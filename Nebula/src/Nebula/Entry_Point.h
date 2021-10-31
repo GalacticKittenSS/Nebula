@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Application.h"
+
 #ifdef NB_WINDOWS
 
 extern Nebula::Application* Nebula::createApplication();
