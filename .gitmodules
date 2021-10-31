@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 [submodule "Nebula/Modules/spdlog"]
+=======
+[submodule "Nebula/src/Modules/spdlog"]
+>>>>>>> 85023b56d8b12946fcc93479d477a4de84f7b0de
 	path = Nebula/src/Modules/spdlog
 	url = https://github.com/gabime/spdlog
 [submodule "Nebula/Modules/glfw"]
