@@ -2,9 +2,10 @@
 .vs/
 [Bb]in/
 [Bb]in-obj/
+[Bb]ackups/
 
 //Files
-Nebula.sln
+*.sln
 *.user
 *.vcxproj
 *.vcxproj.filters

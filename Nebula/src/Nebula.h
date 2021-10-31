@@ -4,10 +4,16 @@
 #include "Nebula/API.h"
 //--------------------
 
-//----Entry Point-----
-#include "Nebula/Entry_Point.h"
-//--------------------
-
 //----Application-----
 #include "Nebula/Application.h"
 //--------------------
+
+//----Logging--------
+#include "Nebula/Log.h"
+//-------------------
+
+/*	-----Entry Point------
+	HAS TO BE INCLUDE BELOW
+	LOGGING AND APPLICATION
+	----------------------	*/
+#include "Nebula/Entry_Point.h"

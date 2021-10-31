@@ -23,6 +23,10 @@ project "Nebula"
 		"%{prj.name}/include/Nebula.h"
 	}
 
+	includedirs {
+		"Nebula\src\Modules\spdlog"
+	}
+
 	filter "system:windows"
 		cppdialect "C++17"
 		staticruntime "On"
@@ -63,7 +67,8 @@ project "Tests"
 	}
 
 	includedirs {
-		"Nebula/include"
+		"Nebula\include"
+		"Nebula\src\Modules\spdlog"
 	}
 
 	links {
