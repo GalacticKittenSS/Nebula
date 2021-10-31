@@ -1,3 +1,6 @@
-[submodule "Nebula\\src\\Modules\\spdlog"]
-	path = Nebula\\src\\Modules\\spdlog
+[submodule "Nebula/Modules/spdlog"]
+	path = Nebula/src/Modules/spdlog
 	url = https://github.com/gabime/spdlog
+[submodule "Nebula/Modules/glfw"]
+	path = Nebula/src/Modules/glfw
+	url = https://github.com/TheCherno/glfw/tree/b4b43190ce623f1a75c94f7100c2d5b0b7bbb4f8

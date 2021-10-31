@@ -1,8 +1,9 @@
 #pragma once
 
 #include "API.h"
-#include "Nebula/events/Window_Event.h"
-#include "Log.h"
+#include "Window.h"
+
+#include <GLFW/glfw3.h>
 
 namespace Nebula {
 	class NB_API Application {
@@ -11,6 +12,9 @@ namespace Nebula {
 		~Application();
 
 		void run();
+	private:
+		std::unique_ptr<Window> m_Window;
+		bool m_Running = true;
 	};
 
 	//Defined In Client

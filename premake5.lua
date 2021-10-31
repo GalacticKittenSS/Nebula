@@ -9,6 +9,12 @@ workspace "Nebula"
 
 outdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
+--Include Directories (Relative to Nebula Project)
+includedir = {}
+includedir["GLFW"] = "Nebula/Modules/glfw/include"
+
+include "Nebula/Modules/GLFW"
+
 project "Nebula"
 	location "Nebula"
 	kind "SharedLib"
@@ -26,12 +32,20 @@ project "Nebula"
 		"%{prj.name}/src/nbpch.h",
 		"%{prj.name}/src/nbpch.cpp",
 		"%{prj.name}/src/Nebula.h",
-		"%{prj.name}/include/Nebula.h"
+		"%{prj.name}/src/Platform/**.h",
+		"%{prj.name}/src/Platform/**.cpp",
+		"%{prj.name}/include/**.h"
 	}
 
 	includedirs {
 		"%{prj.name}/src",
-		"%{prj.name}/src/Modules/spdlog/include"
+		"%{prj.name}/Modules/spdlog/include",
+		"%{includedir.GLFW}"
+	}
+
+	links { 
+		"GLFW",
+		"opengl32.lib"
 	}
 
 	filter "system:windows"
@@ -74,7 +88,9 @@ project "Tests"
 	}
 
 	includedirs {
-		"Nebula/include"
+		"Nebula/include",
+		"Nebula/Modules/spdlog/include",
+		"%{includedir.GLFW}"
 	}
 
 	links {

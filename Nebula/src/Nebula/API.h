@@ -10,4 +10,12 @@
 	#error Only Windows is Supported
 #endif //NB_WINDOWS
 
+#ifdef NB_ENABLE_ASSERTS
+	#define NB_ASSERT(x, ...) { if(!(x)) { NB_ERROR("Assertion Failed: {0}", __VA_ARGS__); __debugbreak(); } }
+	#define CL_ASSERT(x, ...) { if(!(x)) { CL_ERROR("Assertion Failed: {0}", __VA_ARGS__); __debugbreak(); } }
+#else
+	#define NB_ASSERT(x, ...)
+	#define CL_ASSERT(x, ...)
+#endif //NB_ENABLE_ASSERTS
+
 #define BIT(x) (1 << x)
