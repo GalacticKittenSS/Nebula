@@ -1,3 +1,4 @@
+#include "nbpch.h"
 #include "Application.h"
 
 namespace Nebula {

@@ -1,10 +1,9 @@
 #pragma once
 
+#include "nbpch.h"
 #include "Nebula/API.h"
 #include "Event_Manager.h"
 
-#include <functional>
-#include <string>
 
 //TODO: Add Event Listener/Manager
 

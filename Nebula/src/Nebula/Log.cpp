@@ -1,3 +1,4 @@
+#include "nbpch.h"
 #include "Log.h"
 
 namespace Nebula {

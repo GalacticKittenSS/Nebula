@@ -17,15 +17,21 @@ project "Nebula"
 	targetdir ("bin/" .. outdir .. "/%{prj.name}")
 	objdir ("bin-obj/" .. outdir .. "/%{prj.name}")
 
+	pchheader "nbpch.h"
+	pchsource "nbpch.cpp"
+
 	files {
-		"%{prj.name}/src/**.h",
-		"%{prj.name}/src/**.cpp",
+		"%{prj.name}/src/Nebula/**.h",
+		"%{prj.name}/src/Nebula/**.cpp",
+		"%{prj.name}/src/nbpch.h",
+		"%{prj.name}/src/nbpch.cpp",
+		"%{prj.name}/src/Nebula.h",
 		"%{prj.name}/include/Nebula.h"
 	}
 
 	includedirs {
-		"Nebula\src",
-		"Nebula\src\Modules\spdlog"
+		"%{prj.name}/src",
+		"%{prj.name}/src/Modules/spdlog/include"
 	}
 
 	filter "system:windows"
@@ -68,8 +74,7 @@ project "Tests"
 	}
 
 	includedirs {
-		"Nebula\include"
-		"Nebula\src\Modules\spdlog"
+		"Nebula/include"
 	}
 
 	links {

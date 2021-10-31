@@ -6,6 +6,7 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/fmt/ostr.h>
 
+
 namespace Nebula {
 	class NB_API Log {
 	public:

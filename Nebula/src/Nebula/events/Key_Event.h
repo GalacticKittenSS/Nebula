@@ -2,7 +2,6 @@
 
 #include "Event.h"
 
-#include <sstream>
 
 namespace Nebula {
 	class NB_API KeyEvent : public Event {
