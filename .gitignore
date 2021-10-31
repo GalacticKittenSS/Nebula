@@ -1,0 +1,10 @@
+//DIRECTORIES
+.vs/
+[Bb]in/
+[Bb]in-obj/
+
+//Files
+Nebula.sln
+*.user
+*.vcxproj
+*.vcxproj.filters
