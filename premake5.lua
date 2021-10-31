@@ -24,6 +24,7 @@ project "Nebula"
 	}
 
 	includedirs {
+		"Nebula\src",
 		"Nebula\src\Modules\spdlog"
 	}
 

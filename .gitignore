@@ -9,3 +9,7 @@
 *.user
 *.vcxproj
 *.vcxproj.filters
+
+//Useless Files
+Event_Listener.h
+Event_Manager.h

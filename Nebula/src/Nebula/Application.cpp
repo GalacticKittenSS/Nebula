@@ -10,6 +10,9 @@ namespace Nebula {
 	}
 
 	void Application::run() {
+		WindowResizeEvent e(1280, 720);
+		NB_TRACE(e);
+
 		while (true);
 	}
 }
