@@ -7,7 +7,7 @@ workspace "Nebula"
 		"Dist"
 	}
 
-outdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
+outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 --Include Directories (Relative to Nebula Project)
 includedir = {}
@@ -20,8 +20,8 @@ project "Nebula"
 	kind "SharedLib"
 	language "C++"
 
-	targetdir ("bin/" .. outdir .. "/%{prj.name}")
-	objdir ("bin-obj/" .. outdir .. "/%{prj.name}")
+	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
+	objdir ("bin-obj/" .. outputdir .. "/%{prj.name}")
 
 	pchheader "nbpch.h"
 	pchsource "nbpch.cpp"
@@ -59,7 +59,7 @@ project "Nebula"
 		}
 
 		postbuildcommands {
-			("{COPY} %{cfg.buildtarget.relpath} ../bin/" .. outdir .. "/Tests")
+			("{COPY} %{cfg.buildtarget.relpath} ../bin/" .. outputdir .. "/Tests")
 		}
 
 	filter "configurations:Debug"
@@ -79,8 +79,8 @@ project "Tests"
 	kind "ConsoleApp"
 	language "C++"
 
-	targetdir ("bin/" .. outdir .. "/%{prj.name}")
-	objdir ("bin-obj/" .. outdir .. "/%{prj.name}")
+	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
+	objdir ("bin-obj/" .. outputdir .. "/%{prj.name}")
 
 	files {
 		"%{prj.name}/src/**.h",
