@@ -17,6 +17,7 @@ class App : public Nebula::Application {
 public:
 	App() {
 		//PushLayer(new ExampleLayer());
+		PushOverlay(new Nebula::ImGuiLayer());
 	}
 
 	~App() {

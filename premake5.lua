@@ -13,9 +13,11 @@ outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 includedir = {}
 includedir["GLFW"] = "Nebula/Modules/glfw/include"
 includedir["GLad"] = "Nebula/Modules/glad/include"
+includedir["ImGui"] = "Nebula/Modules/imgui"
 
 include "Nebula/Modules/GLFW"
 include "Nebula/Modules/GLad"
+include "Nebula/Modules/ImGui"
 
 project "Nebula"
 	location "Nebula"
@@ -43,12 +45,14 @@ project "Nebula"
 		"%{prj.name}/src",
 		"%{prj.name}/Modules/spdlog/include",
 		"%{includedir.GLFW}",
-		"%{includedir.GLad}"
+		"%{includedir.GLad}",
+		"%{includedir.ImGui}"
 	}
 
 	links { 
 		"GLFW",
 		"GLad",
+		"ImGui",
 		"opengl32.lib"
 	}
 
@@ -97,7 +101,9 @@ project "Tests"
 	includedirs {
 		"Nebula/include",
 		"Nebula/Modules/spdlog/include",
-		"%{includedir.GLFW}"
+		"%{includedir.GLFW}",
+		"%{includedir.GLad}",
+		"%{includedir.ImGui}"
 	}
 
 	links {

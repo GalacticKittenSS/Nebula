@@ -19,7 +19,7 @@ namespace Nebula {
 		void Update() override;
 
 		inline uint32_t GetWidth() const override { return m_Data.Width; }
-		inline uint32_t GetHeight() const override { return m_Data.Width; }
+		inline uint32_t GetHeight() const override { return m_Data.Height; }
 
 		//Window Attributes
 		inline void SetEventCallback(const EventCallbackFn& callback) override {
