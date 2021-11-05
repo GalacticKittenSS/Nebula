@@ -23,10 +23,10 @@ namespace Nebula {
 		float m_MouseX, m_MouseY;
 	};
 
-
-	class NB_API MouseMovedEvent : public Event {
+	
+	class NB_API MouseScrolledEvent : public Event {
 	public:
-		MouseMovedEvent(float x, float y) : m_XOffset(x), m_YOffset(y) { }
+		MouseScrolledEvent(float x, float y) : m_XOffset(x), m_YOffset(y) { }
 
 		inline float GetOffsetX() const { return m_XOffset; }
 		inline float GetOffsetY() const { return m_YOffset; }

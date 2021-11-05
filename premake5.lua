@@ -12,8 +12,10 @@ outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 --Include Directories (Relative to Nebula Project)
 includedir = {}
 includedir["GLFW"] = "Nebula/Modules/glfw/include"
+includedir["GLad"] = "Nebula/Modules/glad/include"
 
 include "Nebula/Modules/GLFW"
+include "Nebula/Modules/GLad"
 
 project "Nebula"
 	location "Nebula"
@@ -40,11 +42,13 @@ project "Nebula"
 	includedirs {
 		"%{prj.name}/src",
 		"%{prj.name}/Modules/spdlog/include",
-		"%{includedir.GLFW}"
+		"%{includedir.GLFW}",
+		"%{includedir.GLad}"
 	}
 
 	links { 
 		"GLFW",
+		"GLad",
 		"opengl32.lib"
 	}
 
@@ -64,14 +68,17 @@ project "Nebula"
 
 	filter "configurations:Debug"
 		defines "NB_DEBUG"
+		buildoptions '/MDd /Yc"nbpch.h"'
 		symbols "On"
 
 	filter "configurations:Release"
 		defines "NB_DEBUG"
+		buildoptions '/MD /Yc"nbpch.h"'
 		optimize "On"
 
 	filter "configurations:Dist"
 		defines "NB_DIST"
+		buildoptions '/MD /Yc"nbpch.h"'
 		optimize "On"
 
 project "Tests"
@@ -108,12 +115,15 @@ project "Tests"
 
 	filter "configurations:Debug"
 		defines "NB_DEBUG"
+		buildoptions "/MDd"
 		symbols "On"
 
 	filter "configurations:Release"
 		defines "NB_DEBUG"
+		buildoptions "/MD"
 		optimize "On"
 
 	filter "configurations:Dist"
 		defines "NB_DIST"
+		buildoptions "/MD"
 		optimize "On"

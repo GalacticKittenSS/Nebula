@@ -50,8 +50,8 @@ namespace Nebula {
 		inline bool IsInCategory(EventCategory category) {
 			return GetCategoryFlags() & category;
 		}
-	protected:
-		bool m_Handled = false;
+	public:
+		bool Handled = false;
 	};
 
 	class NB_API Dispatcher {
@@ -64,7 +64,7 @@ namespace Nebula {
 		bool Dispatch(EventFn<T> func) {
 			if (m_Event.GetEventType() == T::GetStaticType()) {
 				//TODO Call Event Listener from event Manager
-				m_Event.m_Handled = func(*(T*)&m_Event);
+				m_Event.Handled = func(*(T*)&m_Event);
 				return true;
 			}
 			return false;

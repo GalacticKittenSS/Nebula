@@ -4,18 +4,16 @@
 #include "Nebula/API.h"
 //--------------------
 
-//----Logging--------
-#include "Nebula/Log.h"
-//-------------------
+//----LAYERS---------
+#include "Nebula/Layer.h"
+//--------------------
 
-/*	------Application-------
-	HAS TO BE INCLUDED BELOW
-			LOGGING
-	------------------------*/
+//----Application-----
 #include "Nebula/Application.h"
+//--------------------
 
 /*	-----Entry Point-------
 	HAS TO BE INCLUDED BELOW
-	LOGGING AND APPLICATION
+		APPLICATION
 	-----------------------	*/
 #include "Nebula/Entry_Point.h"

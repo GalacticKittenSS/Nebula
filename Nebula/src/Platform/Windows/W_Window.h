@@ -2,6 +2,11 @@
 
 #include "Nebula/Window.h"
 
+#include "Nebula/events/Key_Event.h"
+#include "Nebula/events/Mouse_Event.h"
+#include "Nebula/events/Window_Event.h"
+
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
 //Window Generator for Windows Systems using glfw
@@ -11,7 +16,7 @@ namespace Nebula {
 		W_Window(const WindowProps& props);
 		virtual ~W_Window();
 
-		void OnUpdate() override;
+		void Update() override;
 
 		inline uint32_t GetWidth() const override { return m_Data.Width; }
 		inline uint32_t GetHeight() const override { return m_Data.Width; }
