@@ -2,9 +2,6 @@
 #include "Application.h"
 
 namespace Nebula {
-
-#define BIND_EVENT(x) std::bind(&x, this, std::placeholders::_1)
-
 	Application* Application::s_Instance = nullptr;
 
 	Application::Application() {

@@ -44,4 +44,17 @@ namespace Nebula {
 
 		EVENT_TYPE(KeyReleased)
 	};
+
+	class NB_API KeyTypedEvent : public KeyEvent {
+	public:
+		KeyTypedEvent(int32_t keycode) : KeyEvent(keycode) { }
+
+		std::string ToString() const override {
+			std::stringstream ss;
+			ss << "KeyTypedEvent: " << m_KeyCode;
+			return ss.str();
+		}
+
+		EVENT_TYPE(KeyTyped)
+	};
 }

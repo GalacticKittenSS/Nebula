@@ -19,7 +19,7 @@ namespace Nebula {
 		//Window Events
 		WindowClose, WindowResize, WindowFocus, WindowNoFocus, WindowMoved,
 		//Key Updates
-		KeyPressed, KeyReleased,
+		KeyPressed, KeyReleased, KeyTyped,
 		//Mouse Updates
 		MouseButtonPressed, MouseButtonReleased, MouseMoved, MouseScrolled
 	};
@@ -37,6 +37,7 @@ namespace Nebula {
 						 virtual const char* GetName() const override { return #type; }
 
 #define EVENT_CATEGORY(category) virtual int GetCategoryFlags() const override { return category; }
+#define BIND_EVENT(x) std::bind(&x, this, std::placeholders::_1)
 
 	class NB_API Event
 	{
