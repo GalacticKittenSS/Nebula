@@ -1,6 +1,8 @@
 #include "nbpch.h"
 #include "Application.h"
 #include <GLFW/glfw3.h>
+#include "Key_Codes.h"
+#include "events/Key_Event.h"
 
 namespace Nebula {
 	Application* Application::s_Instance = nullptr;
@@ -25,9 +27,6 @@ namespace Nebula {
 			for (Layer* layer : m_LayerStack)
 				layer->Update();
 
-			auto [x, y] = Input::GetMousePos();
-			NB_TRACE("{0}, {1}", x, y);
-
 			m_Window->Update();
 		}
 	}
@@ -51,6 +50,11 @@ namespace Nebula {
 	}
 
 	void Application::OnEvent(Event& e) {
+		if (e.GetEventType() == EventType::KeyPressed) {
+			KeyPressedEvent& event = (KeyPressedEvent&)e;
+			NB_TRACE("{0}", (char)event.GetKeyCode());
+		}
+
 		Dispatcher dispatcher(e);
 		dispatcher.Dispatch<WindowCloseEvent>(BIND_EVENT(Application::OnWindowClose));
 
