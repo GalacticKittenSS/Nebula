@@ -1,5 +1,6 @@
 #include "nbpch.h"
 #include "Application.h"
+#include <GLFW/glfw3.h>
 
 namespace Nebula {
 	Application* Application::s_Instance = nullptr;
@@ -23,6 +24,9 @@ namespace Nebula {
 
 			for (Layer* layer : m_LayerStack)
 				layer->Update();
+
+			auto [x, y] = Input::GetMousePos();
+			NB_TRACE("{0}, {1}", x, y);
 
 			m_Window->Update();
 		}

@@ -1,5 +1,6 @@
 workspace "Nebula"
 	architecture "x64"
+	startproject "Tests"
 
 	configurations {
 		"Debug",
@@ -15,14 +16,17 @@ includedir["GLFW"] = "Nebula/Modules/glfw/include"
 includedir["GLad"] = "Nebula/Modules/glad/include"
 includedir["ImGui"] = "Nebula/Modules/imgui"
 
-include "Nebula/Modules/GLFW"
-include "Nebula/Modules/GLad"
-include "Nebula/Modules/ImGui"
+group "Dependencies"
+	include "Nebula/Modules/GLFW"
+	include "Nebula/Modules/GLad"
+	include "Nebula/Modules/ImGui"
+group ""
 
 project "Nebula"
 	location "Nebula"
 	kind "SharedLib"
 	language "C++"
+	staticruntime "off"
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-obj/" .. outputdir .. "/%{prj.name}")
@@ -56,39 +60,43 @@ project "Nebula"
 		"opengl32.lib"
 	}
 
+	defines "NEBULA"
+
 	filter "system:windows"
 		cppdialect "C++17"
-		staticruntime "On"
 		systemversion "latest"
 
-		defines {
-			"NB_WINDOWS",
-			"NEBULA"
-		}
+		defines "NB_WINDOWS"
 
 		postbuildcommands {
-			("{COPY} %{cfg.buildtarget.relpath} ../bin/" .. outputdir .. "/Tests")
+			("{COPY} %{cfg.buildtarget.relpath} \"../bin/" .. outputdir .. "/Tests/\"")
 		}
 
 	filter "configurations:Debug"
 		defines "NB_DEBUG"
-		buildoptions '/MDd /Yc"nbpch.h"'
+		runtime "Debug"
+		buildoptions '/Yc"nbpch.h"'
 		symbols "On"
+
+		defines "NB_ENABLE_ASSERTS"
 
 	filter "configurations:Release"
 		defines "NB_DEBUG"
-		buildoptions '/MD /Yc"nbpch.h"'
+		runtime "Release"
+		buildoptions '/Yc"nbpch.h"'
 		optimize "On"
 
 	filter "configurations:Dist"
 		defines "NB_DIST"
-		buildoptions '/MD /Yc"nbpch.h"'
+		runtime "Release"
+		buildoptions '/Yc"nbpch.h"'
 		optimize "On"
 
 project "Tests"
 	location "Tests"
 	kind "ConsoleApp"
 	language "C++"
+	staticruntime "off"
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-obj/" .. outputdir .. "/%{prj.name}")
@@ -112,7 +120,6 @@ project "Tests"
 
 	filter "system:windows"
 		cppdialect "C++17"
-		staticruntime "On"
 		systemversion "latest"
 
 		defines {
@@ -121,15 +128,15 @@ project "Tests"
 
 	filter "configurations:Debug"
 		defines "NB_DEBUG"
-		buildoptions "/MDd"
+		runtime "Debug"
 		symbols "On"
 
 	filter "configurations:Release"
 		defines "NB_DEBUG"
-		buildoptions "/MD"
+		runtime "Release"
 		optimize "On"
 
 	filter "configurations:Dist"
 		defines "NB_DIST"
-		buildoptions "/MD"
+		runtime "Release"
 		optimize "On"

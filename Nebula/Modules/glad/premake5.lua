@@ -1,7 +1,7 @@
 project "GLad"
 	kind "StaticLib"
 	language "C"
-	staticruntime "off"
+	staticruntime "on"
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-obj/" .. outputdir .. "/%{prj.name}")
@@ -19,13 +19,16 @@ project "GLad"
 	filter "system:windows"
 		systemversion "latest"
 		staticruntime "On"
+		cppdialect "C++17"
 
 	filter "configurations:Debug"
 		runtime "Debug"
-		buildoptions "/MT"
 		symbols "on"
 
 	filter "configurations:Release"
 		runtime "Release"
-		buildoptions "/MT"
+		optimize "on"
+
+	filter "configurations:Dist"
+		runtime "Release"
 		optimize "on"

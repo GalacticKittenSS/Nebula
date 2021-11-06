@@ -1,5 +1,5 @@
 #include "nbpch.h"
-#include "W_Window.h"
+#include "Win_Window.h"
 
 namespace Nebula {
 	static bool s_GLFWInitialized = false;
@@ -9,18 +9,18 @@ namespace Nebula {
 	}
 
 	Window* Window::Create(const WindowProps& props) {
-		return new W_Window(props);
+		return new Win_Window(props);
 	}
 
-	W_Window::W_Window(const WindowProps& props) {
+	Win_Window::Win_Window(const WindowProps& props) {
 		Init(props);
 	}
 
-	W_Window::~W_Window() {
+	Win_Window::~Win_Window() {
 		ShutDown();
 	}
 
-	void W_Window::Init(const WindowProps& props) {
+	void Win_Window::Init(const WindowProps& props) {
 		m_Data.Title = props.Title;
 		m_Data.Width = props.Width;
 		m_Data.Height = props.Height;
@@ -117,16 +117,16 @@ namespace Nebula {
 		});
 	}
 
-	void W_Window::ShutDown() {
+	void Win_Window::ShutDown() {
 		glfwDestroyWindow(m_Window);
 	}
 
-	void W_Window::Update() {
+	void Win_Window::Update() {
 		glfwPollEvents();
 		glfwSwapBuffers(m_Window);
 	}
 
-	void W_Window::SetVSync(bool enabled) {
+	void Win_Window::SetVSync(bool enabled) {
 		if (enabled)
 			glfwSwapInterval(1);
 		else
@@ -135,7 +135,7 @@ namespace Nebula {
 		m_Data.Vsync = enabled;
 	}
 
-	bool W_Window::IsVSync() const {
+	bool Win_Window::IsVSync() const {
 		return m_Data.Vsync;
 	}
 }

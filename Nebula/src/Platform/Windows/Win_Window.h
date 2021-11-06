@@ -11,10 +11,10 @@
 
 //Window Generator for Windows Systems using glfw
 namespace Nebula {
-	class W_Window : public Window {
+	class Win_Window : public Window {
 	public:
-		W_Window(const WindowProps& props);
-		virtual ~W_Window();
+		Win_Window(const WindowProps& props);
+		virtual ~Win_Window();
 
 		void Update() override;
 
@@ -28,6 +28,8 @@ namespace Nebula {
 
 		void SetVSync(bool enabled) override;
 		bool IsVSync() const override;
+
+		inline virtual void* GetNativeWindow() const override { return m_Window; }
 	private:
 		virtual void Init(const WindowProps& props);
 		virtual void ShutDown();

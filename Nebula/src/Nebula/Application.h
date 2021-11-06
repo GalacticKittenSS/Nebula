@@ -3,8 +3,7 @@
 #include "Window.h"
 #include "Nebula/Layer_Stack.h"
 #include "Nebula/events/Window_Event.h"
-
-#include <GLFW/glfw3.h>
+#include "Input.h"
 
 namespace Nebula {
 	class NB_API Application {
