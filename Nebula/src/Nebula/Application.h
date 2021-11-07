@@ -34,6 +34,8 @@ namespace Nebula {
 		bool m_Running = true;
 		LayerStack m_LayerStack;
 
+		uint32_t m_VertexArray, m_VertexBuffer, m_IndexBuffer;
+
 		static Application* s_Instance;
 	};
 

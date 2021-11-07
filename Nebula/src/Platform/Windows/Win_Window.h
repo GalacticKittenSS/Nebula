@@ -1,12 +1,8 @@
 #pragma once
 
 #include "Nebula/Window.h"
+#include "Nebula/renderer/Graphics_Context.h"
 
-#include "Nebula/events/Key_Event.h"
-#include "Nebula/events/Mouse_Event.h"
-#include "Nebula/events/Window_Event.h"
-
-#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
 //Window Generator for Windows Systems using glfw
@@ -35,6 +31,7 @@ namespace Nebula {
 		virtual void ShutDown();
 	private:
 		GLFWwindow* m_Window;
+		GraphicsContext* m_Context;
 
 		struct WindowData {
 			std::string Title;

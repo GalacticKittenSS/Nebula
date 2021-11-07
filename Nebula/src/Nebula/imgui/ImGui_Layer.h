@@ -8,12 +8,12 @@ namespace Nebula {
 		ImGuiLayer();
 		~ImGuiLayer();
 
-		void OnAttach() override;
-		void OnDetach() override;
+		void Attach() override;
+		void Detach() override;
 
 		void Begin();
 		void End();
-		void Render();
+		void Render() override;
 	private:
 		float m_Time = 0.0f;
 	};

@@ -9,11 +9,13 @@ namespace Nebula {
 		Layer(const std::string& name = "Layer");
 		virtual ~Layer();
 
-		virtual void OnAttach() { }
-		virtual void OnDetach() { }
+		virtual void Attach() { }
+		virtual void Detach() { }
+
 		virtual void OnEvent(Event& e) { }
-		
+
 		virtual void Update() { }
+		virtual void Render() { }
 
 		inline const std::string& GetName() const { return m_DebugName; }
 	protected:

@@ -28,9 +28,12 @@ group ""
 --The Nebula Engine
 project "Nebula"
 	location "Nebula"
-	kind "SharedLib"
+	kind "StaticLib"
+
+	cppdialect "C++17"
 	language "C++"
-	staticruntime "off"
+	
+	staticruntime "on"
 
 	buildoptions '/Yc"nbpch.h"'
 
@@ -62,41 +65,42 @@ project "Nebula"
 		"opengl32.lib"
 	}
 
-	defines "NEBULA"
+	defines {
+		"_CRT_SECURE_NO_WARNINGS",
+		"NEBULA"
+	}
 
 	filter "system:windows"
-		cppdialect "C++17"
 		systemversion "latest"
 
 		defines "NB_WINDOWS"
 
-		postbuildcommands {
-			("{COPY} %{cfg.buildtarget.relpath} \"../bin/" .. outputdir .. "/Tests/\"")
-		}
-
 	filter "configurations:Debug"
 		defines "NB_DEBUG"
 		runtime "Debug"
-		symbols "On"
+		symbols "on"
 
 		defines "NB_ENABLE_ASSERTS"
 
 	filter "configurations:Release"
 		defines "NB_DEBUG"
 		runtime "Release"
-		optimize "On"
+		optimize "on"
 
 	filter "configurations:Dist"
 		defines "NB_DIST"
 		runtime "Release"
-		optimize "On"
+		optimize "on"
 
 --The Nebula Client
 project "Tests"
 	location "Tests"
 	kind "ConsoleApp"
+	
+	cppdialect "C++17"
 	language "C++"
-	staticruntime "off"
+
+	staticruntime "on"
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-obj/" .. outputdir .. "/%{prj.name}")
@@ -109,10 +113,7 @@ project "Tests"
 	includedirs {
 		"Nebula/include",
 		"%{includedir.spdlog}",
-		"%{includedir.GLFW}",
-		"%{includedir.GLad}",
-		"%{includedir.ImGui}",
-		"%{includedir.glm}"
+		"%{includedir.ImGui}"
 	}
 
 	links {
@@ -120,24 +121,21 @@ project "Tests"
 	}
 
 	filter "system:windows"
-		cppdialect "C++17"
 		systemversion "latest"
 
-		defines {
-			"NB_WINDOWS"
-		}
+		defines "NB_WINDOWS"
 
 	filter "configurations:Debug"
 		defines "NB_DEBUG"
 		runtime "Debug"
-		symbols "On"
+		symbols "on"
 
 	filter "configurations:Release"
 		defines "NB_DEBUG"
 		runtime "Release"
-		optimize "On"
+		optimize "on"
 
 	filter "configurations:Dist"
 		defines "NB_DIST"
 		runtime "Release"
-		optimize "On"
+		optimize "on"

@@ -1,6 +1,12 @@
 #include "nbpch.h"
 #include "Win_Window.h"
 
+#include "Nebula/events/Window_Event.h"
+#include "Nebula/events/Mouse_Event.h"
+#include "Nebula/events/Key_Event.h"
+
+#include "Platform/OpenGl/OpenGL_Context.h"
+
 namespace Nebula {
 	static bool s_GLFWInitialized = false;
 
@@ -36,9 +42,10 @@ namespace Nebula {
 		}
 
 		m_Window = glfwCreateWindow((int)props.Width, (int)props.Height, m_Data.Title.c_str(), nullptr, nullptr);
-		glfwMakeContextCurrent(m_Window);
-		int status = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
-		NB_ASSERT(status, "Failed to Initialise GLad!");
+		m_Context = new OpenGLContext(m_Window);
+
+		m_Context->Init();
+
 		glfwSetWindowUserPointer(m_Window, &m_Data);
 		SetVSync(true);
 
@@ -123,7 +130,7 @@ namespace Nebula {
 
 	void Win_Window::Update() {
 		glfwPollEvents();
-		glfwSwapBuffers(m_Window);
+		m_Context->SwapBuffers();
 	}
 
 	void Win_Window::SetVSync(bool enabled) {

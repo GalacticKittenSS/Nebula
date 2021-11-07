@@ -3,8 +3,6 @@ project "GLad"
 	language "C"
 	staticruntime "on"
 
-	warnings "off"
-
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-obj/" .. outputdir .. "/%{prj.name}")
 
@@ -20,17 +18,11 @@ project "GLad"
 
 	filter "system:windows"
 		systemversion "latest"
-		staticruntime "On"
-		cppdialect "C++17"
 
 	filter "configurations:Debug"
 		runtime "Debug"
 		symbols "on"
 
 	filter "configurations:Release"
-		runtime "Release"
-		optimize "on"
-
-	filter "configurations:Dist"
 		runtime "Release"
 		optimize "on"
