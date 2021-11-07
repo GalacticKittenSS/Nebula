@@ -4,7 +4,7 @@
 [submodule "Nebula/Modules/glfw"]
 	path = Nebula/Modules/glfw
 	url = https://github.com/TheCherno/glfw
-[submodule "Nebula/Modules/imgu"]
+[submodule "Nebula/Modules/imgui"]
 	path = Nebula/Modules/imgui
 	url = https://github.com/GalacticKittenSS/imgui
 [submodule "Nebula/Modules/glm"]
