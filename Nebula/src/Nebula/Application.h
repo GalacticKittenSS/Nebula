@@ -8,6 +8,8 @@
 #include "Nebula/Layer_Stack.h"
 #include "Nebula/imgui/ImGui_Layer.h"
 
+#include "Nebula/renderer/Shader.h"
+
 namespace Nebula {
 	class NB_API Application {
 	public:
@@ -35,6 +37,7 @@ namespace Nebula {
 		LayerStack m_LayerStack;
 
 		uint32_t m_VertexArray, m_VertexBuffer, m_IndexBuffer;
+		std::unique_ptr<Shader> m_Shader;
 
 		static Application* s_Instance;
 	};

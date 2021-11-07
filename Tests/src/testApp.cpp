@@ -20,7 +20,7 @@ public:
 class App : public Nebula::Application {
 public:
 	App() {
-		PushOverlay(new ExampleLayer());
+		//PushOverlay(new ExampleLayer());
 	}
 
 	~App() {

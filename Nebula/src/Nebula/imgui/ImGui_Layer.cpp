@@ -77,7 +77,7 @@ namespace Nebula {
 	}
 
 	void ImGuiLayer::Render() {
-		static bool show = true;
-		ImGui::ShowDemoWindow(&show);
+		//static bool show = false;
+		//ImGui::ShowDemoWindow(&show);
 	}
 }
