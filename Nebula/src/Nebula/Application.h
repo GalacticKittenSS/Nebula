@@ -5,6 +5,7 @@
 #include "Nebula/events/Window_Event.h"
 #include "Input.h"
 
+
 namespace Nebula {
 	class NB_API Application {
 	public:

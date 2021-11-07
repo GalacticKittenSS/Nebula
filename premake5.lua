@@ -10,23 +10,29 @@ workspace "Nebula"
 
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
---Include Directories (Relative to Nebula Project)
+--Include Directories (Relative to Solution Directory)
 includedir = {}
+includedir["spdlog"] = "Nebula/Modules/spdlog/include"
 includedir["GLFW"] = "Nebula/Modules/glfw/include"
 includedir["GLad"] = "Nebula/Modules/glad/include"
-includedir["ImGui"] = "Nebula/Modules/imgui"
+includedir["ImGui"] = "Nebula/Modules/imgui/include"
+includedir["glm"] = "Nebula/Modules/glm/glm"
 
+--Dependencies
 group "Dependencies"
 	include "Nebula/Modules/GLFW"
 	include "Nebula/Modules/GLad"
 	include "Nebula/Modules/ImGui"
 group ""
 
+--The Nebula Engine
 project "Nebula"
 	location "Nebula"
 	kind "SharedLib"
 	language "C++"
 	staticruntime "off"
+
+	buildoptions '/Yc"nbpch.h"'
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-obj/" .. outputdir .. "/%{prj.name}")
@@ -35,22 +41,18 @@ project "Nebula"
 	pchsource "nbpch.cpp"
 
 	files {
-		"%{prj.name}/src/Nebula/**.h",
-		"%{prj.name}/src/Nebula/**.cpp",
-		"%{prj.name}/src/nbpch.h",
-		"%{prj.name}/src/nbpch.cpp",
-		"%{prj.name}/src/Nebula.h",
-		"%{prj.name}/src/Platform/**.h",
-		"%{prj.name}/src/Platform/**.cpp",
+		"%{prj.name}/src/**.h",
+		"%{prj.name}/src/**.cpp",
 		"%{prj.name}/include/**.h"
 	}
 
 	includedirs {
 		"%{prj.name}/src",
-		"%{prj.name}/Modules/spdlog/include",
+		"%{includedir.spdlog}",
 		"%{includedir.GLFW}",
 		"%{includedir.GLad}",
-		"%{includedir.ImGui}"
+		"%{includedir.ImGui}",
+		"%{includedir.glm}"
 	}
 
 	links { 
@@ -75,7 +77,6 @@ project "Nebula"
 	filter "configurations:Debug"
 		defines "NB_DEBUG"
 		runtime "Debug"
-		buildoptions '/Yc"nbpch.h"'
 		symbols "On"
 
 		defines "NB_ENABLE_ASSERTS"
@@ -83,15 +84,14 @@ project "Nebula"
 	filter "configurations:Release"
 		defines "NB_DEBUG"
 		runtime "Release"
-		buildoptions '/Yc"nbpch.h"'
 		optimize "On"
 
 	filter "configurations:Dist"
 		defines "NB_DIST"
 		runtime "Release"
-		buildoptions '/Yc"nbpch.h"'
 		optimize "On"
 
+--The Nebula Client
 project "Tests"
 	location "Tests"
 	kind "ConsoleApp"
@@ -108,10 +108,11 @@ project "Tests"
 
 	includedirs {
 		"Nebula/include",
-		"Nebula/Modules/spdlog/include",
+		"%{includedir.spdlog}",
 		"%{includedir.GLFW}",
 		"%{includedir.GLad}",
-		"%{includedir.ImGui}"
+		"%{includedir.ImGui}",
+		"%{includedir.glm}"
 	}
 
 	links {

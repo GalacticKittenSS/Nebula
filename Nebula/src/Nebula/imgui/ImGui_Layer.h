@@ -3,7 +3,7 @@
 #include "Nebula/Layer.h"
 #include "Nebula/Application.h"
 
-#include "imgui.h"
+#include "imgui/imgui.h"
 #include "Platform/OpenGl/ImGui_Renderer.h"
 #include <GLFW/glfw3.h>
 
