@@ -90,12 +90,20 @@
  *                                  int arg2) KHRONOS_APIATTRIBUTES;
  */
 
+#if defined(__SCITECH_SNAP__) && !defined(KHRONOS_STATIC)
+#   define KHRONOS_STATIC 1
+#endif
+
  /*-------------------------------------------------------------------------
   * Definition of KHRONOS_APICALL
   *-------------------------------------------------------------------------
   * This precedes the return type of the function in the function prototype.
   */
-#if defined(_WIN32) && !defined(__SCITECH_SNAP__)
+#if defined(KHRONOS_STATIC)
+  /* If the preprocessor constant KHRONOS_STATIC is defined, make the
+   * header compatible with static linking. */
+#   define KHRONOS_APICALL
+#elif defined(_WIN32)
 #   define KHRONOS_APICALL __declspec(dllimport)
 #elif defined (__SYMBIAN32__)
 #   define KHRONOS_APICALL IMPORT_C
@@ -139,7 +147,7 @@
       * Using <stdint.h>
       */
 #include <stdint.h>
-    typedef int32_t                 khronos_int32_t;
+typedef int32_t                 khronos_int32_t;
 typedef uint32_t                khronos_uint32_t;
 typedef int64_t                 khronos_int64_t;
 typedef uint64_t                khronos_uint64_t;
@@ -152,7 +160,7 @@ typedef uint64_t                khronos_uint64_t;
       * Using <inttypes.h>
       */
 #include <inttypes.h>
-    typedef int32_t                 khronos_int32_t;
+typedef int32_t                 khronos_int32_t;
 typedef uint32_t                khronos_uint32_t;
 typedef int64_t                 khronos_int64_t;
 typedef uint64_t                khronos_uint64_t;
@@ -164,7 +172,7 @@ typedef uint64_t                khronos_uint64_t;
      /*
       * Win32
       */
-    typedef __int32                 khronos_int32_t;
+typedef __int32                 khronos_int32_t;
 typedef unsigned __int32        khronos_uint32_t;
 typedef __int64                 khronos_int64_t;
 typedef unsigned __int64        khronos_uint64_t;
@@ -176,7 +184,7 @@ typedef unsigned __int64        khronos_uint64_t;
      /*
       * Sun or Digital
       */
-    typedef int                     khronos_int32_t;
+typedef int                     khronos_int32_t;
 typedef unsigned int            khronos_uint32_t;
 #if defined(__arch64__) || defined(_LP64)
 typedef long int                khronos_int64_t;
@@ -193,7 +201,7 @@ typedef unsigned long long int  khronos_uint64_t;
      /*
       * Hypothetical platform with no float or int64 support
       */
-    typedef int                     khronos_int32_t;
+typedef int                     khronos_int32_t;
 typedef unsigned int            khronos_uint32_t;
 #define KHRONOS_SUPPORT_INT64   0
 #define KHRONOS_SUPPORT_FLOAT   0
@@ -204,7 +212,7 @@ typedef unsigned int            khronos_uint32_t;
       * Generic fallback
       */
 #include <stdint.h>
-    typedef int32_t                 khronos_int32_t;
+typedef int32_t                 khronos_int32_t;
 typedef uint32_t                khronos_uint32_t;
 typedef int64_t                 khronos_int64_t;
 typedef uint64_t                khronos_uint64_t;
