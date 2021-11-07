@@ -1,7 +1,7 @@
 #include "nbpch.h"
 #include "Application.h"
+
 #include <GLFW/glfw3.h>
-#include "Key_Codes.h"
 #include "events/Key_Event.h"
 
 namespace Nebula {
@@ -13,6 +13,9 @@ namespace Nebula {
 
 		m_Window = std::unique_ptr<Window>(Window::Create());
 		m_Window->SetEventCallback(BIND_EVENT(Application::OnEvent));
+
+		m_ImGui = new ImGuiLayer();
+		PushOverlay(m_ImGui);
 	}
 
 	Application::~Application() {
@@ -26,6 +29,11 @@ namespace Nebula {
 
 			for (Layer* layer : m_LayerStack)
 				layer->Update();
+
+			m_ImGui->Begin();
+			for (Layer* layer : m_LayerStack)
+				m_ImGui->Render();
+			m_ImGui->End();
 
 			m_Window->Update();
 		}

@@ -1,10 +1,12 @@
 #pragma once
 
 #include "Window.h"
-#include "Nebula/Layer_Stack.h"
 #include "Nebula/events/Window_Event.h"
+
 #include "Input.h"
 
+#include "Nebula/Layer_Stack.h"
+#include "Nebula/imgui/ImGui_Layer.h"
 
 namespace Nebula {
 	class NB_API Application {
@@ -28,6 +30,7 @@ namespace Nebula {
 
 	private:
 		std::unique_ptr<Window> m_Window;
+		ImGuiLayer* m_ImGui;
 		bool m_Running = true;
 		LayerStack m_LayerStack;
 

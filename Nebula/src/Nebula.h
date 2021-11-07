@@ -6,7 +6,6 @@
 
 //----LAYERS---------
 #include "Nebula/Layer.h"
-#include "Nebula/imgui/ImGui_Layer.h"
 //--------------------
 
 //----Application-----

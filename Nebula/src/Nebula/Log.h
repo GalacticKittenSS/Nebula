@@ -20,7 +20,7 @@ namespace Nebula {
 }
 
 //Nebula Log Macros
-#define NB_FATAL(...) ::Nebula::Log::GetCoreLogger()->fatal(__VA_ARGS__)
+//#define NB_FATAL(...) ::Nebula::Log::GetCoreLogger()->fatal(__VA_ARGS__)
 #define NB_ERROR(...) ::Nebula::Log::GetCoreLogger()->error(__VA_ARGS__)
 #define NB_WARN(...)  ::Nebula::Log::GetCoreLogger()->warn(__VA_ARGS__)
 #define NB_INFO(...)  ::Nebula::Log::GetCoreLogger()->info(__VA_ARGS__)
@@ -28,7 +28,7 @@ namespace Nebula {
 //--------------
 
 //Client Log Macros
-#define CL_FATAL(...) ::Nebula::Log::GetClientLogger()->fatal(__VA_ARGS__)
+//#define CL_FATAL(...) ::Nebula::Log::GetClientLogger()->fatal(__VA_ARGS__)
 #define CL_ERROR(...) ::Nebula::Log::GetClientLogger()->error(__VA_ARGS__)
 #define CL_WARN(...)  ::Nebula::Log::GetClientLogger()->warn(__VA_ARGS__)
 #define CL_INFO(...)  ::Nebula::Log::GetClientLogger()->info(__VA_ARGS__)
