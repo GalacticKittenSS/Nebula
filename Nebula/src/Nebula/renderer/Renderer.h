@@ -1,14 +1,16 @@
 #pragma once
 
-namespace Nebula {
-	enum class RendererAPI {
-		None = 0, OpenGL = 1
-	};
+//#include "Render_Command.h"
+#include "Renderer_API.h"
 
+namespace Nebula {
 	class Renderer {
 	public:
-		inline static RendererAPI GetAPI() { return s_RendererAPI; }
-	private:
-		static RendererAPI s_RendererAPI;
+		/*static void BeginScene();
+		static void EndScene();
+
+		static void Submit(const std::shared_ptr<VertexArray>& vertexArray);*/
+
+		inline static RendererAPI::API GetAPI() { return RendererAPI::GetAPI(); }
 	};
 }

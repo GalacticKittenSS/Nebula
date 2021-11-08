@@ -1,15 +1,14 @@
 #pragma once
 
 #include "Window.h"
+#include "Nebula/Layer_Stack.h"
 #include "Nebula/events/Window_Event.h"
 
-#include "Input.h"
-
-#include "Nebula/Layer_Stack.h"
 #include "Nebula/imgui/ImGui_Layer.h"
 
 #include "Nebula/renderer/Shader.h"
 #include "Nebula/renderer/Buffer.h"
+#include "Nebula/renderer/Vertex_Array.h"
 
 namespace Nebula {
 	class NB_API Application {
@@ -37,10 +36,10 @@ namespace Nebula {
 		bool m_Running = true;
 		LayerStack m_LayerStack;
 
-		uint32_t m_VertexArray;
-		std::unique_ptr<Shader> m_Shader;
-		std::unique_ptr<VertexBuffer> m_VertexBuffer;
-		std::unique_ptr<IndexBuffer>  m_IndexBuffer;
+		std::shared_ptr<Shader> m_Shader;
+
+		std::shared_ptr<VertexArray>  m_VertexArray;
+		std::shared_ptr<VertexArray>  m_SquareVA;
 
 		static Application* s_Instance;
 	};

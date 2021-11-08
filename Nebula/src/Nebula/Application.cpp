@@ -2,29 +2,12 @@
 #include "Application.h"
 #include "events/Key_Event.h"
 
+#include "Input.h"
+
 #include <glad/glad.h>
 
 namespace Nebula {
 	Application* Application::s_Instance = nullptr;
-
-	static GLenum ShaderTypetoOpenGL(ShaderDataType type) {
-		switch (type) {
-			case ShaderDataType::Float:		return GL_FLOAT;
-			case ShaderDataType::Float2:	return GL_FLOAT;
-			case ShaderDataType::Float3:	return GL_FLOAT;
-			case ShaderDataType::Float4:	return GL_FLOAT;
-			case ShaderDataType::Int:		return GL_INT;
-			case ShaderDataType::Int2:		return GL_INT;
-			case ShaderDataType::Int3:		return GL_INT;
-			case ShaderDataType::Int4:		return GL_INT;
-			case ShaderDataType::Mat3:		return GL_FLOAT;
-			case ShaderDataType::Mat4:		return GL_FLOAT;
-			case ShaderDataType::Bool:		return GL_BOOL;
-		}
-
-		NB_ASSERT(false, "Unknow Shader Data Type!");
-		return 0;
-	}
 
 	Application::Application() {
 		NB_ASSERT(!s_Instance, "Application already exists!");
@@ -36,46 +19,55 @@ namespace Nebula {
 		m_ImGui = new ImGuiLayer();
 		PushOverlay(m_ImGui);
 
-		glGenVertexArrays(1, &m_VertexArray);
-		glBindVertexArray(m_VertexArray);
-
-		float vertices[3 * 7] = {
-			-0.5f, -0.5f, 0.0f, 0.8f, 0.2f, 0.8f, 1.0f,
-			 0.5f, -0.5f, 0.0f,	0.2f, 0.3f, 0.8f, 1.0f,
-			 0.0f,  0.5f, 0.0f,	0.8f, 0.8f, 0.2f, 1.0f
+		BufferLayout layout = {
+			{ShaderDataType::Float3, "position"},
+			{ShaderDataType::Float4, "colour"}
 		};
 
-		m_VertexBuffer.reset(VertexBuffer::Create(vertices, sizeof(vertices)));
-
-		{
-			BufferLayout layout = {
-				{ShaderDataType::Float3, "position"},
-				{ShaderDataType::Float4, "colour"}
-			};
-
-			m_VertexBuffer->SetLayout(layout);
-		}
-
-		uint32_t index = 0;
-		const auto& layout = m_VertexBuffer->GetLayout();
-		for (const auto& element : layout) {
-			glEnableVertexAttribArray(index);
-			
-			glVertexAttribPointer(
-				index, 
-				element.GetComponentCount(), 
-				ShaderTypetoOpenGL(element.Type), 
-				element.Normalized ? GL_TRUE: GL_FALSE, 
-				layout.GetStride(),
-				(const void*)element.Offset
-			);
-
-			index++;
-		}
+		float triangleVertexes[6 * 7] = {
+			-0.5f, -0.5f, 0.0f, 0.0f, 0.75f, 0.0f, 1.0f, //BOTTOM LEFT  (V1)
+			 0.5f, -0.5f, 0.0f,	0.0f, 0.75f, 0.0f, 1.0f, //BOTTOM RIGHT (V2)
+			 0.12f, 0.5f, 0.0f,	1.0f,  0.0f, 1.0f, 1.0f, //TOP RIGHT    (V3)
+			-0.5f, -0.5f, 0.0f, 0.0f, 0.75f, 0.0f, 1.0f, //BOTTOM LEFT  (Must be the same as V1)
+			-0.12f, 0.5f, 0.0f,	1.0f,  0.0f, 1.0f, 1.0f, //TOP LEFT     (V4)
+			 0.12f, 0.5f, 0.0f,	1.0f,  0.0f, 1.0f, 1.0f, //TOP RIGHT    (Must be the same as V3)
+		}; 
 		
-		uint32_t indices[3] = { 0, 1, 2 };
+		float squareVertexes[6 * 7] = {
+			-0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, //BOTTOM LEFT  (V1)
+			 0.5f, -0.5f, 0.0f,	0.0f, 0.0f, 1.0f, 1.0f, //BOTTOM RIGHT (V2)
+			 0.5f,  0.5f, 0.0f,	0.0f, 0.0f, 1.0f, 1.0f, //TOP RIGHT    (V3)
+			-0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, //BOTTOM LEFT  (Must be the same as V1)
+			-0.5f,  0.5f, 0.0f,	0.0f, 0.0f, 1.0f, 1.0f, //TOP LEFT     (V4)
+			 0.5f,  0.5f, 0.0f,	0.0f, 0.0f, 1.0f, 1.0f  //TOP RIGHT    (Must be the same as V3)
+		};
 
-		m_IndexBuffer.reset(IndexBuffer::Create(indices, sizeof(indices) / sizeof(uint32_t)));
+		uint32_t triangleIndices[] = { 0, 1, 2 };
+		uint32_t squareIndices[] = { 0, 1, 2, 3, 4, 5 };
+
+		//TRIANGLE ARRAY
+		m_VertexArray.reset(VertexArray::Create());
+
+		std::shared_ptr<VertexBuffer> triangleVB;
+		triangleVB.reset(VertexBuffer::Create(triangleVertexes, sizeof(triangleVertexes)));
+		triangleVB->SetLayout(layout);
+		m_VertexArray->AddVertexBuffer(triangleVB);
+
+		std::shared_ptr<IndexBuffer> triangleIB;
+		triangleIB.reset(IndexBuffer::Create(squareIndices, sizeof(squareIndices) / sizeof(uint32_t)));
+		m_VertexArray->SetIndexBuffer(triangleIB);
+
+		//SQUARE ARRAY
+		m_SquareVA.reset(VertexArray::Create());
+
+		std::shared_ptr<VertexBuffer> squareVB;
+		squareVB.reset(VertexBuffer::Create(squareVertexes, sizeof(squareVertexes)));
+		squareVB->SetLayout(layout);
+		m_SquareVA->AddVertexBuffer(squareVB);
+
+		std::shared_ptr<IndexBuffer> squareIB;
+		squareIB.reset(IndexBuffer::Create(squareIndices, sizeof(squareIndices) / sizeof(uint32_t)));
+		m_SquareVA->SetIndexBuffer(squareIB);
 
 		std::string vertexSrc = R"(
 			#version 330 core
@@ -116,12 +108,22 @@ namespace Nebula {
 
 	void Application::run() {
 		while (m_Running) {
-			glClearColor(0.1f, 0.1f, 0.1f, 1);
-			glClear(GL_COLOR_BUFFER_BIT);
+			glClearColor(0.1f, 0.1f, 0.1f, 1); //RenderCommand::SetClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+			glClear(GL_COLOR_BUFFER_BIT); //RenderCommand::Clear();
+
+			//Renderer::BeginScene();
 
 			m_Shader->Bind();
-			glBindVertexArray(m_VertexArray);
-			glDrawElements(GL_TRIANGLES, m_IndexBuffer->GetCount(), GL_UNSIGNED_INT, nullptr);
+
+			//Renderer::Submit(m_SquareVA);
+			m_SquareVA->Bind();
+			glDrawElements(GL_TRIANGLES, m_SquareVA->GetIndexBuffer()->GetCount(), GL_UNSIGNED_INT, nullptr);
+
+			//Renderer::Submit(m_VertexArray);
+			m_VertexArray->Bind();
+			glDrawElements(GL_TRIANGLES, m_VertexArray->GetIndexBuffer()->GetCount(), GL_UNSIGNED_INT, nullptr);
+
+			//Renderer::EndScene();
 
 			for (Layer* layer : m_LayerStack)
 				layer->Update();
