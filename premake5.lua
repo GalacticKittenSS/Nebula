@@ -113,7 +113,8 @@ project "Tests"
 	includedirs {
 		"Nebula/include",
 		"%{includedir.spdlog}",
-		"%{includedir.ImGui}"
+		"%{includedir.ImGui}",
+		"%{includedir.glm}"
 	}
 
 	links {

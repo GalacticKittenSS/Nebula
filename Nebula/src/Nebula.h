@@ -11,6 +11,25 @@
 #include "Nebula/imgui/ImGui_Layer.h"
 //--------------------
 
+//----BUFFERS---------
+#include "Nebula/renderer/Shader.h"
+#include "Nebula/renderer/Buffer.h"
+#include "Nebula/renderer/Vertex_Array.h"
+#include "Nebula/renderer/Renderer.h"
+//--------------------
+
+//----EVENTS---------
+#include "Nebula/Input.h"
+#include "Nebula/events/Event.h"
+#include "Nebula/events/Key_Event.h"
+#include "Nebula/events/Mouse_Event.h"
+#include "Nebula/events/Window_Event.h"
+//--------------------
+
+//-----CAMERA----------
+#include "Nebula/renderer/Orthographic_Camera.h"
+//--------------------
+
 //----Application-----
 #include "Nebula/Application.h"
 //--------------------
