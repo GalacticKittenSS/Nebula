@@ -1,6 +1,8 @@
 #include "nbpch.h"
 #include "Renderer.h"
 
+#include "Platform/OpenGl/OpenGL_Shader.h"
+
 namespace Nebula {
 	Renderer::SceneData* Renderer::m_Data = new Renderer::SceneData();
 
@@ -11,9 +13,10 @@ namespace Nebula {
 	void Renderer::EndScene() {
 	}
 
-	void Renderer::Submit(const std::shared_ptr<Shader>& shader, const std::shared_ptr<VertexArray>& vertexArray) {
+	void Renderer::Submit(const std::shared_ptr<Shader>& shader, const std::shared_ptr<VertexArray>& vertexArray, const glm::mat4& transform) {
 		shader->Bind();
-		shader->UploadUniformMat4("view", m_Data->ViewProjectMatrix);
+		std::dynamic_pointer_cast<OpenGLShader>(shader)->UploadUniformMat4("view", m_Data->ViewProjectMatrix);
+		std::dynamic_pointer_cast<OpenGLShader>(shader)->UploadUniformMat4("transform", transform);
 
 		vertexArray->Bind();
 		RenderCommand::DrawIndexed(vertexArray);

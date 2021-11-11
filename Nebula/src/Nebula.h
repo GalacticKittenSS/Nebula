@@ -36,6 +36,8 @@
 //--------------------
 
 #include "Nebula/core/Timestep.h"
+#include "Nebula/Window.h"
+#include "Platform/OpenGl/OpenGL_Shader.h"
 
 //----Application-----
 #include "Nebula/Application.h"

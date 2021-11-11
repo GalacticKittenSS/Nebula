@@ -2,10 +2,10 @@
 
 class ExampleLayer : public Nebula::Layer {
 public:
-	ExampleLayer():
-		m_Camera(-1.6f, 1.6f, -0.9f, 0.9f), 
-		Layer("Example Layer") { 
-		Start(); 
+	ExampleLayer() :
+		m_Camera(-1.6f, 1.6f, -0.9f, 0.9f),
+		Layer("Example Layer") {
+		Start();
 	}
 
 	~ExampleLayer() { }
@@ -24,6 +24,7 @@ public:
 			-0.12f, 0.5f, 0.0f,	1.0f,  0.0f, 1.0f, 1.0f, //TOP LEFT     (V4)
 			 0.12f, 0.5f, 0.0f,	1.0f,  0.0f, 1.0f, 1.0f, //TOP RIGHT    (Must be the same as V3)
 		};
+
 
 		float squareVertexes[6 * 7] = {
 			-0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, //BOTTOM LEFT  (V1)
@@ -66,8 +67,9 @@ public:
 
 			layout(location = 0) in vec3 position;
 			layout(location = 1) in vec4 colour;
-
+			
 			uniform mat4 view;
+			uniform mat4 transform;
 
 			out vec3 outPos;
 			out vec4 outCol;
@@ -75,7 +77,7 @@ public:
 			void main() {
 				outPos = position;
 				outCol = colour;
-				gl_Position = view * vec4(position, 1.0);
+				gl_Position = view * transform * vec4(position, 1.0);
 			}
 		)";
 
@@ -88,12 +90,42 @@ public:
 			in vec4 outCol;
 
 			void main() {
-				colour = vec4(outPos * 0.5 + 0.5, 1.0);
 				colour = outCol;
 			}
 		)";
 
-		m_Shader.reset(new Nebula::Shader(vertexSrc, fragmentSrc));
+		std::string vertColSrc = R"(
+			#version 330 core
+
+			layout(location = 0) in vec3 position;
+			
+			uniform mat4 view;
+			uniform mat4 transform;
+
+			out vec3 outPos;
+			
+			void main() {
+				outPos = position;
+				gl_Position = view * transform * vec4(position, 1.0);
+			}
+		)";
+
+		std::string fragColSrc = R"(
+			#version 330 core
+
+			layout(location = 0) out vec4 colour;
+
+			uniform vec3 col;
+
+			in vec3 outPos;
+
+			void main() {
+				colour = vec4(col, 1.0);
+			}
+		)";
+
+		m_Shader.reset(Nebula::Shader::Create(vertexSrc, fragmentSrc));
+		m_SquareShader.reset(Nebula::Shader::Create(vertColSrc, fragColSrc));
 	}
 
 	void Render() {
@@ -101,15 +133,36 @@ public:
 		Nebula::RenderCommand::Clear();
 
 		Nebula::Renderer::BeginScene(m_Camera);
-		Nebula::Renderer::Submit(m_Shader, m_SquareVA);
+
+		std::dynamic_pointer_cast<Nebula::OpenGLShader>(m_SquareShader)->Bind();
+		std::dynamic_pointer_cast<Nebula::OpenGLShader>(m_SquareShader)->UploadUniformFloat3("col", m_SquareColour);
+
+		glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(0.1f));
+		glm::vec4 red(0.8f, 0.2f, 0.3f, 1.0f);
+		glm::vec4 blue(0.2f, 0.3f, 0.8f, 1.0f);
+		
+		for (int y = -10; y < 10; y++) {
+			for (int x = -10; x < 10; x++) {
+				glm::vec3 pos(x * 0.11f, y * 0.11f, 0.0f);
+				glm::mat4 transform = glm::translate(glm::mat4(1.0f), pos) * scale;
+				Nebula::Renderer::Submit(m_SquareShader, m_SquareVA, transform);
+			}
+		}
+
 		Nebula::Renderer::Submit(m_Shader, m_VertexArray);
 		Nebula::Renderer::EndScene();
+
+		//IMGUI
+		ImGui::Begin("Settings");
+		ImGui::ColorEdit3("Square Colour", glm::value_ptr(m_SquareColour));
+		ImGui::End();
 	}
 
 	void Update(Nebula::Timestep ts) {
 		glm::vec3 position = m_Camera.GetPosition();
 		float rotation = m_Camera.GetRotation();
 
+		// CAMERA
 		if (Nebula::Input::IsKeyPressed(NB_W))
 			position.y += moveSpeed * ts;
 
@@ -132,16 +185,20 @@ public:
 	}
 
 	bool OnKeyPressedEvent(Nebula::KeyPressedEvent& event) {
-		NB_TRACE("Key {0} was pressed!", (char)event.GetKeyCode());
+		//NB_TRACE("Key {0} was pressed!", (char)event.GetKeyCode());
 		return false;
 	}
 private:
 	std::shared_ptr<Nebula::Shader>		  m_Shader;
+	std::shared_ptr<Nebula::Shader>		  m_SquareShader;
 	std::shared_ptr<Nebula::VertexArray>  m_VertexArray;
 	std::shared_ptr<Nebula::VertexArray>  m_SquareVA;
 
+	glm::vec3 m_SquareColour = { 0.0f, 0.0f, 0.0f };
+
 	Nebula::OrthographicCamera m_Camera;
-	float moveSpeed = 3.0f;
+
+	float moveSpeed = 5.0f;
 	float rotSpeed = 180.0f;
 };
 

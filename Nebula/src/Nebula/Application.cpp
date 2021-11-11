@@ -7,12 +7,13 @@ namespace Nebula {
 	Application* Application::s_Instance = nullptr;
 
 	Application::Application() {
+		
 		NB_ASSERT(!s_Instance, "Application already exists!");
 		s_Instance = this;
 
 		m_Window = std::unique_ptr<Window>(Window::Create());
 		m_Window->SetEventCallback(BIND_EVENT(Application::OnEvent));
-		
+
 		m_ImGui = new ImGuiLayer();
 		PushOverlay(m_ImGui);
 	}
@@ -23,7 +24,7 @@ namespace Nebula {
 
 	void Application::run() {
 		while (m_Running) {
-			float time = glfwGetTime();
+			float time = (float)glfwGetTime();
 			Timestep timestep = time - m_LastFrameTime;
 			m_LastFrameTime = time;
 			
