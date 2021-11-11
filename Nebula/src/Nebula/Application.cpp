@@ -21,8 +21,6 @@ namespace Nebula {
 
 	void Application::run() {
 		while (m_Running) {
-			Render();
-
 			for (Layer* layer : m_LayerStack)
 				layer->Update();
 
@@ -52,8 +50,6 @@ namespace Nebula {
 	}
 
 	void Application::OnEvent(Event& e) {
-		RecieveEvent(e);
-
 		Dispatcher dispatcher(e);
 		dispatcher.Dispatch<WindowCloseEvent>(BIND_EVENT(Application::OnWindowClose));
 

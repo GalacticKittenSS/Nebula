@@ -1,17 +1,19 @@
 #include <Nebula.h>
 
-using namespace Nebula;
-
-class App : public Application {
+class ExampleLayer : public Nebula::Layer {
 public:
-	App(): cam(-2.0f, 2.0f, -2.0f, 2.0f) { Start(); }
+	ExampleLayer():
+		m_Camera(-1.6f, 1.6f, -0.9f, 0.9f), 
+		Layer("Example Layer") { 
+		Start(); 
+	}
 
-	~App() { }
+	~ExampleLayer() { }
 
 	void Start() {
-		BufferLayout layout = {
-			{ShaderDataType::Float3, "position"},
-			{ShaderDataType::Float4, "colour"}
+		Nebula::BufferLayout layout = {
+			{Nebula::ShaderDataType::Float3, "position"},
+			{Nebula::ShaderDataType::Float4, "colour"}
 		};
 
 		float triangleVertexes[6 * 7] = {
@@ -36,27 +38,27 @@ public:
 		uint32_t squareIndices[] = { 0, 1, 2, 3, 4, 5 };
 
 		//TRIANGLE ARRAY
-		m_VertexArray.reset(VertexArray::Create());
+		m_VertexArray.reset(Nebula::VertexArray::Create());
 
-		std::shared_ptr<VertexBuffer> triangleVB;
-		triangleVB.reset(VertexBuffer::Create(triangleVertexes, sizeof(triangleVertexes)));
+		std::shared_ptr<Nebula::VertexBuffer> triangleVB;
+		triangleVB.reset(Nebula::VertexBuffer::Create(triangleVertexes, sizeof(triangleVertexes)));
 		triangleVB->SetLayout(layout);
 		m_VertexArray->AddVertexBuffer(triangleVB);
 
-		std::shared_ptr<IndexBuffer> triangleIB;
-		triangleIB.reset(IndexBuffer::Create(squareIndices, sizeof(squareIndices) / sizeof(uint32_t)));
+		std::shared_ptr<Nebula::IndexBuffer> triangleIB;
+		triangleIB.reset(Nebula::IndexBuffer::Create(squareIndices, sizeof(squareIndices) / sizeof(uint32_t)));
 		m_VertexArray->SetIndexBuffer(triangleIB);
 
 		//SQUARE ARRAY
-		m_SquareVA.reset(VertexArray::Create());
+		m_SquareVA.reset(Nebula::VertexArray::Create());
 
-		std::shared_ptr<VertexBuffer> squareVB;
-		squareVB.reset(VertexBuffer::Create(squareVertexes, sizeof(squareVertexes)));
+		std::shared_ptr<Nebula::VertexBuffer> squareVB;
+		squareVB.reset(Nebula::VertexBuffer::Create(squareVertexes, sizeof(squareVertexes)));
 		squareVB->SetLayout(layout);
 		m_SquareVA->AddVertexBuffer(squareVB);
 
-		std::shared_ptr<IndexBuffer> squareIB;
-		squareIB.reset(IndexBuffer::Create(squareIndices, sizeof(squareIndices) / sizeof(uint32_t)));
+		std::shared_ptr<Nebula::IndexBuffer> squareIB;
+		squareIB.reset(Nebula::IndexBuffer::Create(squareIndices, sizeof(squareIndices) / sizeof(uint32_t)));
 		m_SquareVA->SetIndexBuffer(squareIB);
 
 		std::string vertexSrc = R"(
@@ -91,34 +93,59 @@ public:
 			}
 		)";
 
-		m_Shader.reset(new Shader(vertexSrc, fragmentSrc));
+		m_Shader.reset(new Nebula::Shader(vertexSrc, fragmentSrc));
 	}
 
 	void Render() {
-		RenderCommand::SetClearColour({0.1f, 0.1f, 0.1f, 1.0f});
-		RenderCommand::Clear();
+		Update();
 
-		Renderer::BeginScene();
-		m_Shader->Bind();
-		m_Shader->UploadUniformMat4("view", cam.GetViewProjectionMatrix());
-		Renderer::Submit(m_SquareVA);
-		Renderer::Submit(m_VertexArray);
-		Renderer::EndScene();
+		Nebula::RenderCommand::SetClearColour({ 0.1f, 0.1f, 0.1f, 1.0f });
+		Nebula::RenderCommand::Clear();
+
+		Nebula::Renderer::BeginScene(m_Camera);
+		Nebula::Renderer::Submit(m_Shader, m_SquareVA);
+		Nebula::Renderer::Submit(m_Shader, m_VertexArray);
+		Nebula::Renderer::EndScene();
 	}
 
-	void RecieveEvent(Event& e) {
-		if (e.GetEventType() == EventType::KeyPressed) {
-			KeyPressedEvent& event = (KeyPressedEvent&)e;
-			NB_TRACE("{0}", (char)event.GetKeyCode());
-		}
+	void Update() {
+		if (Nebula::Input::IsKeyPressed(NB_W))
+			m_Camera.SetPosition({ m_Camera.GetPosition().x, m_Camera.GetPosition().y + 0.005f, 0.0f });
+
+		if (Nebula::Input::IsKeyPressed(NB_S))
+			m_Camera.SetPosition({ m_Camera.GetPosition().x, m_Camera.GetPosition().y - 0.005f, 0.0f });
+
+		if (Nebula::Input::IsKeyPressed(NB_D))
+			m_Camera.SetPosition({ m_Camera.GetPosition().x + 0.005f, m_Camera.GetPosition().y, 0.0f });
+
+		if (Nebula::Input::IsKeyPressed(NB_A))
+			m_Camera.SetPosition({ m_Camera.GetPosition().x - 0.005f, m_Camera.GetPosition().y, 0.0f });
 	}
 
+	void OnEvent(Nebula::Event& e) {
+		Nebula::Dispatcher dispatcher(e);
+		dispatcher.Dispatch<Nebula::KeyPressedEvent>(BIND_EVENT(ExampleLayer::OnKeyPressedEvent));
+	}
+
+	bool OnKeyPressedEvent(Nebula::KeyPressedEvent& event) {
+		NB_TRACE("Key {0} was pressed!", (char)event.GetKeyCode());
+		return false;
+	}
 private:
-	std::shared_ptr<Shader>		  m_Shader;
-	std::shared_ptr<VertexArray>  m_VertexArray;
-	std::shared_ptr<VertexArray>  m_SquareVA;
+	std::shared_ptr<Nebula::Shader>		  m_Shader;
+	std::shared_ptr<Nebula::VertexArray>  m_VertexArray;
+	std::shared_ptr<Nebula::VertexArray>  m_SquareVA;
 
-	OrthographicCamera cam;
+	Nebula::OrthographicCamera m_Camera;
+};
+
+class App : public Nebula::Application {
+public:
+	App() {
+		PushLayer(new ExampleLayer());
+	}
+
+	~App() { }
 };
 
 Nebula::Application* Nebula::createApplication() {

@@ -8,10 +8,10 @@ namespace Nebula {
 		OrthographicCamera(float left, float right, float bottom, float top);
 
 		const glm::vec3& GetPosition() { return m_Position; }
-		void SetPosition(const glm::vec3& position) { m_Position = position; }
+		void SetPosition(const glm::vec3& position) { m_Position = position; RecalculateViewMatrix(); }
 
 		const float& GetRotation() { return m_Rotation; }
-		void SetRotation(const float& rotation) { m_Rotation = rotation; }
+		void SetRotation(const float& rotation) { m_Rotation = rotation; RecalculateViewMatrix(); }
 
 		const glm::mat4& GetProjectionMatrix() const { return m_ProjectionMatrix; }
 		const glm::mat4& GetViewMatrix() const { return m_ViewMatrix; }
@@ -23,7 +23,7 @@ namespace Nebula {
 		glm::mat4 m_ViewMatrix;
 		glm::mat4 m_ViewProjectionMatrix;
 
-		glm::vec3 m_Position;
+		glm::vec3 m_Position = { 0, 0, 0 };
 		float m_Rotation = 0.0f;
 	};
 }

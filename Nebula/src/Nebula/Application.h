@@ -17,13 +17,6 @@ namespace Nebula {
 		void run();
 		void OnEvent(Event& e);
 
-		virtual void Render() = 0;
-		//virtual void Start() = 0;
-		//virtual void Update() { }
-		//virtual void Tick()   { }
-
-		virtual void RecieveEvent(Event& e) { }
-
 		void PushLayer(Layer* layer);
 		void PopLayer(Layer* layer);
 		void PushOverlay(Layer* overlay);
