@@ -8,6 +8,8 @@
 #include "events/Event.h"
 #include "events/Window_Event.h"
 
+#include "core/Timestep.h"
+
 namespace Nebula {
 	class NB_API Application {
 	public:
@@ -31,6 +33,9 @@ namespace Nebula {
 		ImGuiLayer* m_ImGui;
 		bool m_Running = true;
 		LayerStack m_LayerStack;
+
+		Timestep m_Timestep;
+		float m_LastFrameTime;
 
 		static Application* s_Instance;
 	};

@@ -1,6 +1,8 @@
 #include "nbpch.h"
 #include "Application.h"
 
+#include <GLFW/glfw3.h>
+
 namespace Nebula {
 	Application* Application::s_Instance = nullptr;
 
@@ -10,7 +12,7 @@ namespace Nebula {
 
 		m_Window = std::unique_ptr<Window>(Window::Create());
 		m_Window->SetEventCallback(BIND_EVENT(Application::OnEvent));
-
+		
 		m_ImGui = new ImGuiLayer();
 		PushOverlay(m_ImGui);
 	}
@@ -21,8 +23,12 @@ namespace Nebula {
 
 	void Application::run() {
 		while (m_Running) {
+			float time = glfwGetTime();
+			Timestep timestep = time - m_LastFrameTime;
+			m_LastFrameTime = time;
+			
 			for (Layer* layer : m_LayerStack)
-				layer->Update();
+				layer->Update(timestep);
 
 			m_ImGui->Begin();
 			for (Layer* layer : m_LayerStack)

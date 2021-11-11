@@ -1,7 +1,8 @@
 #pragma once
 
-#include "Nebula/API.h"
-#include "Nebula/events/Event.h"
+#include "API.h"
+#include "events/Event.h"
+#include "core/Timestep.h"
 
 namespace Nebula {
 	class NB_API Layer {
@@ -14,7 +15,7 @@ namespace Nebula {
 
 		virtual void OnEvent(Event& e) { }
 
-		virtual void Update() { }
+		virtual void Update(Timestep ts) { }
 		virtual void Render() { }
 
 		inline const std::string& GetName() const { return m_DebugName; }

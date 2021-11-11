@@ -97,8 +97,6 @@ public:
 	}
 
 	void Render() {
-		Update();
-
 		Nebula::RenderCommand::SetClearColour({ 0.1f, 0.1f, 0.1f, 1.0f });
 		Nebula::RenderCommand::Clear();
 
@@ -108,18 +106,24 @@ public:
 		Nebula::Renderer::EndScene();
 	}
 
-	void Update() {
+	void Update(Nebula::Timestep ts) {
+		glm::vec3 position = m_Camera.GetPosition();
+		float rotation = m_Camera.GetRotation();
+
 		if (Nebula::Input::IsKeyPressed(NB_W))
-			m_Camera.SetPosition({ m_Camera.GetPosition().x, m_Camera.GetPosition().y + 0.005f, 0.0f });
+			position.y += moveSpeed * ts;
 
 		if (Nebula::Input::IsKeyPressed(NB_S))
-			m_Camera.SetPosition({ m_Camera.GetPosition().x, m_Camera.GetPosition().y - 0.005f, 0.0f });
+			position.y -= moveSpeed * ts;
 
 		if (Nebula::Input::IsKeyPressed(NB_D))
-			m_Camera.SetPosition({ m_Camera.GetPosition().x + 0.005f, m_Camera.GetPosition().y, 0.0f });
+			position.x += moveSpeed * ts;
 
 		if (Nebula::Input::IsKeyPressed(NB_A))
-			m_Camera.SetPosition({ m_Camera.GetPosition().x - 0.005f, m_Camera.GetPosition().y, 0.0f });
+			position.x -= moveSpeed * ts;
+
+		m_Camera.SetPosition(position);
+		m_Camera.SetRotation(rotation);
 	}
 
 	void OnEvent(Nebula::Event& e) {
@@ -137,6 +141,8 @@ private:
 	std::shared_ptr<Nebula::VertexArray>  m_SquareVA;
 
 	Nebula::OrthographicCamera m_Camera;
+	float moveSpeed = 3.0f;
+	float rotSpeed = 180.0f;
 };
 
 class App : public Nebula::Application {

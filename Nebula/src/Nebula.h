@@ -35,6 +35,8 @@
 #include "Nebula/renderer/Orthographic_Camera.h"
 //--------------------
 
+#include "Nebula/core/Timestep.h"
+
 //----Application-----
 #include "Nebula/Application.h"
 //--------------------
