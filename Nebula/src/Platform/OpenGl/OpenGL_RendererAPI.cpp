@@ -16,7 +16,7 @@ namespace Nebula {
 		glClearColor(colour.r, colour.g, colour.b, colour.a);
 	}
 
-	void OpenGL_RendererAPI::DrawIndexed(const std::shared_ptr<VertexArray>& vertexArray) {
+	void OpenGL_RendererAPI::DrawIndexed(const Ref<VertexArray>& vertexArray) {
 		glDrawElements(GL_TRIANGLES, vertexArray->GetIndexBuffer()->GetCount(), GL_UNSIGNED_INT, nullptr);
 	}
 }

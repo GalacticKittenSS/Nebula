@@ -40,7 +40,7 @@ namespace Nebula {
 		glBindVertexArray(0);
 	}
 
-	void OpenGL_VertexArray::AddVertexBuffer(const std::shared_ptr<VertexBuffer>& buffer) {
+	void OpenGL_VertexArray::AddVertexBuffer(const Ref<VertexBuffer>& buffer) {
 		//NB_ASSERT(buffer->GetLayout().GetElements().size(), "Vertex Buffer has no layout!");
 
 		glBindVertexArray(m_RendererID);
@@ -67,7 +67,7 @@ namespace Nebula {
 
 	}
 
-	void OpenGL_VertexArray::SetIndexBuffer(const std::shared_ptr<IndexBuffer>& buffer) {
+	void OpenGL_VertexArray::SetIndexBuffer(const Ref<IndexBuffer>& buffer) {
 		glBindVertexArray(m_RendererID);
 		buffer->Bind();
 

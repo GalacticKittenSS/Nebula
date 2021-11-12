@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #ifdef NB_WINDOWS
 	#ifdef NB_DLL
 		#ifdef NEBULA
@@ -25,3 +27,11 @@
 #endif //NB_ENABLE_ASSERTS
 
 #define BIT(x) (1 << x)
+
+namespace Nebula {
+	template<typename T>
+	using Scope = std::unique_ptr<T>;
+
+	template<typename T>
+	using Ref = std::shared_ptr<T>;
+}

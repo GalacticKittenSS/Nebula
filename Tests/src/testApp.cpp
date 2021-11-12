@@ -41,24 +41,24 @@ public:
 		//TRIANGLE ARRAY
 		m_VertexArray.reset(Nebula::VertexArray::Create());
 
-		std::shared_ptr<Nebula::VertexBuffer> triangleVB;
+		Nebula::Ref<Nebula::VertexBuffer> triangleVB;
 		triangleVB.reset(Nebula::VertexBuffer::Create(triangleVertexes, sizeof(triangleVertexes)));
 		triangleVB->SetLayout(layout);
 		m_VertexArray->AddVertexBuffer(triangleVB);
 
-		std::shared_ptr<Nebula::IndexBuffer> triangleIB;
+		Nebula::Ref<Nebula::IndexBuffer> triangleIB;
 		triangleIB.reset(Nebula::IndexBuffer::Create(squareIndices, sizeof(squareIndices) / sizeof(uint32_t)));
 		m_VertexArray->SetIndexBuffer(triangleIB);
 
 		//SQUARE ARRAY
 		m_SquareVA.reset(Nebula::VertexArray::Create());
 
-		std::shared_ptr<Nebula::VertexBuffer> squareVB;
+		Nebula::Ref<Nebula::VertexBuffer> squareVB;
 		squareVB.reset(Nebula::VertexBuffer::Create(squareVertexes, sizeof(squareVertexes)));
 		squareVB->SetLayout(layout);
 		m_SquareVA->AddVertexBuffer(squareVB);
 
-		std::shared_ptr<Nebula::IndexBuffer> squareIB;
+		Nebula::Ref<Nebula::IndexBuffer> squareIB;
 		squareIB.reset(Nebula::IndexBuffer::Create(squareIndices, sizeof(squareIndices) / sizeof(uint32_t)));
 		m_SquareVA->SetIndexBuffer(squareIB);
 
@@ -197,10 +197,10 @@ public:
 	}
 
 private:
-	std::shared_ptr<Nebula::Shader>		  m_Shader;
-	std::shared_ptr<Nebula::Shader>		  m_SquareShader;
-	std::shared_ptr<Nebula::VertexArray>  m_VertexArray;
-	std::shared_ptr<Nebula::VertexArray>  m_SquareVA;
+	Nebula::Ref<Nebula::Shader>		  m_Shader;
+	Nebula::Ref<Nebula::Shader>		  m_SquareShader;
+	Nebula::Ref<Nebula::VertexArray>  m_VertexArray;
+	Nebula::Ref<Nebula::VertexArray>  m_SquareVA;
 
 	glm::vec3 m_SquareColour = { 0.2f, 0.3f, 0.8f };
 

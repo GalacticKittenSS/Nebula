@@ -15,7 +15,7 @@ namespace Nebula {
 		virtual void SetClearColour(float r, float g, float b, float a) = 0;
 		virtual void SetClearColour(const glm::vec4& colour) = 0;
 
-		virtual void DrawIndexed(const std::shared_ptr<VertexArray>& vertexArray) = 0;
+		virtual void DrawIndexed(const Ref<VertexArray>& vertexArray) = 0;
 
 		inline static API GetAPI() { return s_API; }
 	private:
