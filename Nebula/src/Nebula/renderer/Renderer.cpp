@@ -15,8 +15,8 @@ namespace Nebula {
 
 	void Renderer::Submit(const std::shared_ptr<Shader>& shader, const std::shared_ptr<VertexArray>& vertexArray, const glm::mat4& transform) {
 		shader->Bind();
-		std::dynamic_pointer_cast<OpenGLShader>(shader)->UploadUniformMat4("view", m_Data->ViewProjectMatrix);
-		std::dynamic_pointer_cast<OpenGLShader>(shader)->UploadUniformMat4("transform", transform);
+		std::dynamic_pointer_cast<OpenGL_Shader>(shader)->UploadUniformMat4("view", m_Data->ViewProjectMatrix);
+		std::dynamic_pointer_cast<OpenGL_Shader>(shader)->UploadUniformMat4("transform", transform);
 
 		vertexArray->Bind();
 		RenderCommand::DrawIndexed(vertexArray);

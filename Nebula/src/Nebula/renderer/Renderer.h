@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Render_Command.h"
-#include "Orthographic_Camera.h"
+#include "Camera.h"
 #include "Shader.h"
 
 namespace Nebula {

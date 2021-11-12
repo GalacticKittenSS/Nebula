@@ -8,7 +8,7 @@ namespace Nebula {
 	VertexArray* VertexArray::Create() {
 		switch (Renderer::GetAPI()) {
 			case RendererAPI::API::None:		NB_ASSERT(false, "RendererAPI::None is currently not supported!"); return nullptr;
-			case RendererAPI::API::OpenGL:	return new OpenGLVertexArray();
+			case RendererAPI::API::OpenGL:	return new OpenGL_VertexArray();
 		}
 
 		NB_ASSERT(false, "Unknow Renderer API!");

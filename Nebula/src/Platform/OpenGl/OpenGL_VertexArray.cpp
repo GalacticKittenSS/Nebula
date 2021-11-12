@@ -24,23 +24,23 @@ namespace Nebula {
 	}
 
 
-	OpenGLVertexArray::OpenGLVertexArray() {
+	OpenGL_VertexArray::OpenGL_VertexArray() {
 		glCreateVertexArrays(1, &m_RendererID);
 	}
 
-	OpenGLVertexArray::~OpenGLVertexArray() {
+	OpenGL_VertexArray::~OpenGL_VertexArray() {
 		glDeleteVertexArrays(1, &m_RendererID);
 	}
 
-	void OpenGLVertexArray::Bind() const {
+	void OpenGL_VertexArray::Bind() const {
 		glBindVertexArray(m_RendererID);
 	}
 
-	void OpenGLVertexArray::Unbind() const {
+	void OpenGL_VertexArray::Unbind() const {
 		glBindVertexArray(0);
 	}
 
-	void OpenGLVertexArray::AddVertexBuffer(const std::shared_ptr<VertexBuffer>& buffer) {
+	void OpenGL_VertexArray::AddVertexBuffer(const std::shared_ptr<VertexBuffer>& buffer) {
 		//NB_ASSERT(buffer->GetLayout().GetElements().size(), "Vertex Buffer has no layout!");
 
 		glBindVertexArray(m_RendererID);
@@ -67,7 +67,7 @@ namespace Nebula {
 
 	}
 
-	void OpenGLVertexArray::SetIndexBuffer(const std::shared_ptr<IndexBuffer>& buffer) {
+	void OpenGL_VertexArray::SetIndexBuffer(const std::shared_ptr<IndexBuffer>& buffer) {
 		glBindVertexArray(m_RendererID);
 		buffer->Bind();
 

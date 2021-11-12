@@ -3,7 +3,7 @@
 #include "Nebula/renderer/Renderer_API.h"
 
 namespace Nebula {
-	class OpenGLRendererAPI: public RendererAPI {
+	class OpenGL_RendererAPI: public RendererAPI {
 	public:
 		void Clear() override;
 		void SetClearColour(float r, float g, float b, float a) override;

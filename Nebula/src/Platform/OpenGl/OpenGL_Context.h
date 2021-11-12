@@ -5,9 +5,9 @@
 struct GLFWwindow;
 
 namespace Nebula {
-	class OpenGLContext : public GraphicsContext {
+	class OpenGL_Context : public GraphicsContext {
 	public:
-		OpenGLContext(GLFWwindow* windowHandle);
+		OpenGL_Context(GLFWwindow* windowHandle);
 
 		void Init() override;
 		void SwapBuffers() override;

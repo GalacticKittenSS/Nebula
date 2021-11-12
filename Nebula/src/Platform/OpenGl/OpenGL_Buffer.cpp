@@ -10,21 +10,21 @@ namespace Nebula {
 	////////////////////////////////////////////////////////
 	//-----------------------------------------------------//
 	
-	OpenGLVertexBuffer::OpenGLVertexBuffer(float* vertices, uint32_t size) {
+	OpenGL_VertexBuffer::OpenGL_VertexBuffer(float* vertices, uint32_t size) {
 		glCreateBuffers(1, &m_RendererID);
 		glBindBuffer(GL_ARRAY_BUFFER, m_RendererID);
 		glBufferData(GL_ARRAY_BUFFER, size, vertices, GL_STATIC_DRAW);
 	}
 
-	OpenGLVertexBuffer::~OpenGLVertexBuffer() {
+	OpenGL_VertexBuffer::~OpenGL_VertexBuffer() {
 		glDeleteBuffers(1, &m_RendererID);
 	}
 
-	void OpenGLVertexBuffer::Bind()   const {
+	void OpenGL_VertexBuffer::Bind()   const {
 		glBindBuffer(GL_ARRAY_BUFFER, m_RendererID);
 	}
 
-	void OpenGLVertexBuffer::Unbind() const {
+	void OpenGL_VertexBuffer::Unbind() const {
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 	
@@ -34,21 +34,21 @@ namespace Nebula {
 	////////////////////////////////////////////////////////
 	//----------------------------------------------------//
 
-	OpenGLIndexBuffer::OpenGLIndexBuffer(uint32_t* indices, uint32_t count): m_Count(count) {
+	OpenGL_IndexBuffer::OpenGL_IndexBuffer(uint32_t* indices, uint32_t count): m_Count(count) {
 		glCreateBuffers(1, &m_RendererID);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_RendererID);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, count * sizeof(uint32_t), indices, GL_STATIC_DRAW);
 	}
 
-	OpenGLIndexBuffer::~OpenGLIndexBuffer() {
+	OpenGL_IndexBuffer::~OpenGL_IndexBuffer() {
 		glDeleteBuffers(1, &m_RendererID);
 	}
 
-	void OpenGLIndexBuffer::Bind()   const {
+	void OpenGL_IndexBuffer::Bind()   const {
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_RendererID);
 	}
 
-	void OpenGLIndexBuffer::Unbind() const {
+	void OpenGL_IndexBuffer::Unbind() const {
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 }

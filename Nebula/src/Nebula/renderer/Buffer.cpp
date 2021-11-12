@@ -8,7 +8,7 @@ namespace Nebula {
 	VertexBuffer* VertexBuffer::Create(float* vertices, uint32_t size) {
 		switch (Renderer::GetAPI()) {
 			case RendererAPI::API::None:		NB_ASSERT(false, "RendererAPI::None is not supported!"); return nullptr;
-			case RendererAPI::API::OpenGL:	return new OpenGLVertexBuffer(vertices, size);
+			case RendererAPI::API::OpenGL:	return new OpenGL_VertexBuffer(vertices, size);
 		}
 
 		NB_ASSERT(false, "Unknown Renderer API!"); 
@@ -18,7 +18,7 @@ namespace Nebula {
 	IndexBuffer* IndexBuffer::Create(uint32_t* indices, uint32_t count) {
 		switch (Renderer::GetAPI()) {
 		case RendererAPI::API::None:		NB_ASSERT(false, "RendererAPI::None is not supported!"); return nullptr;
-		case RendererAPI::API::OpenGL:	return new OpenGLIndexBuffer(indices, count);
+		case RendererAPI::API::OpenGL:	return new OpenGL_IndexBuffer(indices, count);
 		}
 
 		NB_ASSERT(false, "Unknown Renderer API!");

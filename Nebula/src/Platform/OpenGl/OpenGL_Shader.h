@@ -5,10 +5,10 @@
 #include <glm/glm.hpp>
 
 namespace Nebula {
-	class OpenGLShader: public Shader {
+	class OpenGL_Shader: public Shader {
 	public:
-		OpenGLShader(const std::string& vertSrc, const std::string& fragSrc);
-		~OpenGLShader();
+		OpenGL_Shader(const std::string& vertSrc, const std::string& fragSrc);
+		~OpenGL_Shader();
 
 		void Bind() const override;
 		void Unbind() const override;

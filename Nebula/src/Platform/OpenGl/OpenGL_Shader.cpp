@@ -5,7 +5,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 namespace Nebula {
-	OpenGLShader::OpenGLShader(const std::string& vertSrc, const std::string& fragSrc) {
+	OpenGL_Shader::OpenGL_Shader(const std::string& vertSrc, const std::string& fragSrc) {
 		//Reused Vars
 		int isCompiled = 0; //Does the Frag/Vertex Shader Compile? 
 		int isLinked = 0; //Does the Program Link?
@@ -89,49 +89,49 @@ namespace Nebula {
 		glDetachShader(m_RendererID, fragmentShader);
 	}
 
-	OpenGLShader::~OpenGLShader() {
+	OpenGL_Shader::~OpenGL_Shader() {
 		glDeleteProgram(m_RendererID);
 	}
 
-	void OpenGLShader::Bind() const {
+	void OpenGL_Shader::Bind() const {
 		glUseProgram(m_RendererID);
 	}
 
-	void OpenGLShader::Unbind() const {
+	void OpenGL_Shader::Unbind() const {
 		glUseProgram(0);
 	}
 
-	void OpenGLShader::UploadUniformInt(const std::string& name, const int value) {
+	void OpenGL_Shader::UploadUniformInt(const std::string& name, const int value) {
 		GLint location = glGetUniformLocation(m_RendererID, name.c_str());
 		glUniform1i(location, value);
 	}
 
-	void OpenGLShader::UploadUniformFloat(const std::string& name, const float value) {
+	void OpenGL_Shader::UploadUniformFloat(const std::string& name, const float value) {
 		GLint location = glGetUniformLocation(m_RendererID, name.c_str());
 		glUniform1f(location, value);
 	}
 
-	void OpenGLShader::UploadUniformFloat2(const std::string& name, const glm::vec2& values) {
+	void OpenGL_Shader::UploadUniformFloat2(const std::string& name, const glm::vec2& values) {
 		GLint location = glGetUniformLocation(m_RendererID, name.c_str());
 		glUniform2f(location, values.x, values.y);
 	}
 
-	void OpenGLShader::UploadUniformFloat3(const std::string& name, const glm::vec3& values) {
+	void OpenGL_Shader::UploadUniformFloat3(const std::string& name, const glm::vec3& values) {
 		GLint location = glGetUniformLocation(m_RendererID, name.c_str());
 		glUniform3f(location, values.x, values.y, values.z);
 	}
 
-	void OpenGLShader::UploadUniformFloat4(const std::string& name, const glm::vec4& values) {
+	void OpenGL_Shader::UploadUniformFloat4(const std::string& name, const glm::vec4& values) {
 		GLint location = glGetUniformLocation(m_RendererID, name.c_str());
 		glUniform4f(location, values.x, values.y, values.z, values.w);
 	}
 	
-	void OpenGLShader::UploadUniformMat3(const std::string& name, const glm::mat3& matrix) {
+	void OpenGL_Shader::UploadUniformMat3(const std::string& name, const glm::mat3& matrix) {
 		GLint location = glGetUniformLocation(m_RendererID, name.c_str());
 		glUniformMatrix3fv(location, 1, GL_FALSE, glm::value_ptr(matrix));
 	}
 
-	void OpenGLShader::UploadUniformMat4(const std::string& name, const glm::mat4& matrix) {
+	void OpenGL_Shader::UploadUniformMat4(const std::string& name, const glm::mat4& matrix) {
 		GLint location = glGetUniformLocation(m_RendererID, name.c_str());
 		glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(matrix));
 	}

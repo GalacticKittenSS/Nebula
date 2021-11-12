@@ -3,10 +3,10 @@
 #include "Nebula/renderer/Vertex_Array.h"
 
 namespace Nebula {
-	class OpenGLVertexArray: public VertexArray {
+	class OpenGL_VertexArray : public VertexArray {
 	public:
-		OpenGLVertexArray();
-		~OpenGLVertexArray();
+		OpenGL_VertexArray();
+		~OpenGL_VertexArray();
 
 		void Bind() const override;
 		void Unbind() const override;

@@ -32,7 +32,7 @@
 //--------------------
 
 //-----CAMERA----------
-#include "Nebula/renderer/Orthographic_Camera.h"
+#include "Nebula/renderer/Camera.h"
 //--------------------
 
 #include "Nebula/core/Timestep.h"

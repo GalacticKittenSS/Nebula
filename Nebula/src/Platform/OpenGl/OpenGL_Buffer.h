@@ -9,10 +9,10 @@ namespace Nebula {
 	////////////////////////////////////////////////////////
 	//-----------------------------------------------------//
 
-	class OpenGLVertexBuffer : public VertexBuffer {
+	class OpenGL_VertexBuffer : public VertexBuffer {
 	public:
-		OpenGLVertexBuffer(float* vertices, uint32_t size);
-		~OpenGLVertexBuffer();
+		OpenGL_VertexBuffer(float* vertices, uint32_t size);
+		~OpenGL_VertexBuffer();
 
 		void Bind()   const override;
 		void Unbind() const override;
@@ -31,10 +31,10 @@ namespace Nebula {
 	////////////////////////////////////////////////////////
 	//----------------------------------------------------//
 
-	class OpenGLIndexBuffer : public IndexBuffer {
+	class OpenGL_IndexBuffer : public IndexBuffer {
 	public:
-		OpenGLIndexBuffer(uint32_t* indices, uint32_t count);
-		~OpenGLIndexBuffer();
+		OpenGL_IndexBuffer(uint32_t* indices, uint32_t count);
+		~OpenGL_IndexBuffer();
 
 		void Bind()   const override;
 		void Unbind() const override;

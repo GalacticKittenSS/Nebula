@@ -134,8 +134,8 @@ public:
 
 		Nebula::Renderer::BeginScene(m_Camera);
 
-		std::dynamic_pointer_cast<Nebula::OpenGLShader>(m_SquareShader)->Bind();
-		std::dynamic_pointer_cast<Nebula::OpenGLShader>(m_SquareShader)->UploadUniformFloat3("col", m_SquareColour);
+		std::dynamic_pointer_cast<Nebula::OpenGL_Shader>(m_SquareShader)->Bind();
+		std::dynamic_pointer_cast<Nebula::OpenGL_Shader>(m_SquareShader)->UploadUniformFloat3("col", m_SquareColour);
 
 		glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(0.1f));
 		glm::vec4 red(0.8f, 0.2f, 0.3f, 1.0f);
@@ -167,7 +167,8 @@ public:
 			position.y += moveSpeed * ts;
 
 		if (Nebula::Input::IsKeyPressed(NB_S))
-			position.y -= moveSpeed * ts;
+			position.y
+			-= moveSpeed * ts;
 
 		if (Nebula::Input::IsKeyPressed(NB_D))
 			position.x += moveSpeed * ts;
@@ -181,20 +182,27 @@ public:
 
 	void OnEvent(Nebula::Event& e) {
 		Nebula::Dispatcher dispatcher(e);
-		dispatcher.Dispatch<Nebula::KeyPressedEvent>(BIND_EVENT(ExampleLayer::OnKeyPressedEvent));
+		dispatcher.Dispatch<Nebula::KeyPressedEvent>(BIND_EVENT(ExampleLayer::OnKeyPressed));
+		dispatcher.Dispatch<Nebula::WindowResizeEvent>(BIND_EVENT(ExampleLayer::OnWindowResize));
 	}
 
-	bool OnKeyPressedEvent(Nebula::KeyPressedEvent& event) {
+	bool OnKeyPressed(Nebula::KeyPressedEvent& event) {
 		//NB_TRACE("Key {0} was pressed!", (char)event.GetKeyCode());
 		return false;
 	}
+
+	bool OnWindowResize(Nebula::WindowResizeEvent& event) {
+		NB_TRACE(event);
+		return false;
+	}
+
 private:
 	std::shared_ptr<Nebula::Shader>		  m_Shader;
 	std::shared_ptr<Nebula::Shader>		  m_SquareShader;
 	std::shared_ptr<Nebula::VertexArray>  m_VertexArray;
 	std::shared_ptr<Nebula::VertexArray>  m_SquareVA;
 
-	glm::vec3 m_SquareColour = { 0.0f, 0.0f, 0.0f };
+	glm::vec3 m_SquareColour = { 0.2f, 0.3f, 0.8f };
 
 	Nebula::OrthographicCamera m_Camera;
 
