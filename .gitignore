@@ -17,4 +17,4 @@ imgui.ini
 premake5(dll).lua
 
 //Texture Files
-assets/textures/
+[Tt]extures/
