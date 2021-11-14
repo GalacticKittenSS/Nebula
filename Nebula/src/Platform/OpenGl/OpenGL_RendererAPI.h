@@ -5,6 +5,8 @@
 namespace Nebula {
 	class OpenGL_RendererAPI: public RendererAPI {
 	public:
+		void Init() override;
+
 		void Clear() override;
 		void SetClearColour(float r, float g, float b, float a) override;
 		void SetClearColour(const glm::vec4& colour) override;

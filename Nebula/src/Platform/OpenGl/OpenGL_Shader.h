@@ -4,9 +4,12 @@
 
 #include <glm/glm.hpp>
 
+typedef unsigned int GLenum;
+
 namespace Nebula {
 	class OpenGL_Shader: public Shader {
 	public:
+		OpenGL_Shader(const std::string& path);
 		OpenGL_Shader(const std::string& vertSrc, const std::string& fragSrc);
 		~OpenGL_Shader();
 
@@ -22,6 +25,10 @@ namespace Nebula {
 		void UploadUniformFloat2(const std::string& name, const glm::vec2& values);
 		void UploadUniformFloat3(const std::string& name, const glm::vec3& values);
 		void UploadUniformFloat4(const std::string& name, const glm::vec4& values);
+	private:
+		std::string ReadFile(const std::string& path);
+		std::unordered_map<GLenum, std::string> PreProcess(const std::string& shaderSrc);
+		bool Compile(std::unordered_map<GLenum, std::string> sources);
 	private:
 		uint32_t m_RendererID;
 	};

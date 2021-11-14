@@ -4,6 +4,11 @@
 #include <glad/glad.h>
 
 namespace Nebula {
+	void OpenGL_RendererAPI::Init() {
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	}
+
 	void OpenGL_RendererAPI::Clear() {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	}

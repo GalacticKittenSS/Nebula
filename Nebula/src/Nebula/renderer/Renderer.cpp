@@ -6,6 +6,10 @@
 namespace Nebula {
 	Renderer::SceneData* Renderer::m_Data = new Renderer::SceneData();
 
+	void Renderer::Init() {
+		RenderCommand::Init();
+	}
+
 	void Renderer::BeginScene(OrthographicCamera& camera) {
 		m_Data->ViewProjectMatrix = camera.GetViewProjectionMatrix();
 	}

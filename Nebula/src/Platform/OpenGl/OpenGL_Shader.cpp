@@ -1,69 +1,132 @@
 #include "nbpch.h"
 #include "OpenGL_Shader.h"
 
+#include <fstream>
+
 #include <glad/glad.h>
 #include <glm/gtc/type_ptr.hpp>
 
 namespace Nebula {
+	static GLenum ShaderTypeFromString(const std::string& type) {
+		if (type == "vertex")
+			return GL_VERTEX_SHADER;
+		if (type == "fragment")
+			return GL_FRAGMENT_SHADER;
+
+		NB_ASSERT(false, "Unknown Shader Type!");
+		return 0;
+	}
+
+	OpenGL_Shader::OpenGL_Shader(const std::string& path) {
+		std::string source = ReadFile(path);
+		auto shaderSources = PreProcess(source);
+		
+		bool compiled = Compile(shaderSources);
+
+		if (!compiled) {
+			NB_WARN("Could Not Compile Shaders");
+		}
+	}
+
 	OpenGL_Shader::OpenGL_Shader(const std::string& vertSrc, const std::string& fragSrc) {
-		//Reused Vars
+		std::unordered_map<GLenum, std::string> sources;
+		sources[GL_VERTEX_SHADER] = vertSrc;
+		sources[GL_FRAGMENT_SHADER] = fragSrc;
+
+		bool compiled = Compile(sources);
+		
+		if (!compiled) {
+			NB_WARN("Could Not Compile Shaders");
+		}
+	}
+
+	OpenGL_Shader::~OpenGL_Shader() {
+		glDeleteProgram(m_RendererID);
+	}
+
+	std::string OpenGL_Shader::ReadFile(const std::string& path) {
+		std::string result;
+		std::ifstream in(path, std::ios::in, std::ios::binary);
+		if (in) {
+			in.seekg(0, std::ios::end);
+			result.resize(in.tellg());
+			in.seekg(0, std::ios::beg);
+			in.read(&result[0], result.size());
+			in.close();
+		}
+		else {
+			NB_ERROR("Could not load file {0}", path);
+		}
+
+		return result;
+	}
+
+	std::unordered_map<GLenum, std::string> OpenGL_Shader::PreProcess(const std::string& source) {
+		std::unordered_map<GLenum, std::string> ShaderSources;
+
+		const char* typeToken = "#type";
+		size_t typeTokenLength = strlen(typeToken);
+		size_t pos = source.find(typeToken, 0);
+		while (pos != std::string::npos) {
+			size_t eol = source.find_first_of("\r\n", pos);
+			NB_ASSERT(eol != std::string::npos, "[Shader] Syntax Error");
+			size_t begin = pos + typeTokenLength + 1;
+			std::string type = source.substr(begin, eol - begin);
+			NB_ASSERT(ShaderTypeFromString(type), "[Shader] Invalid Shader Type Specified");
+
+			size_t nextLinePos = source.find_first_not_of("\r\n", eol);
+			pos = source.find(typeToken, nextLinePos);
+			ShaderSources[ShaderTypeFromString(type)] = source.substr(nextLinePos, pos - (nextLinePos == std::string::npos ? source.size() - 1 : nextLinePos));
+		}
+
+		return ShaderSources;
+	}
+
+	bool OpenGL_Shader::Compile(std::unordered_map<GLenum, std::string> sources) {
 		int isCompiled = 0; //Does the Frag/Vertex Shader Compile? 
-		int isLinked = 0; //Does the Program Link?
+		int isLinked = 0;	//Does the Program Link?
 
-		//Get Char from std::string
-		const char* vert = vertSrc.c_str();
-		const char* frag = fragSrc.c_str();
+		GLuint program = glCreateProgram();
 
-		//Gen and Bind Vertex Shader
-		GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-		glShaderSource(vertexShader, 1, &vert, 0);
+		std::vector<GLenum> glShaderIDs(sources.size());
 
-		//Compile shader and get Status
-		glCompileShader(vertexShader);
-		glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &isCompiled);
+		for (auto& kv : sources) {
+			GLenum type = kv.first;
+			const std::string& source = kv.second;
 
-		if (isCompiled == GL_FALSE) {
-			GLint maxLength = 0;
-			glGetShaderiv(vertexShader, GL_INFO_LOG_LENGTH, &maxLength);
+			GLuint shader = glCreateShader(type);
 
-			std::vector<GLchar> infoLog(maxLength);
-			glGetShaderInfoLog(vertexShader, maxLength, &maxLength, &infoLog[0]);
+			//Get Char from std::string
+			const char* sourceC = source.c_str();
+			
+			//Gen and Bind Shader
+			glShaderSource(shader, 1, &sourceC, 0);
 
-			glDeleteShader(vertexShader);
+			//Compile shader and get Status
+			glCompileShader(shader);
 
-			NB_ERROR("{0}", infoLog.data());
-			NB_ASSERT(false, "Vertex Shader Compilation Failure!");
-			return;
+			glGetShaderiv(shader, GL_COMPILE_STATUS, &isCompiled); 
+			
+			if (isCompiled == GL_FALSE) {
+				GLint maxLength = 0;
+				glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &maxLength);
+
+				std::vector<GLchar> infoLog(maxLength);
+				glGetShaderInfoLog(shader, maxLength, &maxLength, &infoLog[0]);
+
+				glDeleteShader(shader);
+
+				NB_ERROR("{0}", infoLog.data());
+				NB_ASSERT(false, "Shader Compilation Failure!");
+				return false;
+			}
+
+			//Attach Shader to Program
+			glAttachShader(program, shader);
+			glShaderIDs.push_back(shader);
 		}
 
-		//Gen and Bind Fragment Shader
-		GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-		glShaderSource(fragmentShader, 1, &frag, 0);
-
-		//Compile shader and get Status
-		glCompileShader(fragmentShader);
-		glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &isCompiled);
-
-		if (isCompiled == GL_FALSE) {
-			GLint maxLength = 0;
-			glGetShaderiv(fragmentShader, GL_INFO_LOG_LENGTH, &maxLength);
-
-			std::vector<GLchar> infoLog(maxLength);
-			glGetShaderInfoLog(fragmentShader, maxLength, &maxLength, &infoLog[0]);
-
-			glDeleteShader(fragmentShader);
-			glDeleteShader(vertexShader);
-
-			NB_ERROR("{0}", infoLog.data());
-			NB_ASSERT(false, "Fragment Shader Compilation Failure!");
-			return;
-		}
-
-		m_RendererID = glCreateProgram();
-
-		//Attach Shaders to Program
-		glAttachShader(m_RendererID, vertexShader);
-		glAttachShader(m_RendererID, fragmentShader);
+		m_RendererID = program;
 
 		//Link Program and get status
 		glLinkProgram(m_RendererID);
@@ -77,20 +140,21 @@ namespace Nebula {
 			glGetProgramInfoLog(m_RendererID, maxLength, &maxLength, &infoLog[0]);
 
 			glDeleteProgram(m_RendererID);
-			glDeleteShader(fragmentShader);
-			glDeleteShader(vertexShader);
+
+			for (auto shader : glShaderIDs) {
+				glDeleteShader(shader);
+			}
 
 			NB_ERROR("{0}", infoLog.data());
 			NB_ASSERT(false, "Program Shader Link Failure!");
-			return;
+			return false;
 		}
 
-		glDetachShader(m_RendererID, vertexShader);
-		glDetachShader(m_RendererID, fragmentShader);
-	}
+		for (auto shader : glShaderIDs) {
+			glDetachShader(m_RendererID, shader);
+		}
 
-	OpenGL_Shader::~OpenGL_Shader() {
-		glDeleteProgram(m_RendererID);
+		return true;
 	}
 
 	void OpenGL_Shader::Bind() const {

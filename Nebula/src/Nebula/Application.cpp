@@ -1,6 +1,8 @@
 #include "nbpch.h"
 #include "Application.h"
 
+#include "renderer/Renderer.h"
+
 #include <GLFW/glfw3.h>
 
 namespace Nebula {
@@ -13,6 +15,8 @@ namespace Nebula {
 
 		m_Window = std::unique_ptr<Window>(Window::Create());
 		m_Window->SetEventCallback(BIND_EVENT(Application::OnEvent));
+
+		Renderer::Init();
 
 		m_ImGui = new ImGuiLayer();
 		PushOverlay(m_ImGui);

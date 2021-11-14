@@ -5,6 +5,16 @@
 #include "Platform/OpenGl/OpenGL_Shader.h"
 
 namespace Nebula {
+	Shader* Shader::Create(const std::string& path) {
+		switch (Renderer::GetAPI()) {
+		case RendererAPI::API::None:	NB_ASSERT(false, "RendererAPI::None is currently not supported!");
+		case RendererAPI::API::OpenGL:	return new OpenGL_Shader(path);
+		}
+
+		NB_ASSERT(false, "Unknown RendererAPI!");
+		return nullptr;
+	}
+
 	Shader* Shader::Create(const std::string& vertSrc, const std::string& fragSrc) {
 		switch (Renderer::GetAPI()) {
 			case RendererAPI::API::None:	NB_ASSERT(false, "RendererAPI::None is currently not supported!");

@@ -11,6 +11,8 @@ namespace Nebula {
 			None = 0, OpenGL = 1
 		};
 	public:
+		virtual void Init() = 0;
+
 		virtual void Clear() = 0;
 		virtual void SetClearColour(float r, float g, float b, float a) = 0;
 		virtual void SetClearColour(const glm::vec4& colour) = 0;

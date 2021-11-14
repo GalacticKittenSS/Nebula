@@ -17,6 +17,7 @@ includedir["GLFW"] = "Nebula/Modules/glfw/include"
 includedir["GLad"] = "Nebula/Modules/glad/include"
 includedir["ImGui"] = "Nebula/Modules/imgui/include"
 includedir["glm"] = "Nebula/Modules/glm/glm"
+includedir["stb"] = "Nebula/Modules/stb_image"
 
 --Dependencies
 group "Dependencies"
@@ -46,7 +47,9 @@ project "Nebula"
 	files {
 		"%{prj.name}/src/**.h",
 		"%{prj.name}/src/**.cpp",
-		"%{prj.name}/include/**.h"
+		"%{prj.name}/include/**.h",
+		"%{prj.name}/Modules/stb_image/*.h",
+		"%{prj.name}/Modules/stb_image/*.cpp"
 	}
 
 	includedirs {
@@ -55,7 +58,8 @@ project "Nebula"
 		"%{includedir.GLFW}",
 		"%{includedir.GLad}",
 		"%{includedir.ImGui}",
-		"%{includedir.glm}"
+		"%{includedir.glm}",
+		"%{includedir.stb}"
 	}
 
 	links { 

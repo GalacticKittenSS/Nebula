@@ -17,6 +17,7 @@
 #include "Nebula/renderer/Vertex_Array.h"
 //--------------------
 
+#include "Nebula/renderer/Texture.h"
 
 //----RENDERER--------
 #include "Nebula/renderer/Renderer.h"
