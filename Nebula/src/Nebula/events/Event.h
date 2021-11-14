@@ -56,16 +56,14 @@ namespace Nebula {
 	};
 
 	class NB_API Dispatcher {
-		template<typename T>
-		using EventFn = std::function<bool(T&)>;
 	public:
 		Dispatcher(Event& event): m_Event(event) { }
 
-		template<typename T>
-		bool Dispatch(EventFn<T> func) {
+		template<typename T, typename F>
+		bool Dispatch(const F& func) {
 			if (m_Event.GetEventType() == T::GetStaticType()) {
 				//TODO Call Event Listener from event Manager
-				m_Event.Handled = func(*(T*)&m_Event);
+				m_Event.Handled = func(static_cast<T&>(m_Event));
 				return true;
 			}
 			return false;

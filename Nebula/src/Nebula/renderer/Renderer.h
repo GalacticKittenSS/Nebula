@@ -24,6 +24,6 @@ namespace Nebula {
 			glm::mat4 ViewProjectMatrix;
 		};
 
-		static SceneData* m_Data;
+		static SceneData* s_Data;
 	};
 }

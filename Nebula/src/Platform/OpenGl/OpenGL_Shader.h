@@ -10,11 +10,13 @@ namespace Nebula {
 	class OpenGL_Shader: public Shader {
 	public:
 		OpenGL_Shader(const std::string& path);
-		OpenGL_Shader(const std::string& vertSrc, const std::string& fragSrc);
+		OpenGL_Shader(const std::string& name, const std::string& vertSrc, const std::string& fragSrc);
 		~OpenGL_Shader();
 
 		void Bind() const override;
 		void Unbind() const override;
+
+		const std::string& GetName() const override { return m_Name; }
 
 		void UploadUniformInt(const std::string& name, const int value);
 		
@@ -31,5 +33,6 @@ namespace Nebula {
 		bool Compile(std::unordered_map<GLenum, std::string> sources);
 	private:
 		uint32_t m_RendererID;
+		std::string m_Name;
 	};
 }

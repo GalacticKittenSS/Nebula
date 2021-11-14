@@ -14,7 +14,3 @@
 Event_Listener.h
 Event_Manager.h
 imgui.ini
-premake5(dll).lua
-
-//Texture Files
-[Tt]extures/

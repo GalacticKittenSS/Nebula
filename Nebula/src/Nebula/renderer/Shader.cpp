@@ -5,23 +5,51 @@
 #include "Platform/OpenGl/OpenGL_Shader.h"
 
 namespace Nebula {
-	Shader* Shader::Create(const std::string& path) {
+	Ref<Shader> Shader::Create(const std::string& path) {
 		switch (Renderer::GetAPI()) {
 		case RendererAPI::API::None:	NB_ASSERT(false, "RendererAPI::None is currently not supported!");
-		case RendererAPI::API::OpenGL:	return new OpenGL_Shader(path);
+		case RendererAPI::API::OpenGL:	return std::make_shared<OpenGL_Shader>(path);
 		}
 
 		NB_ASSERT(false, "Unknown RendererAPI!");
 		return nullptr;
 	}
 
-	Shader* Shader::Create(const std::string& vertSrc, const std::string& fragSrc) {
+	Ref<Shader> Shader::Create(const std::string& name, const std::string& vertSrc, const std::string& fragSrc) {
 		switch (Renderer::GetAPI()) {
 			case RendererAPI::API::None:	NB_ASSERT(false, "RendererAPI::None is currently not supported!");
-			case RendererAPI::API::OpenGL:	return new OpenGL_Shader(vertSrc, fragSrc);
+			case RendererAPI::API::OpenGL:	return std::make_shared<OpenGL_Shader>(name, vertSrc, fragSrc);
 		}
 
 		NB_ASSERT(false, "Unknown RendererAPI!");
 		return nullptr;
 	}
+
+	void ShaderLibrary::Add(const std::string& name, const Ref<Shader>& shader) {
+		NB_ASSERT(m_Shaders.find(name) == m_Shaders.end(), "Shader already exists!");
+		m_Shaders[name] = shader;
+	}
+
+	void ShaderLibrary::Add(const Ref<Shader>& shader) {
+		auto& name = shader->GetName();
+		Add(name, shader);
+	}
+
+	Ref<Shader> ShaderLibrary::Load(const std::string& filepath) {
+		auto shader = Shader::Create(filepath);
+		Add(shader);
+		return shader;
+	}
+
+	Ref<Shader> ShaderLibrary::Load(const std::string& filepath, const std::string& name) {
+		auto shader = Shader::Create(filepath);
+		Add(name, shader);
+		return shader;
+	}
+
+	Ref<Shader> ShaderLibrary::Get(const std::string& name) {
+		NB_ASSERT(m_Shaders.find(name) != m_Shaders.end(), "Shader not found!");
+		return m_Shaders[name];
+	}
+
 }

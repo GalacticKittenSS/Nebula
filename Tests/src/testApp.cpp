@@ -78,13 +78,13 @@ public:
 
 		//SHADERS
 		//Shader::Create() Returns Shader based on platform
-		m_TextureShader.reset(Nebula::Shader::Create("assets/shaders/Texture.glsl"));
-		m_ColourShader.reset(Nebula::Shader::Create("assets/shaders/Colour.glsl"));
+		m_ShaderLib.Load("assets/shaders/Texture.glsl");
+		m_ShaderLib.Load("assets/shaders/Colour.glsl");
 		
 		//Texture
-		m_Texture = Nebula::Texture2D::Create("assets/textures/rgba.png");
-		std::dynamic_pointer_cast<Nebula::OpenGL_Shader>(m_TextureShader)->Bind();
-		std::dynamic_pointer_cast<Nebula::OpenGL_Shader>(m_TextureShader)->UploadUniformInt("u_Texture", 0);
+		m_Texture = Nebula::Texture2D::Create("assets/textures/cat.png");
+		std::dynamic_pointer_cast<Nebula::OpenGL_Shader>(m_ShaderLib.Get("Texture"))->Bind();
+		std::dynamic_pointer_cast<Nebula::OpenGL_Shader>(m_ShaderLib.Get("Texture"))->UploadUniformInt("u_Texture", 0);
 	}
 
 	//Called Once Per Frame For Rendering
@@ -108,17 +108,17 @@ public:
 				//Position as Mat4 * Scale
 				glm::mat4 transform = glm::translate(glm::mat4(1.0f), pos) * scale;
 				//Render Cube Immediately
-				Nebula::Renderer::Submit(m_TextureShader, m_SquareVA, transform);
+				Nebula::Renderer::Submit(m_ShaderLib.Get("Texture"), m_SquareVA, transform);
 			}
 		}
 
 		//Render Triangle
-		//Nebula::Renderer::Submit(m_ColourShader, m_TriangleVA);
+		Nebula::Renderer::Submit(m_ShaderLib.Get("Colour"), m_TriangleVA);
 
 		//Textured Square
 		m_Texture->Bind();
 		glm::mat4 transform = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(1.0f));
-		Nebula::Renderer::Submit(m_TextureShader, m_SquareVA, transform);
+		Nebula::Renderer::Submit(m_ShaderLib.Get("Texture"), m_SquareVA, transform);
 
 		Nebula::Renderer::EndScene();
 
@@ -173,8 +173,7 @@ public:
 	}
 
 private:
-	Nebula::Ref<Nebula::Shader>		  m_ColourShader;
-	Nebula::Ref<Nebula::Shader>		  m_TextureShader;
+	Nebula::ShaderLibrary m_ShaderLib;
 	Nebula::Ref<Nebula::VertexArray>  m_TriangleVA;
 	Nebula::Ref<Nebula::VertexArray>  m_SquareVA;
 	Nebula::Ref<Nebula::Texture2D>	  m_Texture;

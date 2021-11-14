@@ -8,6 +8,10 @@ workspace "Nebula"
 		"Dist"
 	}
 
+	flags {
+		"MultiProcessorCompile"
+	}
+
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 --Include Directories (Relative to Solution Directory)

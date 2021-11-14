@@ -26,9 +26,16 @@ namespace Nebula {
 		if (!compiled) {
 			NB_WARN("Could Not Compile Shaders");
 		}
+
+		//Extract Name from File Path
+		auto lastSlash = path.find_last_of("/\\");
+		lastSlash = lastSlash == std::string::npos ? 0 : lastSlash + 1;
+		auto lastDot = path.rfind(".");
+		auto count = lastDot == std::string::npos ? path.size() - lastSlash: lastDot - lastSlash;
+		m_Name = path.substr(lastSlash, count);
 	}
 
-	OpenGL_Shader::OpenGL_Shader(const std::string& vertSrc, const std::string& fragSrc) {
+	OpenGL_Shader::OpenGL_Shader(const std::string& name, const std::string& vertSrc, const std::string& fragSrc): m_Name(name) {
 		std::unordered_map<GLenum, std::string> sources;
 		sources[GL_VERTEX_SHADER] = vertSrc;
 		sources[GL_FRAGMENT_SHADER] = fragSrc;
@@ -46,7 +53,7 @@ namespace Nebula {
 
 	std::string OpenGL_Shader::ReadFile(const std::string& path) {
 		std::string result;
-		std::ifstream in(path, std::ios::in, std::ios::binary);
+		std::ifstream in(path, std::ios::in | std::ios::binary);
 		if (in) {
 			in.seekg(0, std::ios::end);
 			result.resize(in.tellg());
@@ -88,7 +95,9 @@ namespace Nebula {
 
 		GLuint program = glCreateProgram();
 
-		std::vector<GLenum> glShaderIDs(sources.size());
+		NB_ASSERT(sources.size() <= 2, "More than 2 Shaders Given! Only 2 are Supported");
+		std::array<GLenum, 2> glShaderIDs;
+		int glShaderIndex = 0;
 
 		for (auto& kv : sources) {
 			GLenum type = kv.first;
@@ -123,7 +132,7 @@ namespace Nebula {
 
 			//Attach Shader to Program
 			glAttachShader(program, shader);
-			glShaderIDs.push_back(shader);
+			glShaderIDs[glShaderIndex++] = shader;
 		}
 
 		m_RendererID = program;
