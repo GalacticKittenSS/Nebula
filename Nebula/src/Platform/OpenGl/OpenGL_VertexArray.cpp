@@ -25,23 +25,31 @@ namespace Nebula {
 
 
 	OpenGL_VertexArray::OpenGL_VertexArray() {
+		NB_PROFILE_FUNCTION();
+
 		glCreateVertexArrays(1, &m_RendererID);
 	}
 
 	OpenGL_VertexArray::~OpenGL_VertexArray() {
+		NB_PROFILE_FUNCTION();
+
 		glDeleteVertexArrays(1, &m_RendererID);
 	}
 
 	void OpenGL_VertexArray::Bind() const {
+		NB_PROFILE_FUNCTION();
+
 		glBindVertexArray(m_RendererID);
 	}
 
 	void OpenGL_VertexArray::Unbind() const {
+		NB_PROFILE_FUNCTION();
+
 		glBindVertexArray(0);
 	}
 
 	void OpenGL_VertexArray::AddVertexBuffer(const Ref<VertexBuffer>& buffer) {
-		//NB_ASSERT(buffer->GetLayout().GetElements().size(), "Vertex Buffer has no layout!");
+		NB_PROFILE_FUNCTION();
 
 		glBindVertexArray(m_RendererID);
 		buffer->Bind();
@@ -67,6 +75,8 @@ namespace Nebula {
 	}
 
 	void OpenGL_VertexArray::SetIndexBuffer(const Ref<IndexBuffer>& buffer) {
+		NB_PROFILE_FUNCTION();
+
 		glBindVertexArray(m_RendererID);
 		buffer->Bind();
 

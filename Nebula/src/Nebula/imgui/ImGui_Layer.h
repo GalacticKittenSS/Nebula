@@ -13,7 +13,6 @@ namespace Nebula {
 
 		void Begin();
 		void End();
-		void Render() override;
 	private:
 		float m_Time = 0.0f;
 	};

@@ -8,6 +8,8 @@
 
 namespace Nebula {
 	static GLenum ShaderTypeFromString(const std::string& type) {
+		NB_PROFILE_FUNCTION();
+
 		if (type == "vertex")
 			return GL_VERTEX_SHADER;
 		if (type == "fragment")
@@ -18,6 +20,8 @@ namespace Nebula {
 	}
 
 	OpenGL_Shader::OpenGL_Shader(const std::string& path) {
+		NB_PROFILE_FUNCTION();
+
 		std::string source = ReadFile(path);
 		auto shaderSources = PreProcess(source);
 		
@@ -36,6 +40,8 @@ namespace Nebula {
 	}
 
 	OpenGL_Shader::OpenGL_Shader(const std::string& name, const std::string& vertSrc, const std::string& fragSrc): m_Name(name) {
+		NB_PROFILE_FUNCTION();
+
 		std::unordered_map<GLenum, std::string> sources;
 		sources[GL_VERTEX_SHADER] = vertSrc;
 		sources[GL_FRAGMENT_SHADER] = fragSrc;
@@ -48,10 +54,14 @@ namespace Nebula {
 	}
 
 	OpenGL_Shader::~OpenGL_Shader() {
+		NB_PROFILE_FUNCTION();
+
 		glDeleteProgram(m_RendererID);
 	}
 
 	std::string OpenGL_Shader::ReadFile(const std::string& path) {
+		NB_PROFILE_FUNCTION();
+
 		std::string result;
 		std::ifstream in(path, std::ios::in | std::ios::binary);
 		if (in) {
@@ -75,6 +85,8 @@ namespace Nebula {
 	}
 
 	std::unordered_map<GLenum, std::string> OpenGL_Shader::PreProcess(const std::string& source) {
+		NB_PROFILE_FUNCTION();
+
 		std::unordered_map<GLenum, std::string> ShaderSources;
 
 		const char* typeToken = "#type";
@@ -98,6 +110,8 @@ namespace Nebula {
 	}
 
 	bool OpenGL_Shader::Compile(std::unordered_map<GLenum, std::string> sources) {
+		NB_PROFILE_FUNCTION();
+
 		int isCompiled = 0; //Does the Frag/Vertex Shader Compile? 
 		int isLinked = 0;	//Does the Program Link?
 

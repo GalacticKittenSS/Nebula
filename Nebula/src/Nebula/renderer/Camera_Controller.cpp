@@ -13,6 +13,8 @@ namespace Nebula {
 	}
 
 	void OrthographicCameraController::OnUpdate(Timestep ts) {
+		NB_PROFILE_FUNCTION();
+
 		if (Input::IsKeyPressed(NB_W)) {
 			m_CamPosition.x += -sin(glm::radians(m_CamRotation)) * m_CamTranslationSpeed * ts;
 			m_CamPosition.y +=  cos(glm::radians(m_CamRotation)) * m_CamTranslationSpeed * ts;
@@ -49,12 +51,16 @@ namespace Nebula {
 	}
 
 	void OrthographicCameraController::OnEvent(Event& e) {
+		NB_PROFILE_FUNCTION();
+
 		Dispatcher dispatcher(e);
 		dispatcher.Dispatch<MouseScrolledEvent>(BIND_EVENT(OrthographicCameraController::OnMouseScrolled));
 		dispatcher.Dispatch<WindowResizeEvent>(BIND_EVENT(OrthographicCameraController::OnWindowResized));
 	}
 
 	bool OrthographicCameraController::OnMouseScrolled(MouseScrolledEvent& event) {
+		NB_PROFILE_FUNCTION();
+
 		m_ZoomLevel -= event.GetOffsetY() * 0.25f;
 		m_ZoomLevel = std::max(m_ZoomLevel, 0.25f);
 		m_Camera.SetProjection(-m_AspectRatio * m_ZoomLevel, m_AspectRatio * m_ZoomLevel, -m_ZoomLevel, m_ZoomLevel);
@@ -63,6 +69,8 @@ namespace Nebula {
 	}
 
 	bool OrthographicCameraController::OnWindowResized(WindowResizeEvent& event) {
+		NB_PROFILE_FUNCTION();
+
 		m_AspectRatio = (float)event.GetWidth() / (float)event.GetHeight();
 		m_Camera.SetProjection(-m_AspectRatio * m_ZoomLevel, m_AspectRatio * m_ZoomLevel, -m_ZoomLevel, m_ZoomLevel);
 

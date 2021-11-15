@@ -7,6 +7,8 @@ namespace Nebula {
 	Scope<Renderer::SceneData> Renderer::s_Data = CreateScope<Renderer::SceneData>();
 
 	void Renderer::Init() {
+		NB_PROFILE_FUNCTION();
+
 		RenderCommand::Init();
 		Renderer2D::Init();
 	}

@@ -27,6 +27,8 @@ namespace Nebula {
 	}
 
 	void Win_Window::Init(const WindowProps& props) {
+		NB_PROFILE_FUNCTION();
+
 		m_Data.Title = props.Title;
 		m_Data.Width = props.Width;
 		m_Data.Height = props.Height;
@@ -126,6 +128,8 @@ namespace Nebula {
 	}
 
 	void Win_Window::ShutDown() {
+		NB_PROFILE_FUNCTION();
+
 		glfwDestroyWindow(m_Window);
 		--s_GLFWWindowCount;
 
@@ -136,6 +140,8 @@ namespace Nebula {
 	}
 
 	void Win_Window::Update() {
+		NB_PROFILE_FUNCTION();
+		
 		glfwPollEvents();
 		m_Context->SwapBuffers();
 	}

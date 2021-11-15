@@ -11,6 +11,8 @@ namespace Nebula {
 	}
 
 	void OpenGL_Context::Init() {
+		NB_PROFILE_FUNCTION();
+
 		glfwMakeContextCurrent(m_WindowHandle);
 		int status = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 		NB_ASSERT(status, "Failed to Initialise GLad!");
@@ -31,6 +33,8 @@ namespace Nebula {
 	}
 
 	void OpenGL_Context::SwapBuffers() {
+		NB_PROFILE_FUNCTION();
+
 		glfwSwapBuffers(m_WindowHandle);
 	}
 }
