@@ -8,14 +8,14 @@
 #include "Platform/OpenGl/OpenGL_Context.h"
 
 namespace Nebula {
-	static bool s_GLFWInitialized = false;
+	static uint8_t s_GLFWWindowCount = 0;
 
 	static void GLFWErrorCallback(int error, const char* description) {
 		NB_ERROR("GLFW Error ({0}): {1}", error, description);
 	}
 
-	Window* Window::Create(const WindowProps& props) {
-		return new Win_Window(props);
+	Scope<Window> Window::Create(const WindowProps& props) {
+		return CreateScope<Win_Window>(props);
 	}
 
 	Win_Window::Win_Window(const WindowProps& props) {
@@ -33,16 +33,17 @@ namespace Nebula {
 
 		NB_INFO("Creating Window {0} ({1}, {2})", props.Title, props.Width, props.Height);
 
-		if (!s_GLFWInitialized) {
+		if (s_GLFWWindowCount == 0) {
 			//TODO: glfwTerminate on system shutdown
+			NB_INFO("Initializing GLFW");
 			int success = glfwInit();
 			NB_ASSERT(success, "Could Not Initialise GLFW");
 			glfwSetErrorCallback(GLFWErrorCallback);
-			s_GLFWInitialized = true;
 		}
 
 		m_Window = glfwCreateWindow((int)props.Width, (int)props.Height, m_Data.Title.c_str(), nullptr, nullptr);
-		m_Context = CreateScope<OpenGL_Context>(m_Window);
+		++s_GLFWWindowCount;
+		m_Context = GraphicsContext::Create(m_Window);
 
 		m_Context->Init();
 
@@ -126,6 +127,12 @@ namespace Nebula {
 
 	void Win_Window::ShutDown() {
 		glfwDestroyWindow(m_Window);
+		--s_GLFWWindowCount;
+
+		if (s_GLFWWindowCount == 0) {
+			NB_INFO("Terminating GLFW");
+			glfwTerminate();
+		}
 	}
 
 	void Win_Window::Update() {

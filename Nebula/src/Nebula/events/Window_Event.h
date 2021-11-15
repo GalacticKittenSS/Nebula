@@ -5,7 +5,7 @@
 namespace Nebula {
 	class NB_API WindowResizeEvent : public Event {
 	public:
-		WindowResizeEvent(unsigned int width, uint32_t height): m_Width(width), m_Height(height) { }
+		WindowResizeEvent(unsigned int width, uint32_t height) : m_Width(width), m_Height(height) { }
 
 		inline uint32_t GetWidth() const { return m_Width; }
 		inline uint32_t GetHeight() const { return m_Height; }
@@ -24,7 +24,7 @@ namespace Nebula {
 
 	class NB_API WindowCloseEvent: public Event{
 	public:
-		WindowCloseEvent() { }
+		WindowCloseEvent() = default;
 
 		EVENT_TYPE(WindowClose)
 		EVENT_CATEGORY(ApplicationCat)

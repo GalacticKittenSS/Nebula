@@ -56,10 +56,16 @@ namespace Nebula {
 		std::ifstream in(path, std::ios::in | std::ios::binary);
 		if (in) {
 			in.seekg(0, std::ios::end);
-			result.resize(in.tellg());
-			in.seekg(0, std::ios::beg);
-			in.read(&result[0], result.size());
-			in.close();
+			size_t size = in.tellg();
+			if (size != -1) {
+				result.resize(in.tellg());
+				in.seekg(0, std::ios::beg);
+				in.read(&result[0], result.size());
+				in.close();
+			}
+			else {
+				NB_ERROR("Could not read from file {0}", path);
+			}
 		}
 		else {
 			NB_ERROR("Could not load file {0}", path);
@@ -167,6 +173,23 @@ namespace Nebula {
 		}
 
 		return true;
+	}
+
+
+	void OpenGL_Shader::SetInt(const std::string& name, const int value) {
+		UploadUniformInt(name, value);
+	}
+	
+	void OpenGL_Shader::SetMat4(const std::string& name, const glm::mat4& value) {
+		UploadUniformMat4(name, value);
+	}
+
+	void OpenGL_Shader::SetFloat3(const std::string& name, const glm::vec3& values) {
+		UploadUniformFloat3(name, values);
+	}
+
+	void OpenGL_Shader::SetFloat4(const std::string& name, const glm::vec4& values) {
+		UploadUniformFloat4(name, values);
 	}
 
 	void OpenGL_Shader::Bind() const {

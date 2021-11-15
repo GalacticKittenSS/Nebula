@@ -21,6 +21,7 @@
 
 //----RENDERER--------
 #include "Nebula/Renderer/Renderer.h"
+#include "Nebula/Renderer/Renderer2D.h"
 #include "Nebula/Renderer/Render_Command.h"
 //--------------------
 
@@ -38,14 +39,7 @@
 
 #include "Nebula/Core/Timestep.h"
 #include "Nebula/Core/Window.h"
-#include "Platform/OpenGl/OpenGL_Shader.h"
 
 //----Application-----
 #include "Nebula/Core/Application.h"
 //--------------------
-
-/*	-----Entry Point-------
-	HAS TO BE INCLUDED BELOW
-		APPLICATION
-	-----------------------	*/
-#include "Nebula/Core/Entry_Point.h"

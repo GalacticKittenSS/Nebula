@@ -14,7 +14,7 @@ namespace Nebula {
 	class NB_API Application {
 	public:
 		Application();
-		~Application();
+		virtual ~Application();
 
 		void run();
 		void OnEvent(Event& e);

@@ -25,7 +25,7 @@ namespace Nebula {
 			s_RendererAPI->SetClearColour(colour);
 		}
 
-		inline static void DrawIndexed(const std::shared_ptr<VertexArray>& vertexArray) {
+		inline static void DrawIndexed(const Ref<VertexArray>& vertexArray) {
 			s_RendererAPI->DrawIndexed(vertexArray);
 		}
 	private:

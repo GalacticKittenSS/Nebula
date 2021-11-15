@@ -13,7 +13,7 @@ namespace Nebula {
 		NB_ASSERT(!s_Instance, "Application already exists!");
 		s_Instance = this;
 
-		m_Window = std::unique_ptr<Window>(Window::Create());
+		m_Window = Window::Create();
 		m_Window->SetEventCallback(BIND_EVENT(Application::OnEvent));
 
 		Renderer::Init();
@@ -23,7 +23,7 @@ namespace Nebula {
 	}
 
 	Application::~Application() {
-
+		Renderer::Shutdown();
 	}
 
 	void Application::run() {
@@ -67,7 +67,7 @@ namespace Nebula {
 	void Application::OnEvent(Event& e) {
 		Dispatcher dispatcher(e);
 		dispatcher.Dispatch<WindowCloseEvent>(BIND_EVENT(Application::OnWindowClose));
-		//dispatcher.Dispatch<WindowResizeEvent>(BIND_EVENT(Application::OnWindowResize));
+		dispatcher.Dispatch<WindowResizeEvent>(BIND_EVENT(Application::OnWindowResize));
 
 		for (auto it = m_LayerStack.end(); it != m_LayerStack.begin();) {
 			(*--it)->OnEvent(e);
@@ -89,7 +89,7 @@ namespace Nebula {
 		}
 
 		m_Minimized = false;
-		//Renderer::OnWindowResize(e.GetWidth(), e.GetHeight());
+		Renderer::OnWindowResize(e.GetWidth(), e.GetHeight());
 
 		return false;
 	}

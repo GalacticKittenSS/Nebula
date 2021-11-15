@@ -2,8 +2,6 @@
 #include "Layer_Stack.h"
 
 namespace Nebula {
-	LayerStack::LayerStack() { }
-
 	LayerStack::~LayerStack() {
 		for (Layer* layer : m_Layers) {
 			layer->Detach();

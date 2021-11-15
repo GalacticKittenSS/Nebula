@@ -6,7 +6,7 @@
 namespace Nebula {
 	class NB_API LayerStack {
 	public:
-		LayerStack();
+		LayerStack() = default;
 		~LayerStack();
 
 		void PushLayer(Layer* layer);

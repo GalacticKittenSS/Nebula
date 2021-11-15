@@ -15,6 +15,11 @@ namespace Nebula {
 
 		static Ref<Shader> Create(const std::string& path);
 		static Ref<Shader> Create(const std::string& name, const std::string& vertSrc, const std::string& fragSrc);
+
+		virtual void SetInt(const std::string& name, const int value) = 0;
+		virtual void SetMat4(const std::string& name, const glm::mat4& value) = 0;
+		virtual void SetFloat3(const std::string& name, const glm::vec3& values) = 0;
+		virtual void SetFloat4(const std::string& name, const glm::vec4& values) = 0;
 	};
 
 	class ShaderLibrary {
