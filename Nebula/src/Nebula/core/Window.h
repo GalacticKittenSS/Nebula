@@ -2,8 +2,8 @@
 
 #include "nbpch.h"
 
-#include "Nebula/API.h"
-#include "Nebula/events/Event.h"
+#include "API.h"
+#include "Nebula/Events/Event.h"
 
 namespace Nebula {
 	struct WindowProps {

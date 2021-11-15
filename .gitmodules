@@ -1,12 +1,16 @@
 [submodule "Nebula/Modules/spdlog"]
 	path = Nebula/Modules/spdlog
 	url = https://github.com/gabime/spdlog
+	branch = v1.x
 [submodule "Nebula/Modules/glfw"]
 	path = Nebula/Modules/glfw
 	url = https://github.com/TheCherno/glfw
+	branch = master
 [submodule "Nebula/Modules/imgui"]
 	path = Nebula/Modules/imgui
 	url = https://github.com/GalacticKittenSS/imgui
+	branch = docking
 [submodule "Nebula/Modules/glm"]
 	path = Nebula/Modules/glm
 	url = https://github.com/g-truc/glm
+	branch = master

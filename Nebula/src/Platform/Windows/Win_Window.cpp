@@ -42,7 +42,7 @@ namespace Nebula {
 		}
 
 		m_Window = glfwCreateWindow((int)props.Width, (int)props.Height, m_Data.Title.c_str(), nullptr, nullptr);
-		m_Context = new OpenGL_Context(m_Window);
+		m_Context = CreateScope<OpenGL_Context>(m_Window);
 
 		m_Context->Init();
 

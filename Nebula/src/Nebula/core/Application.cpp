@@ -1,7 +1,7 @@
 #include "nbpch.h"
 #include "Application.h"
 
-#include "renderer/Renderer.h"
+#include "Nebula/Renderer/Renderer.h"
 
 #include <GLFW/glfw3.h>
 
@@ -32,12 +32,16 @@ namespace Nebula {
 			Timestep timestep = time - m_LastFrameTime;
 			m_LastFrameTime = time;
 			
-			for (Layer* layer : m_LayerStack)
-				layer->Update(timestep);
+			if (!m_Minimized) {
+				for (Layer* layer : m_LayerStack) {
+					layer->Update(timestep);
+					layer->Render();
+				}
+			}
 
 			m_ImGui->Begin();
 			for (Layer* layer : m_LayerStack)
-				layer->Render();
+				layer->ImGuiRender();
 			m_ImGui->End();
 
 			m_Window->Update();
@@ -63,6 +67,7 @@ namespace Nebula {
 	void Application::OnEvent(Event& e) {
 		Dispatcher dispatcher(e);
 		dispatcher.Dispatch<WindowCloseEvent>(BIND_EVENT(Application::OnWindowClose));
+		//dispatcher.Dispatch<WindowResizeEvent>(BIND_EVENT(Application::OnWindowResize));
 
 		for (auto it = m_LayerStack.end(); it != m_LayerStack.begin();) {
 			(*--it)->OnEvent(e);
@@ -75,5 +80,17 @@ namespace Nebula {
 	bool Application::OnWindowClose(WindowCloseEvent& e) {
 		m_Running = false;
 		return true;
+	}
+
+	bool Application::OnWindowResize(WindowResizeEvent& e) {
+		if (e.GetWidth() == 0 || e.GetHeight() == 0) {
+			m_Minimized = true;
+			return false;
+		}
+
+		m_Minimized = false;
+		//Renderer::OnWindowResize(e.GetWidth(), e.GetHeight());
+
+		return false;
 	}
 }

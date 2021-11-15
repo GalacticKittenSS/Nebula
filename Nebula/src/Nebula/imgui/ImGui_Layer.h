@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Nebula/Layer.h"
+#include "Nebula/Core/Layer.h"
 
 namespace Nebula {
 	class NB_API ImGuiLayer : public Layer {

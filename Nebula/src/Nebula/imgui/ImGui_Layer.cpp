@@ -5,7 +5,7 @@
 #include "imgui/platform/imgui_impl_glfw.h"
 #include "imgui/platform/imgui_impl_opengl3.h"
 
-#include "Nebula/Application.h"
+#include "Nebula/Core/Application.h"
 
 #include <GLFW/glfw3.h>
 

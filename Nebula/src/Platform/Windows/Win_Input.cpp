@@ -2,10 +2,10 @@
 #include "Win_Input.h"
 
 #include <GLFW/glfw3.h>
-#include "Nebula/Application.h"
+#include "Nebula/Core/Application.h"
 
 namespace Nebula {
-	Input* Input::s_Instance = new Win_Input();
+	Scope<Input> Input::s_Instance = CreateScope<Win_Input>();
 
 	bool Win_Input::IsKeyPressedImpl(int keycode) {
 		auto window = static_cast<GLFWwindow*>(Application::Get().GetWindow().GetNativeWindow());

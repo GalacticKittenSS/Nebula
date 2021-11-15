@@ -8,10 +8,6 @@ workspace "Nebula"
 		"Dist"
 	}
 
-	flags {
-		"MultiProcessorCompile"
-	}
-
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 --Include Directories (Relative to Solution Directory)
@@ -81,8 +77,6 @@ project "Nebula"
 	filter "system:windows"
 		systemversion "latest"
 
-		defines "NB_WINDOWS"
-
 	filter "configurations:Debug"
 		defines "NB_DEBUG"
 		runtime "Debug"
@@ -131,8 +125,6 @@ project "Tests"
 
 	filter "system:windows"
 		systemversion "latest"
-
-		defines "NB_WINDOWS"
 
 	filter "configurations:Debug"
 		defines "NB_DEBUG"

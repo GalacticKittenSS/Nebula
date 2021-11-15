@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Nebula/Window.h"
-#include "Nebula/renderer/Graphics_Context.h"
+#include "Nebula/Core/Window.h"
+#include "Nebula/Renderer/Graphics_Context.h"
 
 #include <GLFW/glfw3.h>
 
@@ -31,7 +31,7 @@ namespace Nebula {
 		virtual void ShutDown();
 	private:
 		GLFWwindow* m_Window;
-		GraphicsContext* m_Context;
+		Scope<GraphicsContext> m_Context;
 
 		struct WindowData {
 			std::string Title;

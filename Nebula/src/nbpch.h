@@ -15,7 +15,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "Nebula/Log.h"
+#include "Nebula/Core/Log.h"
 
 #ifdef NB_WINDOWS
 	#include <Windows.h>

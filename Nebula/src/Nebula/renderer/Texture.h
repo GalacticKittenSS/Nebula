@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string>
-#include "Nebula/API.h"
+#include "Nebula/Core/API.h"
 
 namespace Nebula {
 	class Texture {

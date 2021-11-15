@@ -6,7 +6,7 @@ public:
 		//Layer Debug
 		Layer("Example Layer") ,
 		//Set Camera Mat4
-		m_Camera(-1.6f, 1.6f, -0.9f, 0.9f) {
+		m_Controller(16.0f / 9.0f, true) {
 		Start();
 	}
 
@@ -93,7 +93,7 @@ public:
 		Nebula::RenderCommand::SetClearColour({ 0.1f, 0.1f, 0.1f, 1.0f });
 		Nebula::RenderCommand::Clear();
 
-		Nebula::Renderer::BeginScene(m_Camera);
+		Nebula::Renderer::BeginScene(m_Controller.GetCamera());
 
 		//Scale (1/10)
 		glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(0.1f));
@@ -121,54 +121,24 @@ public:
 		Nebula::Renderer::Submit(m_ShaderLib.Get("Texture"), m_SquareVA, transform);
 
 		Nebula::Renderer::EndScene();
-
-		//IMGUI
-		/*
-		//Change Colour of cubes
-		ImGui::Begin("Settings"); //Window Name
-		ImGui::ColorEdit3("Square Colour", glm::value_ptr(m_SquareColour)); //Edit Variable m_SquareColour
-		ImGui::End();*/
 	}
 
 	//Called Once Per Frame takes in Timestep (deltaTime)
 	void Update(Nebula::Timestep ts) {
-		//Get Position and Rotation of Camera
-		glm::vec3 position = m_Camera.GetPosition();
-		float rotation = m_Camera.GetRotation();
-
-		//Increment Camera Position when Key is Pressed
-		if (Nebula::Input::IsKeyPressed(NB_W))
-			position.y += moveSpeed * ts;		//UP
-
-		if (Nebula::Input::IsKeyPressed(NB_S))
-			position.y -= moveSpeed * ts;		//DOWN
-
-		if (Nebula::Input::IsKeyPressed(NB_D))
-			position.x += moveSpeed * ts;		//RIGHT
-
-		if (Nebula::Input::IsKeyPressed(NB_A))
-			position.x -= moveSpeed * ts;		//LEFT
-
-		//Set Camera Position and Rotation to Incremented Value
-		m_Camera.SetPosition(position);
-		m_Camera.SetRotation(rotation);
+		m_Controller.OnUpdate(ts);
 	}
 
 	//Is Called On Event
 	void OnEvent(Nebula::Event& e) {
+		m_Controller.OnEvent(e);
+
 		Nebula::Dispatcher dispatcher(e);
 		//Calls Client Made Functions on Event
 		dispatcher.Dispatch<Nebula::KeyPressedEvent>(BIND_EVENT(ExampleLayer::OnKeyPressed));		//Call When Key is Pressed
-		dispatcher.Dispatch<Nebula::WindowResizeEvent>(BIND_EVENT(ExampleLayer::OnWindowResize));	//Call When Window is Resized
 	}
 
 	bool OnKeyPressed(Nebula::KeyPressedEvent& event) {
 		//NB_TRACE("Key {0} was pressed!", (char)event.GetKeyCode());
-		return false;
-	}
-
-	bool OnWindowResize(Nebula::WindowResizeEvent& event) {
-		NB_TRACE(event);
 		return false;
 	}
 
@@ -180,10 +150,7 @@ private:
 
 	glm::vec3 m_SquareColour = { 0.2f, 0.3f, 0.8f };
 
-	Nebula::OrthographicCamera m_Camera;
-
-	float moveSpeed = 5.0f;
-	float rotSpeed = 180.0f;
+	Nebula::OrthographicCameraController m_Controller;
 };
 
 //Application Class (Calls Layers)

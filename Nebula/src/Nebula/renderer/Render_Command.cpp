@@ -4,5 +4,5 @@
 #include "Platform/OpenGl/OpenGL_RendererAPI.h"
 
 namespace Nebula {
-	RendererAPI* RenderCommand::s_RendererAPI = new OpenGL_RendererAPI;
+	Scope<RendererAPI> RenderCommand::s_RendererAPI = CreateScope<OpenGL_RendererAPI>();
 }

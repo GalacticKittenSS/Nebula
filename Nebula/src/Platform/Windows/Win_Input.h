@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Nebula/Input.h"
+#include "Nebula/Core/Input.h"
 
 namespace Nebula {
 	class NB_API Win_Input : public Input {

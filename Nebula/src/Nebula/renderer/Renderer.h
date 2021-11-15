@@ -8,6 +8,7 @@ namespace Nebula {
 	class Renderer {
 	public:
 		static void Init();
+		static void OnWindowResize(uint32_t width, uint32_t height);
 
 		static void BeginScene(OrthographicCamera& camera);
 		static void EndScene();
@@ -24,6 +25,6 @@ namespace Nebula {
 			glm::mat4 ViewProjectMatrix;
 		};
 
-		static SceneData* s_Data;
+		static Scope<SceneData> s_Data;
 	};
 }

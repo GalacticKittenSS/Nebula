@@ -1,7 +1,7 @@
 #pragma once
 
 #include "nbpch.h"
-#include "Nebula/API.h"
+#include "Nebula/Core/API.h"
 #include "Event_Manager.h"
 
 
@@ -32,7 +32,7 @@ namespace Nebula {
 		MouseCat		= BIT(3)
 	};
 
-#define EVENT_TYPE(type) static EventType GetStaticType() { return EventType::##type; }\
+#define EVENT_TYPE(type) static EventType GetStaticType() { return EventType::type; }\
 						 virtual EventType GetEventType() const override { return GetStaticType(); }\
 						 virtual const char* GetName() const override { return #type; }
 

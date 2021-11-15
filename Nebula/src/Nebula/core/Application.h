@@ -3,12 +3,12 @@
 #include "Window.h"
 
 #include "Layer_Stack.h"
-#include "imgui/ImGui_Layer.h"
+#include "Nebula/imgui/ImGui_Layer.h"
 
-#include "events/Event.h"
-#include "events/Window_Event.h"
+#include "Nebula/Events/Event.h"
+#include "Nebula/Events/Window_Event.h"
 
-#include "core/Timestep.h"
+#include "Timestep.h"
 
 namespace Nebula {
 	class NB_API Application {
@@ -28,10 +28,11 @@ namespace Nebula {
 		inline Window& GetWindow() { return *m_Window; }
 	private:
 		bool OnWindowClose(WindowCloseEvent& e);
+		bool OnWindowResize(WindowResizeEvent& e);
 	private:
 		std::unique_ptr<Window> m_Window;
 		ImGuiLayer* m_ImGui;
-		bool m_Running = true;
+		bool m_Running = true, m_Minimized = false;
 		LayerStack m_LayerStack;
 
 		Timestep m_Timestep;
