@@ -194,6 +194,10 @@ namespace Nebula {
 		UploadUniformInt(name, value);
 	}
 	
+	void OpenGL_Shader::SetFloat(const std::string& name, const float value) {
+		UploadUniformFloat(name, value);
+	}
+	
 	void OpenGL_Shader::SetMat4(const std::string& name, const glm::mat4& value) {
 		UploadUniformMat4(name, value);
 	}

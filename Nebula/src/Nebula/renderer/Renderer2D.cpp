@@ -72,30 +72,21 @@ namespace Nebula {
 
 	}
 
-	void Renderer2D::DrawQuad(const glm::vec2& position, const glm::vec2& size, const glm::vec4& colour) {
-		DrawQuad(glm::vec3(position, 0.0f), size, colour);
-	}
-
-	void Renderer2D::DrawQuad(const glm::vec3& position, const glm::vec2& size, const glm::vec4& colour) {
-		DrawQuad(position, size, s_Data->whiteTexture, colour);
-	}
-
-	void Renderer2D::DrawQuad(const glm::vec2& position, const glm::vec2& size, const Ref<Texture2D> texture, const glm::vec4& colour) {
-		DrawQuad({ position.x, position.y, 0.0f }, size, texture, colour);
-	}
-
-	void Renderer2D::DrawQuad(const glm::vec3& position, const glm::vec2& size, const Ref<Texture2D> texture, const glm::vec4& colour) {
+	void Renderer2D::DrawQuad(Quad& quad, float tiling) {
 		NB_PROFILE_FUNCTION();
 
-		s_Data->TextureShader->SetFloat4("u_Colour", colour);
-		texture->Bind();
+		if (quad.texture == nullptr)
+			quad.texture = s_Data->whiteTexture;
 
-		glm::mat4 transform = glm::translate(glm::mat4(1.0f), position) * glm::scale(glm::mat4(1.0f), { size.x, size.y, 1.0f });
-		s_Data->TextureShader->SetMat4("u_Transform", transform);
+		s_Data->TextureShader->SetFloat4("u_Colour", quad.colour);
+		s_Data->TextureShader->SetFloat("u_Tiling", tiling);
+		quad.texture->Bind();
+
+		s_Data->TextureShader->SetMat4("u_Transform", quad.CalculateMatrix());
 
 		s_Data->QuadVertexArray->Bind();
 		RenderCommand::DrawIndexed(s_Data->QuadVertexArray);
-		
-		texture->Unbind();
+
+		quad.texture->Unbind();
 	}
 }

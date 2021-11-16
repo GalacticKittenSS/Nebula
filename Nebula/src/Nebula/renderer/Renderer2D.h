@@ -2,6 +2,7 @@
 
 #include "Camera.h"
 #include "Texture.h"
+#include "Sprites.h"
 
 namespace Nebula {
 	class Renderer2D {
@@ -13,9 +14,6 @@ namespace Nebula {
 		static void EndScene();
 
 		//Primitives
-		static void DrawQuad(const glm::vec2& position, const glm::vec2& size, const glm::vec4& colour);
-		static void DrawQuad(const glm::vec3& position, const glm::vec2& size, const glm::vec4& colour); 
-		static void DrawQuad(const glm::vec2& position, const glm::vec2& size, const Ref<Texture2D> texture, const glm::vec4& colour = {1, 1, 1, 1 });
-		static void DrawQuad(const glm::vec3& position, const glm::vec2& size, const Ref<Texture2D> texture, const glm::vec4& colour = { 1, 1, 1, 1 });
+		static void DrawQuad(Quad& quad, float tiling = 1.0f);
 	};
 }

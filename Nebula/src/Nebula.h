@@ -13,6 +13,7 @@
 #include "Nebula/Renderer/Shader.h"
 #include "Nebula/Renderer/Buffer.h"
 #include "Nebula/Renderer/Vertex_Array.h"
+#include "Nebula/Renderer/Sprites.h"
 //--------------------
 
 #include "Nebula/Renderer/Texture.h"

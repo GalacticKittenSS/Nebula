@@ -24,16 +24,18 @@ void Sandbox2D::Render() {
 	//Clear the Screen of the Previous Frame
 	Nebula::RenderCommand::Clear();
 
-	
 	NB_PROFILE_FUNCTION();
 		
 	//Begin Scene with Camera
 	Nebula::Renderer2D::BeginScene(Controller.GetCamera());
 
-	Nebula::Renderer2D::DrawQuad({ 0.0f, 0.0f, 0.1f }, { 1.0f, 1.0f }, Texture);
-	Nebula::Renderer2D::DrawQuad({ 0.0f, 0.0f }, { 10.0f, 10.0f }, glm::vec4(squareColour, 1.0f));
-	Nebula::Renderer2D::DrawQuad({ 0.8f, 0.2f }, { 1.0f, 1.0f }, { 0.8f, 0.3f, 0.2f, 1.0f });
-		
+	Nebula::Quad quad({ 0.0f, 0.0f, 0.1f }, { 10.0f, 10.0f });
+	quad.texture = Texture;
+
+	Nebula::Renderer2D::DrawQuad(quad, 10.0f);
+	Nebula::Renderer2D::DrawQuad(Nebula::Quad({ 0.0f, 0.0f }, { 10.0f, 10.0f }, 0.0f, glm::vec4(squareColour, 1.0f)));
+	Nebula::Renderer2D::DrawQuad(Nebula::Quad({ 0.8f, 0.2f, 0.2f }, { 1.0f, 1.0f }, 0.0f, { 0.8f, 0.3f, 0.2f, 1.0f }));
+
 	Nebula::Renderer2D::EndScene();
 }
 
@@ -49,6 +51,6 @@ void Sandbox2D::OnEvent(Nebula::Event& e) {
 }
 
 bool Sandbox2D::OnKeyPressed(Nebula::KeyPressedEvent& e) {
-	NB_TRACE("Key {0} was pressed!", (char)e.GetKeyCode());
+	//NB_TRACE("Key {0} was pressed!", (char)e.GetKeyCode());
 	return false;
 }
