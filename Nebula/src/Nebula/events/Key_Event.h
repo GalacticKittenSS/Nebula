@@ -1,23 +1,23 @@
 #pragma once
 
 #include "Event.h"
-
+#include "Nebula/Core/Input.h"
 
 namespace Nebula {
 	class NB_API KeyEvent : public Event {
 	public:
-		inline int32_t GetKeyCode() const { return m_KeyCode; }
+		inline KeyCode GetKeyCode() const { return m_KeyCode; }
 
 		EVENT_CATEGORY(KeyboardCat | InputCat);
 	protected:
-		KeyEvent(int32_t keycode): m_KeyCode(keycode) { }
+		KeyEvent(KeyCode keycode): m_KeyCode(keycode) { }
 
-		int32_t m_KeyCode;
+		KeyCode m_KeyCode;
 	};
 
 	class NB_API KeyPressedEvent : public KeyEvent {
 	public:
-		KeyPressedEvent(int32_t keycode, int32_t repeatCount): KeyEvent(keycode), m_RepeatCount(repeatCount) { }
+		KeyPressedEvent(KeyCode keycode, int32_t repeatCount): KeyEvent(keycode), m_RepeatCount(repeatCount) { }
 
 		inline int GetRepeatCount() const { return m_RepeatCount; }
 
@@ -34,7 +34,7 @@ namespace Nebula {
 
 	class NB_API KeyReleasedEvent : public KeyEvent {
 	public:
-		KeyReleasedEvent(int32_t keycode): KeyEvent(keycode) { }
+		KeyReleasedEvent(KeyCode keycode): KeyEvent(keycode) { }
 
 		std::string ToString() const override {
 			std::stringstream ss;
@@ -47,7 +47,7 @@ namespace Nebula {
 
 	class NB_API KeyTypedEvent : public KeyEvent {
 	public:
-		KeyTypedEvent(int32_t keycode) : KeyEvent(keycode) { }
+		KeyTypedEvent(KeyCode keycode) : KeyEvent(keycode) { }
 
 		std::string ToString() const override {
 			std::stringstream ss;

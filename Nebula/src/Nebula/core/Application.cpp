@@ -86,8 +86,8 @@ namespace Nebula {
 		dispatcher.Dispatch<WindowCloseEvent>(BIND_EVENT(Application::OnWindowClose));
 		dispatcher.Dispatch<WindowResizeEvent>(BIND_EVENT(Application::OnWindowResize));
 
-		for (auto it = m_LayerStack.end(); it != m_LayerStack.begin();) {
-			(*--it)->OnEvent(e);
+		for (auto it = m_LayerStack.rbegin(); it != m_LayerStack.rend(); ++it) {
+			(*it)->OnEvent(e);
 
 			if (e.Handled)
 				break;

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Event.h"
-
+#include "Nebula/Core/Input.h"
 
 namespace Nebula {
 	class NB_API MouseMovedEvent : public Event {
@@ -45,19 +45,19 @@ namespace Nebula {
 
 	class NB_API MouseButtonEvent : public Event {
 	public:
-		inline int GetMouseButton() const { return m_Button; }
+		inline MouseCode GetMouseButton() const { return m_Button; }
 
 		EVENT_CATEGORY(MouseCat | InputCat)
 	protected:
-		MouseButtonEvent(int button): m_Button(button) { }
+		MouseButtonEvent(MouseCode button): m_Button(button) { }
 
-		int m_Button;
+		MouseCode m_Button;
 	};	
 	
 	class NB_API MouseButtonPressedEvent : public MouseButtonEvent
 	{
 	public:
-		MouseButtonPressedEvent(int button): MouseButtonEvent(button) { }
+		MouseButtonPressedEvent(MouseCode button): MouseButtonEvent(button) { }
 
 		std::string ToString() const override
 		{
@@ -72,7 +72,7 @@ namespace Nebula {
 	class NB_API MouseButtonReleasedEvent : public MouseButtonEvent
 	{
 	public:
-		MouseButtonReleasedEvent(int button): MouseButtonEvent(button) { }
+		MouseButtonReleasedEvent(MouseCode button): MouseButtonEvent(button) { }
 
 		std::string ToString() const override
 		{

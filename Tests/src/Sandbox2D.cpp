@@ -43,4 +43,12 @@ void Sandbox2D::ImGuiRender() {
 
 void Sandbox2D::OnEvent(Nebula::Event& e) {
 	Controller.OnEvent(e);
+
+	Nebula::Dispatcher d(e);
+	d.Dispatch<Nebula::KeyPressedEvent>(BIND_EVENT(Sandbox2D::OnKeyPressed));
+}
+
+bool Sandbox2D::OnKeyPressed(Nebula::KeyPressedEvent& e) {
+	NB_TRACE("Key {0} was pressed!", (char)e.GetKeyCode());
+	return false;
 }

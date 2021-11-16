@@ -16,6 +16,7 @@ public:
 	void ImGuiRender() override;
 
 	void OnEvent(Nebula::Event& e) override;
+	bool OnKeyPressed(Nebula::KeyPressedEvent& e);
 private:
 	Nebula::Ref<Nebula::Texture2D> Texture;
 

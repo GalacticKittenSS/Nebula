@@ -1,9 +1,13 @@
 #include "nbpch.h"
 #include "Win_Window.h"
 
+#include "Nebula/Core/Input.h"
+
 #include "Nebula/events/Window_Event.h"
 #include "Nebula/events/Mouse_Event.h"
 #include "Nebula/events/Key_Event.h"
+
+#include "Nebula/Renderer/Renderer.h"
 
 #include "Platform/OpenGl/OpenGL_Context.h"
 
@@ -12,10 +16,6 @@ namespace Nebula {
 
 	static void GLFWErrorCallback(int error, const char* description) {
 		NB_ERROR("GLFW Error ({0}): {1}", error, description);
-	}
-
-	Scope<Window> Window::Create(const WindowProps& props) {
-		return CreateScope<Win_Window>(props);
 	}
 
 	Win_Window::Win_Window(const WindowProps& props) {
@@ -42,6 +42,11 @@ namespace Nebula {
 			NB_ASSERT(success, "Could Not Initialise GLFW");
 			glfwSetErrorCallback(GLFWErrorCallback);
 		}
+
+#ifdef NB_DEBUG
+		if (Renderer::GetAPI() == RendererAPI::API::OpenGL)
+			glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
+#endif
 
 		m_Window = glfwCreateWindow((int)props.Width, (int)props.Height, m_Data.Title.c_str(), nullptr, nullptr);
 		++s_GLFWWindowCount;
@@ -72,17 +77,17 @@ namespace Nebula {
 			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
 			switch (action) {
 				case GLFW_PRESS: {
-					KeyPressedEvent event(key, 0);
+					KeyPressedEvent event(static_cast<KeyCode>(key), 0);
 					data.EventCallback(event);
 					break;
 				}
 				case GLFW_RELEASE: {
-					KeyReleasedEvent event(key);
+					KeyReleasedEvent event(static_cast<KeyCode>(key));
 					data.EventCallback(event);
 					break;
 				}
 				case GLFW_REPEAT: {
-					KeyPressedEvent event(key, 1);
+					KeyPressedEvent event(static_cast<KeyCode>(key), 1);
 					data.EventCallback(event);
 					break;
 				}
@@ -91,7 +96,7 @@ namespace Nebula {
 
 		glfwSetCharCallback(m_Window, [](GLFWwindow* window, unsigned int character) {
 			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
-			KeyTypedEvent event(character);
+			KeyTypedEvent event(static_cast<KeyCode>(character));
 			data.EventCallback(event);
 		});
 
@@ -100,12 +105,12 @@ namespace Nebula {
 
 			switch (action) {
 				case GLFW_PRESS: {
-					MouseButtonPressedEvent event(button);
+					MouseButtonPressedEvent event(static_cast<MouseCode>(button));
 					data.EventCallback(event);
 					break;
 				}
 				case GLFW_RELEASE: {
-					MouseButtonReleasedEvent event(button);
+					MouseButtonReleasedEvent event(static_cast<MouseCode>(button));
 					data.EventCallback(event);
 					break;
 				}

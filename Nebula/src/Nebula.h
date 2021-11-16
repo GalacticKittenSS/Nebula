@@ -2,8 +2,6 @@
 
 //----API DEFINES-----
 #include "Nebula/Core/API.h"
-#include "Nebula/Core/Key_Codes.h"
-#include "Nebula/Core/Mouse_Codes.h"
 //--------------------
 
 //----LAYERS---------

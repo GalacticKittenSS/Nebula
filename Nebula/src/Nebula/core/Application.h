@@ -10,13 +10,14 @@
 
 #include "Time.h"
 
+int main(int argc, char** argv);
+
 namespace Nebula {
 	class NB_API Application {
 	public:
 		Application();
 		virtual ~Application();
 
-		void run();
 		void OnEvent(Event& e);
 
 		void PushLayer(Layer* layer);
@@ -27,6 +28,7 @@ namespace Nebula {
 		inline static Application& Get() { return *s_Instance; }
 		inline Window& GetWindow() { return *m_Window; }
 	private:
+		void run();
 		bool OnWindowClose(WindowCloseEvent& e);
 		bool OnWindowResize(WindowResizeEvent& e);
 	private:
@@ -39,6 +41,7 @@ namespace Nebula {
 		float m_LastFrameTime;
 
 		static Application* s_Instance;
+		friend int ::main(int argc, char** argv);
 	};
 
 	//Defined In Client

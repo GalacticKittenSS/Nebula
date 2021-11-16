@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Nebula/Core/API.h"
+#include "Nebula/Core/Key_Codes.h"
+#include "Nebula/Core/Mouse_Codes.h"
 
 namespace Nebula {
 	class NB_API Input {
@@ -10,20 +12,22 @@ namespace Nebula {
 		Input(const Input&) = delete;
 		Input& operator=(const Input&) = delete;
 
-		inline static bool IsKeyPressed(int keycode) { return s_Instance->IsKeyPressedImpl(keycode); }
+		inline static bool IsKeyPressed(KeyCode key) { return s_Instance->IsKeyPressedImpl(key); }
 
-		inline static bool IsMouseButtonPressed(int button) { return s_Instance->IsMouseButtonPressedImpl(button); }
+		inline static bool IsMouseButtonPressed(MouseCode button) { return s_Instance->IsMouseButtonPressedImpl(button); }
 		inline static std::pair<float, float> GetMousePos() { return s_Instance->GetMousePosImpl(); }
 		inline static float GetMouseX() { return s_Instance->GetMouseXImpl(); }
 		inline static float GetMouseY() { return s_Instance->GetMouseYImpl(); }
 
 	protected:
-		virtual bool IsKeyPressedImpl(int keycode) = 0;
+		virtual bool IsKeyPressedImpl(KeyCode key) = 0;
 
-		virtual bool IsMouseButtonPressedImpl(int button) = 0;
+		virtual bool IsMouseButtonPressedImpl(MouseCode button) = 0;
 		virtual std::pair<float, float> GetMousePosImpl() = 0;
 		virtual float GetMouseXImpl() = 0;
 		virtual float GetMouseYImpl() = 0;
+
+		static Scope<Input> Create();
 	private:
 		static Scope<Input> s_Instance;
 	};
