@@ -10,9 +10,10 @@
 
 namespace Nebula {
 	struct Renderer2DStorage {
-		Ref<VertexArray> QuadVertexArray;
-		Ref<Shader>		   TextureShader;
-		Ref<Texture2D>		whiteTexture;
+		Ref<VertexArray>	  QuadVertexArray;
+		Ref<VertexArray>  TriangleVertexArray;
+		Ref<Shader>				TextureShader;
+		Ref<Texture2D>			 whiteTexture;
 	};
 
 	static Renderer2DStorage* s_Data;
@@ -22,19 +23,20 @@ namespace Nebula {
 
 		s_Data = new Renderer2DStorage();
 		s_Data->QuadVertexArray = VertexArray::Create();
+		s_Data->TriangleVertexArray = VertexArray::Create();
 
 		BufferLayout layout = {
 			{ShaderDataType::Float3, "position"},
 			{ShaderDataType::Float2, "texCoord"}
 		};
 
+		//QUAD
 		float vertices[4 * (3 + 2)] = {
 			-0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
 			 0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
 			 0.5f,  0.5f, 0.0f, 1.0f, 1.0f,
 			-0.5f,  0.5f, 0.0f, 0.0f, 1.0f
 		};
-
 
 		Ref<VertexBuffer> squareVB = VertexBuffer::Create(vertices, sizeof(vertices));
 		squareVB->SetLayout(layout);
@@ -44,6 +46,22 @@ namespace Nebula {
 
 		Ref<IndexBuffer> squareIB = IndexBuffer::Create(indices, sizeof(indices) / sizeof(uint32_t));
 		s_Data->QuadVertexArray->SetIndexBuffer(squareIB);
+
+		//TRIANGLE
+		float TriangleVertices[3 * (3 + 2)] = {
+			-0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
+			 0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
+			 0.0f,  0.5f, 0.0f, 0.5f, 1.0f
+		};
+
+		Ref<VertexBuffer> triangleVB = VertexBuffer::Create(TriangleVertices, sizeof(TriangleVertices));
+		triangleVB->SetLayout(layout);
+		s_Data->TriangleVertexArray->AddVertexBuffer(triangleVB);
+
+		uint32_t triangleIndices[3] = { 0, 1, 2 };
+
+		Ref<IndexBuffer> triangleIB = IndexBuffer::Create(triangleIndices, sizeof(triangleIndices) / sizeof(uint32_t));
+		s_Data->TriangleVertexArray->SetIndexBuffer(triangleIB);
 
 		s_Data->TextureShader = Shader::Create("assets/shaders/Texture.glsl");
 		s_Data->TextureShader->Bind();
@@ -72,7 +90,7 @@ namespace Nebula {
 
 	}
 
-	void Renderer2D::DrawQuad(Quad& quad, float tiling) {
+	void Renderer2D::Draw(Quad& quad, float tiling) {
 		NB_PROFILE_FUNCTION();
 
 		if (quad.texture == nullptr)
@@ -88,5 +106,23 @@ namespace Nebula {
 		RenderCommand::DrawIndexed(s_Data->QuadVertexArray);
 
 		quad.texture->Unbind();
+	}
+	
+	void Renderer2D::Draw(Triangle& tri, float tiling) {
+		NB_PROFILE_FUNCTION();
+
+		if (tri.texture == nullptr)
+			tri.texture = s_Data->whiteTexture;
+
+		s_Data->TextureShader->SetFloat4("u_Colour", tri.colour);
+		s_Data->TextureShader->SetFloat("u_Tiling", tiling);
+		tri.texture->Bind();
+
+		s_Data->TextureShader->SetMat4("u_Transform", tri.CalculateMatrix());
+
+		s_Data->TriangleVertexArray->Bind();
+		RenderCommand::DrawIndexed(s_Data->TriangleVertexArray);
+
+		tri.texture->Unbind();
 	}
 }

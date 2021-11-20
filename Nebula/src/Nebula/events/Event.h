@@ -2,7 +2,6 @@
 
 #include "nbpch.h"
 #include "Nebula/Core/API.h"
-#include "Event_Manager.h"
 
 
 //TODO: Add Event Listener/Manager
@@ -62,7 +61,6 @@ namespace Nebula {
 		template<typename T, typename F>
 		bool Dispatch(const F& func) {
 			if (m_Event.GetEventType() == T::GetStaticType()) {
-				//TODO Call Event Listener from event Manager
 				m_Event.Handled = func(static_cast<T&>(m_Event));
 				return true;
 			}

@@ -14,6 +14,7 @@ namespace Nebula {
 		static void EndScene();
 
 		//Primitives
-		static void DrawQuad(Quad& quad, float tiling = 1.0f);
+		static void Draw(Quad& quad, float tiling = 1.0f);
+		static void Draw(Triangle& tri, float tiling = 1.0f);
 	};
 }

@@ -4,12 +4,14 @@
 //Example 1
 //#define E1	
 //Example 2 (Sandbox 2D)
-#define Sandbox 
+#define Flappy 
 
 #ifdef E1
-	#include "Example1.h"
+	#include "Example1/Example1.h"
 #elif defined Sandbox
-	#include "Sandbox2D.h"
+	#include "Sandbox/Sandbox2D.h"
+#elif defined Flappy
+	#include "Flappy Bird/Game.h"
 #endif
 
 //Application Class (Calls Layers)
@@ -21,6 +23,8 @@ public:
 		PushLayer(new Example1Layer());
 #elif defined Sandbox
 		PushLayer(new Sandbox2D());
+#elif defined Flappy
+		PushLayer(new Game());
 #endif
 	}
 
