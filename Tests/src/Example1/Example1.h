@@ -4,11 +4,13 @@
 
 class Example1Layer : public Nebula::Layer {
 public:
-	Example1Layer();
+	Example1Layer(): 
+		//Layer Debug
+		Layer("Example Layer") { }
+	
+	~Example1Layer() = default;
 
-	~Example1Layer();
-
-	void Start();
+	void Attach();
 
 	//Called Once Per Frame For Rendering
 	void Render();
@@ -22,12 +24,10 @@ public:
 	bool OnKeyPressed(Nebula::KeyPressedEvent& event);
 
 private:
-	Nebula::ShaderLibrary m_ShaderLib;
-	Nebula::Ref<Nebula::VertexArray>  m_TriangleVA;
-	Nebula::Ref<Nebula::VertexArray>  m_SquareVA;
-	Nebula::Ref<Nebula::Texture2D>	  m_Texture;
+	Nebula::ShaderLibrary ShaderLib;
+	Nebula::Ref<Nebula::Texture2D>	  Texture;
 
 	glm::vec3 m_SquareColour = { 0.2f, 0.3f, 0.8f };
 
-	Nebula::OrthographicCameraController m_Controller;
+	Nebula::OrthographicCameraController Controller;
 };

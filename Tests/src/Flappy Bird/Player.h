@@ -2,10 +2,10 @@
 
 #include <Nebula.h>
 
-struct Player : public Nebula::Quad {
-	Player() : Nebula::Quad() { }
+struct Player : public Nebula::Sprite {
+	Player() : Nebula::Sprite() { }
 
-	Player(glm::vec2 position, glm::vec2 size, float rotation = 0.0f): Nebula::Quad(position, size, rotation) { }
+	Player(glm::vec2 position, glm::vec2 size, float rotation = 0.0f): Nebula::Sprite(position, size, rotation) { }
 
 	void Move(glm::vec3 speed) {
 		this->position += speed;

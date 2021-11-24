@@ -13,13 +13,13 @@ public:
 	void SetColour(glm::vec4 col);
 	void SetOffset(float offset);
 
-	Nebula::Triangle GetTopPillar() { return upper; }
-	Nebula::Triangle GetBottomPillar() { return lower; }
+	Nebula::Sprite GetTopPillar() { return upper; }
+	Nebula::Sprite GetBottomPillar() { return lower; }
 private:
 	float moveSpeed = 5.0f;
 	float minHeight = 3.0f;
 
-	Nebula::Triangle upper, lower;
+	Nebula::Sprite upper, lower;
 public:
 	bool canScore = true;
 };

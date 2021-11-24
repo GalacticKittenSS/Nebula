@@ -63,7 +63,7 @@ namespace Nebula {
 		Ref<IndexBuffer> triangleIB = IndexBuffer::Create(triangleIndices, sizeof(triangleIndices) / sizeof(uint32_t));
 		s_Data->TriangleVertexArray->SetIndexBuffer(triangleIB);
 
-		s_Data->TextureShader = Shader::Create("assets/shaders/Texture.glsl");
+		s_Data->TextureShader = Shader::Create("assets/shaders/Default.glsl");
 		s_Data->TextureShader->Bind();
 		s_Data->TextureShader->SetInt("u_Texture", 0);
 
@@ -90,17 +90,19 @@ namespace Nebula {
 
 	}
 
-	void Renderer2D::Draw(Quad& quad, float tiling) {
+	void Renderer2D::DrawQuad(Sprite& quad, float tiling) {
 		NB_PROFILE_FUNCTION();
 
 		if (quad.texture == nullptr)
 			quad.texture = s_Data->whiteTexture;
+		if (quad.shader == nullptr)
+			quad.shader = s_Data->TextureShader;
 
-		s_Data->TextureShader->SetFloat4("u_Colour", quad.colour);
-		s_Data->TextureShader->SetFloat("u_Tiling", tiling);
+		quad.shader->SetFloat4("u_Colour", quad.colour);
+		quad.shader->SetFloat("u_Tiling", tiling);
 		quad.texture->Bind();
 
-		s_Data->TextureShader->SetMat4("u_Transform", quad.CalculateMatrix());
+		quad.shader->SetMat4("u_Transform", quad.CalculateMatrix());
 
 		s_Data->QuadVertexArray->Bind();
 		RenderCommand::DrawIndexed(s_Data->QuadVertexArray);
@@ -108,17 +110,19 @@ namespace Nebula {
 		quad.texture->Unbind();
 	}
 	
-	void Renderer2D::Draw(Triangle& tri, float tiling) {
+	void Renderer2D::DrawTriangle(Sprite& tri, float tiling) {
 		NB_PROFILE_FUNCTION();
 
 		if (tri.texture == nullptr)
 			tri.texture = s_Data->whiteTexture;
+		if (tri.shader == nullptr)
+			tri.shader = s_Data->TextureShader;
 
-		s_Data->TextureShader->SetFloat4("u_Colour", tri.colour);
-		s_Data->TextureShader->SetFloat("u_Tiling", tiling);
+		tri.shader->SetFloat4("u_Colour", tri.colour);
+		tri.shader->SetFloat("u_Tiling", tiling);
 		tri.texture->Bind();
 
-		s_Data->TextureShader->SetMat4("u_Transform", tri.CalculateMatrix());
+		tri.shader->SetMat4("u_Transform", tri.CalculateMatrix());
 
 		s_Data->TriangleVertexArray->Bind();
 		RenderCommand::DrawIndexed(s_Data->TriangleVertexArray);

@@ -2,7 +2,7 @@
 
 #include "Camera.h"
 #include "Texture.h"
-#include "Sprites.h"
+#include "GameObjects.h"
 
 namespace Nebula {
 	class Renderer2D {
@@ -14,7 +14,7 @@ namespace Nebula {
 		static void EndScene();
 
 		//Primitives
-		static void Draw(Quad& quad, float tiling = 1.0f);
-		static void Draw(Triangle& tri, float tiling = 1.0f);
+		static void DrawQuad(Sprite& quad, float tiling = 1.0f);
+		static void DrawTriangle(Sprite& tri, float tiling = 1.0f);
 	};
 }

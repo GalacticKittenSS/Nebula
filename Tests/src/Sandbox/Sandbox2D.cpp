@@ -29,12 +29,12 @@ void Sandbox2D::Render() {
 	//Begin Scene with Camera
 	Nebula::Renderer2D::BeginScene(Controller.GetCamera());
 
-	Nebula::Quad quad({ 0.0f, 0.0f, 0.1f }, { 10.0f, 10.0f });
+	Nebula::Sprite quad({ 0.0f, 0.0f, 0.1f }, { 10.0f, 10.0f });
 	quad.texture = Texture;
 
 	Nebula::Renderer2D::DrawQuad(quad, 10.0f);
-	Nebula::Renderer2D::DrawQuad(Nebula::Quad({ 0.0f, 0.0f }, { 10.0f, 10.0f }, 0.0f, glm::vec4(squareColour, 1.0f)));
-	Nebula::Renderer2D::DrawQuad(Nebula::Quad({ 0.8f, 0.2f, 0.2f }, { 1.0f, 1.0f }, 0.0f, { 0.8f, 0.3f, 0.2f, 1.0f }));
+	Nebula::Renderer2D::DrawQuad(Nebula::Sprite({ 0.0f, 0.0f }, { 10.0f, 10.0f }, 0.0f, glm::vec4(squareColour, 1.0f)));
+	Nebula::Renderer2D::DrawQuad(Nebula::Sprite({ 0.8f, 0.2f, 0.2f }, { 1.0f, 1.0f }, 0.0f, { 0.8f, 0.3f, 0.2f, 1.0f }));
 
 	Nebula::Renderer2D::EndScene();
 }

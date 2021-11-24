@@ -148,8 +148,6 @@ namespace Nebula {
 	};
 }
 
-#define NB_PROFILE
-
 #ifdef NB_PROFILE
 	#if defined(__GNUC__) || (defined(__MWERKS__) && (__MWERKS__ >= 0x3000)) || (defined(__ICC) && (__ICC >= 600)) || defined(__ghs__)
 		#define NB_FUNC_SIG __PRETTY_FUNCTION__

@@ -20,6 +20,7 @@ void Game::Attach() {
 	Camera = CreateCamera();
 	player = Player({ -4.0f, 0.0f }, { 1.0f, 1.0f });
 	player.colour = { 0.2f, 0.3f, 0.8f, 1.0f };
+	player.shader = Nebula::Shader::Create("assets/shaders/Flappy.glsl");
 
 	for (uint32_t i = 0; i < pillarNo; i++) {
 		pillar.push_back(Pillar());
@@ -159,14 +160,14 @@ void Game::OnReset() {
 void Game::Render() {
 	Nebula::RenderCommand::Clear();
 
-	Nebula::Renderer2D::Draw(Nebula::Quad({ 0.0f,  0.0f, -0.1f }, { 32.0f, 18.0f }, 0.0f, { 0.2f, 0.2f, 0.2f, 1 }));
 	Nebula::Renderer2D::BeginScene(Camera);
+	Nebula::Renderer2D::DrawQuad(Nebula::Sprite({ 0.0f,  0.0f, -0.1f }, { 32.0f, 18.0f }, 0.0f, { 0.2f, 0.2f, 0.2f, 1 }));
 	for (uint32_t i = 0; i < pillar.size(); i++) {
 		pillar[i].Submit();
 	}
-	Nebula::Renderer2D::Draw(player);
-	Nebula::Renderer2D::Draw(Nebula::Quad({ 0.0f,  8.0f, 0.1f }, { 32.0f, 2.0f }, 0.0f, glm::vec4(col.GetRGB(), 1.0f)));
-	Nebula::Renderer2D::Draw(Nebula::Quad({ 0.0f, -8.0f, 0.1f }, { 32.0f, 2.0f }, 0.0f, glm::vec4(col.GetRGB(), 1.0f)));
+	Nebula::Renderer2D::DrawQuad(player);
+	Nebula::Renderer2D::DrawQuad(Nebula::Sprite({ 0.0f,  8.0f, 0.1f }, { 32.0f, 2.0f }, 0.0f, glm::vec4(col.GetRGB(), 1.0f)));
+	Nebula::Renderer2D::DrawQuad(Nebula::Sprite({ 0.0f, -8.0f, 0.1f }, { 32.0f, 2.0f }, 0.0f, glm::vec4(col.GetRGB(), 1.0f)));
 	Nebula::Renderer2D::EndScene();
 }
 

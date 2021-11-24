@@ -2,15 +2,19 @@
 	path = Nebula/Modules/spdlog
 	url = https://github.com/gabime/spdlog
 	branch = v1.x
+	ignore = untracked
 [submodule "Nebula/Modules/glfw"]
 	path = Nebula/Modules/glfw
 	url = https://github.com/TheCherno/glfw
 	branch = master
+	ignore = all
 [submodule "Nebula/Modules/imgui"]
 	path = Nebula/Modules/imgui
 	url = https://github.com/GalacticKittenSS/imgui
 	branch = docking
+	ignore = untracked
 [submodule "Nebula/Modules/glm"]
 	path = Nebula/Modules/glm
 	url = https://github.com/g-truc/glm
 	branch = master
+	ignore = all

@@ -139,128 +139,125 @@ namespace Nebula
 	}
 }
 
-#define NB_SPACE           ::Nebula::Key::Space
-#define NB_APOSTROPHE      ::Nebula::Key::Apostrophe    /* ' */
-#define NB_COMMA           ::Nebula::Key::Comma         /* , */
-#define NB_MINUS           ::Nebula::Key::Minus         /* - */
-#define NB_PERIOD          ::Nebula::Key::Period        /* . */
-#define NB_SLASH           ::Nebula::Key::Slash         /* / */
-#define NB_0               ::Nebula::Key::D0
-#define NB_1               ::Nebula::Key::D1
-#define NB_2               ::Nebula::Key::D2
-#define NB_3               ::Nebula::Key::D3
-#define NB_4               ::Nebula::Key::D4
-#define NB_5               ::Nebula::Key::D5
-#define NB_6               ::Nebula::Key::D6
-#define NB_7               ::Nebula::Key::D7
-#define NB_8               ::Nebula::Key::D8
-#define NB_9               ::Nebula::Key::D9
-#define NB_SEMICOLON       ::Nebula::Key::Semicolon     /* ; */
-#define NB_EQUAL           ::Nebula::Key::Equal         /* = */
-#define NB_A               ::Nebula::Key::A
-#define NB_B               ::Nebula::Key::B
-#define NB_C               ::Nebula::Key::C
-#define NB_D               ::Nebula::Key::D
-#define NB_E               ::Nebula::Key::E
-#define NB_F               ::Nebula::Key::F
-#define NB_G               ::Nebula::Key::G
-#define NB_H               ::Nebula::Key::H
-#define NB_I               ::Nebula::Key::I
-#define NB_J               ::Nebula::Key::J
-#define NB_K               ::Nebula::Key::K
-#define NB_L               ::Nebula::Key::L
-#define NB_M               ::Nebula::Key::M
-#define NB_N               ::Nebula::Key::N
-#define NB_O               ::Nebula::Key::O
-#define NB_P               ::Nebula::Key::P
-#define NB_Q               ::Nebula::Key::Q
-#define NB_R               ::Nebula::Key::R
-#define NB_S               ::Nebula::Key::S
-#define NB_T               ::Nebula::Key::T
-#define NB_U               ::Nebula::Key::U
-#define NB_V               ::Nebula::Key::V
-#define NB_W               ::Nebula::Key::W
-#define NB_X               ::Nebula::Key::X
-#define NB_Y               ::Nebula::Key::Y
-#define NB_Z               ::Nebula::Key::Z
-#define NB_LEFT_BRACKET    ::Nebula::Key::LeftBracket   /* [ */
-#define NB_BACKSLASH       ::Nebula::Key::Backslash     /* \ */
-#define NB_RIGHT_BRACKET   ::Nebula::Key::RightBracket  /* ] */
-#define NB_GRAVE_ACCENT    ::Nebula::Key::GraveAccent   /* ` */
-#define NB_WORLD_1         ::Nebula::Key::World1        /* non-US #1 */
-#define NB_WORLD_2         ::Nebula::Key::World2        /* non-US #2 */
-
-/* Function keys */	
-#define NB_ESCAPE          ::Nebula::Key::Escape
-#define NB_ENTER           ::Nebula::Key::Enter
-#define NB_TAB             ::Nebula::Key::Tab
-#define NB_BACKSPACE       ::Nebula::Key::Backspace
-#define NB_INSERT          ::Nebula::Key::Insert
-#define NB_DELETE          ::Nebula::Key::Delete
-#define NB_RIGHT           ::Nebula::Key::Right
-#define NB_LEFT            ::Nebula::Key::Left
-#define NB_DOWN            ::Nebula::Key::Down
-#define NB_UP              ::Nebula::Key::Up
-#define NB_PAGE_UP         ::Nebula::Key::PageUp
-#define NB_PAGE_DOWN       ::Nebula::Key::PageDown
-#define NB_HOME            ::Nebula::Key::Home
-#define NB_END             ::Nebula::Key::End
-#define NB_CAPS_LOCK       ::Nebula::Key::CapsLock
-#define NB_SCROLL_LOCK     ::Nebula::Key::ScrollLock
-#define NB_NUM_LOCK        ::Nebula::Key::NumLock
-#define NB_PRINT_SCREEN    ::Nebula::Key::PrintScreen
-#define NB_PAUSE           ::Nebula::Key::Pause
-#define NB_F1              ::Nebula::Key::F1
-#define NB_F2              ::Nebula::Key::F2
-#define NB_F3              ::Nebula::Key::F3
-#define NB_F4              ::Nebula::Key::F4
-#define NB_F5              ::Nebula::Key::F5
-#define NB_F6              ::Nebula::Key::F6
-#define NB_F7              ::Nebula::Key::F7
-#define NB_F8              ::Nebula::Key::F8
-#define NB_F9              ::Nebula::Key::F9
-#define NB_F10             ::Nebula::Key::F10
-#define NB_F11             ::Nebula::Key::F11
-#define NB_F12             ::Nebula::Key::F12
-#define NB_F13             ::Nebula::Key::F13
-#define NB_F14             ::Nebula::Key::F14
-#define NB_F15             ::Nebula::Key::F15
-#define NB_F16             ::Nebula::Key::F16
-#define NB_F17             ::Nebula::Key::F17
-#define NB_F18             ::Nebula::Key::F18
-#define NB_F19             ::Nebula::Key::F19
-#define NB_F20             ::Nebula::Key::F20
-#define NB_F21             ::Nebula::Key::F21
-#define NB_F22             ::Nebula::Key::F22
-#define NB_F23             ::Nebula::Key::F23
-#define NB_F24             ::Nebula::Key::F24
-#define NB_F25             ::Nebula::Key::F25
-
+#define NB_SPACE ::Nebula::Key::Space  
+#define NB_APOSTROPHE ::Nebula::Key::Apostrophe/* ' */  
+#define NB_COMMA ::Nebula::Key::Comma /* , */  
+#define NB_MINUS ::Nebula::Key::Minus /* - */  
+#define NB_PERIOD ::Nebula::Key::Period/* . */  
+#define NB_SLASH ::Nebula::Key::Slash /* / */  
+#define NB_0 ::Nebula::Key::D0  
+#define NB_1 ::Nebula::Key::D1  
+#define NB_2 ::Nebula::Key::D2  
+#define NB_3 ::Nebula::Key::D3  
+#define NB_4 ::Nebula::Key::D4  
+#define NB_5 ::Nebula::Key::D5  
+#define NB_6 ::Nebula::Key::D6  
+#define NB_7 ::Nebula::Key::D7  
+#define NB_8 ::Nebula::Key::D8  
+#define NB_9 ::Nebula::Key::D9  
+#define NB_SEMICOLON ::Nebula::Key::Semicolon /* ; */  
+#define NB_EQUAL ::Nebula::Key::Equal /* = */  
+#define NB_A ::Nebula::Key::A  
+#define NB_B ::Nebula::Key::B  
+#define NB_C ::Nebula::Key::C  
+#define NB_D ::Nebula::Key::D  
+#define NB_E ::Nebula::Key::E  
+#define NB_F ::Nebula::Key::F  
+#define NB_G ::Nebula::Key::G  
+#define NB_H ::Nebula::Key::H  
+#define NB_I ::Nebula::Key::I  
+#define NB_J ::Nebula::Key::J  
+#define NB_K ::Nebula::Key::K  
+#define NB_L ::Nebula::Key::L  
+#define NB_M ::Nebula::Key::M  
+#define NB_N ::Nebula::Key::N  
+#define NB_O ::Nebula::Key::O  
+#define NB_P ::Nebula::Key::P  
+#define NB_Q ::Nebula::Key::Q  
+#define NB_R ::Nebula::Key::R  
+#define NB_S ::Nebula::Key::S  
+#define NB_T ::Nebula::Key::T  
+#define NB_U ::Nebula::Key::U  
+#define NB_V ::Nebula::Key::V  
+#define NB_W ::Nebula::Key::W  
+#define NB_X ::Nebula::Key::X  
+#define NB_Y ::Nebula::Key::Y  
+#define NB_Z ::Nebula::Key::Z  
+#define NB_LEFT_BRACKET ::Nebula::Key::LeftBracket /* [ */  
+#define NB_BACKSLASH ::Nebula::Key::Backslash /* \ */  
+#define NB_RIGHT_BRACKET ::Nebula::Key::RightBracket/* ] */  
+#define NB_GRAVE_ACCENT ::Nebula::Key::GraveAccent /* ` */  
+#define NB_WORLD_1 ::Nebula::Key::World1/* non-US #1 */  
+#define NB_WORLD_2 ::Nebula::Key::World2/* non-US #2 */  
+/* Function keys */
+#define NB_ESCAPE ::Nebula::Key::Escape  
+#define NB_ENTER ::Nebula::Key::Enter  
+#define NB_TAB ::Nebula::Key::Tab  
+#define NB_BACKSPACE ::Nebula::Key::Backspace  
+#define NB_INSERT ::Nebula::Key::Insert  
+#define NB_DELETE ::Nebula::Key::Delete  
+#define NB_RIGHT ::Nebula::Key::Right  
+#define NB_LEFT ::Nebula::Key::Left  
+#define NB_DOWN ::Nebula::Key::Down  
+#define NB_UP ::Nebula::Key::Up  
+#define NB_PAGE_UP ::Nebula::Key::PageUp  
+#define NB_PAGE_DOWN ::Nebula::Key::PageDown  
+#define NB_HOME ::Nebula::Key::Home  
+#define NB_END ::Nebula::Key::End  
+#define NB_CAPS_LOCK ::Nebula::Key::CapsLock  
+#define NB_SCROLL_LOCK ::Nebula::Key::ScrollLock  
+#define NB_NUM_LOCK ::Nebula::Key::NumLock  
+#define NB_PRINT_SCREEN ::Nebula::Key::PrintScreen  
+#define NB_PAUSE ::Nebula::Key::Pause  
+#define NB_F1 ::Nebula::Key::F1  
+#define NB_F2 ::Nebula::Key::F2  
+#define NB_F3 ::Nebula::Key::F3  
+#define NB_F4 ::Nebula::Key::F4  
+#define NB_F5 ::Nebula::Key::F5  
+#define NB_F6 ::Nebula::Key::F6  
+#define NB_F7 ::Nebula::Key::F7  
+#define NB_F8 ::Nebula::Key::F8  
+#define NB_F9 ::Nebula::Key::F9  
+#define NB_F10 ::Nebula::Key::F10  
+#define NB_F11 ::Nebula::Key::F11  
+#define NB_F12 ::Nebula::Key::F12  
+#define NB_F13 ::Nebula::Key::F13  
+#define NB_F14 ::Nebula::Key::F14  
+#define NB_F15 ::Nebula::Key::F15  
+#define NB_F16 ::Nebula::Key::F16  
+#define NB_F17 ::Nebula::Key::F17  
+#define NB_F18 ::Nebula::Key::F18  
+#define NB_F19 ::Nebula::Key::F19  
+#define NB_F20 ::Nebula::Key::F20  
+#define NB_F21 ::Nebula::Key::F21  
+#define NB_F22 ::Nebula::Key::F22  
+#define NB_F23 ::Nebula::Key::F23  
+#define NB_F24 ::Nebula::Key::F24  
+#define NB_F25 ::Nebula::Key::F25  
 /* Keypad */
-#define NB_KP_0            ::Nebula::Key::KP0
-#define NB_KP_1            ::Nebula::Key::KP1
-#define NB_KP_2            ::Nebula::Key::KP2
-#define NB_KP_3            ::Nebula::Key::KP3
-#define NB_KP_4            ::Nebula::Key::KP4
-#define NB_KP_5            ::Nebula::Key::KP5
-#define NB_KP_6            ::Nebula::Key::KP6
-#define NB_KP_7            ::Nebula::Key::KP7
-#define NB_KP_8            ::Nebula::Key::KP8
-#define NB_KP_9            ::Nebula::Key::KP9
-#define NB_KP_DECIMAL      ::Nebula::Key::KPDecimal
-#define NB_KP_DIVIDE       ::Nebula::Key::KPDivide
-#define NB_KP_MULTIPLY     ::Nebula::Key::KPMultiply
-#define NB_KP_SUBTRACT     ::Nebula::Key::KPSubtract
-#define NB_KP_ADD          ::Nebula::Key::KPAdd
-#define NB_KP_ENTER        ::Nebula::Key::KPEnter
-#define NB_KP_EQUAL        ::Nebula::Key::KPEqual
-
-#define NB_LEFT_SHIFT      ::Nebula::Key::LeftShift
-#define NB_LEFT_CONTROL    ::Nebula::Key::LeftControl
-#define NB_LEFT_ALT        ::Nebula::Key::LeftAlt
-#define NB_LEFT_SUPER      ::Nebula::Key::LeftSuper
-#define NB_RIGHT_SHIFT     ::Nebula::Key::RightShift
-#define NB_RIGHT_CONTROL   ::Nebula::Key::RightControl
-#define NB_RIGHT_ALT       ::Nebula::Key::RightAlt
-#define NB_RIGHT_SUPER     ::Nebula::Key::RightSuper
-#define NB_MENU            ::Nebula::Key::Menu
+#define NB_KP_0 ::Nebula::Key::KP0  
+#define NB_KP_1 ::Nebula::Key::KP1  
+#define NB_KP_2 ::Nebula::Key::KP2  
+#define NB_KP_3 ::Nebula::Key::KP3  
+#define NB_KP_4 ::Nebula::Key::KP4  
+#define NB_KP_5 ::Nebula::Key::KP5  
+#define NB_KP_6 ::Nebula::Key::KP6  
+#define NB_KP_7 ::Nebula::Key::KP7  
+#define NB_KP_8 ::Nebula::Key::KP8  
+#define NB_KP_9 ::Nebula::Key::KP9  
+#define NB_KP_DECIMAL ::Nebula::Key::KPDecimal  
+#define NB_KP_DIVIDE ::Nebula::Key::KPDivide  
+#define NB_KP_MULTIPLY ::Nebula::Key::KPMultiply  
+#define NB_KP_SUBTRACT ::Nebula::Key::KPSubtract  
+#define NB_KP_ADD ::Nebula::Key::KPAdd  
+#define NB_KP_ENTER ::Nebula::Key::KPEnter  
+#define NB_KP_EQUAL ::Nebula::Key::KPEqual  
+#define NB_LEFT_SHIFT ::Nebula::Key::LeftShift  
+#define NB_LEFT_CONTROL ::Nebula::Key::LeftControl  
+#define NB_LEFT_ALT ::Nebula::Key::LeftAlt  
+#define NB_LEFT_SUPER ::Nebula::Key::LeftSuper  
+#define NB_RIGHT_SHIFT ::Nebula::Key::RightShift  
+#define NB_RIGHT_CONTROL ::Nebula::Key::RightControl  
+#define NB_RIGHT_ALT ::Nebula::Key::RightAlt  
+#define NB_RIGHT_SUPER ::Nebula::Key::RightSuper  
+#define NB_MENU ::Nebula::Key::Menu  

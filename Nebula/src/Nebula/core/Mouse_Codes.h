@@ -23,15 +23,15 @@ namespace Nebula {
 	}
 }
 
-#define NB_MOUSE_0      ::Nebula::Mouse::Button0
-#define NB_MOUSE_1      ::Nebula::Mouse::Button1
-#define NB_MOUSE_2      ::Nebula::Mouse::Button2
-#define NB_MOUSE_3      ::Nebula::Mouse::Button3
-#define NB_MOUSE_4      ::Nebula::Mouse::Button4
-#define NB_MOUSE_5      ::Nebula::Mouse::Button5
-#define NB_MOUSE_6      ::Nebula::Mouse::Button6
-#define NB_MOUSE_7      ::Nebula::Mouse::Button7
-#define NB_MOUSE_LAST   ::Nebula::Mouse::ButtonLast
-#define NB_MOUSE_LEFT   ::Nebula::Mouse::ButtonLeft
-#define NB_MOUSE_RIGHT  ::Nebula::Mouse::ButtonRight
+#define NB_MOUSE_0 ::Nebula::Mouse::Button0  
+#define NB_MOUSE_1 ::Nebula::Mouse::Button1  
+#define NB_MOUSE_2 ::Nebula::Mouse::Button2  
+#define NB_MOUSE_3 ::Nebula::Mouse::Button3  
+#define NB_MOUSE_4 ::Nebula::Mouse::Button4  
+#define NB_MOUSE_5 ::Nebula::Mouse::Button5  
+#define NB_MOUSE_6 ::Nebula::Mouse::Button6  
+#define NB_MOUSE_7 ::Nebula::Mouse::Button7  
+#define NB_MOUSE_LAST ::Nebula::Mouse::ButtonLast  
+#define NB_MOUSE_LEFT ::Nebula::Mouse::ButtonLeft  
+#define NB_MOUSE_RIGHT ::Nebula::Mouse::ButtonRight  
 #define NB_MOUSE_MIDDLE ::Nebula::Mouse::ButtonMiddle 

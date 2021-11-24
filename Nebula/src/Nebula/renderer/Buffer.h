@@ -101,9 +101,11 @@ namespace Nebula {
 		virtual void SetLayout(const BufferLayout& layout) = 0;
 		virtual const BufferLayout GetLayout() const = 0;
 
+		//static Ref<VertexBuffer> Create(uint32_t size);
 		static Ref<VertexBuffer> Create(float* vertices, uint32_t size);
 	};
 
+	//Only Supports 32-bit index buffers;
 	class IndexBuffer {
 	public:
 		virtual ~IndexBuffer() { }

@@ -1,9 +1,13 @@
 #include "Pillar.h"
 
 Pillar::Pillar() {
-	upper = Nebula::Triangle();
-	lower = Nebula::Triangle();
+	upper = Nebula::Sprite();
+	upper.shader = Nebula::Shader::Create("assets/shaders/Flappy.glsl");
 	upper.rotation = glm::radians(180.0f);
+
+	lower = Nebula::Sprite();
+	lower.shader = Nebula::Shader::Create("assets/shaders/Flappy.glsl");
+	
 	RecalculatePos();
 }
 
@@ -37,8 +41,8 @@ void Pillar::Update(Nebula::Timestep ts) {
 }
 
 void Pillar::Submit() {
-	Nebula::Renderer2D::Draw(upper);
-	Nebula::Renderer2D::Draw(lower);
+	Nebula::Renderer2D::DrawTriangle(upper);
+	Nebula::Renderer2D::DrawTriangle(lower);
 }
 
 void Pillar::SetColour(glm::vec4 col) {

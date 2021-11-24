@@ -1,9 +1,6 @@
 #include <Nebula.h>
 #include <Nebula_EntryPoint.h>
 
-//Example 1
-//#define E1	
-//Example 2 (Sandbox 2D)
 #define Flappy 
 
 #ifdef E1

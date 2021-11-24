@@ -10,11 +10,6 @@
 	"src/Nebula.h"
 */
 
-
-//------Real Include File------
-#include "../src/Nebula.h"
-//-----------------------------
-
 //-------ImGui--------
 #include "imgui/imgui.h"
 //--------------------
@@ -24,3 +19,7 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 //--------------------
+
+//------Real Include File------
+#include "../src/Nebula.h"
+//-----------------------------

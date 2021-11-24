@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Nebula.h"
+#include <Nebula.h>
 
 class Sandbox2D : public Nebula::Layer {
 public:
