@@ -1,7 +1,8 @@
 #pragma once
 
 #include <string>
-#include <glm/glm.hpp>
+
+#include "Nebula/Maths/Maths.h"
 
 namespace Nebula {
 	class Shader {
@@ -18,9 +19,9 @@ namespace Nebula {
 
 		virtual void SetInt(const std::string& name, const int value) = 0;
 		virtual void SetFloat(const std::string& name, const float value) = 0;
-		virtual void SetMat4(const std::string& name, const glm::mat4& value) = 0;
-		virtual void SetFloat3(const std::string& name, const glm::vec3& values) = 0;
-		virtual void SetFloat4(const std::string& name, const glm::vec4& values) = 0;
+		virtual void SetMat4(const std::string& name, const mat4& value) = 0;
+		virtual void SetFloat3(const std::string& name, const vec3& values) = 0;
+		virtual void SetFloat4(const std::string& name, const vec4& values) = 0;
 	};
 
 	class ShaderLibrary {

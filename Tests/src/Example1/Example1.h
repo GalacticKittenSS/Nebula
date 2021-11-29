@@ -27,7 +27,7 @@ private:
 	Nebula::ShaderLibrary ShaderLib;
 	Nebula::Ref<Nebula::Texture2D>	  Texture;
 
-	glm::vec3 m_SquareColour = { 0.2f, 0.3f, 0.8f };
+	Nebula::vec3 m_SquareColour = { 0.2f, 0.3f, 0.8f };
 
 	Nebula::OrthographicCameraController Controller;
 };

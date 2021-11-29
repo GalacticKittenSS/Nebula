@@ -10,7 +10,7 @@ public:
 	void Update(Nebula::Timestep ts);
 	void Submit();
 
-	void SetColour(glm::vec4 col);
+	void SetColour(Nebula::vec4 col);
 	void SetOffset(float offset);
 
 	Nebula::Sprite GetTopPillar() { return upper; }

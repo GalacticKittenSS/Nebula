@@ -6,6 +6,7 @@ void Sandbox2D::Attach() {
 	NB_PROFILE_FUNCTION();
 
 	Texture = Nebula::Texture2D::Create("assets/textures/cat.png");
+	timer = Nebula::Timer();
 }
 
 void Sandbox2D::Detach() {
@@ -14,7 +15,7 @@ void Sandbox2D::Detach() {
 
 void Sandbox2D::Update(Nebula::Timestep ts) {
 	NB_PROFILE_FUNCTION();
-
+	
 	Controller.OnUpdate(ts);
 }
 
@@ -29,13 +30,11 @@ void Sandbox2D::Render() {
 	//Begin Scene with Camera
 	Nebula::Renderer2D::BeginScene(Controller.GetCamera());
 
-	Nebula::Sprite quad({ 0.0f, 0.0f, 0.1f }, { 10.0f, 10.0f });
-	quad.texture = Texture;
-
-	Nebula::Renderer2D::DrawQuad(quad, 10.0f);
-	Nebula::Renderer2D::DrawQuad(Nebula::Sprite({ 0.0f, 0.0f }, { 10.0f, 10.0f }, 0.0f, glm::vec4(squareColour, 1.0f)));
-	Nebula::Renderer2D::DrawQuad(Nebula::Sprite({ 0.8f, 0.2f, 0.2f }, { 1.0f, 1.0f }, 0.0f, { 0.8f, 0.3f, 0.2f, 1.0f }));
-
+	Nebula::Renderer2D::DrawQuad(Nebula::Sprite({ 
+		 Nebula::cos(timer.elapsed()) + Nebula::sin(timer.elapsed()), 
+		-Nebula::sin(timer.elapsed()) + Nebula::cos(timer.elapsed()) 
+			 }, { 1.0f, 1.0f }, 0.0f, { 0.2f, 0.4f, 0.7f, 1.0f }));
+	
 	Nebula::Renderer2D::EndScene();
 }
 

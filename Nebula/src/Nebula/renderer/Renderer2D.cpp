@@ -6,8 +6,6 @@
 #include "Shader.h"
 #include "Render_Command.h"
 
-#include <glm/gtc/matrix_transform.hpp>
-
 namespace Nebula {
 	struct Renderer2DStorage {
 		Ref<VertexArray>	  QuadVertexArray;

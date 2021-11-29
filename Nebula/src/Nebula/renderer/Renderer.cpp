@@ -27,7 +27,7 @@ namespace Nebula {
 
 	void Renderer::EndScene() { }
 
-	void Renderer::Submit(const Ref<Shader>& shader, const Ref<VertexArray>& vertexArray, const glm::mat4& transform) {
+	void Renderer::Submit(const Ref<Shader>& shader, const Ref<VertexArray>& vertexArray, const mat4& transform) {
 		shader->Bind();
 		shader->SetMat4("u_View", s_Data->ViewProjectMatrix);
 		shader->SetMat4("u_Transform", transform);

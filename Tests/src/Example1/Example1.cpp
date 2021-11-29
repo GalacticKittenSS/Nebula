@@ -26,7 +26,7 @@ void Example1Layer::Render() {
 	for (int y = -10; y < 10; y++) {
 		for (int x = -10; x < 10; x++) {
 			//Get Position with 0.01 gap
-			glm::vec3 pos(x * 0.11f, y * 0.11f, 0.0f);
+			Nebula::vec3 pos(x * 0.11f, y * 0.11f, 0.0f);
 			//Render Cube Immediately
 			Nebula::Renderer2D::DrawQuad(Nebula::Sprite(pos, { 0.1f, 0.1f }, 0.0f, Texture));
 		}

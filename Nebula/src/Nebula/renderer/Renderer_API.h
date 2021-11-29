@@ -1,7 +1,6 @@
 #pragma once
 
-#include <glm/glm.hpp>
-
+#include "Nebula/Maths/Maths.h"
 #include "Vertex_Array.h"
 
 namespace Nebula {
@@ -16,7 +15,7 @@ namespace Nebula {
 
 		virtual void Clear() = 0;
 		virtual void SetClearColour(float r, float g, float b, float a) = 0;
-		virtual void SetClearColour(const glm::vec4& colour) = 0;
+		virtual void SetClearColour(const vec4& colour) = 0;
 
 		virtual void DrawIndexed(const Ref<VertexArray>& vertexArray) = 0;
 

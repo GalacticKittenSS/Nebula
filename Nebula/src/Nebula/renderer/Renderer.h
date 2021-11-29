@@ -4,6 +4,8 @@
 #include "Camera.h"
 #include "Shader.h"
 
+#include "Nebula/Maths/Maths.h"
+
 namespace Nebula {
 	class Renderer {
 	public:
@@ -18,13 +20,13 @@ namespace Nebula {
 		static void Submit(
 			const Ref<Shader>& shader,
 			const Ref<VertexArray>& vertexArray,
-			const glm::mat4& transform = glm::mat4(1.0f)
+			const mat4& transform = mat4(1.0f)
 		);
 
 		inline static RendererAPI::API GetAPI() { return RendererAPI::GetAPI(); }
 	private:
 		struct SceneData {
-			glm::mat4 ViewProjectMatrix;
+			mat4 ViewProjectMatrix;
 		};
 
 		static Scope<SceneData> s_Data;

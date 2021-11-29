@@ -3,7 +3,7 @@
 Pillar::Pillar() {
 	upper = Nebula::Sprite();
 	upper.shader = Nebula::Shader::Create("assets/shaders/Flappy.glsl");
-	upper.rotation = glm::radians(180.0f);
+	upper.rotation = Nebula::radians(180.0f);
 
 	lower = Nebula::Sprite();
 	lower.shader = Nebula::Shader::Create("assets/shaders/Flappy.glsl");
@@ -45,7 +45,7 @@ void Pillar::Submit() {
 	Nebula::Renderer2D::DrawTriangle(lower);
 }
 
-void Pillar::SetColour(glm::vec4 col) {
+void Pillar::SetColour(Nebula::vec4 col) {
 	upper.colour = col;
 	lower.colour = col;
 }

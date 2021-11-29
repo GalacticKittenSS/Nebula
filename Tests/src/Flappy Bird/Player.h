@@ -5,14 +5,14 @@
 struct Player : public Nebula::Sprite {
 	Player() : Nebula::Sprite() { }
 
-	Player(glm::vec2 position, glm::vec2 size, float rotation = 0.0f): Nebula::Sprite(position, size, rotation) { }
+	Player(Nebula::vec2 position, Nebula::vec2 size, float rotation = 0.0f) : Nebula::Sprite(position, size, rotation) { }
 
-	void Move(glm::vec3 speed) {
+	void Move(Nebula::vec3 speed) {
 		this->position += speed;
 	}
 
-	void Move(glm::vec2 speed) {
-		this->position += glm::vec3(speed, 0.0f);
+	void Move(Nebula::vec2 speed) {
+		this->position += Nebula::vec3(speed, 0.0f);
 	}
 
 	void Update(Nebula::Timestep ts) {

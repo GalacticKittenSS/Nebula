@@ -22,5 +22,7 @@ private:
 
 	Nebula::OrthographicCameraController Controller;
 
-	glm::vec3 squareColour = { 0, 0, 0 };
+	Nebula::vec3 squareColour = { 0, 0, 0 };
+
+	Nebula::Timer timer;
 };

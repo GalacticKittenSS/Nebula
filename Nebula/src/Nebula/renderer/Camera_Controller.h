@@ -32,7 +32,7 @@ namespace Nebula {
 
 		bool m_Rotation;
 
-		glm::vec3 m_CamPosition = { 0.0f, 0.0f, 0.0f };
+		vec3 m_CamPosition = { 0.0f, 0.0f, 0.0f };
 		float m_CamRotation = 0.0f;
 
 		float m_CamTranslationSpeed = 5.0f, m_CamRotationSpeed = 180.0f;
