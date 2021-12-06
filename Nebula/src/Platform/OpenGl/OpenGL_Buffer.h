@@ -11,11 +11,13 @@ namespace Nebula {
 
 	class OpenGL_VertexBuffer : public VertexBuffer {
 	public:
+		OpenGL_VertexBuffer(uint32_t size);
 		OpenGL_VertexBuffer(float* vertices, uint32_t size);
 		~OpenGL_VertexBuffer();
 
 		void Bind()   const override;
 		void Unbind() const override;
+		void SetData(const void* data, uint32_t size = 0) override;
 
 		const BufferLayout GetLayout() const override { return m_Layout; }
 		void SetLayout(const BufferLayout& layout) override { m_Layout = layout; }

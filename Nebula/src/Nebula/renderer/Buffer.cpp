@@ -5,6 +5,16 @@
 #include "Platform/OpenGl/OpenGL_Buffer.h"
 
 namespace Nebula {
+	Ref<VertexBuffer> VertexBuffer::Create(uint32_t size) {
+		switch (Renderer::GetAPI()) {
+			case RendererAPI::API::None:		NB_ASSERT(false, "RendererAPI::None is not supported!"); return nullptr;
+			case RendererAPI::API::OpenGL:		return CreateRef<OpenGL_VertexBuffer>(size);
+		}
+
+		NB_ASSERT(false, "Unknown Renderer API!");
+		return nullptr;
+	}
+
 	Ref<VertexBuffer> VertexBuffer::Create(float* vertices, uint32_t size) {
 		switch (Renderer::GetAPI()) {
 			case RendererAPI::API::None:		NB_ASSERT(false, "RendererAPI::None is not supported!"); return nullptr;

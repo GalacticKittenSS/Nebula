@@ -1,7 +1,7 @@
 #include <Nebula.h>
 #include <Nebula_EntryPoint.h>
 
-#define Flappy
+#define Sandbox
 
 #ifdef E1
 	#include "Example1/Example1.h"

@@ -18,6 +18,10 @@ namespace Nebula {
 
 		void Bind(uint32_t slot) const;
 		void Unbind() const;
+
+		bool operator==(const Texture& other) const override { 
+			return m_RendererID == ((OpenGL_Texture2D&)other).m_RendererID;
+		}
 	private:
 		std::string m_Path;
 		uint32_t m_Width, m_Height;

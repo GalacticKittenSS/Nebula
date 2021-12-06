@@ -12,6 +12,6 @@ namespace Nebula {
 		void SetClearColour(float r, float g, float b, float a) override;
 		void SetClearColour(const vec4& colour) override;
 
-		void DrawIndexed(const Ref<VertexArray>& vertexArray) override;
+		void DrawIndexed(const Ref<VertexArray>& vertexArray, uint32_t indexCount) override;
 	};
 }

@@ -37,11 +37,11 @@ namespace Nebula {
 
 		//Should only be used by Renderer
 		mat4 CalculateMatrix() {
-			mat4 transform = translate(mat4(1.0f), this->position)
-				* scale(mat4(1.0f), vec3(this->size.x, this->size.y, 0.0f));
+			mat4 transform = translate(this->position)
+				* scale(vec3(size, 1.0f));
 			
 			if (rotation != 0.0f)
-				transform *= rotate(mat4(1.0f), this->rotation, { 0.0f, 0.0f, 1.0f });
+				transform *= rotate(this->rotation, { 0.0f, 0.0f, 1.0f });
 
 			return transform;
 		}

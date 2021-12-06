@@ -18,12 +18,14 @@ namespace Nebula {
 		const std::string& GetName() const override { return m_Name; }
 
 		void SetInt(const std::string& name, const int value) override;
+		void SetIntArray(const std::string& name, int* values, uint32_t count) override;
 		void SetFloat(const std::string& name, const float value) override;
 		void SetMat4(const std::string& name, const mat4& value) override;
 		void SetFloat3(const std::string& name, const vec3& values) override;
 		void SetFloat4(const std::string& name, const vec4& values) override;
 
 		void UploadUniformInt(const std::string& name, const int value);
+		void UploadUniformIntArray(const std::string& name, int* values, uint32_t count);
 		
 		//void UploadUniformMat3(const std::string& name, const mat3& value);
 		void UploadUniformMat4(const std::string& name, const mat4& value);

@@ -39,7 +39,9 @@
 #include "Nebula/Core/Time.h"
 #include "Nebula/Core/Window.h"
 
+//-----Maths----------
 #include "Nebula/Maths/Maths.h"
+//--------------------
 
 //----Application-----
 #include "Nebula/Core/Application.h"
