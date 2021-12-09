@@ -1,7 +1,7 @@
 #include <Nebula.h>
 #include <Nebula_EntryPoint.h>
 
-#define RPG
+#define Sandbox
 
 #if defined E1
 	#include "Example1/Example1.h"
@@ -9,8 +9,8 @@
 	#include "Sandbox/Sandbox2D.h"
 #elif defined Flappy
 	#include "Flappy Bird/Game.h"
-#elif defined RPG
-	#include "RPG/Game.h"
+#elif defined Tile
+	#include "Tilemaps/Game.h"
 #endif
 
 class BG : public Nebula::Layer {

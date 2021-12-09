@@ -31,7 +31,7 @@ namespace Nebula {
 
 		//SUB TEXTURES
 
-		Sprite(vec2 pos, vec2 size, float rotation, vec4 colour, Ref<SubTexture2D> texture = nullptr) :
+		Sprite(vec2 pos, vec2 size, float rotation, vec4 colour, Ref<SubTexture2D> texture) :
 			position({ pos.x, pos.y, 0.0f }), size(size), rotation(radians(rotation)), colour(colour), 
 			texture(texture->GetTexture()) {
 			const vec2* coords = texture->GetTextureCoords();
@@ -41,7 +41,7 @@ namespace Nebula {
 			texCoords[3] = coords[3];
 		}
 
-		Sprite(vec3 pos, vec2 size, float rotation, vec4 colour, Ref<SubTexture2D> texture = nullptr) :
+		Sprite(vec3 pos, vec2 size, float rotation, vec4 colour, Ref<SubTexture2D> texture) :
 			position(pos), size(size), rotation(radians(rotation)), colour(colour), 
 			texture(texture->GetTexture()) {
 			const vec2* coords = texture->GetTextureCoords();

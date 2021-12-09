@@ -55,6 +55,10 @@ namespace Nebula {
 		}
 	}
 
+	void Application::Close() {
+		m_Running = false;
+	}
+
 	void Application::PushLayer(Layer* layer) {
 		NB_PROFILE_FUNCTION();
 

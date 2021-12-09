@@ -25,6 +25,8 @@ namespace Nebula {
 		void PushOverlay(Layer* overlay);
 		void PopOverlay(Layer* overlay);
 
+		void Close();
+
 		inline static Application& Get() { return *s_Instance; }
 		inline Window& GetWindow() { return *m_Window; }
 	private:

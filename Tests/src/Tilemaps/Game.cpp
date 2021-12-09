@@ -4,9 +4,9 @@ using namespace Nebula;
 
 static const char* s_MapTiles =
 "WWWWWWWWWWWWWWWWWWWWWWWW"
-"WWWWWWWWWWWWWWWWDDDWWWWW"
-"WWWWWWWWWWWWWWWWWDDDWWWW"
-"WWWWWDDDDDDDDDDDWWWWWWWW"
+"WWWWWWWWWWWWWWWWWDDDDDWW"
+"WWWWWWWWWWWWWWWWWWDDDDWW"
+"WWWWWDDDDDDDDDDDWWWDDWWW"
 "WWDDDDDDDDDDDDDDDDDWWWWW"
 "WWWDDDDDDWWDDDDDDWWWWWWW"
 "WWWDDDDDWWWWWDDDDWWWWWWW"
@@ -74,15 +74,6 @@ void Game::Render() {
 		}
 	}
 
-	//Renderer2D::DrawQuad(Sprite({-1.0f, 1.0f }, { 1.0f, 1.0f }, 0.0f, grass[0]));
-	//Renderer2D::DrawQuad(Sprite({ 0.0f, 1.0f }, { 1.0f, 1.0f }, 0.0f, grass[1]));
-	//Renderer2D::DrawQuad(Sprite({ 1.0f, 1.0f }, { 1.0f, 1.0f }, 0.0f, grass[2]));
-	//Renderer2D::DrawQuad(Sprite({-1.0f, 0.0f }, { 1.0f, 1.0f }, 0.0f, grass[3]));
-	//Renderer2D::DrawQuad(Sprite({ 0.0f, 0.0f }, { 1.0f, 1.0f }, 0.0f, grass[4]));
-	//Renderer2D::DrawQuad(Sprite({ 1.0f, 0.0f }, { 1.0f, 1.0f }, 0.0f, grass[5]));
-	//Renderer2D::DrawQuad(Sprite({-1.0f,-1.0f }, { 1.0f, 1.0f }, 0.0f, grass[6]));
-	//Renderer2D::DrawQuad(Sprite({ 0.0f,-1.0f }, { 1.0f, 1.0f }, 0.0f, grass[7]));
-	//Renderer2D::DrawQuad(Sprite({ 1.0f,-1.0f }, { 1.0f, 1.0f }, 0.0f, grass[8]));
 	Renderer2D::EndScene();
 }
 

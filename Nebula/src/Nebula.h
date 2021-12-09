@@ -22,6 +22,7 @@
 #include "Nebula/Renderer/Renderer.h"
 #include "Nebula/Renderer/Renderer2D.h"
 #include "Nebula/Renderer/Render_Command.h"
+#include "Nebula/Renderer/FrameBuffer.h"
 //--------------------
 
 //----EVENTS---------

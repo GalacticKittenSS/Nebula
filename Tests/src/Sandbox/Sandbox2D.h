@@ -18,11 +18,9 @@ public:
 	void OnEvent(Nebula::Event& e) override;
 	bool OnKeyPressed(Nebula::KeyPressedEvent& e);
 private:
-	Nebula::Ref<Nebula::Texture2D> Texture;
+	Nebula::Ref<Nebula::FrameBuffer> frameBuffer;
 
 	Nebula::OrthographicCameraController Controller;
-
-	Nebula::vec3 squareColour = { 0, 0, 0 };
 
 	Nebula::Timer timer;
 };
