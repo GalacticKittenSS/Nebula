@@ -7,14 +7,6 @@
 #include "Render_Command.h"
 
 namespace Nebula {
-	struct Vertex {
-		vec3 Position;
-		vec4 Colour;
-		vec2 TexCoord;
-		float TexIndex;
-		float TilingFactor;
-	};
-
 	struct Renderer2DData {
 		static const uint32_t MaxSprites = 10000;
 		static const uint32_t MaxTextureSlots = 32;
@@ -24,7 +16,7 @@ namespace Nebula {
 
 		std::array<Ref<Texture2D>, MaxTextureSlots> TextureSlots;
 		uint32_t TextureSlotIndex = 1;
-
+		
 		//Quad
 		static const uint32_t MaxQuadVertices  = MaxSprites * 4;
 		static const uint32_t MaxQuadIndices   = MaxSprites * 6;
@@ -48,8 +40,6 @@ namespace Nebula {
 		
 		Vertex* TriVBBase = nullptr;
 		Vertex* TriVBPtr = nullptr;
-
-		Renderer2D::stats Stats;
 	};
 
 	static Renderer2DData s_Data;
@@ -135,6 +125,8 @@ namespace Nebula {
 
 	void Renderer2D::Shutdown() {
 		NB_PROFILE_FUNCTION();
+
+		delete[] s_Data.QuadVBBase;
 	}
 
 	void Renderer2D::BeginScene(const OrthographicCamera& camera) {
@@ -167,28 +159,27 @@ namespace Nebula {
 	void Renderer2D::EndScene() {
 		NB_PROFILE_FUNCTION();
 
-		uint32_t dataSize = (uint8_t*)s_Data.QuadVBPtr - (uint8_t*)s_Data.QuadVBBase;
+		uint32_t dataSize = (uint32_t)((uint8_t*)s_Data.QuadVBPtr - (uint8_t*)s_Data.QuadVBBase);
 		s_Data.QuadVertexBuffer->SetData(s_Data.QuadVBBase, dataSize);
 
-		dataSize = (uint8_t*)s_Data.TriVBPtr - (uint8_t*)s_Data.TriVBBase;
+		dataSize = (uint32_t)((uint8_t*)s_Data.TriVBPtr - (uint8_t*)s_Data.TriVBBase);
 		s_Data.TriangleVertexBuffer->SetData(s_Data.TriVBBase, dataSize);
 
-		Flush();
+		Flush(s_Data.TriangleVertexArray, s_Data.TriIndexCount);
+		Flush(s_Data.QuadVertexArray, s_Data.QuadIndexCount);
 	}
 
-	void Renderer2D::Flush() {
+	void Renderer2D::Flush(Ref<VertexArray> vertexArray, uint32_t IndexCount) {
 		NB_PROFILE_FUNCTION();
+
+		if (IndexCount == 0)
+			return;
 
 		for (uint32_t i = 0; i < s_Data.TextureSlotIndex; i++)
 			s_Data.TextureSlots[i]->Bind(i);
 
-		s_Data.QuadVertexArray->Bind();
-		RenderCommand::DrawIndexed(s_Data.QuadVertexArray, s_Data.QuadIndexCount);
-
-		s_Data.TriangleVertexArray->Bind();
-		RenderCommand::DrawIndexed(s_Data.TriangleVertexArray, s_Data.TriIndexCount);
-
-		s_Data.Stats.DrawCalls++;
+		vertexArray->Bind();
+		RenderCommand::DrawIndexed(vertexArray, IndexCount);
 	}
 
 	void Renderer2D::DrawQuad(Sprite& quad, float tiling) {
@@ -197,116 +188,75 @@ namespace Nebula {
 		if (s_Data.QuadIndexCount >= s_Data.MaxQuadIndices)
 			FlushAndReset();
 
-		vec4 colour = quad.colour;
+		vec4 vertexPos[] = { 
+			{ -0.5f, -0.5f, 0.0f, 1.0f }, 
+			{  0.5f, -0.5f, 0.0f, 1.0f }, 
+			{  0.5f,  0.5f, 0.0f, 1.0f }, 
+			{ -0.5f,  0.5f, 0.0f, 1.0f }
+		};
+
+		s_Data.QuadVBPtr = Draw(s_Data.QuadVBPtr, 4, vertexPos, quad, tiling);
+		
+		s_Data.QuadIndexCount += 6;
+	}
+	
+	void Renderer2D::DrawTriangle(Sprite& tri, float tiling) {
+		NB_PROFILE_FUNCTION();
+
+		if (s_Data.TriIndexCount >= s_Data.MaxTriIndices)
+			FlushAndReset();
+
+		vec4 vertexPos[] = { 
+			{ -0.5f, -0.5f, 0.0f, 1.0f }, 
+			{  0.5f, -0.5f, 0.0f, 1.0f }, 
+			{  0.0f,  0.5f, 0.0f, 1.0f } 
+		};
+		s_Data.TriVBPtr = Draw(s_Data.TriVBPtr, 3, vertexPos, tri, tiling);
+
+		s_Data.TriIndexCount += 3;
+	}
+
+	Vertex* Renderer2D::Draw(Vertex* vertexPtr, const size_t vertexCount, vec4* vertexPos, Sprite& sprite, float tiling) {
+		NB_PROFILE_FUNCTION();
+
+		vec4 colour = sprite.colour;
 
 		float textureIndex = 0.0f;
-		
-		if (quad.texture != nullptr) {
+
+		const vec2* texCoords = sprite.texCoords;
+
+		if (sprite.texture != nullptr) {
 			for (uint32_t i = 1; i < s_Data.TextureSlotIndex; i++) {
-				if (*s_Data.TextureSlots[i].get() == *quad.texture.get()) {
+				if (*s_Data.TextureSlots[i].get() == *sprite.texture.get()) {
 					textureIndex = (float)i;
 					break;
 				}
 			}
 
 			if (textureIndex == 0.0f) {
+				if (s_Data.TextureSlotIndex >= Renderer2DData::MaxTextureSlots)
+					FlushAndReset();
+
 				textureIndex = (float)s_Data.TextureSlotIndex;
-				s_Data.TextureSlots[s_Data.TextureSlotIndex] = quad.texture;
+				s_Data.TextureSlots[s_Data.TextureSlotIndex] = sprite.texture;
 				s_Data.TextureSlotIndex++;
 			}
 		}
 
-		mat4 transform = quad.CalculateMatrix();
+		mat4 transform = translate(sprite.position) * scale(vec3(sprite.size, 1.0f));
 
-		s_Data.QuadVBPtr->Position = transform * vec4(-0.5f, -0.5f, 0.0f, 1.0f);
-		s_Data.QuadVBPtr->Colour = colour;
-		s_Data.QuadVBPtr->TexCoord = { 0.0f, 0.0f };
-		s_Data.QuadVBPtr->TexIndex = textureIndex;
-		s_Data.QuadVBPtr->TilingFactor = tiling;
-		s_Data.QuadVBPtr++;
+		if (sprite.rotation != 0.0f)
+			transform *= rotate(sprite.rotation, { 0.0f, 0.0f, 1.0f });
 
-		s_Data.QuadVBPtr->Position = transform * vec4(0.5f, -0.5f, 0.0f, 1.0f);
-		s_Data.QuadVBPtr->Colour = colour;
-		s_Data.QuadVBPtr->TexCoord = { 1.0f, 0.0f };
-		s_Data.QuadVBPtr->TexIndex = textureIndex;
-		s_Data.QuadVBPtr->TilingFactor = tiling;
-		s_Data.QuadVBPtr++;
-
-		s_Data.QuadVBPtr->Position = transform * vec4(0.5f, 0.5f, 0.0f, 1.0f);
-		s_Data.QuadVBPtr->Colour = colour;
-		s_Data.QuadVBPtr->TexCoord = { 1.0f, 1.0f };
-		s_Data.QuadVBPtr->TexIndex = textureIndex;
-		s_Data.QuadVBPtr->TilingFactor = tiling;
-		s_Data.QuadVBPtr++;
-
-		s_Data.QuadVBPtr->Position = transform * vec4(-0.5f, 0.5f, 0.0f, 1.0f);
-		s_Data.QuadVBPtr->Colour = colour;
-		s_Data.QuadVBPtr->TexCoord = { 0.0f, 1.0f };
-		s_Data.QuadVBPtr->TexIndex = textureIndex;
-		s_Data.QuadVBPtr->TilingFactor = tiling;
-		s_Data.QuadVBPtr++;
-
-		s_Data.QuadIndexCount += 6;
-
-		s_Data.Stats.QuadCount++;
-	}
-	
-	void Renderer2D::DrawTriangle(Sprite& tri, float tiling) {
-		NB_PROFILE_FUNCTION();
-		
-		if (s_Data.TriIndexCount >= s_Data.MaxTriIndices)
-			FlushAndReset();
-
-		vec4 colour	  = tri.colour;
-
-		float textureIndex = 0.0f;
-
-		for (uint32_t i = 1; i < s_Data.TextureSlotIndex; i++) {
-			if (*s_Data.TextureSlots[i].get() == *tri.texture.get()) {
-				textureIndex = (float)i;
-				break;
-			}
+		for (size_t i = 0; i < vertexCount; i++) {
+			vertexPtr->Position = transform * vertexPos[i];
+			vertexPtr->Colour = colour;
+			vertexPtr->TexCoord = texCoords[i];
+			vertexPtr->TexIndex = textureIndex;
+			vertexPtr->TilingFactor = tiling;
+			vertexPtr++;
 		}
 
-		if (textureIndex == 0.0f && tri.texture != nullptr) {
-			textureIndex = (float)s_Data.TextureSlotIndex;
-			s_Data.TextureSlots[s_Data.TextureSlotIndex] = tri.texture;
-			s_Data.TextureSlotIndex++;
-		}
-
-		mat4 transform = tri.CalculateMatrix();
-
-		s_Data.TriVBPtr->Position = transform * vec4(-0.5f, -0.5f, 0.0f, 1.0f);
-		s_Data.TriVBPtr->Colour = colour;
-		s_Data.TriVBPtr->TexCoord = { 0.0f, 0.0f };
-		s_Data.TriVBPtr->TexIndex = textureIndex;
-		s_Data.TriVBPtr->TilingFactor = tiling;
-		s_Data.TriVBPtr++;
-
-		s_Data.TriVBPtr->Position = transform * vec4(0.5f, -0.5f, 0.0f, 1.0f);
-		s_Data.TriVBPtr->Colour = colour;
-		s_Data.TriVBPtr->TexCoord = { 1.0f, 0.0f };
-		s_Data.TriVBPtr->TexIndex = textureIndex;
-		s_Data.TriVBPtr->TilingFactor = tiling;
-		s_Data.TriVBPtr++;
-
-		s_Data.TriVBPtr->Position = transform * vec4(0.0f, 0.5f, 0.0f, 1.0f);
-		s_Data.TriVBPtr->Colour = colour;
-		s_Data.TriVBPtr->TexCoord = { 0.5f, 0.5f };
-		s_Data.TriVBPtr->TexIndex = textureIndex;
-		s_Data.TriVBPtr->TilingFactor = tiling;
-		s_Data.TriVBPtr++;
-
-		s_Data.TriIndexCount += 3;
-
-		s_Data.Stats.TriCount++;
-	}
-
-	Renderer2D::stats Renderer2D::GetStats() {
-		return s_Data.Stats;
-	}
-
-	void Renderer2D::ResetStats() {
-		memset(&s_Data.Stats, 0, sizeof(stats));
+		return vertexPtr;
 	}
 }

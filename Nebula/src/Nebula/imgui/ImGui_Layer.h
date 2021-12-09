@@ -10,6 +10,7 @@ namespace Nebula {
 
 		void Attach() override;
 		void Detach() override;
+		void OnEvent(Event& e) override;
 
 		void Begin();
 		void End();

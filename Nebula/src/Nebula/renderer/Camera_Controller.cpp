@@ -5,10 +5,14 @@
 
 namespace Nebula {
 	OrthographicCameraController::OrthographicCameraController(float aspectRatio, bool rotation): 
-		m_AspectRatio(aspectRatio), 
-		m_Camera(-m_AspectRatio * m_ZoomLevel, m_AspectRatio * m_ZoomLevel, -m_ZoomLevel, m_ZoomLevel), 
+		m_AspectRatio(aspectRatio),
+		m_Camera(-m_AspectRatio * m_ZoomLevel, m_AspectRatio* m_ZoomLevel, -m_ZoomLevel, m_ZoomLevel),
 		m_Rotation(rotation) {
+	}
 
+
+	void OrthographicCameraController::CalculateView() {
+		m_Camera.SetProjection(-m_AspectRatio * m_ZoomLevel, m_AspectRatio * m_ZoomLevel, -m_ZoomLevel, m_ZoomLevel);
 	}
 
 	void OrthographicCameraController::OnUpdate(Timestep ts) {
@@ -62,8 +66,9 @@ namespace Nebula {
 
 		m_ZoomLevel -= event.GetOffsetY() * 0.25f;
 		m_ZoomLevel = std::max(m_ZoomLevel, 0.25f);
-		m_Camera.SetProjection(-m_AspectRatio * m_ZoomLevel, m_AspectRatio * m_ZoomLevel, -m_ZoomLevel, m_ZoomLevel);
-		
+		CalculateView();
+		m_CamTranslationSpeed = 2.0f * m_ZoomLevel;
+
 		return false;
 	}
 
@@ -71,7 +76,7 @@ namespace Nebula {
 		NB_PROFILE_FUNCTION();
 
 		m_AspectRatio = (float)event.GetWidth() / (float)event.GetHeight();
-		m_Camera.SetProjection(-m_AspectRatio * m_ZoomLevel, m_AspectRatio * m_ZoomLevel, -m_ZoomLevel, m_ZoomLevel);
+		CalculateView();
 
 		return false;
 	}

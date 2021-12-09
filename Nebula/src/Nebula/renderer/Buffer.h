@@ -21,8 +21,8 @@ namespace Nebula {
 			case ShaderDataType::Int2:		return 4 * 2;
 			case ShaderDataType::Int3:		return 4 * 3;
 			case ShaderDataType::Int4:		return 4 * 4;
-			case ShaderDataType::Mat3:		return 4 * 4 * 3;
-			case ShaderDataType::Mat4:		return 4 * 4 * 4;
+			case ShaderDataType::Mat3:		return 4;// * 4 * 3;
+			case ShaderDataType::Mat4:		return 4;// * 4 * 4;
 			case ShaderDataType::Bool:		return 1;
 		}
 

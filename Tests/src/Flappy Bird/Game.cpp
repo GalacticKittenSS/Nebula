@@ -161,17 +161,20 @@ void Game::Render() {
 	Nebula::RenderCommand::Clear();
 
 	Nebula::Renderer2D::BeginScene(Camera);
-	Nebula::Renderer2D::DrawQuad(Nebula::Sprite({ 0.0f,  0.0f, -0.1f }, { 32.0f, 18.0f }, 0.0f, { 0.2f, 0.2f, 0.2f, 1 }));
-	for (uint32_t i = 0; i < pillar.size(); i++) {
+	
+	for (uint32_t i = 0; i < pillar.size(); i++) 
 		pillar[i].Submit();
-	}
+	
 	Nebula::Renderer2D::DrawQuad(player);
-	Nebula::Renderer2D::DrawQuad(Nebula::Sprite({ 0.0f,  8.0f, 0.1f }, { 32.0f, 2.0f }, 0.0f, Nebula::vec4(col.GetRGB(), 1.0f)));
-	Nebula::Renderer2D::DrawQuad(Nebula::Sprite({ 0.0f, -8.0f, 0.1f }, { 32.0f, 2.0f }, 0.0f, Nebula::vec4(col.GetRGB(), 1.0f)));
+	Nebula::Renderer2D::DrawQuad(Nebula::Sprite({ 0.0f,  8.0f }, { 32.0f, 2.0f }, 0.0f, Nebula::vec4(col.GetRGB(), 1.0f)));
+	Nebula::Renderer2D::DrawQuad(Nebula::Sprite({ 0.0f, -8.0f }, { 32.0f, 2.0f }, 0.0f, Nebula::vec4(col.GetRGB(), 1.0f)));
+	Nebula::Renderer2D::DrawQuad(Nebula::Sprite({ 0.0f,  0.0f, 0.0001f }, { 32.0f, 18.0f }, 0.0f, { 0.2f, 0.2f, 0.2f, 1 }));
+
 	Nebula::Renderer2D::EndScene();
 }
 
 void Game::ImGuiRender() {
+
 }
 
 Nebula::OrthographicCamera Game::CreateCamera(float AspectRatio) {

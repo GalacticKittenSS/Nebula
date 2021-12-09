@@ -5,6 +5,15 @@
 #include "GameObjects.h"
 
 namespace Nebula {
+	class VertexArray;
+
+	struct Vertex {
+		vec3 Position;
+		vec4 Colour;
+		vec2 TexCoord;
+		float TexIndex;
+		float TilingFactor;
+	};
 
 	class Renderer2D {
 	public:
@@ -14,24 +23,13 @@ namespace Nebula {
 		static void BeginScene(const OrthographicCamera& camera);
 		static void EndScene();
 
-		static void Flush();
+		static void Flush(Ref<VertexArray> vertexArray, uint32_t IndexCount);
 
 		//Primitives
 		static void DrawQuad(Sprite& quad, float tiling = 1.0f);
 		static void DrawTriangle(Sprite& tri, float tiling = 1.0f);
-
-		struct stats {
-			uint32_t DrawCalls = 0;
-			uint32_t QuadCount = 0;
-			uint32_t TriCount = 0;
-
-			uint32_t GetTotalVertexCount() { return QuadCount * 4 + TriCount * 3; }
-			uint32_t GetTotalIndexCount() { return QuadCount * 6 + TriCount * 3; }
-		};
-
-		static stats GetStats();
-		static void ResetStats();
 	private:
 		static void FlushAndReset();
+		static Vertex* Draw(Vertex* vertexPtr, const size_t vertexCount, vec4* vertexPos, Sprite& sprite, float tiling = 1.0f);
 	};
 }

@@ -34,7 +34,7 @@ namespace Nebula {
 
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
+		
 		glEnable(GL_DEPTH_TEST);
 	}
 
@@ -55,7 +55,8 @@ namespace Nebula {
 	}
 
 	void OpenGL_RendererAPI::DrawIndexed(const Ref<VertexArray>& vertexArray, uint32_t indexCount) {
-		uint32_t count = indexCount ? vertexArray->GetIndexBuffer()->GetCount() : indexCount;
+		uint32_t count = indexCount ? indexCount : vertexArray->GetIndexBuffer()->GetCount();
 		glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, nullptr);
+		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 }

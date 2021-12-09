@@ -38,11 +38,17 @@
 		#error Only Windows is Supported
 #endif //NB_WINDOWS
 
-
+#ifdef NB_DEBUG
+	#if defined(NB_WINDOWS)
+		#define NB_DEBUGBREAK() __debugbreak()
+	#else
+		#error "Platform doesn't support debugbreak yet!"
+	#endif
+#endif //NB_DEBUG
 
 #ifdef NB_ENABLE_ASSERTS
-	#define NB_ASSERT(x, ...) { if(!(x)) { NB_ERROR("Assertion Failed: {0}", __VA_ARGS__); __debugbreak(); } }
-	#define CL_ASSERT(x, ...) { if(!(x)) { CL_ERROR("Assertion Failed: {0}", __VA_ARGS__); __debugbreak(); } }
+	#define NB_ASSERT(x, ...) { if(!(x)) { NB_ERROR("Assertion Failed: {0}", __VA_ARGS__); NB_DEBUGBREAK(); } }
+	#define CL_ASSERT(x, ...) { if(!(x)) { CL_ERROR("Assertion Failed: {0}", __VA_ARGS__); NB_DEBUGBREAK(); } }
 #else
 	#define NB_ASSERT(x, ...)
 	#define CL_ASSERT(x, ...)

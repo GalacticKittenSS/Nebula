@@ -56,6 +56,12 @@ namespace Nebula {
 		ImGui::DestroyContext();
 	}
 
+	void ImGuiLayer::OnEvent(Event& e) {
+		ImGuiIO& io = ImGui::GetIO();
+		e.Handled | e.IsInCategory(MouseCat) & io.WantCaptureMouse;
+		e.Handled | e.IsInCategory(KeyboardCat) & io.WantCaptureKeyboard;
+	}
+
 	void ImGuiLayer::Begin() {
 		NB_PROFILE_FUNCTION();
 
