@@ -20,6 +20,7 @@ namespace Nebula {
 		static void Init();
 		static void Shutdown();
 
+		static void BeginScene(const Camera& camera, const mat4& transform);
 		static void BeginScene(const OrthographicCamera& camera);
 		static void EndScene();
 
@@ -27,6 +28,8 @@ namespace Nebula {
 
 		//Primitives
 		static void DrawQuad(Sprite& quad, float tiling = 1.0f);
+		static void DrawQuad(const mat4& matrix, const vec4& colour, float tiling = 1.0f);
+
 		static void DrawTriangle(Sprite& tri, float tiling = 1.0f);
 	private:
 		static void FlushAndReset();

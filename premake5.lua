@@ -16,8 +16,8 @@ includedir["spdlog"] = "Nebula/Modules/spdlog/include"
 includedir["GLFW"] = "Nebula/Modules/glfw/include"
 includedir["GLad"] = "Nebula/Modules/glad/include"
 includedir["ImGui"] = "Nebula/Modules/imgui/include"
-includedir["glm"] = "Nebula/Modules/glm/glm"
 includedir["stb"] = "Nebula/Modules/stb_image"
+includedir["entt"] = "Nebula/Modules/entt/include"
 
 --Dependencies
 group "Dependencies"
@@ -58,8 +58,8 @@ project "Nebula"
 		"%{includedir.GLFW}",
 		"%{includedir.GLad}",
 		"%{includedir.ImGui}",
-		"%{includedir.glm}",
-		"%{includedir.stb}"
+		"%{includedir.stb}",
+		"%{includedir.entt}"
 	}
 
 	links { 
@@ -108,14 +108,15 @@ project "Nebula Storm"
 	objdir ("bin-obj/" .. outputdir .. "/%{prj.name}")
 
 	files {
-		"%{prj.name}/**.h",
-		"%{prj.name}/**.cpp"
+		"%{prj.name}/src/**.h",
+		"%{prj.name}/src/**.cpp"
 	}
 
 	includedirs {
 		"Nebula/include",
 		"%{includedir.spdlog}",
-		"%{includedir.ImGui}"
+		"%{includedir.ImGui}",
+		"%{includedir.entt}"
 	}
 
 	links {

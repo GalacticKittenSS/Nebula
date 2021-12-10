@@ -31,6 +31,8 @@
 #include "Geometric.h"
 #include "Trigonometric.h"
 
+#include "value_ptr.h"
+
 namespace Nebula {
 	typedef vec<1, float> vec1;
 	typedef vec<2, float> vec2;

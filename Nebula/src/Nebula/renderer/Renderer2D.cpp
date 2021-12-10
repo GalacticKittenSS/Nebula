@@ -143,6 +143,23 @@ namespace Nebula {
 
 		s_Data.TextureSlotIndex = 1;
 	}
+	
+	void Renderer2D::BeginScene(const Camera& camera, const mat4& transform) {
+		NB_PROFILE_FUNCTION();
+
+		mat4 viewProj = camera.GetProjection() * inverse(transform);
+
+		s_Data.TextureShader->Bind();
+		s_Data.TextureShader->SetMat4("u_View", viewProj);
+
+		s_Data.QuadIndexCount = 0;
+		s_Data.QuadVBPtr = s_Data.QuadVBBase;
+
+		s_Data.TriIndexCount = 0;
+		s_Data.TriVBPtr = s_Data.TriVBBase;
+
+		s_Data.TextureSlotIndex = 1;
+	}
 
 	void Renderer2D::FlushAndReset() {
 		EndScene();
@@ -180,6 +197,36 @@ namespace Nebula {
 
 		vertexArray->Bind();
 		RenderCommand::DrawIndexed(vertexArray, IndexCount);
+	}
+	
+	void Renderer2D::DrawQuad(const mat4& matrix, const vec4& colour, float tiling) {
+		NB_PROFILE_FUNCTION();
+
+		if (s_Data.QuadIndexCount >= s_Data.MaxQuadIndices)
+			FlushAndReset();
+
+		float textureIndex = 0.0f;
+
+		vec4 vertexPos[4] = {
+			{ -0.5f, -0.5f, 0.0f, 1.0f },
+			{  0.5f, -0.5f, 0.0f, 1.0f },
+			{  0.5f,  0.5f, 0.0f, 1.0f },
+			{ -0.5f,  0.5f, 0.0f, 1.0f }
+		};
+
+		vec2 texCoords[4] = { { 0, 0 }, { 1, 0 }, { 1, 1 }, { 0, 1 } };
+		mat4 transform = matrix;
+
+		for (size_t i = 0; i < 4; i++) {
+			s_Data.QuadVBPtr->Position = transform * vertexPos[i];
+			s_Data.QuadVBPtr->Colour = colour;
+			s_Data.QuadVBPtr->TexCoord = texCoords[i];
+			s_Data.QuadVBPtr->TexIndex = 0.0f;
+			s_Data.QuadVBPtr->TilingFactor = tiling;
+			s_Data.QuadVBPtr++;
+		}
+
+		s_Data.QuadIndexCount += 6;
 	}
 
 	void Renderer2D::DrawQuad(Sprite& quad, float tiling) {

@@ -9,20 +9,31 @@
 #include "Nebula/imgui/ImGui_Layer.h"
 //--------------------
 
-//----BUFFERS---------
-#include "Nebula/Renderer/Shader.h"
-#include "Nebula/Renderer/Buffer.h"
-#include "Nebula/Renderer/Vertex_Array.h"
-#include "Nebula/Renderer/GameObjects.h"
+//----SCENES----------
+#include "Nebula/Scene/Scene.h"
+#include "Nebula/Scene/Entity.h"
+#include "Nebula/Scene/Components.h"
 //--------------------
 
-#include "Nebula/Renderer/Texture.h"
+//-----MATHS----------
+#include "Nebula/Maths/Maths.h"
+//--------------------
 
 //----RENDERER--------
+#include "Nebula/Renderer/Shader.h"
+#include "Nebula/Renderer/Texture.h"
+#include "Nebula/Renderer/GameObjects.h"
+#include "Nebula/renderer/Camera_Controller.h"
+#include "Nebula/Renderer/FrameBuffer.h"
+
+//--Buffers
+#include "Nebula/Renderer/Buffer.h"
+#include "Nebula/Renderer/Vertex_Array.h"
+
+//--Renderers
 #include "Nebula/Renderer/Renderer.h"
 #include "Nebula/Renderer/Renderer2D.h"
 #include "Nebula/Renderer/Render_Command.h"
-#include "Nebula/Renderer/FrameBuffer.h"
 //--------------------
 
 //----EVENTS---------
@@ -33,17 +44,9 @@
 #include "Nebula/Events/Window_Event.h"
 //--------------------
 
-//-----CAMERA----------
-#include "Nebula/renderer/Camera_Controller.h"
-//--------------------
-
+//----Application-----
 #include "Nebula/Core/Time.h"
 #include "Nebula/Core/Window.h"
 
-//-----Maths----------
-#include "Nebula/Maths/Maths.h"
-//--------------------
-
-//----Application-----
 #include "Nebula/Core/Application.h"
 //--------------------

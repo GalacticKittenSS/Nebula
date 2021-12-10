@@ -3,6 +3,17 @@
 #include "Nebula/Maths/Maths.h"
 
 namespace Nebula {
+	class Camera {
+	public:
+		Camera() = default;
+		Camera(const mat4& projection) : m_ProjectionMatrix(projection) { }
+		virtual ~Camera() = default;
+
+		const mat4& GetProjection() const { return m_ProjectionMatrix; }
+	protected:
+		mat4 m_ProjectionMatrix = mat4(1.0f);
+	};
+
 	class OrthographicCamera {
 	public:
 		OrthographicCamera(float left, float right, float bottom, float top);

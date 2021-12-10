@@ -24,5 +24,12 @@ namespace Nebula {
 		OrthographicCameraController Controller;
 		Ref<FrameBuffer> frameBuffer;
 		Timer timer;
+
+		Ref<Scene> m_ActiveScene;
+		Entity square;
+		Entity Camera;
+		Entity Camera2;
+
+		bool m_Primary;
 	};
 }

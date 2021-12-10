@@ -15,6 +15,15 @@ namespace Nebula {
 
 		frameBuffer = Nebula::FrameBuffer::Create(fbSpec);
 		timer = Nebula::Timer();
+
+		m_ActiveScene = CreateRef<Scene>();
+		square = m_ActiveScene->CreateEntity("Square");
+		Camera = m_ActiveScene->CreateEntity("Camera");
+		Camera2 = m_ActiveScene->CreateEntity("Camera2");
+
+		square.AddComponent<SpriteRendererComponent>(vec4{ 1.0f, 1.0f, 1.0f, 1.0f });
+		Camera.AddComponent<CameraComponent>();
+		Camera2.AddComponent<CameraComponent>();
 	}
 
 	void EditorLayer::Detach() {
@@ -24,44 +33,28 @@ namespace Nebula {
 	void EditorLayer::Update(Nebula::Timestep ts) {
 		NB_PROFILE_FUNCTION();
 
+		FrameBufferSpecification spec = frameBuffer->GetFrameBufferSpecifications();
+		if (m_GameViewSize.x > 0.0f && m_GameViewSize.y > 0.0f && (spec.Width != m_GameViewSize.x || spec.Height != m_GameViewSize.y)) {
+			frameBuffer->Resize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
+			Controller.OnResize(m_GameViewSize.x, m_GameViewSize.y);
+
+			m_ActiveScene->OnViewportResize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
+		}
+
 		if (m_GameViewFocus)
 			Controller.OnUpdate(ts);
 	}
 
 	void EditorLayer::Render() {
 		NB_PROFILE_FUNCTION();
+
 		frameBuffer->Bind();
 
-		//Window Background Colour
 		Nebula::RenderCommand::SetClearColour({ 0.1f, 0.1f, 0.1f, 1.0f });
-		//Clear the Screen of the Previous Frame
 		Nebula::RenderCommand::Clear();
 
-		//Begin Scene with Camera
-		Nebula::Renderer2D::BeginScene(Controller.GetCamera());
-		Nebula::Renderer2D::DrawQuad(Nebula::Sprite({ Nebula::cos(timer.elapsed()) + Nebula::sin(timer.elapsed()), -Nebula::sin(timer.elapsed()) + Nebula::cos(timer.elapsed()) }, { 1.0f, 1.0f } ));
-
-		Nebula::Renderer2D::DrawQuad(Nebula::Sprite({
-			 Nebula::cos(timer.elapsed()) + Nebula::sin(timer.elapsed()),
-			-Nebula::sin(timer.elapsed()) + Nebula::cos(timer.elapsed())
-				 }, { 1.0f, 1.0f }, 0.0f, { 0.2f, 0.4f, 0.7f, 1.0f }));
-	
-		Nebula::Renderer2D::DrawQuad(Nebula::Sprite({-5.0f, 0.2f }, { 2.0f, 3.0f },  0.0f, { 1.0f, 0.1f, 0.2f, 1.0f }));
-		Nebula::Renderer2D::DrawQuad(Nebula::Sprite({ 2.0f, 2.0f }, { 2.0f, 2.0f }, 45.0f, { 0.2f, 0.4f, 0.7f, 1.0f }));
-	
-	
-		for (float y = -SPRITEAXIS; y < SPRITEAXIS; y += SPRITESIZE) {
-			for (float x = -SPRITEAXIS; x < SPRITEAXIS; x += SPRITESIZE) {
-				Nebula::vec3 colour = { (x + SPRITEAXIS) / (SPRITEAXIS * 2), 0.4f, (y + SPRITEAXIS) / (SPRITEAXIS * 2) };
-				Nebula::Renderer2D::DrawQuad(Nebula::Sprite({ x, y, -0.1f }, { SPRITESIZE - 0.05f, SPRITESIZE - 0.05f }, 0.0f, { colour.r, colour.g, colour.b, 0.5f }));
-				Nebula::Renderer2D::DrawTriangle(Nebula::Sprite({ x, y, -0.1f }, { SPRITESIZE - 0.05f, SPRITESIZE - 0.05f }, 0.0f, { colour.g, colour.b, colour.r, 0.5f }));
-			}
-		}
-
-		Nebula::Renderer2D::DrawQuad(Nebula::Sprite({ 0.0f, 0.0f, -0.9f }, { 100.0f, 100.0f }, 0.0f, Nebula::Texture2D::Create("assets/textures/checkerboard.png")), 10.0f);
-		Nebula::Renderer2D::DrawQuad(Nebula::Sprite({ 0, 0 }, { 1, 1 }, 0.0, Nebula::Texture2D::Create("assets/textures/cat.png")));
-	
-		Nebula::Renderer2D::EndScene();
+		m_ActiveScene->Render();
+		
 		frameBuffer->Unbind();
 	}
 
@@ -110,6 +103,30 @@ namespace Nebula {
 		}
 
 		ImGui::Begin("Settings");
+		if (square) {
+			ImGui::Separator();
+			ImGui::Text("%s", square.GetComponent<TagComponent>().Tag.c_str());
+			
+			auto& squareColor = square.GetComponent<SpriteRendererComponent>().Colour;
+			ImGui::ColorEdit4("Square Colour: ", value_ptr(squareColor));
+			
+			ImGui::Separator();
+		}
+
+		ImGui::DragFloat3("Camera Transform", value_ptr(Camera.GetComponent<TransformComponent>().Transform[3]));
+
+		if (ImGui::Checkbox("Camera A", &m_Primary)) {
+			Camera.GetComponent<CameraComponent>().Primary = m_Primary;
+			Camera2.GetComponent<CameraComponent>().Primary = !m_Primary;
+		}
+
+
+		auto& cam = Camera2.GetComponent<CameraComponent>().Camera;
+		float size = cam.GetOrthographicSize();
+
+		if (ImGui::DragFloat("Camera 2 Ortho Size", &size))
+			cam.SetOrthographicSize(size);
+
 		ImGui::End();
 
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
@@ -121,12 +138,7 @@ namespace Nebula {
 		Application::Get().GetImGuiLayer()->SetBlockEvents(!m_GameViewFocus || !m_GameViewHovered);
 
 		ImVec2 panelSize = ImGui::GetContentRegionAvail();
-		if (m_GameViewSize != *(vec2*)&panelSize) {
-			frameBuffer->Resize((uint32_t)panelSize.x, (uint32_t)panelSize.y);
-			m_GameViewSize = { panelSize.x, panelSize.y };
-
-			Controller.OnResize(panelSize.x, panelSize.y);
-		}
+		m_GameViewSize = { panelSize.x, panelSize.y };
 
 		uint32_t textureID = frameBuffer->GetColourAttachmentRendererID();
 		ImGui::Image((void*)textureID, panelSize, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });

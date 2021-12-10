@@ -24,36 +24,36 @@ namespace Nebula {
 
 	class Instrumentor
 	{
-	private:
-		std::mutex m_Mutex;
-		InstrumentationSession* m_CurrentSession;
-		std::ofstream m_OutputStream;
-		int m_ProfileCount;
 	public:
-		Instrumentor(): m_CurrentSession(nullptr) { }
+		Instrumentor(const Instrumentor&) = delete;
+		Instrumentor(Instrumentor&&) = delete;
 
 		void BeginSession(const std::string& name, const std::string& filepath = "results.json")
 		{
 			std::lock_guard lock(m_Mutex);
-			if (m_CurrentSession) {
+			if (m_CurrentSession)
+			{
 				// If there is already a current session, then close it before beginning new one.
 				// Subsequent profiling output meant for the original session will end up in the
 				// newly opened session instead.  That's better than having badly formatted
 				// profiling output.
-				if (Log::GetCoreLogger()) { // Edge case: BeginSession() might be before Log::Init()
+				if (Log::GetCoreLogger()) // Edge case: BeginSession() might be before Log::Init()
+				{
 					NB_ERROR("Instrumentor::BeginSession('{0}') when session '{1}' already open.", name, m_CurrentSession->Name);
 				}
 				InternalEndSession();
 			}
-
 			m_OutputStream.open(filepath);
-			
-			if (m_OutputStream.is_open()) {
+
+			if (m_OutputStream.is_open())
+			{
 				m_CurrentSession = new InstrumentationSession({ name });
 				WriteHeader();
 			}
-			else {
-				if (Log::GetCoreLogger()) { // Edge case: BeginSession() might be before Log::Init()
+			else
+			{
+				if (Log::GetCoreLogger()) // Edge case: BeginSession() might be before Log::Init()
+				{
 					NB_ERROR("Instrumentor could not open results file '{0}'.", filepath);
 				}
 			}
@@ -69,14 +69,11 @@ namespace Nebula {
 		{
 			std::stringstream json;
 
-			std::string name = result.Name;
-			std::replace(name.begin(), name.end(), '"', '\'');
-
 			json << std::setprecision(3) << std::fixed;
 			json << ",{";
 			json << "\"cat\":\"function\",";
 			json << "\"dur\":" << (result.ElapsedTime.count()) << ',';
-			json << "\"name\":\"" << name << "\",";
+			json << "\"name\":\"" << result.Name << "\",";
 			json << "\"ph\":\"X\",";
 			json << "\"pid\":0,";
 			json << "\"tid\":" << result.ThreadID << ",";
@@ -84,15 +81,27 @@ namespace Nebula {
 			json << "}";
 
 			std::lock_guard lock(m_Mutex);
-			if (m_CurrentSession) {
+			if (m_CurrentSession)
+			{
 				m_OutputStream << json.str();
 				m_OutputStream.flush();
 			}
 		}
 
-		static Instrumentor& Get() {
+		static Instrumentor& Get()
+		{
 			static Instrumentor instance;
 			return instance;
+		}
+	private:
+		Instrumentor()
+			: m_CurrentSession(nullptr)
+		{
+		}
+
+		~Instrumentor()
+		{
+			EndSession();
 		}
 
 		void WriteHeader()
@@ -109,14 +118,20 @@ namespace Nebula {
 
 		// Note: you must already own lock on m_Mutex before
 		// calling InternalEndSession()
-		void InternalEndSession() {
-			if (m_CurrentSession) {
+		void InternalEndSession()
+		{
+			if (m_CurrentSession)
+			{
 				WriteFooter();
 				m_OutputStream.close();
 				delete m_CurrentSession;
 				m_CurrentSession = nullptr;
 			}
 		}
+	private:
+		std::mutex m_Mutex;
+		InstrumentationSession* m_CurrentSession;
+		std::ofstream m_OutputStream;
 	};
 
 	class InstrumentationTimer
@@ -169,7 +184,10 @@ namespace Nebula {
 
 	#define NB_PROFILE_BEGIN_SESSION(name, filepath) Nebula::Instrumentor::Get().BeginSession(name, filepath)
 	#define NB_PROFILE_END_SESSION() Nebula::Instrumentor::Get().EndSession()
-	#define NB_PROFILE_SCOPE(name) Nebula::InstrumentationTimer timer##__LINE__(name);
+	#define NB_PROFILE_SCOPE_LINE2(name, line) constexpr auto fixedName##line = ::Hazel::InstrumentorUtils::CleanupOutputString(name, "__cdecl ");\
+											   ::Hazel::InstrumentationTimer timer##line(fixedName##line.Data)
+	#define NB_PROFILE_SCOPE_LINE(name, line) HZ_PROFILE_SCOPE_LINE2(name, line)
+	#define NB_PROFILE_SCOPE(name) HZ_PROFILE_SCOPE_LINE(name, __LINE__)
 	#define NB_PROFILE_FUNCTION() NB_PROFILE_SCOPE(NB_FUNC_SIG)
 #else
 	#define NB_PROFILE_BEGIN_SESSION(name, filepath)
