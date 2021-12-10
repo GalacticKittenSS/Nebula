@@ -53,6 +53,11 @@ namespace Nebula {
 		m_Camera.SetPosition(m_CamPosition);
 	}
 
+	void OrthographicCameraController::OnResize(float width, float height) {
+		m_AspectRatio = width / height;
+		m_Camera.SetProjection(-m_AspectRatio * m_ZoomLevel, m_AspectRatio * m_ZoomLevel, -m_ZoomLevel, m_ZoomLevel);
+	}
+
 	void OrthographicCameraController::OnEvent(Event& e) {
 		NB_PROFILE_FUNCTION();
 
@@ -75,7 +80,7 @@ namespace Nebula {
 	bool OrthographicCameraController::OnWindowResized(WindowResizeEvent& event) {
 		NB_PROFILE_FUNCTION();
 
-		m_AspectRatio = (float)event.GetWidth() / (float)event.GetHeight();
+		OnResize((float)event.GetWidth(), (float)event.GetHeight());
 		CalculateView();
 
 		return false;

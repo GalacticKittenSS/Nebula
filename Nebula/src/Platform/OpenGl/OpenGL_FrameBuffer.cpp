@@ -4,15 +4,26 @@
 #include <glad/glad.h>
 
 namespace Nebula {
+
+	static const uint32_t s_MaxFrameBufferSize = 8192;
+
 	OpenGL_FrameBuffer::OpenGL_FrameBuffer(const FrameBufferSpecification& specifications): m_Specifications(specifications) {
 		Invalidate();
 	}
 
 	OpenGL_FrameBuffer::~OpenGL_FrameBuffer() {
 		glDeleteFramebuffers(1, &m_RendererID);
+		glDeleteTextures(1, &m_colourAttachment);
+		glDeleteTextures(1, &m_DepthAttachment);
 	}
 
 	void OpenGL_FrameBuffer::Invalidate() {
+		if (m_RendererID) {
+			glDeleteFramebuffers(1, &m_RendererID);
+			glDeleteTextures(1, &m_colourAttachment);
+			glDeleteTextures(1, &m_DepthAttachment);
+		}
+
 		glCreateFramebuffers(1, &m_RendererID);
 		glBindFramebuffer(GL_FRAMEBUFFER, m_RendererID);
 
@@ -37,9 +48,22 @@ namespace Nebula {
 
 	void OpenGL_FrameBuffer::Bind() {
 		glBindFramebuffer(GL_FRAMEBUFFER, m_RendererID);
+		glViewport(0, 0, m_Specifications.Width, m_Specifications.Height);
 	}
 
 	void OpenGL_FrameBuffer::Unbind() {
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
+
+	void OpenGL_FrameBuffer::Resize(uint32_t width, uint32_t height) {
+		if (width == 0 || height == 0 || width > s_MaxFrameBufferSize || height > s_MaxFrameBufferSize) {
+			NB_WARN("Attempted to resize framebuffer to ({0}, {1})", width, height);
+			return;
+		}
+
+		m_Specifications.Width = width;
+		m_Specifications.Height = height;
+
+		Invalidate();
 	}
 }

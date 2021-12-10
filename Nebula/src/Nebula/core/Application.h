@@ -15,7 +15,7 @@ int main(int argc, char** argv);
 namespace Nebula {
 	class NB_API Application {
 	public:
-		Application();
+		Application(const std::string& name = "Nebula App");
 		virtual ~Application();
 
 		void OnEvent(Event& e);
@@ -26,6 +26,8 @@ namespace Nebula {
 		void PopOverlay(Layer* overlay);
 
 		void Close();
+
+		ImGuiLayer* GetImGuiLayer() { return m_ImGui; }
 
 		inline static Application& Get() { return *s_Instance; }
 		inline Window& GetWindow() { return *m_Window; }

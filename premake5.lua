@@ -1,6 +1,6 @@
 workspace "Nebula"
 	architecture "x86_64"
-	startproject "Tests"
+	startproject "Nebula Storm"
 
 	configurations {
 		"Debug",
@@ -93,10 +93,10 @@ project "Nebula"
 		defines "NB_DIST"
 		runtime "Release"
 		optimize "on"
-
---The Nebula Client
-project "Tests"
-	location "Tests"
+		
+--The Nebula Editor
+project "Nebula Storm"
+	location "Nebula-Storm"
 	kind "ConsoleApp"
 	
 	cppdialect "C++17"
@@ -108,15 +108,14 @@ project "Tests"
 	objdir ("bin-obj/" .. outputdir .. "/%{prj.name}")
 
 	files {
-		"%{prj.name}/src/**.h",
-		"%{prj.name}/src/**.cpp"
+		"%{prj.name}/**.h",
+		"%{prj.name}/**.cpp"
 	}
 
 	includedirs {
 		"Nebula/include",
 		"%{includedir.spdlog}",
-		"%{includedir.ImGui}",
-		"%{includedir.glm}"
+		"%{includedir.ImGui}"
 	}
 
 	links {

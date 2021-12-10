@@ -42,6 +42,8 @@ namespace Nebula {
 	{
 		friend class Dispatcher;
 	public:
+		virtual ~Event() = default;
+
 		virtual EventType GetEventType() const = 0;
 		virtual const char* GetName() const = 0;
 		virtual int GetCategoryFlags() const = 0;
