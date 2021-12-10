@@ -14,6 +14,8 @@ namespace Nebula {
 		NB_ASSERT(!s_Instance, "Application already exists!");
 		s_Instance = this;
 
+		Time::Start();
+
 		m_Window = Window::Create(WindowProps(name));
 		m_Window->SetEventCallback(BIND_EVENT(Application::OnEvent));
 
@@ -34,10 +36,12 @@ namespace Nebula {
 
 		while (m_Running) {
 			NB_PROFILE_SCOPE("Frame - Application::run()")
+			Time::Update();
 
 			float time = (float)glfwGetTime();
 			Timestep timestep = time - m_LastFrameTime;
 			m_LastFrameTime = time;
+
 			
 			if (!m_Minimized) {
 				for (Layer* layer : m_LayerStack) {

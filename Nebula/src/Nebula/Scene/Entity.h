@@ -37,4 +37,15 @@ namespace Nebula {
 		entt::entity m_EntityHandle{ entt::null };
 		Scene* m_Scene = nullptr;
 	};
+
+	class ScriptableEntity {
+	public:
+		template<typename T>
+		T& GetComponent() {
+			return m_Entity.GetComponent<T>();
+		}
+	private:
+		Entity m_Entity;
+		friend class Scene;
+	};
 }

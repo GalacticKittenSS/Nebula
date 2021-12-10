@@ -4,6 +4,30 @@
 #define SPRITEAXIS SPRITESIZE * 10.0f
 
 namespace Nebula {
+	class CustomScript : public Nebula::ScriptableEntity {
+	public:
+		void Start() { }
+
+		void Update() {
+			auto& transform = GetComponent<TransformComponent>().Transform;
+
+			if (Input::IsKeyPressed(KeyCode::A))
+				transform[3][0] -= speed * Time::DeltaTime();
+			if (Input::IsKeyPressed(KeyCode::D))
+				transform[3][0] += speed * Time::DeltaTime();
+			if (Input::IsKeyPressed(KeyCode::W))
+				transform[3][1] += speed * Time::DeltaTime();
+			if (Input::IsKeyPressed(KeyCode::S))
+				transform[3][1] -= speed * Time::DeltaTime();
+		}
+
+		void Destroy() {
+
+		}
+	private:
+		float speed = 10.0f;
+	};
+
 	EditorLayer::EditorLayer() : Layer("Editor"), Controller(16.0f / 9.0f) { }
 
 	void EditorLayer::Attach() {
@@ -19,11 +43,11 @@ namespace Nebula {
 		m_ActiveScene = CreateRef<Scene>();
 		square = m_ActiveScene->CreateEntity("Square");
 		Camera = m_ActiveScene->CreateEntity("Camera");
-		Camera2 = m_ActiveScene->CreateEntity("Camera2");
 
 		square.AddComponent<SpriteRendererComponent>(vec4{ 1.0f, 1.0f, 1.0f, 1.0f });
 		Camera.AddComponent<CameraComponent>();
-		Camera2.AddComponent<CameraComponent>();
+
+		Camera.AddComponent<NativeScriptComponent>().Bind<CustomScript>();
 	}
 
 	void EditorLayer::Detach() {
@@ -115,16 +139,10 @@ namespace Nebula {
 
 		ImGui::DragFloat3("Camera Transform", value_ptr(Camera.GetComponent<TransformComponent>().Transform[3]));
 
-		if (ImGui::Checkbox("Camera A", &m_Primary)) {
-			Camera.GetComponent<CameraComponent>().Primary = m_Primary;
-			Camera2.GetComponent<CameraComponent>().Primary = !m_Primary;
-		}
-
-
-		auto& cam = Camera2.GetComponent<CameraComponent>().Camera;
+		auto& cam = Camera.GetComponent<CameraComponent>().Camera;
 		float size = cam.GetOrthographicSize();
 
-		if (ImGui::DragFloat("Camera 2 Ortho Size", &size))
+		if (ImGui::DragFloat("Camera Ortho Size", &size))
 			cam.SetOrthographicSize(size);
 
 		ImGui::End();

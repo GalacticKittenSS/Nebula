@@ -3,6 +3,7 @@
 #include "Nebula/Maths/Maths.h"
 
 #include "Nebula/Renderer/Camera.h"
+#include "Entity.h"
 #include "Scene_Camera.h"
 
 namespace Nebula {
@@ -40,5 +41,26 @@ namespace Nebula {
 
 		CameraComponent() = default;
 		CameraComponent(const CameraComponent&) = default;
+	};
+
+	struct NativeScriptComponent {
+		ScriptableEntity* Instance = nullptr;
+
+		std::function<void()> InstantiateFunction;
+		std::function<void()> DestroyInstanceFunction;
+
+		std::function<void(ScriptableEntity*)> OnCreateFunction;
+		std::function<void(ScriptableEntity*)> OnUpdateFunction;
+		std::function<void(ScriptableEntity*)> OnDestroyFunction;
+
+		template<typename T>
+		void Bind() {
+			InstantiateFunction = [&]() { Instance = new T(); };
+			DestroyInstanceFunction = [&]() { delete (T*)Instance; Instance = nullptr; };
+
+			OnCreateFunction = [](ScriptableEntity* instance) { ((T*)instance)->Start(); };
+			OnUpdateFunction = [](ScriptableEntity* instance) { ((T*)instance)->Update(); };
+			OnDestroyFunction = [](ScriptableEntity* instance) { ((T*)instance)->Destroy(); };
+		}
 	};
 }

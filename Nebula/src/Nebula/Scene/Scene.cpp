@@ -24,6 +24,20 @@ namespace Nebula {
 	}
 
 	void Scene::Render() {
+		m_Registry.view<NativeScriptComponent>().each([=](auto entity, auto& nsc) 
+		{
+			if (!nsc.Instance) {
+				nsc.InstantiateFunction();
+				nsc.Instance->m_Entity = Entity{ entity, this };
+
+				if (nsc.OnCreateFunction)
+					nsc.OnCreateFunction(nsc.Instance);
+			}
+
+			if (nsc.OnUpdateFunction)
+				nsc.OnUpdateFunction(nsc.Instance);
+		});
+		
 		Camera* mainCam = nullptr;
 		mat4* mainCamTransform = nullptr;
 
