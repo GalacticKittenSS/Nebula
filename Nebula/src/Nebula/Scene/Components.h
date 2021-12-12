@@ -16,14 +16,23 @@ namespace Nebula {
 	};
 
 	struct TransformComponent {
-		mat4 Transform{ 1.0f };
+		vec3 Translation =	{ 0.0f, 0.0f, 0.0f };
+		vec3 Rotation =		{ 0.0f, 0.0f, 0.0f };
+		vec3 Scale =		{ 1.0f, 1.0f, 1.0f };
 
 		TransformComponent() = default;
 		TransformComponent(const TransformComponent&) = default;
-		TransformComponent(const mat4& transform) : Transform(transform) { }
+		TransformComponent(const vec3& translation) : Translation(translation) { }
 
-		operator mat4& () { return Transform; }
-		operator const mat4& () const { return Transform; }
+		operator mat4 () { return CalculateMatrix(); }
+
+		mat4 CalculateMatrix() {
+			mat4 rotation = rotate(Rotation.x, { 1, 0, 0 })
+				* rotate(Rotation.y, { 0, 1, 0 })
+				* rotate(Rotation.z, { 0, 0, 1 });
+
+			return translate(Translation) * rotation * scale(Scale);
+		}
 	};
 
 	struct SpriteRendererComponent {
@@ -46,21 +55,13 @@ namespace Nebula {
 	struct NativeScriptComponent {
 		ScriptableEntity* Instance = nullptr;
 
-		std::function<void()> InstantiateFunction;
-		std::function<void()> DestroyInstanceFunction;
-
-		std::function<void(ScriptableEntity*)> OnCreateFunction;
-		std::function<void(ScriptableEntity*)> OnUpdateFunction;
-		std::function<void(ScriptableEntity*)> OnDestroyFunction;
+		ScriptableEntity*(*InstantiateScript)();
+		void (*DestroyScript)(NativeScriptComponent*);
 
 		template<typename T>
 		void Bind() {
-			InstantiateFunction = [&]() { Instance = new T(); };
-			DestroyInstanceFunction = [&]() { delete (T*)Instance; Instance = nullptr; };
-
-			OnCreateFunction = [](ScriptableEntity* instance) { ((T*)instance)->Start(); };
-			OnUpdateFunction = [](ScriptableEntity* instance) { ((T*)instance)->Update(); };
-			OnDestroyFunction = [](ScriptableEntity* instance) { ((T*)instance)->Destroy(); };
+			InstantiateScript = []() { return static_cast<ScriptableEntity*>(new T()); };
+			DestroyScript = [](NativeScriptComponent* nsc) { delete nsc->Instance; nsc->Instance = nullptr; };
 		}
 	};
 }

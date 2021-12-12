@@ -202,4 +202,17 @@ namespace Nebula {
 		Result[3][2] = -(zFar + zNear) / (zFar - zNear);
 		return Result;
 	}
+
+	template<typename T>
+	inline mat<4, 4, T> perspective(T fov, T aspect, T zNear, T zFar) {
+		T const tanHalfFovy = tan(fov / static_cast<T>(2));
+
+		mat<4, 4, T> Result(static_cast<T>(0));
+		Result[0][0] = static_cast<T>(1) / (aspect * tanHalfFovy);
+		Result[1][1] = static_cast<T>(1) / (tanHalfFovy);
+		Result[2][2] = -(zFar + zNear) / (zFar - zNear);
+		Result[2][3] = -static_cast<T>(1);
+		Result[3][2] = -(static_cast<T>(2) * zFar * zNear) / (zFar - zNear);
+		return Result;
+	}
 }

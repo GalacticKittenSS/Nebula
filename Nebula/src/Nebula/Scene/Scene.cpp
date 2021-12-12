@@ -24,40 +24,37 @@ namespace Nebula {
 	}
 
 	void Scene::Render() {
-		m_Registry.view<NativeScriptComponent>().each([=](auto entity, auto& nsc) 
+		m_Registry.view<NativeScriptComponent>().each([=](auto entity, NativeScriptComponent& nsc) 
 		{
 			if (!nsc.Instance) {
-				nsc.InstantiateFunction();
+				nsc.Instance = nsc.InstantiateScript();
 				nsc.Instance->m_Entity = Entity{ entity, this };
-
-				if (nsc.OnCreateFunction)
-					nsc.OnCreateFunction(nsc.Instance);
+				nsc.Instance->Start();
 			}
 
-			if (nsc.OnUpdateFunction)
-				nsc.OnUpdateFunction(nsc.Instance);
+			nsc.Instance->Update();
 		});
 		
 		Camera* mainCam = nullptr;
-		mat4* mainCamTransform = nullptr;
+		mat4 mainCamTransform;
 
 		auto view = m_Registry.view<TransformComponent, CameraComponent>();
 		for (auto entity : view) {
-			auto& [transform, camera] = view.get<TransformComponent, CameraComponent>(entity);
+			auto [transform, camera] = view.get<TransformComponent, CameraComponent>(entity);
 
 			if (camera.Primary) {
 				mainCam = &camera.Camera;
-				mainCamTransform = &transform.Transform;
+				mainCamTransform = transform;
 				break;
 			}
 		}
 
 		if (mainCam) {
-			Renderer2D::BeginScene(*mainCam, *mainCamTransform);
+			Renderer2D::BeginScene(*mainCam, mainCamTransform);
 
 			auto group = m_Registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
 			for (auto entity : group) {
-				auto& [transform, sprite] = group.get<TransformComponent, SpriteRendererComponent>(entity);
+				auto [transform, sprite] = group.get<TransformComponent, SpriteRendererComponent>(entity);
 
 				Renderer2D::DrawQuad(transform, sprite.Colour, 1.0f);
 			}

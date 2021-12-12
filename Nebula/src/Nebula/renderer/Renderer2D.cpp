@@ -306,4 +306,48 @@ namespace Nebula {
 
 		return vertexPtr;
 	}
+
+	void Renderer2D::DrawQuad(const size_t vertexCount, vec4* vertexPos, Sprite& sprite, float tiling) {
+		NB_PROFILE_FUNCTION();
+
+		vec4 colour = sprite.colour;
+
+		float textureIndex = 0.0f;
+
+		const vec2* texCoords = sprite.texCoords;
+
+		if (sprite.texture != nullptr) {
+			for (uint32_t i = 1; i < s_Data.TextureSlotIndex; i++) {
+				if (*s_Data.TextureSlots[i].get() == *sprite.texture.get()) {
+					textureIndex = (float)i;
+					break;
+				}
+			}
+
+			if (textureIndex == 0.0f) {
+				if (s_Data.TextureSlotIndex >= Renderer2DData::MaxTextureSlots)
+					FlushAndReset();
+
+				textureIndex = (float)s_Data.TextureSlotIndex;
+				s_Data.TextureSlots[s_Data.TextureSlotIndex] = sprite.texture;
+				s_Data.TextureSlotIndex++;
+			}
+		}
+
+		mat4 transform = translate(sprite.position) * scale(vec3(sprite.size, 1.0f));
+
+		if (sprite.rotation != 0.0f)
+			transform *= rotate(sprite.rotation, { 0.0f, 0.0f, 1.0f });
+
+		for (size_t i = 0; i < vertexCount; i++) {
+			s_Data.QuadVBPtr->Position = transform * vertexPos[i];
+			s_Data.QuadVBPtr->Colour = colour;
+			s_Data.QuadVBPtr->TexCoord = texCoords[i];
+			s_Data.QuadVBPtr->TexIndex = textureIndex;
+			s_Data.QuadVBPtr->TilingFactor = tiling;
+			s_Data.QuadVBPtr++;
+		}
+
+		s_Data.QuadIndexCount += 12;
+	}
 }

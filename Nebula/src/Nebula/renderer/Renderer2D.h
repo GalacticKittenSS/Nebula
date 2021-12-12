@@ -29,6 +29,7 @@ namespace Nebula {
 		//Primitives
 		static void DrawQuad(Sprite& quad, float tiling = 1.0f);
 		static void DrawQuad(const mat4& matrix, const vec4& colour, float tiling = 1.0f);
+		static void DrawQuad(const size_t vertexCount, vec4* vertexPos, Sprite& sprite, float tiling = 1.0f);
 
 		static void DrawTriangle(Sprite& tri, float tiling = 1.0f);
 	private:

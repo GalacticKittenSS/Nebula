@@ -2,6 +2,8 @@
 
 #include <Nebula.h>
 
+#include "Panels/Scene_Hierarchy.h"
+
 namespace Nebula {
 	class EditorLayer : public Layer {
 	public:
@@ -21,15 +23,11 @@ namespace Nebula {
 		bool m_GameViewFocus = false, m_GameViewHovered = false;
 		vec2 m_GameViewSize = { 1280.0f, 720.0f };
 
-		OrthographicCameraController Controller;
+		Ref<Scene> m_ActiveScene;
 		Ref<FrameBuffer> frameBuffer;
 		Timer timer;
 
-		Ref<Scene> m_ActiveScene;
-		Entity square;
-		Entity Camera;
-		Entity Camera2;
-
-		bool m_Primary;
+		//Panels
+		SceneHierarchyPanel m_SceneHierarchy;
 	};
 }
