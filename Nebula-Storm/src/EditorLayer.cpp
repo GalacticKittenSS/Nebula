@@ -125,9 +125,9 @@ namespace Nebula {
 			{ 0, 0, 1, 1 }
 		};
 
-		Renderer2D::BeginScene(m_Camera.GetComponent<CameraComponent>().Camera, m_Camera.GetComponent<TransformComponent>().CalculateMatrix());
-		Renderer2D::Draw(NB_QUAD, cubeVertices, sizeof(cubeVertices) / sizeof(vec4), translate(vec3{ 0.0f, 0.0f, 0.0f }));
-		Renderer2D::EndScene();
+		//Renderer2D::BeginScene(m_Camera.GetComponent<CameraComponent>().Camera, m_Camera.GetComponent<TransformComponent>().CalculateMatrix());
+		//Renderer2D::Draw(NB_QUAD, cubeVertices, sizeof(cubeVertices) / sizeof(vec4), translate(vec3{ 0.0f, -0.5f, 0.0f }));
+		//Renderer2D::EndScene();
 
 		frameBuffer->Unbind();
 	}
@@ -151,8 +151,14 @@ namespace Nebula {
 		ImGui::Begin("Nebula Storm", &dockspaceOpen, window_flags);
 		ImGui::PopStyleVar(3);
 
+		ImGuiStyle& style = ImGui::GetStyle();
+		float minWinSize = style.WindowMinSize.x;
+		style.WindowMinSize.x = 370.0f;
+
 		ImGuiID dockspace_id = ImGui::GetID("Nebula Storm");
 		ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+
+		style.WindowMinSize.x = minWinSize;
 		
 		if (ImGui::BeginMenuBar()) {
 			if (ImGui::BeginMenu("File")) {

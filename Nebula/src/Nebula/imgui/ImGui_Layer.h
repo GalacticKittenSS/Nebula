@@ -17,6 +17,8 @@ namespace Nebula {
 
 		void SetBlockEvents(bool block) { m_BlockEvents = block; }
 	private:
+		void SetDarkThemeColour();
+	private:
 		float m_Time = 0.0f;
 		bool m_BlockEvents;
 	};
