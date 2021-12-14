@@ -20,6 +20,12 @@ namespace Nebula {
 
 		void OnEvent(Nebula::Event& e) override;
 	private:
+		bool OnKeyPressed(KeyPressedEvent& e);
+
+		void NewScene();
+		void SaveSceneAs();
+		void LoadScene();
+	private:
 		bool m_GameViewFocus = false, m_GameViewHovered = false;
 		vec2 m_GameViewSize = { 1280.0f, 720.0f };
 

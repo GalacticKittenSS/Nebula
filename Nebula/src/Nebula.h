@@ -14,6 +14,7 @@
 #include "Nebula/Scene/Scene.h"
 #include "Nebula/Scene/Entity.h"
 #include "Nebula/Scene/Components.h"
+#include "Nebula/Scene/Scene_Serializer.h"
 //--------------------
 
 //-----MATHS----------
@@ -44,6 +45,8 @@
 #include "Nebula/Events/Mouse_Event.h"
 #include "Nebula/Events/Window_Event.h"
 //--------------------
+
+#include "Nebula/Utils/Platform_Utils.h"
 
 //----Application-----
 #include "Nebula/Core/Time.h"

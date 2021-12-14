@@ -5,6 +5,7 @@
 namespace Nebula {
 	class Entity;
 	class SceneHierarchyPanel;
+	class SceneSerializer;
 
 	class Scene {
 	public:
@@ -27,5 +28,6 @@ namespace Nebula {
 
 		friend class Entity;
 		friend class SceneHierarchyPanel;
+		friend class SceneSerializer;
 	};
 }

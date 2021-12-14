@@ -56,17 +56,14 @@ namespace Nebula {
 		frameBuffer = FrameBuffer::Create(fbSpec);
 		timer = Timer();
 
+		m_SceneHierarchy.SetContext(m_ActiveScene); 
+
+
 		m_ActiveScene = CreateRef<Scene>();
-		
-		m_Camera = m_ActiveScene->CreateEntity("Camera");
-		
-		m_Camera.AddComponent<CameraComponent>();
-		m_Camera.AddComponent<NativeScriptComponent>().Bind<CameraController>();
-
-		m_Camera.GetComponent<CameraComponent>().Camera.SetProjectionType(SceneCamera::ProjectionType::Perspective);
-		m_Camera.GetComponent<TransformComponent>().Translation.z = 1.0f;
-
+		m_ActiveScene->OnViewportResize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
 		m_SceneHierarchy.SetContext(m_ActiveScene);
+
+		SceneSerializer(m_ActiveScene).Deserialize("assets/scenes/PinkCube.nebula");
 	}
 
 	void EditorLayer::Detach() {
@@ -92,42 +89,6 @@ namespace Nebula {
 		RenderCommand::Clear();
 
 		m_ActiveScene->Render();
-
-		vec4 cubeVertices[] = {
-			{ 0, 0, 0, 1 },
-			{ 1, 0, 0, 1 },
-			{ 1, 1, 0, 1 },
-			{ 0, 1, 0, 1 },
-			
-			{ 1, 0, 1, 1 },
-			{ 1, 0, 0, 1 },
-			{ 1, 1, 0, 1 },
-			{ 1, 1, 1, 1 },
-
-			{ 0, 1, 1, 1 },
-			{ 1, 1, 1, 1 },
-			{ 1, 1, 0, 1 },
-			{ 0, 1, 0, 1 },
-
-			{ 0, 0, 1, 1 },
-			{ 1, 0, 1, 1 },
-			{ 1, 1, 1, 1 },
-			{ 0, 1, 1, 1 },
-
-			{ 0, 0, 0, 1 },
-			{ 0, 0, 1, 1 },
-			{ 0, 1, 1, 1 },
-			{ 0, 1, 0, 1 },
-
-			{ 0, 0, 0, 1 },
-			{ 1, 0, 0, 1 },
-			{ 1, 0, 1, 1 },
-			{ 0, 0, 1, 1 }
-		};
-
-		//Renderer2D::BeginScene(m_Camera.GetComponent<CameraComponent>().Camera, m_Camera.GetComponent<TransformComponent>().CalculateMatrix());
-		//Renderer2D::Draw(NB_QUAD, cubeVertices, sizeof(cubeVertices) / sizeof(vec4), translate(vec3{ 0.0f, -0.5f, 0.0f }));
-		//Renderer2D::EndScene();
 
 		frameBuffer->Unbind();
 	}
@@ -162,6 +123,15 @@ namespace Nebula {
 		
 		if (ImGui::BeginMenuBar()) {
 			if (ImGui::BeginMenu("File")) {
+				if (ImGui::MenuItem("New", "Ctrl+N"))
+					NewScene();
+
+				if (ImGui::MenuItem("Open...", "Ctrl+O"))
+					LoadScene();
+				
+				if (ImGui::MenuItem("Save As...", "Ctrl+Shift+S"))
+					SaveSceneAs();
+				
 				if (ImGui::MenuItem("Quit")) 
 					Application::Get().Close();
 				
@@ -214,6 +184,59 @@ namespace Nebula {
 	}
 
 	void EditorLayer::OnEvent(Event& e) {
+		Dispatcher d(e);
+		d.Dispatch<KeyPressedEvent>(BIND_EVENT(EditorLayer::OnKeyPressed));
+	}
 
+	bool EditorLayer::OnKeyPressed(KeyPressedEvent& e) {
+		if (e.GetRepeatCount() > 0)
+			return false;
+
+		bool control = Input::IsKeyPressed(KeyCode::LeftControl) || Input::IsKeyPressed(KeyCode::RightControl);
+		bool shift = Input::IsKeyPressed(KeyCode::LeftShift) || Input::IsKeyPressed(KeyCode::RightShift);
+		switch (e.GetKeyCode())
+		{
+		case KeyCode::S:
+			if (control && shift)
+				SaveSceneAs();
+			break;
+		case KeyCode::N:
+			if (control)
+				NewScene();
+			break;
+		case KeyCode::O:
+			if (control)
+				LoadScene();
+			break;
+		}
+
+		return true;
+	}
+
+
+	void EditorLayer::NewScene() {
+		m_ActiveScene = CreateRef<Scene>();
+		m_ActiveScene->OnViewportResize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
+		m_SceneHierarchy.SetContext(m_ActiveScene);
+	}
+
+	void EditorLayer::SaveSceneAs() {
+		std::string filepath = FileDialogs::SaveFile("Nebula Scene (*.nebula)\0*.nebula\0");
+		std::string ending = ".nebula";
+
+		if (!equal(ending.rbegin(), ending.rend(), filepath.rbegin()))
+			filepath += ending;
+
+		if (!filepath.empty())
+			SceneSerializer(m_ActiveScene).Serialize(filepath);
+	}
+
+	void EditorLayer::LoadScene() {
+		std::string filepath = FileDialogs::OpenFile("Nebula Scene (*.nebula)\0*.nebula\0");
+
+		if (!filepath.empty()) {
+			NewScene();
+			SceneSerializer(m_ActiveScene).Deserialize(filepath);
+		}
 	}
 }

@@ -18,12 +18,14 @@ includedir["GLad"] = "Nebula/Modules/glad/include"
 includedir["ImGui"] = "Nebula/Modules/imgui/include"
 includedir["stb"] = "Nebula/Modules/stb_image"
 includedir["entt"] = "Nebula/Modules/entt/include"
+includedir["yaml"] = "Nebula/Modules/yaml-cpp/include"
 
 --Dependencies
 group "Dependencies"
 	include "Nebula/Modules/GLFW"
 	include "Nebula/Modules/GLad"
 	include "Nebula/Modules/ImGui"
+	include "Nebula/Modules/yaml-cpp"
 group ""
 
 --The Nebula Engine
@@ -59,13 +61,15 @@ project "Nebula"
 		"%{includedir.GLad}",
 		"%{includedir.ImGui}",
 		"%{includedir.stb}",
-		"%{includedir.entt}"
+		"%{includedir.entt}",
+		"%{includedir.yaml}"
 	}
 
 	links { 
 		"GLFW",
 		"GLad",
 		"ImGui",
+		"yaml-cpp",
 		"opengl32.lib"
 	}
 
