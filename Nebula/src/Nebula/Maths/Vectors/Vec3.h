@@ -486,7 +486,7 @@ namespace Nebula {
 
 	template<typename T>
 	inline constexpr bool  operator==(vec<3, T> const& v1, vec<3, T> const& v2) {
-		return v1 == v2;
+		return v1.x == v2.x && v1.y == v2.y && v1.z == v2.z;
 	}
 
 	template<typename T>

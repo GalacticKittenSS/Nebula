@@ -27,6 +27,8 @@ namespace Nebula {
 		Ref<FrameBuffer> frameBuffer;
 		Timer timer;
 
+		Entity m_Camera;
+
 		//Panels
 		SceneHierarchyPanel m_SceneHierarchy;
 	};

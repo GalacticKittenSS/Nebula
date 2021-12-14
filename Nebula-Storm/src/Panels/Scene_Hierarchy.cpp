@@ -1,7 +1,6 @@
 #include "Scene_Hierarchy.h"
 
-#include "../../Nebula/Modules/glm/glm/glm/glm.hpp"
-#include "../../Nebula/Modules/glm/glm/glm/gtc/matrix_transform.hpp"
+#include "imgui.cpp"
 
 namespace Nebula {
 	SceneHierarchyPanel::SceneHierarchyPanel(const Ref<Scene>& scene) {
@@ -12,8 +11,6 @@ namespace Nebula {
 	}
 
 	void SceneHierarchyPanel::OnImGuiRender() {
-		glm::perspective(45.0f, 16.0f / 9.0f, 1000.0f, -10.0f);
-
 		ImGui::Begin("Scene Hierarchy");
 
 		m_Context->m_Registry.each([&](auto entityID) {
@@ -50,6 +47,77 @@ namespace Nebula {
 		}
 	}
 
+	static void DrawVec3Control(const std::string& label, vec3& values, float resetvalue = 0.0f, float columnWidth = 100.0f) {
+		ImGuiIO& io = ImGui::GetIO();
+		auto boldFont = io.Fonts->Fonts[0];
+
+		ImGui::PushID(label.c_str());
+
+		ImGui::Columns(2);
+		ImGui::SetColumnWidth(0, columnWidth);
+		ImGui::Text(label.c_str());
+		ImGui::NextColumn();
+
+		ImGui::PushMultiItemsWidths(3, ImGui::CalcItemWidth());
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 0, 0 });
+
+		float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
+		ImVec2 buttonSize = { lineHeight + 3.0f, lineHeight };
+
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.8f, 0.2f, 0.1f, 1.0f });
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 1.0f, 0.3f, 0.3f, 1.0f });
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.8f, 0.2f, 0.1f, 1.0f });
+		ImGui::PushFont(boldFont);
+
+		if (ImGui::Button("X", buttonSize))
+			values.x = resetvalue;
+
+		ImGui::PopFont();
+		ImGui::PopStyleColor(3);
+
+		ImGui::SameLine();
+		ImGui::DragFloat("##X", &values.x, 0.1f, 0.0f, 0.0f, "%.2f");
+		ImGui::PopItemWidth();
+		ImGui::SameLine();
+
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.3f, 0.8f, 0.3f, 1.0f });
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
+		ImGui::PushFont(boldFont);
+
+		if (ImGui::Button("Y", buttonSize))
+			values.y = resetvalue;
+
+		ImGui::PopFont();
+		ImGui::PopStyleColor(3);
+
+		ImGui::SameLine();
+		ImGui::DragFloat("##Y", &values.y, 0.1f, 0.0f, 0.0f, "%.2f");
+		ImGui::PopItemWidth();
+		ImGui::SameLine();
+
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.1f, 0.25f, 0.8f, 1.0f });
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.2f, 0.35f, 0.9f, 1.0f });
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.1f, 0.25f, 0.8f, 1.0f });
+		ImGui::PushFont(boldFont);
+
+		if (ImGui::Button("Z", buttonSize))
+			values.z = resetvalue;
+
+		ImGui::PopFont();
+		ImGui::PopStyleColor(3);
+
+		ImGui::SameLine();
+		ImGui::DragFloat("##Z", &values.z, 0.1f, 0.0f, 0.0f, "%.2f");
+		ImGui::PopItemWidth();
+
+		ImGui::PopStyleVar();
+
+		ImGui::Columns(1);
+
+		ImGui::PopID();
+	}
+
 	void SceneHierarchyPanel::DrawComponents(Entity entity) {
 		if (entity.HasComponent<TagComponent>()) {
 			auto& tag = entity.GetComponent<TagComponent>().Tag;
@@ -66,21 +134,17 @@ namespace Nebula {
 		if (entity.HasComponent<TransformComponent>()) {
 			if (ImGui::TreeNodeEx((void*)typeid(TransformComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen, "Transform")) {
 				auto& transformComp = entity.GetComponent<TransformComponent>();
+				vec3 rotation = degrees(transformComp.Rotation);
 
-				if (ImGui::DragFloat3("Position", value_ptr(transformComp.Translation), 0.1f)) {
-					transformComp.CalculateMatrix();
-				}
-
-				if (ImGui::DragFloat3("Rotation", value_ptr(transformComp.Rotation), 0.1f)) {
-					transformComp.CalculateMatrix();
-				}
-
-				if (ImGui::DragFloat3("Size", value_ptr(transformComp.Scale), 0.1f)) {
-					transformComp.CalculateMatrix();
-				}
+				DrawVec3Control("Position", transformComp.Translation);
+				DrawVec3Control("Rotation", rotation);
+				DrawVec3Control("Scale", transformComp.Scale, 1.0f);
+				
+				transformComp.Rotation = radians(rotation);
 
 				ImGui::TreePop();
 			}
+			
 		}
 
 		if (entity.HasComponent<CameraComponent>()) {

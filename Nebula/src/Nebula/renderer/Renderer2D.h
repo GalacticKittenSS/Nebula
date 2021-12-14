@@ -4,16 +4,14 @@
 #include "Texture.h"
 #include "GameObjects.h"
 
+#define NB_QUAD 0
+#define NB_TRI  1
+
 namespace Nebula {
 	class VertexArray;
 
-	struct Vertex {
-		vec3 Position;
-		vec4 Colour;
-		vec2 TexCoord;
-		float TexIndex;
-		float TilingFactor;
-	};
+	struct Vertex;
+	struct RenderData;
 
 	class Renderer2D {
 	public:
@@ -27,13 +25,14 @@ namespace Nebula {
 		static void Flush(Ref<VertexArray> vertexArray, uint32_t IndexCount);
 
 		//Primitives
+		static void Draw(const uint32_t type, const vec4* vertexPos, const uint32_t vertexCount, const mat4& transform, Ref<Texture2D> texture = nullptr);
+
 		static void DrawQuad(Sprite& quad, float tiling = 1.0f);
 		static void DrawQuad(const mat4& matrix, const vec4& colour, float tiling = 1.0f);
-		static void DrawQuad(const size_t vertexCount, vec4* vertexPos, Sprite& sprite, float tiling = 1.0f);
 
 		static void DrawTriangle(Sprite& tri, float tiling = 1.0f);
 	private:
 		static void FlushAndReset();
-		static Vertex* Draw(Vertex* vertexPtr, const size_t vertexCount, vec4* vertexPos, Sprite& sprite, float tiling = 1.0f);
+		static Vertex* Draw(Vertex* vertexPtr, const uint32_t vertexCount, const vec4* vertexPos, const RenderData& data, float tiling);
 	};
 }
