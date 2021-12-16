@@ -11,7 +11,8 @@
 */
 
 //-------ImGui--------
-#include "imgui/imgui.h"
+#include "../Modules/imgui/include/imgui/imgui.h"
+#include "../Modules/imguizmo/ImGuizmo.h"
 //--------------------
 
 //------Real Include File------

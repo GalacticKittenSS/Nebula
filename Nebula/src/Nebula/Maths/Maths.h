@@ -25,6 +25,10 @@
 //Matrices
 #include "Matrices/Transformation.h"
 #include "Matrices/Mat4.h"
+#include "Matrices/Mat3.h"
+
+//Quaternions
+#include "Quaternions/Quaternion.h"
 
 //Calculations
 #include "Exponential.h"
@@ -39,4 +43,19 @@ namespace Nebula {
 	typedef vec<3, float> vec3;
 	typedef vec<4, float> vec4;
 	typedef mat<4, 4, float> mat4;
+	typedef mat<3, 3, float> mat3;
+	typedef qua<float> quat;
+	
+	inline constexpr float epsilon() { return std::numeric_limits<float>::epsilon(); }
+	inline constexpr float pi() { return 3.14159265358979323846264338327950288f; }
+
+	inline bool epsilonEqual(float const& x, float const& y, float const& epsilon) { return abs(x - y) < epsilon; }
+	inline bool epsilonNotEqual(float const& x, float const& y, float const& epsilon) { return abs(x - y) >= epsilon; }
+	
+	template<typename T>
+	inline vec<3, T> scaleVec(vec<3, T> const& v, T desiredLength) {
+		return v * desiredLength / length(v);
+	}
+
+	bool DecomposeTransform(mat4& transform, vec3& outTranslation, vec3& outRotation, vec3& outScale);
 }

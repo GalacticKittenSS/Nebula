@@ -34,7 +34,7 @@ namespace Nebula {
 			}
 
 			rotation.y = -(Input::GetMouseX() - Application::Get().GetWindow().GetWidth() / 2) / 360;
-			//rotation.x = -(Input::GetMouseY() - Application::Get().GetWindow().GetHeight() / 2) / 360;
+			rotation.x = -(Input::GetMouseY() - Application::Get().GetWindow().GetHeight() / 2) / 360;
 		}
 
 		void Destroy() {
@@ -138,7 +138,7 @@ namespace Nebula {
 				ImGui::EndMenu();
 			}
 			
-			if (ImGui::BeginMenu("Add")) {
+			if (ImGui::BeginMenu("Create Entity")) {
 				if (ImGui::MenuItem("Empty")) 
 					auto& sprite = m_ActiveScene->CreateEntity("Entity");
 
@@ -168,7 +168,7 @@ namespace Nebula {
 
 		m_GameViewFocus = ImGui::IsWindowFocused();
 		m_GameViewHovered = ImGui::IsWindowHovered();
-		Application::Get().GetImGuiLayer()->SetBlockEvents(!m_GameViewFocus || !m_GameViewHovered);
+		Application::Get().GetImGuiLayer()->SetBlockEvents(!m_GameViewFocus && !m_GameViewHovered);
 
 		if (m_GameViewFocus)
 			m_ActiveScene->Update();
@@ -178,6 +178,48 @@ namespace Nebula {
 
 		uint32_t textureID = frameBuffer->GetColourAttachmentRendererID();
 		ImGui::Image((void*)textureID, panelSize, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+
+		//Gizmos
+		Entity selectedEntity = m_SceneHierarchy.GetSelectedEntity();
+		if (selectedEntity && m_GizmoType != -1) {
+			ImGuizmo::SetOrthographic(false);
+			ImGuizmo::SetDrawlist();
+
+			float windowWidth = (float)ImGui::GetWindowWidth();
+			float windowHeight = (float)ImGui::GetWindowHeight();
+			ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowWidth, windowHeight);
+
+			auto cameraEntity = m_ActiveScene->GetPrimaryCamera();
+			const auto& camera = cameraEntity.GetComponent<CameraComponent>().Camera;
+
+			const mat4& cameraProj = camera.GetProjection();
+			mat4 cameraView = inverse(cameraEntity.GetComponent<TransformComponent>().CalculateMatrix());
+
+			auto& tc = selectedEntity.GetComponent<TransformComponent>();
+			mat4 transform = tc.CalculateMatrix();
+
+			bool snap = Input::IsKeyPressed(Key::LeftControl);
+			float snapValue = 0.25f;
+			if (m_GizmoType == ImGuizmo::OPERATION::ROTATE)
+				snapValue = 22.5f;
+
+			float snapValues[3] = { snapValue, snapValue, snapValue };
+
+			ImGuizmo::Manipulate(value_ptr(cameraView), value_ptr(cameraProj), 
+				(ImGuizmo::OPERATION)m_GizmoType, ImGuizmo::LOCAL, value_ptr(transform), nullptr, snap ? snapValues : nullptr);
+
+
+			if (ImGuizmo::IsUsing()) {
+				vec3 translation, rotation, scale;
+				DecomposeTransform(transform, translation, rotation, scale);
+
+				vec3 deltaRotation = rotation - tc.Rotation;
+				tc.Translation = translation;
+				tc.Rotation += deltaRotation;
+				tc.Scale = scale;
+			}
+		}
+
 		ImGui::End();
 		
 		ImGui::End();
@@ -196,6 +238,7 @@ namespace Nebula {
 		bool shift = Input::IsKeyPressed(KeyCode::LeftShift) || Input::IsKeyPressed(KeyCode::RightShift);
 		switch (e.GetKeyCode())
 		{
+		//Scene Saving/Loading
 		case KeyCode::S:
 			if (control && shift)
 				SaveSceneAs();
@@ -207,6 +250,20 @@ namespace Nebula {
 		case KeyCode::O:
 			if (control)
 				LoadScene();
+			break;
+
+		//Gizmos
+		case KeyCode::Q:
+			m_GizmoType = -1;
+			break;
+		case KeyCode::W:
+			m_GizmoType = ImGuizmo::OPERATION::TRANSLATE;
+			break;
+		case KeyCode::E:
+			m_GizmoType = ImGuizmo::OPERATION::ROTATE;
+			break;
+		case KeyCode::R:
+			m_GizmoType = ImGuizmo::OPERATION::SCALE;
 			break;
 		}
 

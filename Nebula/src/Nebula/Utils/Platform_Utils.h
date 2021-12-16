@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <optional>
 
 namespace Nebula {
 	class FileDialogs {

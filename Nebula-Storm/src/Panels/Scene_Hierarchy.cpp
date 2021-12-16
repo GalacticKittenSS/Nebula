@@ -1,6 +1,11 @@
 #include "Scene_Hierarchy.h"
+#include <cstring>
 
-#include "imgui.cpp"
+#include "../../Nebula/Modules/imgui/src/imgui.cpp"
+
+#ifdef _MSVC_LANG
+	#define _CRT_SECURE_NO_WARNINGS
+#endif
 
 namespace Nebula {
 	SceneHierarchyPanel::SceneHierarchyPanel(const Ref<Scene>& scene) {
@@ -188,7 +193,7 @@ namespace Nebula {
 
 			char buffer[256];
 			memset(buffer, 0, sizeof(buffer));
-			strcpy_s(buffer, sizeof(buffer), tag.c_str());
+			strncpy(buffer, tag.c_str(), sizeof(buffer));
 
 			if (ImGui::InputText("##Tag", buffer, sizeof(buffer))) {
 				tag = std::string(buffer);
@@ -203,12 +208,20 @@ namespace Nebula {
 
 		if (ImGui::BeginPopup("Add Component")) {
 			if (ImGui::MenuItem("Camera")) {
-				m_SelectionContext.AddComponent<CameraComponent>();
+				if (!m_SelectionContext.HasComponent<CameraComponent>())
+					m_SelectionContext.AddComponent<CameraComponent>();
+				else
+					NB_WARN("This entity already has the Camera Component!");
 				ImGui::CloseCurrentPopup();
 			}
+			
+			
 
 			if (ImGui::MenuItem("Sprite Renderer")) {
-				m_SelectionContext.AddComponent<SpriteRendererComponent>();
+				if (!m_SelectionContext.HasComponent<CameraComponent>())
+					m_SelectionContext.AddComponent<SpriteRendererComponent>();
+				else
+					NB_WARN("This entity already has the Camera Component!");
 				ImGui::CloseCurrentPopup();
 			}
 

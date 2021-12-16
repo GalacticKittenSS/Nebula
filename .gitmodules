@@ -21,3 +21,6 @@
 [submodule "Nebula/Modules/yaml-cpp"]
 	path = Nebula/Modules/yaml-cpp
 	url = https://github.com/TheCherno/yaml-cpp
+[submodule "Nebula/Modules/imguizmo"]
+	path = Nebula/Modules/imguizmo
+	url = https://github.com/thecherno/imguizmo

@@ -107,7 +107,6 @@ namespace Nebula {
 		}
 
 		explicit constexpr mat(mat<3, 3, T> const& m) {
-
 			this->value[0] = vec<4, T>(m[0], 0);
 			this->value[1] = vec<4, T>(m[1], 0);
 			this->value[2] = vec<4, T>(m[2], 0);

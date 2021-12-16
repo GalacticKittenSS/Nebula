@@ -27,11 +27,7 @@ namespace Nebula {
 		operator mat4 () { return CalculateMatrix(); }
 
 		mat4 CalculateMatrix() {
-			mat4 rotation = rotate(Rotation.x, { 1, 0, 0 })
-				* rotate(Rotation.y, { 0, 1, 0 })
-				* rotate(Rotation.z, { 0, 0, 1 });
-
-			return translate(Translation) * rotation * scale(Scale);
+			return translate(Translation) * toMat4(quat(Rotation)) * scale(Scale);
 		}
 	};
 

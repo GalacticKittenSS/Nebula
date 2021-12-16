@@ -35,6 +35,8 @@ namespace Nebula {
 
 		Entity m_Camera;
 
+		int m_GizmoType = -1;
+
 		//Panels
 		SceneHierarchyPanel m_SceneHierarchy;
 	};
