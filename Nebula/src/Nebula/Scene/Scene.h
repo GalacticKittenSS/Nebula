@@ -1,6 +1,7 @@
 #pragma once
 
 #include "entt.hpp"
+#include "Nebula/Renderer/Camera.h"
 
 namespace Nebula {
 	class Entity;
@@ -15,8 +16,9 @@ namespace Nebula {
 		Entity CreateEntity(const std::string& name);
 		void DestroyEntity(Entity entity);
 
-		void Update();
-		void Render();
+		void UpdateRuntime();
+		void UpdateEditor(EditorCamera& camera);
+		void RenderRuntime();
 		
 		void OnViewportResize(uint32_t width, uint32_t height);
 

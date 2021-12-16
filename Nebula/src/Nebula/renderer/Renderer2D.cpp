@@ -182,6 +182,23 @@ namespace Nebula {
 
 		s_Data.TextureSlotIndex = 1;
 	}
+
+	void Renderer2D::BeginScene(const EditorCamera& camera) {
+		NB_PROFILE_FUNCTION();
+
+		mat4 viewProj = camera.GetViewProjection();
+
+		s_Data.TextureShader->Bind();
+		s_Data.TextureShader->SetMat4("u_View", viewProj);
+
+		s_Data.QuadIndexCount = 0;
+		s_Data.QuadVBPtr = s_Data.QuadVBBase;
+
+		s_Data.TriIndexCount = 0;
+		s_Data.TriVBPtr = s_Data.TriVBBase;
+
+		s_Data.TextureSlotIndex = 1;
+	}
 	
 	void Renderer2D::Draw(const uint32_t type, const vec4* vertexPos, const uint32_t vertexCount, const mat4& transform, Ref<Texture2D> texture) {
 		NB_PROFILE_FUNCTION();

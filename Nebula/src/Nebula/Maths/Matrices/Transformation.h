@@ -163,11 +163,15 @@ namespace Nebula {
 	}
 	
 	template<typename T>
-	inline mat<4, 4, T> rotate(T angle, vec<3, T> const& v)
-	{
+	inline mat<4, 4, T> rotate(T angle, vec<3, T> const& v) {
 		const mat<4, 4, T> m(1.0f);
 
 		return rotate(m, angle, v);
+	}
+
+	template<typename T>
+	inline vec<3, T> rotate(qua<T> const& q, vec<3, T> const& v) {
+		return q * v;
 	}
 
 	template<typename T>

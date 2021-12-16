@@ -27,6 +27,7 @@ namespace Nebula {
 		void LoadScene();
 	private:
 		bool m_GameViewFocus = false, m_GameViewHovered = false;
+		bool m_UsingGizmo = false;
 		vec2 m_GameViewSize = { 1280.0f, 720.0f };
 
 		Ref<Scene> m_ActiveScene;
@@ -34,6 +35,8 @@ namespace Nebula {
 		Timer timer;
 
 		Entity m_Camera;
+		
+		EditorCamera m_EditorCam;
 
 		int m_GizmoType = -1;
 

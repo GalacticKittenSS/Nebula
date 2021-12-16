@@ -171,7 +171,7 @@ namespace Nebula {
 	template<typename T>
 	inline constexpr vec<3, T> cross(vec<3, T> const& x, vec<3, T> const& y)
 	{
-		return detail::compute_cross<T, detail::is_aligned<Q>::value>::call(x, y);
+		return compute_cross<T>::call(x, y);
 	}
 	
 	// normalize

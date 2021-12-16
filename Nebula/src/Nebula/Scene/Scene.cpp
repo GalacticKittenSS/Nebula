@@ -40,7 +40,7 @@ namespace Nebula {
 		return {};
 	}
 
-	void Scene::Update() {
+	void Scene::UpdateRuntime() {
 		m_Registry.view<NativeScriptComponent>().each([=](auto entity, NativeScriptComponent& nsc)
 		{
 			if (!nsc.Instance) {
@@ -53,7 +53,20 @@ namespace Nebula {
 		});
 	}
 
-	void Scene::Render() {
+	void Scene::UpdateEditor(EditorCamera& camera) {
+		Renderer2D::BeginScene(camera); 
+		
+		auto group = m_Registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
+		for (auto entity : group) {
+			auto [transform, sprite] = group.get<TransformComponent, SpriteRendererComponent>(entity);
+
+			Renderer2D::DrawQuad(transform, sprite.Colour, 1.0f);
+		}
+
+		Renderer2D::EndScene();
+	}
+
+	void Scene::RenderRuntime() {
 		Camera* mainCam = nullptr;
 		mat4 mainCamTransform;
 

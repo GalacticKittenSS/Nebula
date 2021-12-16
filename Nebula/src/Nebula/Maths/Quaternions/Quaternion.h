@@ -207,9 +207,9 @@ namespace Nebula {
 
 	template<typename T>
 	constexpr vec<3, T> operator*(qua<T> const& q, vec<3, T> const& v) {
-		vec<3, T> const QuatVector(q.x.y.z);
-		vec<3, T> const uv(glm::cross(QuatVector, v));
-		vec<3, T> const uuv(glm::cross(QuatVector, uv));
+		vec<3, T> const QuatVector(q.x, q.y, q.z);
+		vec<3, T> const uv(cross(QuatVector, v));
+		vec<3, T> const uuv(cross(QuatVector, uv));
 
 		return v + ((uv * q.w) + uuv) * static_cast<T>(2);
 	}

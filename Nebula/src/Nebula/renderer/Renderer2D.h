@@ -18,7 +18,8 @@ namespace Nebula {
 		static void Init();
 		static void Shutdown();
 
-		static void BeginScene(const Camera& camera, const mat4& transform);
+		static void BeginScene(const Camera& camera, const mat4& transform = mat4(1.0f));
+		static void BeginScene(const EditorCamera& camera);
 		static void BeginScene(const OrthographicCamera& camera);
 		static void EndScene();
 

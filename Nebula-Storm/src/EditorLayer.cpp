@@ -56,8 +56,9 @@ namespace Nebula {
 		frameBuffer = FrameBuffer::Create(fbSpec);
 		timer = Timer();
 
-		m_SceneHierarchy.SetContext(m_ActiveScene); 
+		m_SceneHierarchy.SetContext(m_ActiveScene);
 
+		//m_EditorCam = EditorCamera(60.0f, 16.0f / 9.0f, 0.01f, 1000.0f);
 
 		m_ActiveScene = CreateRef<Scene>();
 		m_ActiveScene->OnViewportResize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
@@ -73,10 +74,16 @@ namespace Nebula {
 	void EditorLayer::Update(Timestep ts) {
 		NB_PROFILE_FUNCTION();
 
+
 		FrameBufferSpecification spec = frameBuffer->GetFrameBufferSpecifications();
 		if (m_GameViewSize.x > 0.0f && m_GameViewSize.y > 0.0f && (spec.Width != m_GameViewSize.x || spec.Height != m_GameViewSize.y)) {
 			frameBuffer->Resize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
 			m_ActiveScene->OnViewportResize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
+			m_EditorCam.SetViewPortSize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
+		}
+
+		if (!m_UsingGizmo && m_GameViewHovered) {
+			m_EditorCam.Update();
 		}
 	}
 
@@ -88,7 +95,7 @@ namespace Nebula {
 		RenderCommand::SetClearColour({ 0.1f, 0.1f, 0.1f, 1.0f });
 		RenderCommand::Clear();
 
-		m_ActiveScene->Render();
+		m_ActiveScene->UpdateEditor(m_EditorCam);
 
 		frameBuffer->Unbind();
 	}
@@ -171,14 +178,14 @@ namespace Nebula {
 		Application::Get().GetImGuiLayer()->SetBlockEvents(!m_GameViewFocus && !m_GameViewHovered);
 
 		if (m_GameViewFocus)
-			m_ActiveScene->Update();
+			m_ActiveScene->UpdateRuntime();
 
 		ImVec2 panelSize = ImGui::GetContentRegionAvail();
 		m_GameViewSize = { panelSize.x, panelSize.y };
 
 		uint32_t textureID = frameBuffer->GetColourAttachmentRendererID();
 		ImGui::Image((void*)textureID, panelSize, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
-
+		
 		//Gizmos
 		Entity selectedEntity = m_SceneHierarchy.GetSelectedEntity();
 		if (selectedEntity && m_GizmoType != -1) {
@@ -189,11 +196,8 @@ namespace Nebula {
 			float windowHeight = (float)ImGui::GetWindowHeight();
 			ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowWidth, windowHeight);
 
-			auto cameraEntity = m_ActiveScene->GetPrimaryCamera();
-			const auto& camera = cameraEntity.GetComponent<CameraComponent>().Camera;
-
-			const mat4& cameraProj = camera.GetProjection();
-			mat4 cameraView = inverse(cameraEntity.GetComponent<TransformComponent>().CalculateMatrix());
+			const mat4& cameraProj = m_EditorCam.GetProjection();
+			mat4 cameraView = m_EditorCam.GetViewMatrix();
 
 			auto& tc = selectedEntity.GetComponent<TransformComponent>();
 			mat4 transform = tc.CalculateMatrix();
@@ -217,7 +221,10 @@ namespace Nebula {
 				tc.Translation = translation;
 				tc.Rotation += deltaRotation;
 				tc.Scale = scale;
-			}
+
+				m_UsingGizmo = true;
+			} else
+				m_UsingGizmo = false;
 		}
 
 		ImGui::End();
@@ -226,6 +233,8 @@ namespace Nebula {
 	}
 
 	void EditorLayer::OnEvent(Event& e) {
+		m_EditorCam.OnEvent(e);
+
 		Dispatcher d(e);
 		d.Dispatch<KeyPressedEvent>(BIND_EVENT(EditorLayer::OnKeyPressed));
 	}
