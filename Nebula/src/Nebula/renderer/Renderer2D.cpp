@@ -6,6 +6,8 @@
 #include "Shader.h"
 #include "Render_Command.h"
 
+#include "Nebula/Scene/Components.h"
+
 namespace Nebula {
 	struct Renderer2DData {
 		static const uint32_t MaxSprites = 10000;
@@ -42,28 +44,16 @@ namespace Nebula {
 		Vertex* TriVBPtr = nullptr;
 	};
 	static Renderer2DData s_Data;
-
-	struct RenderData {
-		mat4 Transform;
-		Ref<Texture2D> Texture;
-		vec4 Colour;
-		
-		vec2* TextureCoordinates;
-
-		RenderData(const mat4& transform, Ref<Texture2D> texture, const vec4& colour, vec2* texCoords) {
-			Transform = transform;
-			Texture = texture;
-			Colour = colour;
-			TextureCoordinates = texCoords;
-		}
-	};
-
+	
 	struct Vertex {
 		vec3 Position;
 		vec4 Colour;
 		vec2 TexCoord;
 		float TexIndex;
 		float TilingFactor;
+
+		//Editor Only
+		int EntityID;
 	};
 
 	void Renderer2D::Init() {
@@ -74,7 +64,8 @@ namespace Nebula {
 			{ShaderDataType::Float4, "colour"},
 			{ShaderDataType::Float2, "texCoord"},
 			{ShaderDataType::Float, "texIndex"},
-			{ShaderDataType::Float, "tilingFactor"}
+			{ShaderDataType::Float, "tilingFactor"},
+			{ShaderDataType::Int, "entityID"}
 		};
 
 		//QUAD
@@ -150,21 +141,6 @@ namespace Nebula {
 		delete[] s_Data.QuadVBBase;
 		delete[] s_Data.TriVBBase;
 	}
-
-	void Renderer2D::BeginScene(const OrthographicCamera& camera) {
-		NB_PROFILE_FUNCTION();
-
-		s_Data.TextureShader->Bind();
-		s_Data.TextureShader->SetMat4("u_View", camera.GetViewProjectionMatrix());
-
-		s_Data.QuadIndexCount = 0;
-		s_Data.QuadVBPtr = s_Data.QuadVBBase;
-
-		s_Data.TriIndexCount = 0;
-		s_Data.TriVBPtr = s_Data.TriVBBase;
-
-		s_Data.TextureSlotIndex = 1;
-	}
 	
 	void Renderer2D::BeginScene(const Camera& camera, const mat4& transform) {
 		NB_PROFILE_FUNCTION();
@@ -200,7 +176,8 @@ namespace Nebula {
 		s_Data.TextureSlotIndex = 1;
 	}
 	
-	void Renderer2D::Draw(const uint32_t type, const vec4* vertexPos, const uint32_t vertexCount, const mat4& transform, Ref<Texture2D> texture) {
+	void Renderer2D::Draw(const uint32_t type, const vec4* vertexPos, 
+		const mat4& transform, const vec4& colour, Ref<Texture2D> texture, float tiling, uint32_t entityID) {
 		NB_PROFILE_FUNCTION();
 		
 		if (s_Data.TriIndexCount >= s_Data.MaxTriIndices)
@@ -210,114 +187,80 @@ namespace Nebula {
 			texture = s_Data.whiteTexture;
 
 		if (type == NB_QUAD) {
-			vec2* texCoords = new vec2[vertexCount];
-
-			for (uint32_t i = 0; i < vertexCount; i+=4) {
+			vec2* texCoords = new vec2[type];
+			for (uint32_t i = 0; i < type; i+=4) {
 				texCoords[i + 0] = { 0, 0 };
 				texCoords[i + 1] = { 1, 0 };
 				texCoords[i + 2] = { 1, 1 };
 				texCoords[i + 3] = { 0, 1 };
 			};
 
-			s_Data.QuadVBPtr = Draw(s_Data.QuadVBPtr, vertexCount, vertexPos, { transform, texture, { 1.0f, 1.0f, 1.0f, 1.0f }, texCoords }, 1.0f);
-			s_Data.QuadIndexCount += uint32_t(vertexCount * 1.5);
-		} else if (type == NB_TRI) {
-			vec2 texCoords[] = {
-				{ 0, 0 },
-				{ 1, 0 },
-				{ 0.5f, 0.5f }
+			s_Data.QuadVBPtr = CalculateVertexData(s_Data.QuadVBPtr, type, vertexPos, transform, colour, texture, texCoords, tiling, entityID);
+			s_Data.QuadIndexCount += uint32_t(type * 1.5);
+		}
+		else if (type == NB_TRI) {
+			vec2* texCoords = new vec2[type];
+			for (uint32_t i = 0; i < type; i+=3) {
+				texCoords[i + 0] = { 0.0f, 0.0f };
+				texCoords[i + 1] = { 1.0f, 0.0f };
+				texCoords[i + 2] = { 0.5f, 0.5f };
 			};
 
-			s_Data.TriVBPtr  = Draw(s_Data.TriVBPtr, vertexCount, vertexPos, { transform, texture,  { 1.0f, 1.0f, 1.0f, 1.0f }, texCoords }, 1.0f);
-			s_Data.TriIndexCount += vertexCount;
+			s_Data.TriVBPtr = CalculateVertexData(s_Data.TriVBPtr, type, vertexPos, transform, colour, texture, texCoords, tiling, entityID);
+			s_Data.TriIndexCount += type;
 		}
 	}
 
-	void Renderer2D::DrawQuad(Sprite& quad, float tiling) {
+	void Renderer2D::Draw(const uint32_t type, Entity& entity, float tiling) {
 		NB_PROFILE_FUNCTION();
 
-		if (s_Data.QuadIndexCount >= s_Data.MaxQuadIndices)
-			FlushAndReset();
+		vec4* vertexPos = new vec4[type];
 
-		vec4 vertexPos[] = { 
-			{ -0.5f, -0.5f, 0.0f, 1.0f }, 
-			{  0.5f, -0.5f, 0.0f, 1.0f }, 
-			{  0.5f,  0.5f, 0.0f, 1.0f }, 
-			{ -0.5f,  0.5f, 0.0f, 1.0f }
-		};
+		if (type == NB_QUAD) {
+			vertexPos[0] = { -0.5f, -0.5f, 0.0f, 1.0f };
+			vertexPos[1] = { 0.5f, -0.5f, 0.0f, 1.0f };
+			vertexPos[2] = { 0.5f,  0.5f, 0.0f, 1.0f };
+			vertexPos[3] = { -0.5f,  0.5f, 0.0f, 1.0f };
+		}
+		else if (type == NB_TRI) {
+			vertexPos[0] = { -0.5f, -0.5f, 0.0f, 1.0f };
+			vertexPos[1] = { 0.5f, -0.5f, 0.0f, 1.0f };
+			vertexPos[2] = { 0.5f,  0.5f, 0.0f, 1.0f };
+		}
 
-		mat4 transform = translate(quad.position) * scale(vec3(quad.size, 1.0f));
-
-		if (quad.rotation > 0.0f)
-			transform *= rotate(quad.rotation, { 0.0f, 0.0f, 1.0f });
-
-		Ref<Texture2D> texture = quad.texture;
-
-		if (texture == nullptr)
-			texture = s_Data.whiteTexture;
-
-		s_Data.QuadVBPtr = Draw(s_Data.QuadVBPtr, 4, vertexPos, { transform, texture, quad.colour, quad.texCoords }, tiling);
+		mat4 transform = entity.GetComponent<TransformComponent>().CalculateMatrix();
+		auto& spriteRenderer = entity.GetComponent<SpriteRendererComponent>();
 		
-		s_Data.QuadIndexCount += 6;
+		Draw(type, vertexPos, transform, spriteRenderer.Colour, nullptr, tiling, entity);
 	}
 
-	void Renderer2D::DrawQuad(const mat4& matrix, const vec4& colour, float tiling) {
-		NB_PROFILE_FUNCTION();
+	void Renderer2D::Draw(const uint32_t type, const mat4& transform, const vec4& colour, float tiling) {
+		vec4* vertexPos;
 
-		if (s_Data.QuadIndexCount >= s_Data.MaxQuadIndices)
-			FlushAndReset();
+		if (type == NB_QUAD) {
+			vertexPos[0] = { -0.5f, -0.5f, 0.0f, 1.0f };
+			vertexPos[1] = {  0.5f, -0.5f, 0.0f, 1.0f };
+			vertexPos[2] = {  0.5f,  0.5f, 0.0f, 1.0f };
+			vertexPos[3] = { -0.5f,  0.5f, 0.0f, 1.0f };
+		}
+		else if (type == NB_TRI) {
+			vertexPos[0] = { -0.5f, -0.5f, 0.0f, 1.0f };
+			vertexPos[1] = {  0.5f, -0.5f, 0.0f, 1.0f };
+			vertexPos[2] = {  0.5f,  0.5f, 0.0f, 1.0f };
+		}
 
-		float textureIndex = 0.0f;
-
-		vec4 vertexPos[4] = {
-			{ -0.5f, -0.5f, 0.0f, 1.0f },
-			{  0.5f, -0.5f, 0.0f, 1.0f },
-			{  0.5f,  0.5f, 0.0f, 1.0f },
-			{ -0.5f,  0.5f, 0.0f, 1.0f }
-		};
-
-		vec2 texCoords[4] = { { 0, 0 }, { 1, 0 }, { 1, 1 }, { 0, 1 } };
-		
-		s_Data.QuadVBPtr = Draw(s_Data.QuadVBPtr, 4, vertexPos, { matrix, s_Data.whiteTexture, colour, texCoords }, 1.0f);
-
-		s_Data.QuadIndexCount += 6;
-	}
-	
-	void Renderer2D::DrawTriangle(Sprite& tri, float tiling) {
-		NB_PROFILE_FUNCTION();
-
-		if (s_Data.TriIndexCount >= s_Data.MaxTriIndices)
-			FlushAndReset();
-
-		vec4 vertexPos[] = { 
-			{ -0.5f, -0.5f, 0.0f, 1.0f }, 
-			{  0.5f, -0.5f, 0.0f, 1.0f }, 
-			{  0.0f,  0.5f, 0.0f, 1.0f } 
-		};
-
-		mat4 transform = translate(tri.position) * scale(vec3(tri.size, 1.0f));
-
-		if (tri.rotation > 0.0f)
-			transform *= rotate(tri.rotation, { 0.0f, 0.0f, 1.0f });
-
-		Ref<Texture2D> texture = tri.texture;
-
-		if (texture == nullptr)
-			texture = s_Data.whiteTexture;
-		
-		s_Data.TriVBPtr = Draw(s_Data.TriVBPtr, 4, vertexPos, { transform, texture, tri.colour, tri.texCoords }, tiling);
-
-		s_Data.TriIndexCount += 3;
+		Draw(type, vertexPos, transform, colour, nullptr, tiling);
 	}
 
-	Vertex* Renderer2D::Draw(Vertex* vertexPtr, const uint32_t vertexCount, const vec4* vertexPos, const RenderData& data, float tiling) {
+	Vertex* Renderer2D::CalculateVertexData(Vertex* vertexPtr, const uint32_t vertexCount, const vec4* vertexPos, 
+		const mat4& transform, const vec4& colour, Ref<Texture2D> texture, vec2* texCoord, float tiling, uint32_t entityID) {
 		NB_PROFILE_FUNCTION();
 
 		float textureIndex = 0.0f;
 
-		if (data.Texture != nullptr) {
+		if (texture != nullptr) {
 			for (uint32_t i = 1; i < s_Data.TextureSlotIndex; i++) {
-				if (*s_Data.TextureSlots[i].get() == *data.Texture.get()) {
+				if (*s_Data.TextureSlots[i].get() == *texture.get()) {
 					textureIndex = (float)i;
 					break;
 				}
@@ -328,17 +271,18 @@ namespace Nebula {
 					FlushAndReset();
 
 				textureIndex = (float)s_Data.TextureSlotIndex;
-				s_Data.TextureSlots[s_Data.TextureSlotIndex] = data.Texture;
+				s_Data.TextureSlots[s_Data.TextureSlotIndex] = texture;
 				s_Data.TextureSlotIndex++;
 			}
 		}
 
 		for (size_t i = 0; i < vertexCount; i++) {
-			vertexPtr->Position = data.Transform * vertexPos[i];
-			vertexPtr->Colour = data.Colour;
-			vertexPtr->TexCoord = data.TextureCoordinates[i];
+			vertexPtr->Position = transform * vertexPos[i];
+			vertexPtr->Colour = colour;
+			vertexPtr->TexCoord = texCoord[i];
 			vertexPtr->TexIndex = textureIndex;
 			vertexPtr->TilingFactor = tiling;
+			vertexPtr->EntityID = entityID;
 			vertexPtr++;
 		}
 

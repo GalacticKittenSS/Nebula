@@ -60,7 +60,7 @@ namespace Nebula {
 		for (auto entity : group) {
 			auto [transform, sprite] = group.get<TransformComponent, SpriteRendererComponent>(entity);
 
-			Renderer2D::DrawQuad(transform, sprite.Colour, 1.0f);
+			Renderer2D::Draw(NB_QUAD, Entity{ entity, this });
 		}
 
 		Renderer2D::EndScene();
@@ -88,7 +88,7 @@ namespace Nebula {
 			for (auto entity : group) {
 				auto [transform, sprite] = group.get<TransformComponent, SpriteRendererComponent>(entity);
 
-				Renderer2D::DrawQuad(transform, sprite.Colour, 1.0f);
+				Renderer2D::Draw(NB_QUAD, Entity{ entity, this });
 			}
 
 			Renderer2D::EndScene();

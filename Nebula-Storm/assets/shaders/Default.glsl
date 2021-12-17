@@ -1,41 +1,46 @@
 #type vertex
-#version 330 core
+#version 450
 
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec4 colour;
 layout(location = 2) in vec2 texCoord;
 layout(location = 3) in float texIndex;
 layout(location = 4) in float tilingFactor;
-			
+layout(location = 5) in int entityID;
+
 uniform mat4 u_View;
 
-out vec4 v_Colour;
+out vec4 v_colour;
 out vec2 v_texCoord;
-out float v_texIndex;
+out flat float v_texIndex;
 out float v_tilingFactor;
+out flat int v_entityID;
 			
 void main() {
-	v_Colour = colour;
+	v_colour = colour;
 	v_texCoord = texCoord;
 	v_texIndex = texIndex;
 	v_tilingFactor = tilingFactor;
+	v_entityID = entityID;
 	gl_Position = u_View * vec4(position, 1.0);
 }
 
 #type fragment
-#version 330 core
+#version 450
 
 layout(location = 0) out vec4 colour;
+layout(location = 1) out int id;
 
-in vec4 v_Colour;
+in vec4 v_colour;
 in vec2 v_texCoord;
-in float v_texIndex;
+in flat float v_texIndex;
 in float v_tilingFactor;
+in flat int v_entityID;
 
 uniform sampler2D u_Textures[32];
 
 void main() {
-	vec4 texColor = v_Colour;
+	vec4 texColor = v_colour;
 	
 	switch(int(v_texIndex))
 	{
@@ -73,4 +78,5 @@ void main() {
 		case 31: texColor *= texture(u_Textures[31], v_texCoord * v_tilingFactor); break;
 	}
 	colour = texColor;
+	id = v_entityID;
 }

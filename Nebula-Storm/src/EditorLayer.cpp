@@ -3,8 +3,6 @@
 namespace Nebula {
 	class CameraController : public ScriptableEntity {
 	public:
-		void Start() { }
-
 		void Update() {
 			auto& position = GetComponent<TransformComponent>().Translation;
 			auto& rotation = GetComponent<TransformComponent>().Rotation;
@@ -36,10 +34,6 @@ namespace Nebula {
 			rotation.y = -(Input::GetMouseX() - Application::Get().GetWindow().GetWidth() / 2) / 360;
 			rotation.x = -(Input::GetMouseY() - Application::Get().GetWindow().GetHeight() / 2) / 360;
 		}
-
-		void Destroy() {
-
-		}
 	private:
 		float speed = 10.0f;
 	};
@@ -50,6 +44,7 @@ namespace Nebula {
 		NB_PROFILE_FUNCTION();
 
 		FrameBufferSpecification fbSpec;
+		fbSpec.Attachments = { FramebufferTextureFormat::RGBA8, FramebufferTextureFormat::RED_INT, FramebufferTextureFormat::Depth };
 		fbSpec.Width = 1280;
 		fbSpec.Height = 720;
 
@@ -58,7 +53,7 @@ namespace Nebula {
 
 		m_SceneHierarchy.SetContext(m_ActiveScene);
 
-		//m_EditorCam = EditorCamera(60.0f, 16.0f / 9.0f, 0.01f, 1000.0f);
+		m_EditorCam = EditorCamera(60.0f, 16.0f / 9.0f, 0.01f, 1000.0f);
 
 		m_ActiveScene = CreateRef<Scene>();
 		m_ActiveScene->OnViewportResize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
@@ -79,7 +74,7 @@ namespace Nebula {
 		if (m_GameViewSize.x > 0.0f && m_GameViewSize.y > 0.0f && (spec.Width != m_GameViewSize.x || spec.Height != m_GameViewSize.y)) {
 			frameBuffer->Resize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
 			m_ActiveScene->OnViewportResize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
-			m_EditorCam.SetViewPortSize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
+			m_EditorCam.SetViewPortSize(m_GameViewSize.x, m_GameViewSize.y);
 		}
 
 		if (!m_UsingGizmo && m_GameViewHovered) {
@@ -95,7 +90,21 @@ namespace Nebula {
 		RenderCommand::SetClearColour({ 0.1f, 0.1f, 0.1f, 1.0f });
 		RenderCommand::Clear();
 
+		frameBuffer->ClearAttachment(1, -1);
+
 		m_ActiveScene->UpdateEditor(m_EditorCam);
+
+		vec2 viewportSize = m_ViewPortBounds[1] - m_ViewPortBounds[0];
+
+		auto [mx, my] = ImGui::GetMousePos();
+		mx -= m_ViewPortBounds[0].x;
+		my -= m_ViewPortBounds[0].y;
+		my = viewportSize.y - my;
+
+		if (m_GameViewHovered) {
+			int pixelData = frameBuffer->ReadPixel(1, mx, my);
+			m_HoveredEntity = pixelData == -1 ? Entity() : Entity((entt::entity)pixelData, m_ActiveScene.get());
+		}
 
 		frameBuffer->Unbind();
 	}
@@ -173,6 +182,12 @@ namespace Nebula {
 		ImGui::Begin("Game View", nullptr, ImGuiWindowFlags_NoCollapse);
 		ImGui::PopStyleVar();
 
+		auto viewportMinRegion = ImGui::GetWindowContentRegionMin();
+		auto viewportMaxRegion = ImGui::GetWindowContentRegionMax();
+		auto viewportOffset = ImGui::GetWindowPos();
+		m_ViewPortBounds[0] = { viewportMinRegion.x + viewportOffset.x, viewportMinRegion.y + viewportOffset.y };
+		m_ViewPortBounds[1] = { viewportMaxRegion.x + viewportOffset.x, viewportMaxRegion.y + viewportOffset.y };
+
 		m_GameViewFocus = ImGui::IsWindowFocused();
 		m_GameViewHovered = ImGui::IsWindowHovered();
 		Application::Get().GetImGuiLayer()->SetBlockEvents(!m_GameViewFocus && !m_GameViewHovered);
@@ -186,11 +201,15 @@ namespace Nebula {
 		uint32_t textureID = frameBuffer->GetColourAttachmentRendererID();
 		ImGui::Image((void*)textureID, panelSize, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
 		
+		m_UsingGizmo = ImGuizmo::IsOver();
+
 		//Gizmos
 		Entity selectedEntity = m_SceneHierarchy.GetSelectedEntity();
 		if (selectedEntity && m_GizmoType != -1) {
 			ImGuizmo::SetOrthographic(false);
 			ImGuizmo::SetDrawlist();
+
+			ImGuizmo::SetRect(m_ViewPortBounds[0].x, m_ViewPortBounds[0].y, m_ViewPortBounds[1].x - m_ViewPortBounds[0].x, m_ViewPortBounds[1].y - m_ViewPortBounds[0].y);
 
 			float windowWidth = (float)ImGui::GetWindowWidth();
 			float windowHeight = (float)ImGui::GetWindowHeight();
@@ -221,10 +240,7 @@ namespace Nebula {
 				tc.Translation = translation;
 				tc.Rotation += deltaRotation;
 				tc.Scale = scale;
-
-				m_UsingGizmo = true;
-			} else
-				m_UsingGizmo = false;
+			}
 		}
 
 		ImGui::End();
@@ -237,6 +253,7 @@ namespace Nebula {
 
 		Dispatcher d(e);
 		d.Dispatch<KeyPressedEvent>(BIND_EVENT(EditorLayer::OnKeyPressed));
+		d.Dispatch<MouseButtonPressedEvent>(BIND_EVENT(EditorLayer::OnMousePressed));
 	}
 
 	bool EditorLayer::OnKeyPressed(KeyPressedEvent& e) {
@@ -263,16 +280,20 @@ namespace Nebula {
 
 		//Gizmos
 		case KeyCode::Q:
-			m_GizmoType = -1;
+			if (!m_UsingGizmo)
+				m_GizmoType = -1;
 			break;
 		case KeyCode::W:
-			m_GizmoType = ImGuizmo::OPERATION::TRANSLATE;
+			if (!m_UsingGizmo)
+				m_GizmoType = ImGuizmo::OPERATION::TRANSLATE;
 			break;
 		case KeyCode::E:
-			m_GizmoType = ImGuizmo::OPERATION::ROTATE;
+			if (!m_UsingGizmo)
+				m_GizmoType = ImGuizmo::OPERATION::ROTATE;
 			break;
 		case KeyCode::R:
-			m_GizmoType = ImGuizmo::OPERATION::SCALE;
+			if (!m_UsingGizmo)
+				m_GizmoType = ImGuizmo::OPERATION::SCALE;
 			break;
 		}
 
@@ -280,10 +301,19 @@ namespace Nebula {
 	}
 
 
+	bool EditorLayer::OnMousePressed(MouseButtonPressedEvent& e) {
+		if (e.GetMouseButton() == Mouse::Button0 && !m_UsingGizmo && m_GameViewHovered)
+			m_SceneHierarchy.SetSelectedEntity(m_HoveredEntity);
+
+		return false;
+	}
+
 	void EditorLayer::NewScene() {
 		m_ActiveScene = CreateRef<Scene>();
 		m_ActiveScene->OnViewportResize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
 		m_SceneHierarchy.SetContext(m_ActiveScene);
+
+		m_HoveredEntity = { };
 	}
 
 	void EditorLayer::SaveSceneAs() {

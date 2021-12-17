@@ -2,17 +2,16 @@
 
 #include "Camera.h"
 #include "Texture.h"
-#include "GameObjects.h"
 
-#define NB_QUAD 0
-#define NB_TRI  1
+#include "Nebula/Scene/Entity.h"
+
+#define NB_QUAD 4
+#define NB_TRI  3
 
 namespace Nebula {
 	class VertexArray;
-
 	struct Vertex;
-	struct RenderData;
-
+	
 	class Renderer2D {
 	public:
 		static void Init();
@@ -20,20 +19,19 @@ namespace Nebula {
 
 		static void BeginScene(const Camera& camera, const mat4& transform = mat4(1.0f));
 		static void BeginScene(const EditorCamera& camera);
-		static void BeginScene(const OrthographicCamera& camera);
 		static void EndScene();
 
 		static void Flush(Ref<VertexArray> vertexArray, uint32_t IndexCount);
 
 		//Primitives
-		static void Draw(const uint32_t type, const vec4* vertexPos, const uint32_t vertexCount, const mat4& transform, Ref<Texture2D> texture = nullptr);
+		static void Draw(const uint32_t type, const vec4* vertexPos,
+			const mat4& transform, const vec4& colour, Ref<Texture2D> texture = nullptr, float tiling = 1.0f, uint32_t entityID = -1);
 
-		static void DrawQuad(Sprite& quad, float tiling = 1.0f);
-		static void DrawQuad(const mat4& matrix, const vec4& colour, float tiling = 1.0f);
-
-		static void DrawTriangle(Sprite& tri, float tiling = 1.0f);
+		static void Draw(const uint32_t type, Entity& quad, float tiling = 1.0f);
+		static void Draw(const uint32_t type, const mat4& transform, const vec4& colour, float tiling = 1.0f);
 	private:
 		static void FlushAndReset();
-		static Vertex* Draw(Vertex* vertexPtr, const uint32_t vertexCount, const vec4* vertexPos, const RenderData& data, float tiling);
+		static Vertex* CalculateVertexData(Vertex* vertexPtr, const uint32_t vertexCount, const vec4* vertexPos,
+			const mat4& transform, const vec4& colour, Ref<Texture2D> texture, vec2* texCoord, float tiling, uint32_t entityID);
 	};
 }

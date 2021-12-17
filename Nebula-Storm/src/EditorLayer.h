@@ -21,6 +21,7 @@ namespace Nebula {
 		void OnEvent(Nebula::Event& e) override;
 	private:
 		bool OnKeyPressed(KeyPressedEvent& e);
+		bool OnMousePressed(MouseButtonPressedEvent& e);
 
 		void NewScene();
 		void SaveSceneAs();
@@ -28,13 +29,16 @@ namespace Nebula {
 	private:
 		bool m_GameViewFocus = false, m_GameViewHovered = false;
 		bool m_UsingGizmo = false;
+		
 		vec2 m_GameViewSize = { 1280.0f, 720.0f };
+		vec2 m_ViewPortBounds[2];
 
 		Ref<Scene> m_ActiveScene;
 		Ref<FrameBuffer> frameBuffer;
 		Timer timer;
 
 		Entity m_Camera;
+		Entity m_HoveredEntity;
 		
 		EditorCamera m_EditorCam;
 
