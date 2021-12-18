@@ -3,6 +3,9 @@
 **/bin/
 bin-obj/
 [Bb]ackups/
+[Pp]remake/
+Nebula/Modules/VulkanSDK/
+__pycache__/
 
 //Files
 *.sln

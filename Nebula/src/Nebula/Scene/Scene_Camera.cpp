@@ -24,8 +24,8 @@ namespace Nebula {
 
 
 	void SceneCamera::SetViewPortSize(uint32_t width, uint32_t height) {
+		NB_ASSERT(width > 0 && height > 0, "");
 		m_AspectRatio = (float)width / (float)height;
-		
 		RecalculateProjectionMatrix();
 	}
 

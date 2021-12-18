@@ -6,14 +6,14 @@
 namespace Nebula {
 	class NebulaStorm : public Application {
 	public:
-		NebulaStorm(): Application("Nebula Storm") {
+		NebulaStorm(ApplicationCommandLineArgs args): Application("Nebula Storm", args) {
 			PushLayer(new EditorLayer());
 		}
 
 		~NebulaStorm() { }
 	};
 
-	Application* createApplication() {
-		return new NebulaStorm;
+	Application* CreateApplication(ApplicationCommandLineArgs args) {
+		return new NebulaStorm(args);
 	}
 }

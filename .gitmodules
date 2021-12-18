@@ -21,6 +21,8 @@
 [submodule "Nebula/Modules/yaml-cpp"]
 	path = Nebula/Modules/yaml-cpp
 	url = https://github.com/TheCherno/yaml-cpp
+	ignore = untracked
 [submodule "Nebula/Modules/imguizmo"]
 	path = Nebula/Modules/imguizmo
 	url = https://github.com/thecherno/imguizmo
+	ignore = all

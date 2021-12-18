@@ -13,9 +13,22 @@
 int main(int argc, char** argv);
 
 namespace Nebula {
-	class NB_API Application {
+	struct ApplicationCommandLineArgs
+	{
+		int Count = 0;
+		char** Args = nullptr;
+
+		const char* operator[](int index) const
+		{
+			NB_ASSERT(index < Count, "");
+			return Args[index];
+		}
+	};
+
+	class Application
+	{
 	public:
-		Application(const std::string& name = "Nebula App");
+		Application(const std::string& name = "Nebula App", ApplicationCommandLineArgs args = ApplicationCommandLineArgs());
 		virtual ~Application();
 
 		void OnEvent(Event& e);
@@ -30,12 +43,14 @@ namespace Nebula {
 		ImGuiLayer* GetImGuiLayer() { return m_ImGui; }
 
 		inline static Application& Get() { return *s_Instance; }
+		ApplicationCommandLineArgs GetCommandLineArgs() const { return m_CommandLineArgs; }
 		inline Window& GetWindow() { return *m_Window; }
 	private:
 		void run();
 		bool OnWindowClose(WindowCloseEvent& e);
 		bool OnWindowResize(WindowResizeEvent& e);
 	private:
+		ApplicationCommandLineArgs m_CommandLineArgs;
 		Scope<Window> m_Window;
 		ImGuiLayer* m_ImGui;
 		bool m_Running = true, m_Minimized = false;
@@ -49,5 +64,5 @@ namespace Nebula {
 	};
 
 	//Defined In Client
-	Application* createApplication();
+	Application* CreateApplication(ApplicationCommandLineArgs args);
 }

@@ -4,7 +4,7 @@ project "Nebula Storm"
 	cppdialect "C++17"
 	language "C++"
 
-	staticruntime "on"
+	staticruntime "off"
 
 	targetdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("%{wks.location}/bin-obj/" .. outputdir .. "/%{prj.name}")
@@ -18,6 +18,7 @@ project "Nebula Storm"
 		"%{wks.location}/Nebula/include",
 		"%{includedir.spdlog}",
 		"%{includedir.entt}",
+		"%{includedir.ImGui}"
 	}
 
 	links {
@@ -31,6 +32,10 @@ project "Nebula Storm"
 		defines "NB_DEBUG"
 		runtime "Debug"
 		symbols "on"
+
+		postbuildcommands {
+			"{COPYDIR} \"%{LibraryDir.VulkanSDK_DebugDLL}\" \"%{cfg.targetdir}\""
+		}
 
 	filter "configurations:Release"
 		defines "NB_DEBUG"

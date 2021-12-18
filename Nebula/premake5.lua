@@ -2,7 +2,7 @@ project "Nebula"
 	kind "StaticLib"
 	cppdialect "C++17"
 	language "C++"
-	staticruntime "on"
+	staticruntime "off"
 
 	pchheader "nbpch.h"
 	pchsource "src/nbpch.cpp"
@@ -38,8 +38,9 @@ project "Nebula"
 		"%{includedir.ImGui}",
 		"%{includedir.stb}",
 		"%{includedir.entt}",
-		"%{includedir.yaml}",
-		"%{includedir.imguizmo}"
+		"%{includedir.yaml}",		
+		"%{includedir.imguizmo}",
+		"%{includedir.VulkanSDK}"
 	}
 
 	links { 
@@ -63,6 +64,12 @@ project "Nebula"
 		defines "NB_DEBUG"
 		runtime "Debug"
 		symbols "on"
+		
+		links {
+			"%{Library.ShaderC_Debug}",
+			"%{Library.SPIRV_Cross_Debug}",
+			"%{Library.SPIRV_Cross_GLSL_Debug}"
+		}
 
 		defines "NB_ENABLE_ASSERTS"
 
@@ -71,7 +78,19 @@ project "Nebula"
 		runtime "Release"
 		optimize "on"
 
+		links {
+			"%{Library.ShaderC_Release}",
+			"%{Library.SPIRV_Cross_Release}",
+			"%{Library.SPIRV_Cross_GLSL_Release}"
+		}
+
 	filter "configurations:Dist"
 		defines "NB_DIST"
 		runtime "Release"
 		optimize "on"
+		
+		links {
+			"%{Library.ShaderC_Release}",
+			"%{Library.SPIRV_Cross_Release}",
+			"%{Library.SPIRV_Cross_GLSL_Release}"
+		}

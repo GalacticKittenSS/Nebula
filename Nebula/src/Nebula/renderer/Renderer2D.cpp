@@ -5,6 +5,7 @@
 #include "Vertex_Array.h"
 #include "Shader.h"
 #include "Render_Command.h"
+#include "UniformBuffer.h"
 
 #include "Nebula/Scene/Components.h"
 
@@ -41,7 +42,14 @@ namespace Nebula {
 		uint32_t TriIndexCount = 0;
 		
 		Vertex* TriVBBase = nullptr;
-		Vertex* TriVBPtr = nullptr;
+		Vertex* TriVBPtr = nullptr; 
+		
+		struct CameraData
+		{
+			mat4 ViewProjection;
+		};
+		CameraData CameraBuffer;
+		Ref<UniformBuffer> CameraUniformBuffer;
 	};
 	static Renderer2DData s_Data;
 	
@@ -54,7 +62,7 @@ namespace Nebula {
 
 		//Editor Only
 		int EntityID;
-	};
+	}; 
 
 	void Renderer2D::Init() {
 		NB_PROFILE_FUNCTION();
@@ -133,6 +141,9 @@ namespace Nebula {
 
 		s_Data.TextureShader->Bind();
 		s_Data.TextureShader->SetIntArray("u_Textures", samplers, s_Data.MaxTextureSlots);
+
+
+		s_Data.CameraUniformBuffer = UniformBuffer::Create(sizeof(Renderer2DData::CameraData), 0);
 	}
 
 	void Renderer2D::Shutdown() {
@@ -144,11 +155,9 @@ namespace Nebula {
 	
 	void Renderer2D::BeginScene(const Camera& camera, const mat4& transform) {
 		NB_PROFILE_FUNCTION();
-
-		mat4 viewProj = camera.GetProjection() * inverse(transform);
-
-		s_Data.TextureShader->Bind();
-		s_Data.TextureShader->SetMat4("u_View", viewProj);
+		
+		s_Data.CameraBuffer.ViewProjection = camera.GetProjection() * inverse(transform);
+		s_Data.CameraUniformBuffer->SetData(&s_Data.CameraBuffer, sizeof(Renderer2DData::CameraData));
 
 		s_Data.QuadIndexCount = 0;
 		s_Data.QuadVBPtr = s_Data.QuadVBBase;
@@ -162,10 +171,8 @@ namespace Nebula {
 	void Renderer2D::BeginScene(const EditorCamera& camera) {
 		NB_PROFILE_FUNCTION();
 
-		mat4 viewProj = camera.GetViewProjection();
-
-		s_Data.TextureShader->Bind();
-		s_Data.TextureShader->SetMat4("u_View", viewProj);
+		s_Data.CameraBuffer.ViewProjection = camera.GetViewProjection();
+		s_Data.CameraUniformBuffer->SetData(&s_Data.CameraBuffer, sizeof(Renderer2DData::CameraData));
 
 		s_Data.QuadIndexCount = 0;
 		s_Data.QuadVBPtr = s_Data.QuadVBBase;
@@ -235,7 +242,7 @@ namespace Nebula {
 	}
 
 	void Renderer2D::Draw(const uint32_t type, const mat4& transform, const vec4& colour, float tiling) {
-		vec4* vertexPos;
+		vec4* vertexPos = new vec4[type];
 
 		if (type == NB_QUAD) {
 			vertexPos[0] = { -0.5f, -0.5f, 0.0f, 1.0f };
@@ -305,13 +312,12 @@ namespace Nebula {
 	void Renderer2D::Flush(Ref<VertexArray> vertexArray, uint32_t IndexCount) {
 		NB_PROFILE_FUNCTION();
 
-		if (IndexCount == 0)
+		if (!IndexCount)
 			return;
 
 		for (uint32_t i = 0; i < s_Data.TextureSlotIndex; i++)
 			s_Data.TextureSlots[i]->Bind(i);
 
-		vertexArray->Bind();
 		RenderCommand::DrawIndexed(vertexArray, IndexCount);
 	}
 

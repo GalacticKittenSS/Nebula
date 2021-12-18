@@ -8,7 +8,7 @@
 namespace Nebula {
 	Application* Application::s_Instance = nullptr;
 
-	Application::Application(const std::string& name) {
+	Application::Application(const std::string& name, ApplicationCommandLineArgs args) {
 		NB_PROFILE_FUNCTION();
 
 		NB_ASSERT(!s_Instance, "Application already exists!");

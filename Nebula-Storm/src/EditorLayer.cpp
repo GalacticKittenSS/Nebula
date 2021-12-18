@@ -53,6 +53,14 @@ namespace Nebula {
 
 		m_SceneHierarchy.SetContext(m_ActiveScene);
 
+		auto commandLineArgs = Application::Get().GetCommandLineArgs();
+		if (commandLineArgs.Count > 1)
+		{
+			auto sceneFilePath = commandLineArgs[1];
+			SceneSerializer serializer(m_ActiveScene);
+			serializer.Deserialize(sceneFilePath);
+		}
+
 		m_EditorCam = EditorCamera(60.0f, 16.0f / 9.0f, 0.01f, 1000.0f);
 
 		m_ActiveScene = CreateRef<Scene>();
@@ -102,7 +110,7 @@ namespace Nebula {
 		my = viewportSize.y - my;
 
 		if (m_GameViewHovered) {
-			int pixelData = frameBuffer->ReadPixel(1, mx, my);
+			int pixelData = frameBuffer->ReadPixel(1, (int)mx, (int)my);
 			m_HoveredEntity = pixelData == -1 ? Entity() : Entity((entt::entity)pixelData, m_ActiveScene.get());
 		}
 
@@ -329,7 +337,7 @@ namespace Nebula {
 
 	void EditorLayer::LoadScene() {
 		std::string filepath = FileDialogs::OpenFile("Nebula Scene (*.nebula)\0*.nebula\0");
-
+		
 		if (!filepath.empty()) {
 			NewScene();
 			SceneSerializer(m_ActiveScene).Deserialize(filepath);
