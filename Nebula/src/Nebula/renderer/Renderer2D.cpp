@@ -218,7 +218,7 @@ namespace Nebula {
 		}
 	}
 
-	void Renderer2D::Draw(const uint32_t type, Entity& entity, float tiling) {
+	void Renderer2D::Draw(const uint32_t type, Entity& entity) {
 		NB_PROFILE_FUNCTION();
 
 		vec4* vertexPos = new vec4[type];
@@ -238,10 +238,10 @@ namespace Nebula {
 		mat4 transform = entity.GetComponent<TransformComponent>().CalculateMatrix();
 		auto& spriteRenderer = entity.GetComponent<SpriteRendererComponent>();
 		
-		Draw(type, vertexPos, transform, spriteRenderer.Colour, nullptr, tiling, entity);
+		Draw(type, vertexPos, transform, spriteRenderer.Colour, spriteRenderer.Texture, spriteRenderer.Tiling, entity);
 	}
 
-	void Renderer2D::Draw(const uint32_t type, const mat4& transform, const vec4& colour, float tiling) {
+	void Renderer2D::Draw(const uint32_t type, const mat4& transform, const vec4& colour, Ref<Texture2D> texture, float tiling) {
 		vec4* vertexPos = new vec4[type];
 
 		if (type == NB_QUAD) {
@@ -256,7 +256,7 @@ namespace Nebula {
 			vertexPos[2] = {  0.5f,  0.5f, 0.0f, 1.0f };
 		}
 
-		Draw(type, vertexPos, transform, colour, nullptr, tiling);
+		Draw(type, vertexPos, transform, colour, texture, tiling);
 	}
 
 	Vertex* Renderer2D::CalculateVertexData(Vertex* vertexPtr, const uint32_t vertexCount, const vec4* vertexPos, 
@@ -265,24 +265,22 @@ namespace Nebula {
 
 		float textureIndex = 0.0f;
 
-		if (texture != nullptr) {
-			for (uint32_t i = 1; i < s_Data.TextureSlotIndex; i++) {
-				if (*s_Data.TextureSlots[i].get() == *texture.get()) {
-					textureIndex = (float)i;
-					break;
-				}
-			}
-
-			if (textureIndex == 0.0f) {
-				if (s_Data.TextureSlotIndex >= Renderer2DData::MaxTextureSlots)
-					FlushAndReset();
-
-				textureIndex = (float)s_Data.TextureSlotIndex;
-				s_Data.TextureSlots[s_Data.TextureSlotIndex] = texture;
-				s_Data.TextureSlotIndex++;
+		for (uint32_t i = 1; i < s_Data.TextureSlotIndex; i++) {
+			if (*s_Data.TextureSlots[i].get() == *texture.get()) {
+				textureIndex = (float)i;
+				break;
 			}
 		}
 
+		if (textureIndex == 0.0f) {
+			if (s_Data.TextureSlotIndex >= Renderer2DData::MaxTextureSlots)
+				FlushAndReset();
+
+			textureIndex = (float)s_Data.TextureSlotIndex;
+			s_Data.TextureSlots[s_Data.TextureSlotIndex] = texture;
+			s_Data.TextureSlotIndex++;
+		}
+		
 		for (size_t i = 0; i < vertexCount; i++) {
 			vertexPtr->Position = transform * vertexPos[i];
 			vertexPtr->Colour = colour;

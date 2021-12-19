@@ -6,6 +6,8 @@
 #include "Entity.h"
 #include "Scene_Camera.h"
 
+#include "Nebula/Renderer/Texture.h"
+
 namespace Nebula {
 	struct TagComponent {
 		std::string Tag;
@@ -33,10 +35,12 @@ namespace Nebula {
 
 	struct SpriteRendererComponent {
 		vec4 Colour{ 1.0f, 1.0f, 1.0f, 1.0f };
+		Ref<Texture2D> Texture = nullptr;
+		float Tiling = 1.0f;
 
 		SpriteRendererComponent() = default;
 		SpriteRendererComponent(const SpriteRendererComponent&) = default;
-		SpriteRendererComponent(const vec4& colour) : Colour(colour) { }
+		SpriteRendererComponent(const vec4& colour, Ref<Texture2D> texture = nullptr, float tiling = 1.0f) : Colour(colour), Texture(texture), Tiling(tiling) { }
 	};
 
 	struct CameraComponent {

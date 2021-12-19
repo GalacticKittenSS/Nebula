@@ -27,8 +27,8 @@ namespace Nebula {
 		static void Draw(const uint32_t type, const vec4* vertexPos,
 			const mat4& transform, const vec4& colour, Ref<Texture2D> texture = nullptr, float tiling = 1.0f, uint32_t entityID = -1);
 
-		static void Draw(const uint32_t type, Entity& quad, float tiling = 1.0f);
-		static void Draw(const uint32_t type, const mat4& transform, const vec4& colour, float tiling = 1.0f);
+		static void Draw(const uint32_t type, Entity& quad);
+		static void Draw(const uint32_t type, const mat4& transform, const vec4& colour, const Ref<Texture2D> texture = nullptr, float tiling = 1.0f);
 	private:
 		static void FlushAndReset();
 		static Vertex* CalculateVertexData(Vertex* vertexPtr, const uint32_t vertexCount, const vec4* vertexPos,

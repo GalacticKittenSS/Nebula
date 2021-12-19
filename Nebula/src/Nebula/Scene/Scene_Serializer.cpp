@@ -134,6 +134,7 @@ namespace Nebula {
 
 			auto& component = entity.GetComponent<SpriteRendererComponent>();
 			out << YAML::Key << "Colour" << YAML::Value << component.Colour;
+			out << YAML::Key << "Tiling" << YAML::Value << component.Tiling;
 
 			out << YAML::EndMap;
 		}

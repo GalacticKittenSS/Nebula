@@ -1,42 +1,7 @@
 #include "EditorLayer.h"
 
 namespace Nebula {
-	class CameraController : public ScriptableEntity {
-	public:
-		void Update() {
-			auto& position = GetComponent<TransformComponent>().Translation;
-			auto& rotation = GetComponent<TransformComponent>().Rotation;
-
-			if (Input::IsKeyPressed(KeyCode::A)) {
-				position.x -=  cos(rotation.z) * cos(rotation.y) * speed * Time::DeltaTime();
-				position.y -=  sin(rotation.z) * speed * Time::DeltaTime();
-				position.z -= -sin(rotation.y) * speed * Time::DeltaTime();
-			}
-
-			if (Input::IsKeyPressed(KeyCode::D)) {
-				position.x +=  cos(rotation.z) * cos(rotation.y) * speed * Time::DeltaTime();
-				position.y +=  sin(rotation.z) * speed * Time::DeltaTime();
-				position.z += -sin(rotation.y) * speed * Time::DeltaTime();
-			}
-
-			if (Input::IsKeyPressed(KeyCode::W)) {
-				position.x += -sin(rotation.y) * speed * Time::DeltaTime();
-				position.y +=  sin(rotation.x) * speed * Time::DeltaTime();
-				position.z += -cos(rotation.x) * cos(rotation.y) * speed * Time::DeltaTime();
-			}
-
-			if (Input::IsKeyPressed(KeyCode::S)) {
-				position.x -= -sin(rotation.y) * speed * Time::DeltaTime();
-				position.y -=  sin(rotation.x) * speed * Time::DeltaTime();
-				position.z -= -cos(rotation.x) * cos(rotation.y) * speed * Time::DeltaTime();
-			}
-
-			rotation.y = -(Input::GetMouseX() - Application::Get().GetWindow().GetWidth() / 2) / 360;
-			rotation.x = -(Input::GetMouseY() - Application::Get().GetWindow().GetHeight() / 2) / 360;
-		}
-	private:
-		float speed = 10.0f;
-	};
+	extern const std::filesystem::path s_AssetPath = "assets";
 
 	EditorLayer::EditorLayer() : Layer("Editor") { }
 
@@ -50,8 +15,6 @@ namespace Nebula {
 
 		frameBuffer = FrameBuffer::Create(fbSpec);
 		timer = Timer();
-
-		m_SceneHierarchy.SetContext(m_ActiveScene);
 
 		auto commandLineArgs = Application::Get().GetCommandLineArgs();
 		if (commandLineArgs.Count > 1)
@@ -174,7 +137,6 @@ namespace Nebula {
 				if (ImGui::MenuItem("Camera")) {
 					auto& sprite = m_ActiveScene->CreateEntity("Camera");
 					sprite.AddComponent<CameraComponent>();
-					sprite.AddComponent<NativeScriptComponent>().Bind<CameraController>();
 				}
 
 				ImGui::EndMenu();
@@ -184,7 +146,7 @@ namespace Nebula {
 		}
 
 		m_SceneHierarchy.OnImGuiRender();
-
+		m_ContentBrowser.OnImGuiRender();
 		
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 		ImGui::Begin("Game View", nullptr, ImGuiWindowFlags_NoCollapse);
@@ -208,6 +170,14 @@ namespace Nebula {
 
 		uint32_t textureID = frameBuffer->GetColourAttachmentRendererID();
 		ImGui::Image((void*)textureID, panelSize, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+
+		if (ImGui::BeginDragDropTarget()) {
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
+				const wchar_t* path = (const wchar_t*)payload->Data;
+				LoadScene(s_AssetPath / path);
+			}
+			ImGui::EndDragDropTarget();
+		}
 		
 		m_UsingGizmo = ImGuizmo::IsOver();
 
@@ -339,8 +309,12 @@ namespace Nebula {
 		std::string filepath = FileDialogs::OpenFile("Nebula Scene (*.nebula)\0*.nebula\0");
 		
 		if (!filepath.empty()) {
-			NewScene();
-			SceneSerializer(m_ActiveScene).Deserialize(filepath);
+			LoadScene(filepath);
 		}
+	}
+
+	void EditorLayer::LoadScene(const std::filesystem::path& path) {
+		NewScene();
+		SceneSerializer(m_ActiveScene).Deserialize(path.string());
 	}
 }

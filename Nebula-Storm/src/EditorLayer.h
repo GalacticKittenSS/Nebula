@@ -3,6 +3,7 @@
 #include <Nebula.h>
 
 #include "Panels/Scene_Hierarchy.h"
+#include "Panels/Content_Browser.h"
 
 namespace Nebula {
 	class EditorLayer : public Layer {
@@ -26,6 +27,7 @@ namespace Nebula {
 		void NewScene();
 		void SaveSceneAs();
 		void LoadScene();
+		void LoadScene(const std::filesystem::path& path);
 	private:
 		bool m_GameViewFocus = false, m_GameViewHovered = false;
 		bool m_UsingGizmo = false;
@@ -46,5 +48,6 @@ namespace Nebula {
 
 		//Panels
 		SceneHierarchyPanel m_SceneHierarchy;
+		ContentBrowserPanel m_ContentBrowser;
 	};
 }
