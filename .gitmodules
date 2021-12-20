@@ -26,3 +26,7 @@
 	path = Nebula/Modules/imguizmo
 	url = https://github.com/thecherno/imguizmo
 	ignore = all
+[submodule "Nebula/Modules/Box2D"]
+	path = Nebula/Modules/Box2D
+	url = https://github.com/TheCherno/box2d
+	ignore = untracked

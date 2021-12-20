@@ -3,11 +3,11 @@
 #include "entt.hpp"
 #include "Nebula/Renderer/Camera.h"
 
+class b2World;
+
 namespace Nebula {
 	class Entity;
-	class SceneHierarchyPanel;
-	class SceneSerializer;
-
+	
 	class Scene {
 	public:
 		Scene();
@@ -15,6 +15,9 @@ namespace Nebula {
 
 		Entity CreateEntity(const std::string& name);
 		void DestroyEntity(Entity entity);
+		
+		void OnRuntimeStart();
+		void OnRuntimeStop();
 
 		void UpdateRuntime();
 		void UpdateEditor(EditorCamera& camera);
@@ -29,6 +32,8 @@ namespace Nebula {
 	private:
 		entt::registry m_Registry;
 		uint32_t m_ViewportWidth = 0, m_ViewportHeight = 0;
+
+		b2World* m_PhysicsWorld = nullptr;
 
 		friend class Entity;
 		friend class SceneHierarchyPanel;

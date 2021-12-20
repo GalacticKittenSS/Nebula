@@ -7,6 +7,28 @@
 #include <yaml-cpp/yaml.h>
 
 namespace YAML {
+	template<>
+	struct convert<Nebula::vec2>
+	{
+		static Node encode(const Nebula::vec2& rhs)
+		{
+			Node node;
+			node.push_back(rhs.x);
+			node.push_back(rhs.y);
+			node.SetStyle(EmitterStyle::Flow);
+			return node;
+		}
+
+		static bool decode(const Node& node, Nebula::vec2& rhs)
+		{
+			if (!node.IsSequence() || node.size() != 2)
+				return false;
+
+			rhs.x = node[0].as<float>();
+			rhs.y = node[1].as<float>();
+			return true;
+		}
+	};
 
 	template<>
 	struct convert <Nebula::vec3>
@@ -63,6 +85,13 @@ namespace YAML {
 }
 
 namespace Nebula {
+	YAML::Emitter& operator<<(YAML::Emitter& out, const vec2& v)
+	{
+		out << YAML::Flow;
+		out << YAML::BeginSeq << v.x << v.y << YAML::EndSeq;
+		return out;
+	}
+
 	YAML::Emitter& operator<<(YAML::Emitter& out, const vec3& v) {
 		out << YAML::Flow;
 		out << YAML::BeginSeq << v.x << v.y << v.z << YAML::EndSeq;
@@ -73,6 +102,29 @@ namespace Nebula {
 		out << YAML::Flow;
 		out << YAML::BeginSeq << v.x << v.y << v.z << v.w <<YAML::EndSeq;
 		return out;
+	}
+
+	static std::string RigidBody2DBodyTypeToString(Rigidbody2DComponent::BodyType bodyType)
+	{
+		switch (bodyType)
+		{
+		case Rigidbody2DComponent::BodyType::Static:    return "Static";
+		case Rigidbody2DComponent::BodyType::Dynamic:   return "Dynamic";
+		case Rigidbody2DComponent::BodyType::Kinematic: return "Kinematic";
+		}
+
+		NB_ASSERT(false, "Unknown body type");
+		return {};
+	}
+
+	static Rigidbody2DComponent::BodyType RigidBody2DBodyTypeFromString(const std::string& bodyTypeString)
+	{
+		if (bodyTypeString == "Static")    return Rigidbody2DComponent::BodyType::Static;
+		if (bodyTypeString == "Dynamic")   return Rigidbody2DComponent::BodyType::Dynamic;
+		if (bodyTypeString == "Kinematic") return Rigidbody2DComponent::BodyType::Kinematic;
+
+		NB_ASSERT(false, "Unknown body type");
+		return Rigidbody2DComponent::BodyType::Static;
 	}
 
 	SceneSerializer::SceneSerializer(const Ref<Scene>& scene): m_Scene(scene) { }
@@ -143,14 +195,30 @@ namespace Nebula {
 			out << YAML::EndMap;
 		}
 
-		if (entity.HasComponent<NativeScriptComponent>()) {
-			out << YAML::Key << "NativeScriptComponent";
-			out << YAML::BeginMap;
+		if (entity.HasComponent<Rigidbody2DComponent>()) {
+			out << YAML::Key << "Rigidbody2DComponent";
+			out << YAML::BeginMap; // Rigidbody2DComponent
 
-			auto& component = entity.GetComponent<NativeScriptComponent>();
-			out << YAML::Key << "Instance" << YAML::Value << component.Instance;
+			auto& rb2dComponent = entity.GetComponent<Rigidbody2DComponent>();
+			out << YAML::Key << "BodyType" << YAML::Value << RigidBody2DBodyTypeToString(rb2dComponent.Type);
+			out << YAML::Key << "FixedRotation" << YAML::Value << rb2dComponent.FixedRotation;
 
-			out << YAML::EndMap;
+			out << YAML::EndMap; // Rigidbody2DComponent
+		}
+
+		if (entity.HasComponent<Box2DComponent>()) {
+			out << YAML::Key << "Box2DComponent";
+			out << YAML::BeginMap; // BoxCollider2DComponent
+
+			auto& bc2dComponent = entity.GetComponent<Box2DComponent>();
+			out << YAML::Key << "Offset" << YAML::Value << bc2dComponent.Offset;
+			out << YAML::Key << "Size" << YAML::Value << bc2dComponent.Size;
+			out << YAML::Key << "Density" << YAML::Value << bc2dComponent.Density;
+			out << YAML::Key << "Friction" << YAML::Value << bc2dComponent.Friction;
+			out << YAML::Key << "Restitution" << YAML::Value << bc2dComponent.Restitution;
+			out << YAML::Key << "RestitutionThreshold" << YAML::Value << bc2dComponent.RestitutionThreshold;
+
+			out << YAML::EndMap; // BoxCollider2DComponent
 		}
 
 		out << YAML::EndMap;
@@ -248,6 +316,26 @@ namespace Nebula {
 					std::string texture = spriteRendererComponent["Texture"].as<std::string>();
 					if (texture != "None")
 						src.Texture = Texture2D::Create(texture);
+				}
+
+				auto rigidbody2DComponent = entity["Rigidbody2DComponent"];
+				if (rigidbody2DComponent)
+				{
+					auto& rb2d = deserializedEntity.AddComponent<Rigidbody2DComponent>();
+					rb2d.Type = RigidBody2DBodyTypeFromString(rigidbody2DComponent["BodyType"].as<std::string>());
+					rb2d.FixedRotation = rigidbody2DComponent["FixedRotation"].as<bool>();
+				}
+
+				auto box2DComponent = entity["Box2DComponent"];
+				if (box2DComponent)
+				{
+					auto& bc2d = deserializedEntity.AddComponent<Box2DComponent>();
+					bc2d.Offset = box2DComponent["Offset"].as<vec2>();
+					bc2d.Size = box2DComponent["Size"].as<vec2>();
+					bc2d.Density = box2DComponent["Density"].as<float>();
+					bc2d.Friction = box2DComponent["Friction"].as<float>();
+					bc2d.Restitution = box2DComponent["Restitution"].as<float>();
+					bc2d.RestitutionThreshold = box2DComponent["RestitutionThreshold"].as<float>();
 				}
 			}
 		}

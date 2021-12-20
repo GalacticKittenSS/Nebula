@@ -15,6 +15,7 @@ outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 --Dependencies
 group "Dependencies"
+	include "Nebula/Modules/Box2D"
 	include "Nebula/Modules/GLFW"
 	include "Nebula/Modules/GLad"
 	include "Nebula/Modules/ImGui"

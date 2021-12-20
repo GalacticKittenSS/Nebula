@@ -3,14 +3,16 @@
 VULKAN_SDK = os.getenv("VULKAN_SDK")
 
 includedir = {}
-includedir["spdlog"] =		"%{wks.location}/Nebula/Modules/spdlog/include"
-includedir["stb"] =			"%{wks.location}/Nebula/Modules/stb_image"
-includedir["yaml"] =		"%{wks.location}/Nebula/Modules/yaml-cpp/include"
-includedir["GLFW"] =		"%{wks.location}/Nebula/Modules/glfw/include"
+includedir["Box2D"] =		"%{wks.location}/Nebula/Modules/Box2D/include"
+includedir["Entt"] =		"%{wks.location}/Nebula/Modules/entt/include"
 includedir["GLad"] =		"%{wks.location}/Nebula/Modules/glad/include"
+includedir["GLFW"] =		"%{wks.location}/Nebula/Modules/glfw/include"
 includedir["ImGui"] =		"%{wks.location}/Nebula/Modules/imgui/include"
-includedir["imguizmo"] =	"%{wks.location}/Nebula/Modules/imguizmo"
-includedir["entt"] =		"%{wks.location}/Nebula/Modules/entt/include"
+includedir["ImGuizmo"] =	"%{wks.location}/Nebula/Modules/imguizmo"
+includedir["Spdlog"] =		"%{wks.location}/Nebula/Modules/spdlog/include"
+includedir["Stb"] =			"%{wks.location}/Nebula/Modules/stb_image"
+includedir["Yaml"] =		"%{wks.location}/Nebula/Modules/yaml-cpp/include"
+
 includedir["shaderc"] =		"%{wks.location}/Nebula/Modules/shaderc/include"
 includedir["SPIRV_Cross"] = "%{wks.location}/Nebula/Modules/SPIRV-Cross"
 includedir["VulkanSDK"] = "	 %{VULKAN_SDK}/Include"

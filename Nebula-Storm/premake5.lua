@@ -16,9 +16,9 @@ project "Nebula Storm"
 
 	includedirs {
 		"%{wks.location}/Nebula/include",
-		"%{includedir.spdlog}",
-		"%{includedir.entt}",
-		"%{includedir.ImGui}"
+		"%{includedir.Entt}",
+		"%{includedir.ImGui}",
+		"%{includedir.Spdlog}"
 	}
 
 	links {
