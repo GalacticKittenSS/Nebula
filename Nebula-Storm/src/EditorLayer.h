@@ -33,6 +33,8 @@ namespace Nebula {
 		void OnScenePlay();
 		void OnSceneStop();
 
+		void DuplicateEntity();
+
 		//Panels
 		void UI_Toolbar();
 	private:
@@ -42,7 +44,7 @@ namespace Nebula {
 		vec2 m_GameViewSize = { 1280.0f, 720.0f };
 		vec2 m_ViewPortBounds[2];
 
-		Ref<Scene> m_ActiveScene;
+		Ref<Scene> m_ActiveScene, m_EditorScene;
 		std::string m_ScenePath;
 		Ref<FrameBuffer> frameBuffer;
 		Timer timer;

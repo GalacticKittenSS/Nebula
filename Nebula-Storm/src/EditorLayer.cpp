@@ -33,7 +33,7 @@ namespace Nebula {
 		m_ActiveScene->OnViewportResize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
 		m_SceneHierarchy.SetContext(m_ActiveScene);
 
-		LoadScene("assets/scenes/PinkCube.nebula");
+		//LoadScene("assets/scenes/PinkCube.nebula");
 	}
 
 	void EditorLayer::Detach() {
@@ -305,6 +305,19 @@ namespace Nebula {
 				LoadScene();
 			break;
 
+		case KeyCode::D:
+			if (control)
+				DuplicateEntity();
+			break;
+
+		case KeyCode::Backspace:
+			if (m_SceneHierarchy.GetSelectedEntity()) {
+				if (m_SceneState == SceneState::Edit)
+					m_EditorScene->DestroyEntity(m_SceneHierarchy.GetSelectedEntity());
+
+				m_SceneHierarchy.SetSelectedEntity({});
+			}
+
 		//Gizmos
 		case KeyCode::Q:
 			if (!m_UsingGizmo)
@@ -338,7 +351,7 @@ namespace Nebula {
 	void EditorLayer::NewScene() {
 		m_ActiveScene = CreateRef<Scene>();
 		m_ActiveScene->OnViewportResize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
-		m_SceneHierarchy.SetContext(m_ActiveScene);
+		m_SceneHierarchy.SetContext(m_EditorScene);
 
 		m_HoveredEntity = { };
 		m_ScenePath = "";
@@ -373,23 +386,43 @@ namespace Nebula {
 			return;
 		}
 
+		if (m_SceneState == SceneState::Play)
+			OnSceneStop();
+
 		Ref<Scene> empty = CreateRef<Scene>();
 		if (SceneSerializer(empty).Deserialize(path.string())) {
-			m_ActiveScene = empty;
+			m_EditorScene = empty;
 			m_ActiveScene->OnViewportResize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
-			m_SceneHierarchy.SetContext(m_ActiveScene);
+			m_SceneHierarchy.SetContext(m_EditorScene);
+
+			m_ActiveScene = m_EditorScene;
 		}
 
 		m_ScenePath = path.string();
 	}
 
 	void EditorLayer::OnScenePlay() {
+		m_ActiveScene = Scene::Copy(m_EditorScene);
 		m_ActiveScene->OnRuntimeStart();
+		
+		m_SceneHierarchy.SetContext(m_ActiveScene);
 		m_SceneState = SceneState::Play;
 	}
 
 	void EditorLayer::OnSceneStop() {
 		m_ActiveScene->OnRuntimeStop();
+		m_ActiveScene = m_EditorScene;
 		m_SceneState = SceneState::Edit;
+
+		m_SceneHierarchy.SetContext(m_EditorScene);
+	}
+
+	void EditorLayer::DuplicateEntity() {
+		if (m_SceneState != SceneState::Edit)
+			return;
+		
+		Entity selectedEnt = m_SceneHierarchy.GetSelectedEntity();
+		if (selectedEnt)
+			m_EditorScene->DuplicateEntity(selectedEnt);
 	}
 }

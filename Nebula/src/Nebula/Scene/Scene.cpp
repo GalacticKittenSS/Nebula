@@ -25,6 +25,56 @@ namespace Nebula {
 		NB_ASSERT(false, "Unknown Rigidbody Type!");
 		return b2BodyType::b2_staticBody;
 	}
+
+	template<typename T>
+	static void CopyComponent(entt::registry& dst, entt::registry& src, const std::unordered_map<UUID, entt::entity>& map) {
+		auto view = src.view<T>();
+
+		for (auto e : view) {
+			UUID uuid = src.get<IDComponent>(e).ID;
+			
+			NB_ASSERT(map.find(uuid) != map.end(), "");
+			entt::entity dstEnttID = map.at(uuid);
+
+			auto& Component = src.get<T>(e);
+			dst.emplace_or_replace<T>(dstEnttID, Component);
+
+		}
+	}
+
+	template<typename T>
+	static void CopyComponent(Entity dst, Entity src) {
+		if (src.HasComponent<T>())
+			dst.AddOrReplaceComponent<T>(src.GetComponent<T>());
+	}
+
+	Ref<Scene> Scene::Copy(Ref<Scene> other) {
+		Ref<Scene> newScene = CreateRef<Scene>();
+		newScene->m_ViewportWidth = other->m_ViewportWidth;
+		newScene->m_ViewportHeight = other->m_ViewportHeight;
+
+		std::unordered_map<UUID, entt::entity> enttMap;
+
+		auto& srcSceneReg = other->m_Registry;
+		auto& dstSceneReg = newScene->m_Registry;
+		auto idView = srcSceneReg.view<IDComponent>();
+		for (auto e : idView) {
+			UUID uuid = srcSceneReg.get<IDComponent>(e).ID;
+			const auto& name = srcSceneReg.get<TagComponent>(e).Tag;
+			Entity newEnt = newScene->CreateEntity(uuid, name);
+			enttMap[uuid] = (entt::entity)newEnt;
+		}
+
+		CopyComponent<TransformComponent>(dstSceneReg, srcSceneReg, enttMap);
+		CopyComponent<SpriteRendererComponent>(dstSceneReg, srcSceneReg, enttMap);
+		CopyComponent<CameraComponent>(dstSceneReg, srcSceneReg, enttMap);
+		CopyComponent<NativeScriptComponent>(dstSceneReg, srcSceneReg, enttMap);
+		CopyComponent<Rigidbody2DComponent>(dstSceneReg, srcSceneReg, enttMap);
+		CopyComponent<Box2DComponent>(dstSceneReg, srcSceneReg, enttMap);
+
+		return newScene;
+	}
+
 	Scene::Scene() {
 
 	}
@@ -49,6 +99,18 @@ namespace Nebula {
 
 	void Scene::DestroyEntity(Entity entity) {
 		m_Registry.destroy(entity);
+	}
+
+	void Scene::DuplicateEntity(Entity entity) {
+		std::string name = entity.GetName();
+		Entity newEnt = CreateEntity(name);
+
+		CopyComponent<TransformComponent>(newEnt, entity);
+		CopyComponent<SpriteRendererComponent>(newEnt, entity);
+		CopyComponent<CameraComponent>(newEnt, entity);
+		CopyComponent<NativeScriptComponent>(newEnt, entity);
+		CopyComponent<Rigidbody2DComponent>(newEnt, entity);
+		CopyComponent<Box2DComponent>(newEnt, entity);
 	}
 
 	void Scene::OnRuntimeStart() {
