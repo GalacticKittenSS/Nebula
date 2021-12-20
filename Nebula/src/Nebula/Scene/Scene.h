@@ -7,6 +7,7 @@ class b2World;
 
 namespace Nebula {
 	class Entity;
+	class UUID;
 	
 	class Scene {
 	public:
@@ -14,6 +15,7 @@ namespace Nebula {
 		~Scene();
 
 		Entity CreateEntity(const std::string& name);
+		Entity CreateEntity(UUID uuid, const std::string& name);
 		void DestroyEntity(Entity entity);
 		
 		void OnRuntimeStart();

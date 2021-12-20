@@ -34,10 +34,16 @@ namespace Nebula {
 	}
 
 	Entity Scene::CreateEntity(const std::string& name) {
-		Entity entity =  { m_Registry.create(), this };
+		return CreateEntity(UUID(), name);
+	}
+
+	Entity Scene::CreateEntity(UUID uuid, const std::string& name) {
+		Entity entity = { m_Registry.create(), this };
+		auto& idc = entity.AddComponent<IDComponent>();
+		idc.ID = uuid;
 		entity.AddComponent<TransformComponent>();
 		auto& tag = entity.AddComponent<TagComponent>();
-		tag.Tag = name.empty() ? "Entity": name;
+		tag.Tag = name.empty() ? "Entity" : name;
 		return entity;
 	}
 
@@ -213,4 +219,7 @@ namespace Nebula {
 
 	template<>
 	void Scene::OnComponentAdded<Rigidbody2DComponent>(Entity entity, Rigidbody2DComponent& component) { }
+	
+	template<>
+	void Scene::OnComponentAdded<IDComponent>(Entity entity, IDComponent& component) { }
 }

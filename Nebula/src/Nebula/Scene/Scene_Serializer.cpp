@@ -1,7 +1,7 @@
 #include "nbpch.h"
 #include "Scene_Serializer.h"
 
-#include "Components.h"
+#include "Entity.h"
 
 #include <fstream>
 #include <yaml-cpp/yaml.h>
@@ -132,7 +132,7 @@ namespace Nebula {
 	static void SerializeEntity(YAML::Emitter& out, Entity entity) {
 		out << YAML::BeginMap;
 		out << YAML::Key << "Entity";
-		out << YAML::Value << (uint32_t)entity;
+		out << YAML::Value << entity.GetUUID();
 
 		if (entity.HasComponent<TagComponent>()) {
 			out << YAML::Key << "TagComponent";
@@ -276,7 +276,7 @@ namespace Nebula {
 
 				NB_TRACE("Deserialized Entity with ID = {0}, name = {1}", uuid, name);
 
-				Entity deserializedEntity = m_Scene->CreateEntity(name);
+				Entity deserializedEntity = m_Scene->CreateEntity(uuid, name);
 
 				auto transformComponent = entity["TransformComponent"];
 				if (transformComponent) {

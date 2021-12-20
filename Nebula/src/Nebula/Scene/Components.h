@@ -3,12 +3,20 @@
 #include "Nebula/Maths/Maths.h"
 
 #include "Nebula/Renderer/Camera.h"
-#include "Entity.h"
 #include "Scene_Camera.h"
+
+#include "Nebula/Core/UUID.h"
 
 #include "Nebula/Renderer/Texture.h"
 
 namespace Nebula {
+	struct IDComponent {
+		UUID ID;
+
+		IDComponent() = default;
+		IDComponent(const IDComponent&) = default;
+	};
+
 	struct TagComponent {
 		std::string Tag;
 
@@ -52,6 +60,7 @@ namespace Nebula {
 		CameraComponent(const CameraComponent&) = default;
 	};
 
+	class ScriptableEntity;
 	struct NativeScriptComponent {
 		ScriptableEntity* Instance = nullptr;
 

@@ -1,6 +1,6 @@
 Scene: Untitled
 Entities:
-  - Entity: 3
+  - Entity: 3569121158399529359
     TagComponent:
       Tag: Right
     TransformComponent:
@@ -11,7 +11,7 @@ Entities:
       Colour: [0.370656192, 0, 0.370656371, 1]
       Texture: None
       Tiling: 1
-  - Entity: 2
+  - Entity: 2605563009129528535
     TagComponent:
       Tag: Left
     TransformComponent:
@@ -22,7 +22,7 @@ Entities:
       Colour: [0.494208276, 0, 0.494208515, 1]
       Texture: None
       Tiling: 1
-  - Entity: 1
+  - Entity: 12439973311556186660
     TagComponent:
       Tag: Top
     TransformComponent:
@@ -33,7 +33,7 @@ Entities:
       Colour: [1, 0, 1, 1]
       Texture: None
       Tiling: 1
-  - Entity: 0
+  - Entity: 14839156043936488729
     TagComponent:
       Tag: Camera
     TransformComponent:
