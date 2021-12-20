@@ -8,6 +8,9 @@ namespace Nebula {
 	void EditorLayer::Attach() {
 		NB_PROFILE_FUNCTION();
 
+		m_PlayIcon = Texture2D::Create("Resources/Icons/PlayButton.png");
+		m_StopIcon = Texture2D::Create("Resources/Icons/StopButton.png");
+
 		FrameBufferSpecification fbSpec;
 		fbSpec.Attachments = { FramebufferTextureFormat::RGBA8, FramebufferTextureFormat::RED_INT, FramebufferTextureFormat::Depth };
 		fbSpec.Width = 1280;
@@ -48,9 +51,11 @@ namespace Nebula {
 			m_EditorCam.SetViewPortSize(m_GameViewSize.x, m_GameViewSize.y);
 		}
 
-		if (!m_UsingGizmo && m_GameViewHovered) {
+		if (!m_UsingGizmo && m_GameViewHovered && m_SceneState == SceneState::Edit)
 			m_EditorCam.Update();
-		}
+
+		if (m_GameViewFocus)
+			m_ActiveScene->UpdateRuntime();
 	}
 
 	void EditorLayer::Render() {
@@ -63,19 +68,31 @@ namespace Nebula {
 
 		frameBuffer->ClearAttachment(1, -1);
 
-		m_ActiveScene->UpdateEditor(m_EditorCam);
 
-		vec2 viewportSize = m_ViewPortBounds[1] - m_ViewPortBounds[0];
+		switch (m_SceneState) {
+			case SceneState::Edit: {
+				m_ActiveScene->UpdateEditor(m_EditorCam);
 
-		auto [mx, my] = ImGui::GetMousePos();
-		mx -= m_ViewPortBounds[0].x;
-		my -= m_ViewPortBounds[0].y;
-		my = viewportSize.y - my;
+				auto [mx, my] = ImGui::GetMousePos();
+				mx -= m_ViewPortBounds[0].x;
+				my -= m_ViewPortBounds[0].y;
+				vec2 viewportSize = m_ViewPortBounds[1] - m_ViewPortBounds[0];
+				my = viewportSize.y - my;
 
-		if (m_GameViewHovered) {
-			int pixelData = frameBuffer->ReadPixel(1, (int)mx, (int)my);
-			m_HoveredEntity = pixelData == -1 ? Entity() : Entity((entt::entity)pixelData, m_ActiveScene.get());
+				if (mx >= 0 && my >= 0 && mx < viewportSize.x && my < viewportSize.y) {
+					int pixelData = frameBuffer->ReadPixel(1, (int)mx, (int)my);
+					m_HoveredEntity = pixelData == -1 ? Entity() : Entity((entt::entity)pixelData, m_ActiveScene.get());
+				}
+
+				break;
+			}
+			
+			case SceneState::Play: {
+				m_ActiveScene->RenderRuntime();
+				break;
+			}
 		}
+
 
 		frameBuffer->Unbind();
 	}
@@ -150,7 +167,6 @@ namespace Nebula {
 		
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 		ImGui::Begin("Game View", nullptr, ImGuiWindowFlags_NoCollapse);
-		ImGui::PopStyleVar();
 
 		auto viewportMinRegion = ImGui::GetWindowContentRegionMin();
 		auto viewportMaxRegion = ImGui::GetWindowContentRegionMax();
@@ -161,9 +177,6 @@ namespace Nebula {
 		m_GameViewFocus = ImGui::IsWindowFocused();
 		m_GameViewHovered = ImGui::IsWindowHovered();
 		Application::Get().GetImGuiLayer()->SetBlockEvents(!m_GameViewFocus && !m_GameViewHovered);
-
-		if (m_GameViewFocus)
-			m_ActiveScene->UpdateRuntime();
 
 		ImVec2 panelSize = ImGui::GetContentRegionAvail();
 		m_GameViewSize = { panelSize.x, panelSize.y };
@@ -182,47 +195,78 @@ namespace Nebula {
 		m_UsingGizmo = ImGuizmo::IsOver();
 
 		//Gizmos
-		Entity selectedEntity = m_SceneHierarchy.GetSelectedEntity();
-		if (selectedEntity && m_GizmoType != -1) {
-			ImGuizmo::SetOrthographic(false);
-			ImGuizmo::SetDrawlist();
+		if (m_SceneState == SceneState::Edit) {
+			Entity selectedEntity = m_SceneHierarchy.GetSelectedEntity();
+			if (selectedEntity && m_GizmoType != -1) {
+				ImGuizmo::SetOrthographic(false);
+				ImGuizmo::SetDrawlist();
 
-			ImGuizmo::SetRect(m_ViewPortBounds[0].x, m_ViewPortBounds[0].y, m_ViewPortBounds[1].x - m_ViewPortBounds[0].x, m_ViewPortBounds[1].y - m_ViewPortBounds[0].y);
+				ImGuizmo::SetRect(m_ViewPortBounds[0].x, m_ViewPortBounds[0].y, m_ViewPortBounds[1].x - m_ViewPortBounds[0].x, m_ViewPortBounds[1].y - m_ViewPortBounds[0].y);
 
-			float windowWidth = (float)ImGui::GetWindowWidth();
-			float windowHeight = (float)ImGui::GetWindowHeight();
-			ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowWidth, windowHeight);
+				float windowWidth = (float)ImGui::GetWindowWidth();
+				float windowHeight = (float)ImGui::GetWindowHeight();
+				ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowWidth, windowHeight);
 
-			const mat4& cameraProj = m_EditorCam.GetProjection();
-			mat4 cameraView = m_EditorCam.GetViewMatrix();
+				const mat4& cameraProj = m_EditorCam.GetProjection();
+				mat4 cameraView = m_EditorCam.GetViewMatrix();
 
-			auto& tc = selectedEntity.GetComponent<TransformComponent>();
-			mat4 transform = tc.CalculateMatrix();
+				auto& tc = selectedEntity.GetComponent<TransformComponent>();
+				mat4 transform = tc.CalculateMatrix();
 
-			bool snap = Input::IsKeyPressed(Key::LeftControl);
-			float snapValue = 0.25f;
-			if (m_GizmoType == ImGuizmo::OPERATION::ROTATE)
-				snapValue = 22.5f;
+				bool snap = Input::IsKeyPressed(Key::LeftControl);
+				float snapValue = 0.25f;
+				if (m_GizmoType == ImGuizmo::OPERATION::ROTATE)
+					snapValue = 22.5f;
 
-			float snapValues[3] = { snapValue, snapValue, snapValue };
+				float snapValues[3] = { snapValue, snapValue, snapValue };
 
-			ImGuizmo::Manipulate(value_ptr(cameraView), value_ptr(cameraProj), 
-				(ImGuizmo::OPERATION)m_GizmoType, ImGuizmo::LOCAL, value_ptr(transform), nullptr, snap ? snapValues : nullptr);
+				ImGuizmo::Manipulate(value_ptr(cameraView), value_ptr(cameraProj), 
+					(ImGuizmo::OPERATION)m_GizmoType, ImGuizmo::LOCAL, value_ptr(transform), nullptr, snap ? snapValues : nullptr);
 
 
-			if (ImGuizmo::IsUsing()) {
-				vec3 translation, rotation, scale;
-				DecomposeTransform(transform, translation, rotation, scale);
+				if (ImGuizmo::IsUsing()) {
+					vec3 translation, rotation, scale;
+					DecomposeTransform(transform, translation, rotation, scale);
 
-				vec3 deltaRotation = rotation - tc.Rotation;
-				tc.Translation = translation;
-				tc.Rotation += deltaRotation;
-				tc.Scale = scale;
+					vec3 deltaRotation = rotation - tc.Rotation;
+					tc.Translation = translation;
+					tc.Rotation += deltaRotation;
+					tc.Scale = scale;
+				}
 			}
 		}
 
 		ImGui::End();
+		ImGui::PopStyleVar();
+
+		UI_Toolbar();
 		
+		ImGui::End();
+	}
+
+	void EditorLayer::UI_Toolbar() {
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 2));
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemInnerSpacing, ImVec2(0, 0));
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+		auto& colours = ImGui::GetStyle().Colors;
+		const auto& buttonHovered = colours[ImGuiCol_ButtonHovered];
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(buttonHovered.x, buttonHovered.y, buttonHovered.z, 0.5f));
+		const auto& buttonActive = colours[ImGuiCol_ButtonActive];
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(buttonActive.x, buttonActive.y, buttonActive.z, 0.5f));
+
+		ImGui::Begin("##toolbar", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+
+		float size = ImGui::GetWindowHeight() - 4.0f;
+		Ref<Texture2D> icon = m_SceneState == SceneState::Edit ? m_PlayIcon : m_StopIcon;
+		ImGui::SetCursorPosX((ImGui::GetWindowContentRegionMax().x * 0.5f) - (size * 0.5f));
+		if (ImGui::ImageButton((ImTextureID)icon->GetRendererID(), ImVec2(size, size), ImVec2(0, 0), ImVec2(1, 1), 0)) {
+			if (m_SceneState == SceneState::Edit)
+				OnScenePlay();
+			else if (m_SceneState == SceneState::Play)
+				OnSceneStop();
+		}
+		ImGui::PopStyleVar(2);
+		ImGui::PopStyleColor(3);
 		ImGui::End();
 	}
 
@@ -280,7 +324,7 @@ namespace Nebula {
 
 
 	bool EditorLayer::OnMousePressed(MouseButtonPressedEvent& e) {
-		if (e.GetMouseButton() == Mouse::Button0 && !m_UsingGizmo && m_GameViewHovered)
+		if (e.GetMouseButton() == Mouse::Button0 && !m_UsingGizmo && m_GameViewHovered && m_SceneState == SceneState::Edit)
 			m_SceneHierarchy.SetSelectedEntity(m_HoveredEntity);
 
 		return false;
@@ -316,5 +360,13 @@ namespace Nebula {
 	void EditorLayer::LoadScene(const std::filesystem::path& path) {
 		NewScene();
 		SceneSerializer(m_ActiveScene).Deserialize(path.string());
+	}
+
+	void EditorLayer::OnScenePlay() {
+		m_SceneState = SceneState::Play;
+	}
+
+	void EditorLayer::OnSceneStop() {
+		m_SceneState = SceneState::Edit;
 	}
 }

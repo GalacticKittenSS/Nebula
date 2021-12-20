@@ -13,7 +13,7 @@ namespace Nebula {
 		static constexpr length_t Length() { return 2; }
 		
 		inline constexpr T& operator[](length_t i) {
-			NB_ASSERT(i >= 0 && i < this->length(), "'i' must be Less than 2 and more than 0");
+			NB_ASSERT(i >= 0 && i < this->Length(), "'i' must be Less than 2 and more than 0");
 
 			switch (i) {
 			case 0:
@@ -24,7 +24,7 @@ namespace Nebula {
 		}
 
 		inline constexpr const T& operator[](length_t i) const {
-			NB_ASSERT(i >= 0 && i < this->length(), "'i' must be Less than 2 and more than 0");
+			NB_ASSERT(i >= 0 && i < this->Length(), "'i' must be Less than 2 and more than 0");
 			
 			switch (i) {
 			case 0:

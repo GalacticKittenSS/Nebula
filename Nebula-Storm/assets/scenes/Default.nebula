@@ -9,6 +9,8 @@ Entities:
       Scale: [1, 1, 1]
     SpriteRendererComponent:
       Colour: [0.370656192, 0, 0.370656371, 1]
+      Texture: None
+      Tiling: 1
   - Entity: 2
     TagComponent:
       Tag: Left
@@ -18,6 +20,8 @@ Entities:
       Scale: [1, 1, 1]
     SpriteRendererComponent:
       Colour: [0.494208276, 0, 0.494208515, 1]
+      Texture: None
+      Tiling: 1
   - Entity: 1
     TagComponent:
       Tag: Top
@@ -27,6 +31,8 @@ Entities:
       Scale: [1, 1, 1]
     SpriteRendererComponent:
       Colour: [1, 0, 1, 1]
+      Texture: None
+      Tiling: 1
   - Entity: 0
     TagComponent:
       Tag: Camera

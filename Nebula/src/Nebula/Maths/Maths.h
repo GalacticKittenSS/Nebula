@@ -36,6 +36,7 @@
 #include "Trigonometric.h"
 
 #include "value_ptr.h"
+#include "ToString.h"
 
 namespace Nebula {
 	typedef vec<1, float> vec1;
@@ -58,4 +59,19 @@ namespace Nebula {
 	}
 
 	bool DecomposeTransform(mat4& transform, vec3& outTranslation, vec3& outRotation, vec3& outScale);
+
+	template<typename OStream, length_t L, typename T>
+	inline OStream& operator<<(OStream& os, const vec<L, T>& vector) {
+		return os << to_string(vector);
+	}
+
+	template<typename OStream, length_t C, length_t R, typename T>
+	inline OStream& operator<<(OStream& os, const mat<C, R, T>& matrix) {
+		return os << to_string(matrix);
+	}
+
+	template<typename OStream, typename T>
+	inline OStream& operator<<(OStream& os, qua<T> quaternio) {
+		return os << to_string(quaternio);
+	}
 }

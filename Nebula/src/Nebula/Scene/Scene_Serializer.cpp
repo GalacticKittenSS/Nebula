@@ -134,6 +134,10 @@ namespace Nebula {
 
 			auto& component = entity.GetComponent<SpriteRendererComponent>();
 			out << YAML::Key << "Colour" << YAML::Value << component.Colour;
+			if (component.Texture != nullptr)
+				out << YAML::Key << "Texture" << YAML::Value << component.Texture->GetPath();
+			else
+				out << YAML::Key << "Texture" << YAML::Value << "None";
 			out << YAML::Key << "Tiling" << YAML::Value << component.Tiling;
 
 			out << YAML::EndMap;
@@ -233,6 +237,11 @@ namespace Nebula {
 				{
 					auto& src = deserializedEntity.AddComponent<SpriteRendererComponent>();
 					src.Colour = spriteRendererComponent["Colour"].as<vec4>();
+					src.Tiling = spriteRendererComponent["Tiling"].as<float>();
+
+					std::string texture = spriteRendererComponent["Texture"].as<std::string>();
+					if (texture != "None")
+						src.Texture = Texture2D::Create(texture);
 				}
 			}
 		}

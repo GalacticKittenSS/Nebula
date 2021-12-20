@@ -1,0 +1,24 @@
+Scene: Untitled
+Entities:
+  - Entity: 1
+    TagComponent:
+      Tag: No Texture
+    TransformComponent:
+      Translation: [1.60000002, 0.899999976, 0]
+      Rotation: [-0.00174532924, 0, 0]
+      Scale: [1, 1, 1]
+    SpriteRendererComponent:
+      Colour: [0.621621609, 0.0216007493, 0.0216007493, 1]
+      Texture: None
+      Tiling: 1
+  - Entity: 0
+    TagComponent:
+      Tag: Texture
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    SpriteRendererComponent:
+      Colour: [1, 1, 1, 1]
+      Texture: assets\textures\Checkerboard.png
+      Tiling: 2.0999999
