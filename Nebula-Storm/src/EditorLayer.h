@@ -25,6 +25,7 @@ namespace Nebula {
 		bool OnMousePressed(MouseButtonPressedEvent& e);
 
 		void NewScene();
+		void SaveScene();
 		void SaveSceneAs();
 		void LoadScene();
 		void LoadScene(const std::filesystem::path& path);
@@ -42,6 +43,7 @@ namespace Nebula {
 		vec2 m_ViewPortBounds[2];
 
 		Ref<Scene> m_ActiveScene;
+		std::string m_ScenePath;
 		Ref<FrameBuffer> frameBuffer;
 		Timer timer;
 

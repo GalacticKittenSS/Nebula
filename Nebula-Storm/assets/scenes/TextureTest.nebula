@@ -1,4 +1,4 @@
-Scene: Untitled
+Scene: Textured_Sprites_Test
 Entities:
   - Entity: 1
     TagComponent:
