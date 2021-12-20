@@ -71,7 +71,7 @@ namespace Nebula {
 	}
 
 	template<typename OStream, typename T>
-	inline OStream& operator<<(OStream& os, qua<T> quaternio) {
-		return os << to_string(quaternio);
+	inline OStream& operator<<(OStream& os, qua<T> quaternion) {
+		return os << to_string(quaternion);
 	}
 }

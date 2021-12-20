@@ -14,6 +14,9 @@ os.chdir('./../')
 premakeInstalled = PremakeReq.Validate()
 VulkanReq.Validate()
 
+print("\nUpdating submodules...")
+subprocess.call(["git", "submodule", "update", "--init", "--recursive"])
+
 if (premakeInstalled):
     if platform.system() == "Windows":
         print("\nRunning premake...")

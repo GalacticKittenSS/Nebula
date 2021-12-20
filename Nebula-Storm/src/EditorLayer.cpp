@@ -358,8 +358,17 @@ namespace Nebula {
 	}
 
 	void EditorLayer::LoadScene(const std::filesystem::path& path) {
-		NewScene();
-		SceneSerializer(m_ActiveScene).Deserialize(path.string());
+		if (path.extension().string() != ".nebula") {
+			NB_WARN("Could not load {0} - not a scene file", path.filename().string());
+			return;
+		}
+
+		Ref<Scene> empty = CreateRef<Scene>();
+		if (SceneSerializer(empty).Deserialize(path.string())) {
+			m_ActiveScene = empty;
+			m_ActiveScene->OnViewportResize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
+			m_SceneHierarchy.SetContext(m_ActiveScene);
+		}
 	}
 
 	void EditorLayer::OnScenePlay() {
