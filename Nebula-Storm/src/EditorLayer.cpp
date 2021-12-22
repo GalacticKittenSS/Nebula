@@ -33,7 +33,6 @@ namespace Nebula {
 		m_ActiveScene->OnViewportResize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
 		m_SceneHierarchy.SetContext(m_ActiveScene);
 
-		//LoadScene("assets/scenes/PinkCube.nebula");
 	}
 
 	void EditorLayer::Detach() {
@@ -349,10 +348,16 @@ namespace Nebula {
 	}
 
 	void EditorLayer::NewScene() {
-		m_ActiveScene = CreateRef<Scene>();
+		if (m_SceneState != SceneState::Edit)
+			OnSceneStop();
+
+		
+		m_EditorScene = CreateRef<Scene>();
 		m_ActiveScene->OnViewportResize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
 		m_SceneHierarchy.SetContext(m_EditorScene);
 
+		m_ActiveScene = m_EditorScene;
+		
 		m_HoveredEntity = { };
 		m_ScenePath = "";
 	}
@@ -386,7 +391,7 @@ namespace Nebula {
 			return;
 		}
 
-		if (m_SceneState == SceneState::Play)
+		if (m_SceneState != SceneState::Edit)
 			OnSceneStop();
 
 		Ref<Scene> empty = CreateRef<Scene>();
@@ -402,6 +407,9 @@ namespace Nebula {
 	}
 
 	void EditorLayer::OnScenePlay() {
+		if (!m_EditorScene)
+			return;
+
 		m_ActiveScene = Scene::Copy(m_EditorScene);
 		m_ActiveScene->OnRuntimeStart();
 		

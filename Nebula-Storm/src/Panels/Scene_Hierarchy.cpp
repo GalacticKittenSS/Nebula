@@ -229,6 +229,13 @@ namespace Nebula {
 				}
 			}
 
+			if (!m_SelectionContext.HasComponent<CircleRendererComponent>()) {
+				if (ImGui::MenuItem("Circle Renderer")) {
+					m_SelectionContext.AddComponent<CircleRendererComponent>();
+					ImGui::CloseCurrentPopup();
+				}
+			}
+
 			if (!m_SelectionContext.HasComponent<Rigidbody2DComponent>()) {
 				if (ImGui::MenuItem("Rigidbody 2D")) {
 					m_SelectionContext.AddComponent<Rigidbody2DComponent>();
@@ -338,6 +345,12 @@ namespace Nebula {
 
 			if (component.Texture != nullptr)
 				ImGui::DragFloat("Texture Tiling Factor", &component.Tiling, 0.1f, 0.0f, 100.0f);
+		}, true);
+
+		DrawComponent<CircleRendererComponent>("Circle Renderer", entity, [](auto& component) {
+			ImGui::ColorEdit4("Colour", value_ptr(component.Colour));
+			ImGui::DragFloat("Thickness", &component.Thickness, 0.25f, 0.0f, 1.0f);
+			ImGui::DragFloat("Fade", &component.Fade, 0.00025f, 0.0f, 1.0f);
 		}, true);
 
 		DrawComponent<Rigidbody2DComponent>("Rigidbody 2D", entity, [](auto& component) {

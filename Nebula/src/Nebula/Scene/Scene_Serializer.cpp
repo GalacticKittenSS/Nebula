@@ -195,6 +195,18 @@ namespace Nebula {
 			out << YAML::EndMap;
 		}
 
+		if (entity.HasComponent<CircleRendererComponent>()) {
+			out << YAML::Key << "CircleRendererComponent";
+			out << YAML::BeginMap;
+
+			auto& component = entity.GetComponent<CircleRendererComponent>();
+			out << YAML::Key << "Colour" << YAML::Value << component.Colour;
+			out << YAML::Key << "Thickness" << YAML::Value << component.Thickness;
+			out << YAML::Key << "Fade" << YAML::Value << component.Fade;
+			
+			out << YAML::EndMap;
+		}
+
 		if (entity.HasComponent<Rigidbody2DComponent>()) {
 			out << YAML::Key << "Rigidbody2DComponent";
 			out << YAML::BeginMap; // Rigidbody2DComponent
@@ -316,6 +328,15 @@ namespace Nebula {
 					std::string texture = spriteRendererComponent["Texture"].as<std::string>();
 					if (texture != "None")
 						src.Texture = Texture2D::Create(texture);
+				}
+
+				auto circleRendererComponent = entity["CircleRendererComponent"];
+				if (circleRendererComponent)
+				{
+					auto& crc = deserializedEntity.AddComponent<CircleRendererComponent>();
+					crc.Colour = circleRendererComponent["Colour"].as<vec4>();
+					crc.Thickness = circleRendererComponent["Thickness"].as<float>();
+					crc.Fade = circleRendererComponent["Fade"].as<float>();
 				}
 
 				auto rigidbody2DComponent = entity["Rigidbody2DComponent"];

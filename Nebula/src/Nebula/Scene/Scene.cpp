@@ -67,6 +67,7 @@ namespace Nebula {
 
 		CopyComponent<TransformComponent>(dstSceneReg, srcSceneReg, enttMap);
 		CopyComponent<SpriteRendererComponent>(dstSceneReg, srcSceneReg, enttMap);
+		CopyComponent<CircleRendererComponent>(dstSceneReg, srcSceneReg, enttMap);
 		CopyComponent<CameraComponent>(dstSceneReg, srcSceneReg, enttMap);
 		CopyComponent<NativeScriptComponent>(dstSceneReg, srcSceneReg, enttMap);
 		CopyComponent<Rigidbody2DComponent>(dstSceneReg, srcSceneReg, enttMap);
@@ -107,6 +108,7 @@ namespace Nebula {
 
 		CopyComponent<TransformComponent>(newEnt, entity);
 		CopyComponent<SpriteRendererComponent>(newEnt, entity);
+		CopyComponent<CircleRendererComponent>(newEnt, entity);
 		CopyComponent<CameraComponent>(newEnt, entity);
 		CopyComponent<NativeScriptComponent>(newEnt, entity);
 		CopyComponent<Rigidbody2DComponent>(newEnt, entity);
@@ -201,9 +203,12 @@ namespace Nebula {
 		
 		auto group = m_Registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
 		for (auto entity : group) {
-			auto [transform, sprite] = group.get<TransformComponent, SpriteRendererComponent>(entity);
-
 			Renderer2D::Draw(NB_QUAD, Entity{ entity, this });
+		}
+
+		auto CircleGroup = m_Registry.view<TransformComponent, CircleRendererComponent>();
+		for (auto entity : CircleGroup) {
+			Renderer2D::Draw(NB_CIRCLE, Entity{ entity, this });
 		}
 
 		Renderer2D::EndScene();
@@ -229,9 +234,12 @@ namespace Nebula {
 
 			auto group = m_Registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
 			for (auto entity : group) {
-				auto [transform, sprite] = group.get<TransformComponent, SpriteRendererComponent>(entity);
-
 				Renderer2D::Draw(NB_QUAD, Entity{ entity, this });
+			}
+
+			auto CircleGroup = m_Registry.view<TransformComponent, CircleRendererComponent>();
+			for (auto entity : CircleGroup) {
+				Renderer2D::Draw(NB_CIRCLE, Entity{ entity, this });
 			}
 
 			Renderer2D::EndScene();
@@ -263,6 +271,9 @@ namespace Nebula {
 
 	template<>
 	void Scene::OnComponentAdded<SpriteRendererComponent>(Entity entity, SpriteRendererComponent& component) { }
+
+	template<>
+	void Scene::OnComponentAdded<CircleRendererComponent>(Entity entity, CircleRendererComponent& component) { }
 
 	template<>
 	void Scene::OnComponentAdded<TagComponent>(Entity entity, TagComponent& component) { }
