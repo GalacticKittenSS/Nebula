@@ -200,15 +200,15 @@ namespace Nebula {
 
 	void Scene::UpdateEditor(EditorCamera& camera) {
 		Renderer2D::BeginScene(camera); 
-		
+
 		auto group = m_Registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
 		for (auto entity : group) {
-			Renderer2D::Draw(NB_QUAD, Entity{ entity, this });
+			Renderer2D::Draw(NB_RECT, Entity{ entity, this });
 		}
 
 		auto CircleGroup = m_Registry.view<TransformComponent, CircleRendererComponent>();
 		for (auto entity : CircleGroup) {
-			Renderer2D::Draw(NB_CIRCLE, Entity{ entity, this });
+			Renderer2D::Draw(NB_RECT, Entity{ entity, this });
 		}
 
 		Renderer2D::EndScene();

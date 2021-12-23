@@ -18,6 +18,7 @@ namespace Nebula {
 		
 		Ref<Shader>		TextureShader;
 		Ref<Shader>		 CircleShader;
+		Ref<Shader>		   LineShader;
 		Ref<Texture2D>	 WhiteTexture;
 
 		std::array<Ref<Texture2D>, MaxTextureSlots> TextureSlots;
@@ -46,7 +47,7 @@ namespace Nebula {
 		uint32_t TriIndexCount = 0;
 		
 		Vertex* TriVBBase = nullptr;
-		Vertex* TriVBPtr = nullptr; 
+		Vertex* TriVBPtr  = nullptr; 
 
 		//Circle
 		Ref<VertexArray>	CircleVertexArray;
@@ -55,7 +56,16 @@ namespace Nebula {
 		uint32_t CircleIndexCount = 0;
 
 		CircleVertex* CircleVBBase = nullptr;
-		CircleVertex* CircleVBPtr = nullptr;
+		CircleVertex* CircleVBPtr  = nullptr;
+
+		//Circle
+		Ref<VertexArray>	LineVertexArray;
+		Ref<VertexBuffer>  LineVertexBuffer;
+
+		uint32_t LineVertexCount = 0;
+
+		LineVertex* LineVBBase = nullptr;
+		LineVertex* LineVBPtr  = nullptr;
 	};
 	static Renderer2DData s_Data;
 	
@@ -79,8 +89,15 @@ namespace Nebula {
 		//Editor Only
 		int EntityID;
 	};
+	struct LineVertex {
+		vec3 Position;
+		vec4 Colour;
+		
+		//Editor Only
+		int EntityID;
+	};
 
-	static void SetupShape(const uint32_t Type, BufferLayout layout, uint32_t maxVertices, uint32_t maxIndices, uint32_t indexCountPerShape, uint32_t verticesPerShape) {
+	static void SetupShape(const uint32_t Type, BufferLayout layout, uint32_t maxVertices, uint32_t maxIndices, uint32_t indicesPerShape, uint32_t verticesPerShape) {
 		Ref<VertexArray> vArray  = VertexArray::Create();
 		Ref<VertexBuffer> vBuffer = VertexBuffer::Create(maxVertices * sizeof(Vertex));
 		vBuffer->SetLayout(layout);
@@ -92,9 +109,11 @@ namespace Nebula {
 		for (uint32_t i = 0; i < maxIndices; i += 6) {
 			indices[i + 0] = offset + 0;
 			indices[i + 1] = offset + 1;
-			indices[i + 2] = offset + 2;
+			
+			if (indicesPerShape >= 3)
+				indices[i + 2] = offset + 2;
 
-			if (verticesPerShape == 4) {
+			if (indicesPerShape == 6) {
 				indices[i + 3] = offset + 2;
 				indices[i + 4] = offset + 3;
 				indices[i + 5] = offset + 0;
@@ -118,6 +137,10 @@ namespace Nebula {
 			s_Data.CircleVertexArray = vArray;
 			s_Data.CircleVertexBuffer = vBuffer;
 			s_Data.CircleVBBase = new CircleVertex[s_Data.MaxVertices];
+		} else if (Type == NB_LINE) { 
+			s_Data.LineVertexArray = vArray;
+			s_Data.LineVertexBuffer = vBuffer;
+			s_Data.LineVBBase = new LineVertex[s_Data.MaxVertices];
 		}
 
 		delete[] indices;
@@ -132,6 +155,9 @@ namespace Nebula {
 
 		s_Data.CircleIndexCount = 0;
 		s_Data.CircleVBPtr = s_Data.CircleVBBase;
+
+		s_Data.LineVertexCount = 0;
+		s_Data.LineVBPtr = s_Data.LineVBBase;
 
 		s_Data.TextureSlotIndex = 1;
 	}
@@ -157,10 +183,17 @@ namespace Nebula {
 			{ShaderDataType::Int, "entityID"}
 		};
 
+		BufferLayout LineLayout = {
+			{ShaderDataType::Float3, "position"},
+			{ShaderDataType::Float4, "colour"},
+			{ShaderDataType::Int, "entityID"}
+		};
+
 		SetupShape(NB_QUAD, layout, s_Data.MaxVertices, s_Data.MaxIndices, 6, 4);
 		SetupShape(NB_CIRCLE, CircleLayout, s_Data.MaxVertices, s_Data.MaxIndices, 6, 4);
 		SetupShape(NB_TRI, layout, s_Data.MaxVertices, s_Data.MaxIndices, 3, 3);
-		
+		SetupShape(NB_LINE, LineLayout, s_Data.MaxVertices, s_Data.MaxIndices, 2, 2);
+
 		//White Texture
 		s_Data.WhiteTexture = Texture2D::Create(1, 1);
 		uint32_t whiteTextureData = 0xffffffff;
@@ -170,6 +203,7 @@ namespace Nebula {
 		//Shaders
 		s_Data.TextureShader = Shader::Create("assets/shaders/Default.glsl");
 		s_Data.CircleShader = Shader::Create("assets/shaders/Circle.glsl");
+		s_Data.LineShader = Shader::Create("assets/shaders/Line.glsl");
 		
 		int32_t samplers[s_Data.MaxTextureSlots];
 		for (uint32_t i = 0; i < s_Data.MaxTextureSlots; i++)
@@ -244,7 +278,8 @@ namespace Nebula {
 		}
 	}
 
-	void Renderer2D::Draw(const vec4* vertexPos, const mat4& transform, const vec4& colour, const float thickness, const float fade, uint32_t entityID) {
+	void Renderer2D::Draw(const uint32_t type, const vec4* vertexPos, const mat4& transform, const vec4& colour,
+		const float thickness, const float fade, uint32_t entityID) {
 		if (s_Data.CircleIndexCount >= s_Data.MaxIndices)
 			FlushAndReset();
 
@@ -263,6 +298,88 @@ namespace Nebula {
 	void Renderer2D::Draw(const uint32_t type, Entity& entity) {
 		NB_PROFILE_FUNCTION();
 
+		if (type == NB_RECT) {
+			mat4 transform = entity.GetComponent<TransformComponent>().CalculateMatrix();
+			vec4 colour = { 1, 1, 1, 1 };
+
+			if (entity.HasComponent<SpriteRendererComponent>())
+				colour = entity.GetComponent<SpriteRendererComponent>().Colour;
+			else if (entity.HasComponent<CircleRendererComponent>())
+				colour = entity.GetComponent<CircleRendererComponent>().Colour;
+
+			vec3 p0 = transform * vec4(-0.5f, -0.5f, 0.0f, 1.0f);
+			vec3 p1 = transform * vec4( 0.5f, -0.5f, 0.0f, 1.0f);
+			vec3 p2 = transform * vec4( 0.5f,  0.5f, 0.0f, 1.0f);
+			vec3 p3 = transform * vec4(-0.5f,  0.5f, 0.0f, 1.0f);
+			
+			DrawLine(p0, p1, colour, entity);
+			DrawLine(p1, p2, colour, entity);
+			DrawLine(p2, p3, colour, entity);
+			DrawLine(p3, p0, colour, entity);
+
+			return;
+		}
+
+		uint32_t size = type;
+		if (type == NB_CIRCLE)
+			size = 4;
+
+		vec4* vertexPos = new vec4[size];
+
+		if (type == NB_QUAD || type == NB_CIRCLE) {
+			vertexPos[0] = { -0.5f, -0.5f, 0.0f, 1.0f };
+			vertexPos[1] = {  0.5f, -0.5f, 0.0f, 1.0f };
+			vertexPos[2] = {  0.5f,  0.5f, 0.0f, 1.0f };
+			vertexPos[3] = { -0.5f,  0.5f, 0.0f, 1.0f };
+		} else if (type == NB_TRI) {
+			vertexPos[0] = { -0.5f, -0.5f, 0.0f, 1.0f };
+			vertexPos[1] = {  0.5f, -0.5f, 0.0f, 1.0f };
+			vertexPos[2] = {  0.5f,  0.5f, 0.0f, 1.0f };
+		} else if (type == NB_LINE) {
+			vertexPos[0] = { -0.5f, 0.0f, 0.0f, 1.0f };
+			vertexPos[1] = {  0.5f, 0.0f, 0.0f, 1.0f };
+		}
+
+		if (type == NB_CIRCLE) {
+			mat4 transform = entity.GetComponent<TransformComponent>().CalculateMatrix();
+			auto& circleRenderer = entity.GetComponent<CircleRendererComponent>();
+
+			Draw(type, vertexPos, transform, circleRenderer.Colour, circleRenderer.Thickness, circleRenderer.Fade, entity);
+		}
+
+		else if (type == NB_LINE) {
+			NB_WARN("Render2D::Draw(type = NB_LINE) is depreciated, Use Render2D::DrawLine(const vec3&, const vec3&, const vec4&, int) instead");
+			mat4 transform = entity.GetComponent<TransformComponent>().CalculateMatrix();
+			//TODO: Line Renderer Component
+			
+			DrawLine(vertexPos[0] * transform[3], vertexPos[1] * transform[3], { 1.0f, 1.0f, 1.0f, 1.0f });
+		} else {
+			mat4 transform = entity.GetComponent<TransformComponent>().CalculateMatrix();
+			auto& spriteRenderer = entity.GetComponent<SpriteRendererComponent>();
+
+			Draw(type, vertexPos, transform, spriteRenderer.Colour, spriteRenderer.Texture, spriteRenderer.Tiling, entity);
+		}
+	}
+
+	void Renderer2D::Draw(const uint32_t type, const mat4& transform, const vec4& colour, Ref<Texture2D> texture, float tiling) {
+		if (type == NB_RECT) {
+			vec3 position, size, rotation;
+			mat4 trans = transform;
+			DecomposeTransform(trans, position, rotation, size);
+
+			vec3 p0 = vec3(position.x - size.x * 0.5f, position.y - size.y * 0.5f, position.z);
+			vec3 p1 = vec3(position.x + size.x * 0.5f, position.y - size.y * 0.5f, position.z);
+			vec3 p2 = vec3(position.x + size.x * 0.5f, position.y + size.y * 0.5f, position.z);
+			vec3 p3 = vec3(position.x - size.x * 0.5f, position.y + size.y * 0.5f, position.z);
+
+			DrawLine(p0, p1, colour, -1);
+			DrawLine(p1, p2, colour, -1);
+			DrawLine(p2, p3, colour, -1);
+			DrawLine(p3, p0, colour, -1);
+
+			return;
+		}
+		
 		uint32_t size = type;
 		if (type == NB_CIRCLE)
 			size = 4;
@@ -274,41 +391,38 @@ namespace Nebula {
 			vertexPos[1] = { 0.5f, -0.5f, 0.0f, 1.0f };
 			vertexPos[2] = { 0.5f,  0.5f, 0.0f, 1.0f };
 			vertexPos[3] = { -0.5f,  0.5f, 0.0f, 1.0f };
-		} else if (type == NB_TRI) {
-			vertexPos[0] = { -0.5f, -0.5f, 0.0f, 1.0f };
-			vertexPos[1] = { 0.5f, -0.5f, 0.0f, 1.0f };
-			vertexPos[2] = { 0.5f,  0.5f, 0.0f, 1.0f };
-		}
-
-		if (type == NB_CIRCLE) {
-			mat4 transform = entity.GetComponent<TransformComponent>().CalculateMatrix();
-			auto& circleRenderer = entity.GetComponent<CircleRendererComponent>();
-
-			Draw(vertexPos, transform, circleRenderer.Colour, circleRenderer.Thickness, circleRenderer.Fade, entity);
-		} else {
-			mat4 transform = entity.GetComponent<TransformComponent>().CalculateMatrix();
-			auto& spriteRenderer = entity.GetComponent<SpriteRendererComponent>();
-
-			Draw(type, vertexPos, transform, spriteRenderer.Colour, spriteRenderer.Texture, spriteRenderer.Tiling, entity);
-		}
-	}
-
-	void Renderer2D::Draw(const uint32_t type, const mat4& transform, const vec4& colour, Ref<Texture2D> texture, float tiling) {
-		vec4* vertexPos = new vec4[type];
-
-		if (type == NB_QUAD) {
-			vertexPos[0] = { -0.5f, -0.5f, 0.0f, 1.0f };
-			vertexPos[1] = {  0.5f, -0.5f, 0.0f, 1.0f };
-			vertexPos[2] = {  0.5f,  0.5f, 0.0f, 1.0f };
-			vertexPos[3] = { -0.5f,  0.5f, 0.0f, 1.0f };
 		}
 		else if (type == NB_TRI) {
 			vertexPos[0] = { -0.5f, -0.5f, 0.0f, 1.0f };
 			vertexPos[1] = {  0.5f, -0.5f, 0.0f, 1.0f };
 			vertexPos[2] = {  0.5f,  0.5f, 0.0f, 1.0f };
 		}
+		else if (type == NB_LINE) {
+			vertexPos[0] = { -0.5f, 0.0f, 0.0f, 1.0f };
+			vertexPos[1] = {  0.5f, 0.0f, 0.0f, 1.0f };
+		}
 
-		Draw(type, vertexPos, transform, colour, texture, tiling);
+		if (type == NB_CIRCLE)
+			Draw(type, vertexPos, transform, colour, -1);
+		else if (type == NB_LINE) {
+			NB_WARN("Render2D::Draw(type = NB_LINE) is depreciated, please use Render2D::DrawLine(const vec3&, const vec3&, const vec4&, int)");
+			DrawLine(vertexPos[0] * transform[3], vertexPos[1] * transform[3], colour);
+		} else
+			Draw(type, vertexPos, transform, colour, texture, tiling);
+	}
+
+	void Renderer2D::DrawLine(const vec3& p0, const vec3& p1, const vec4& colour, int entityID) {
+		s_Data.LineVBPtr->Position = p0;
+		s_Data.LineVBPtr->Colour = colour;
+		s_Data.LineVBPtr->EntityID = entityID;
+		s_Data.LineVBPtr++;
+
+		s_Data.LineVBPtr->Position = p1;
+		s_Data.LineVBPtr->Colour = colour;
+		s_Data.LineVBPtr->EntityID = entityID;
+		s_Data.LineVBPtr++;
+
+		s_Data.LineVertexCount += 2;
 	}
 
 	Vertex* Renderer2D::CalculateVertexData(Vertex* vertexPtr, const uint32_t vertexCount, const vec4* vertexPos, 
@@ -374,20 +488,31 @@ namespace Nebula {
 		if (s_Data.TriIndexCount) {
 			uint32_t dataSize = (uint32_t)((uint8_t*)s_Data.TriVBPtr - (uint8_t*)s_Data.TriVBBase);
 			s_Data.TriangleVertexBuffer->SetData(s_Data.TriVBBase, dataSize);
+			
 			RenderCommand::DrawIndexed(s_Data.TriangleVertexArray, s_Data.TriIndexCount);
 		}
 
 		if (s_Data.QuadIndexCount) {
 			uint32_t dataSize = (uint32_t)((uint8_t*)s_Data.QuadVBPtr - (uint8_t*)s_Data.QuadVBBase);
 			s_Data.QuadVertexBuffer->SetData(s_Data.QuadVBBase, dataSize);
+
 			RenderCommand::DrawIndexed(s_Data.QuadVertexArray, s_Data.QuadIndexCount);
 		}
 		
 		if (s_Data.CircleIndexCount) {
-			s_Data.CircleShader->Bind();
 			uint32_t dataSize = (uint32_t)((uint8_t*)s_Data.CircleVBPtr - (uint8_t*)s_Data.CircleVBBase);
 			s_Data.CircleVertexBuffer->SetData(s_Data.CircleVBBase, dataSize);
+			
+			s_Data.CircleShader->Bind();
 			RenderCommand::DrawIndexed(s_Data.CircleVertexArray, s_Data.CircleIndexCount);
+		}
+
+		if (s_Data.LineVertexCount) {
+			uint32_t dataSize = (uint32_t)((uint8_t*)s_Data.LineVBPtr - (uint8_t*)s_Data.LineVBBase);
+			s_Data.LineVertexBuffer->SetData(s_Data.LineVBBase, dataSize);
+
+			s_Data.LineShader->Bind();
+			RenderCommand::DrawLines(s_Data.LineVertexArray, s_Data.LineVertexCount);
 		}
 	}
 

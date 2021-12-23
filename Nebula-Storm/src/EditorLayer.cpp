@@ -32,7 +32,6 @@ namespace Nebula {
 		m_ActiveScene = CreateRef<Scene>();
 		m_ActiveScene->OnViewportResize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
 		m_SceneHierarchy.SetContext(m_ActiveScene);
-
 	}
 
 	void EditorLayer::Detach() {
@@ -65,8 +64,9 @@ namespace Nebula {
 		RenderCommand::SetClearColour({ 0.1f, 0.1f, 0.1f, 1.0f });
 		RenderCommand::Clear();
 
-		frameBuffer->ClearAttachment(1, -1);
+		RenderCommand::SetLineWidth(5.0f);
 
+		frameBuffer->ClearAttachment(1, -1);
 
 		switch (m_SceneState) {
 			case SceneState::Edit: {

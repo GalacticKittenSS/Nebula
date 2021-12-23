@@ -28,6 +28,14 @@ namespace Nebula {
 		inline static void DrawIndexed(const Ref<VertexArray>& vertexArray, uint32_t indexCount = 0) {
 			s_RendererAPI->DrawIndexed(vertexArray, indexCount);
 		}
+
+		inline static void DrawLines(const Ref<VertexArray>& vertexArray, uint32_t vertexCount = 0) {
+			s_RendererAPI->DrawLines(vertexArray, vertexCount);
+		}
+
+		inline static void SetLineWidth(float width) {
+			s_RendererAPI->SetLineWidth(width);
+		}
 	private:
 		static Scope<RendererAPI> s_RendererAPI;
 	};
