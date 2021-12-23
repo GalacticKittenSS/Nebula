@@ -36,6 +36,7 @@ namespace Nebula {
 
 		static void Draw(const uint32_t type, Entity& quad);
 		static void Draw(const uint32_t type, const mat4& transform, const vec4& colour, const Ref<Texture2D> texture = nullptr, float tiling = 1.0f);
+		static void DrawCircle(const mat4& transform, const vec4& colour, const float thickness = 1.0f, const float fade = 0.005f, int EntityID = -1);
 		static void DrawLine(const vec3& p0, const vec3& p1, const vec4& colour, int entityID = -1);
 	private:
 		static void FlushAndReset();

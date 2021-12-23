@@ -32,6 +32,8 @@ namespace Nebula {
 		m_ActiveScene = CreateRef<Scene>();
 		m_ActiveScene->OnViewportResize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
 		m_SceneHierarchy.SetContext(m_ActiveScene);
+
+		NewScene();
 	}
 
 	void EditorLayer::Detach() {
@@ -92,6 +94,7 @@ namespace Nebula {
 			}
 		}
 
+		OnOverlayRender();
 
 		frameBuffer->Unbind();
 	}
@@ -143,19 +146,30 @@ namespace Nebula {
 				
 				ImGui::EndMenu();
 			}
+
+			if (ImGui::BeginMenu("Settings")) {
+				if (ImGui::MenuItem("Show Physics Colliders", NULL, m_ShowColliders))
+					m_ShowColliders = !m_ShowColliders;
+
+				ImGui::EndMenu();
+			}
 			
-			if (ImGui::BeginMenu("Create Entity")) {
-				if (ImGui::MenuItem("Empty")) 
-					auto& sprite = m_ActiveScene->CreateEntity("Entity");
+			if (ImGui::BeginMenu("Scene")) {
+				if (ImGui::BeginMenu("Create Entity")) {
+					if (ImGui::MenuItem("Empty")) 
+						auto& sprite = m_ActiveScene->CreateEntity("Entity");
 
-				if (ImGui::MenuItem("Sprite")) {
-					auto& sprite = m_ActiveScene->CreateEntity("Sprite");
-					sprite.AddComponent<SpriteRendererComponent>();
-				}
+					if (ImGui::MenuItem("Sprite")) {
+						auto& sprite = m_ActiveScene->CreateEntity("Sprite");
+						sprite.AddComponent<SpriteRendererComponent>();
+					}
 
-				if (ImGui::MenuItem("Camera")) {
-					auto& sprite = m_ActiveScene->CreateEntity("Camera");
-					sprite.AddComponent<CameraComponent>();
+					if (ImGui::MenuItem("Camera")) {
+						auto& sprite = m_ActiveScene->CreateEntity("Camera");
+						sprite.AddComponent<CameraComponent>();
+					}
+
+					ImGui::EndMenu();
 				}
 
 				ImGui::EndMenu();
@@ -244,6 +258,47 @@ namespace Nebula {
 		UI_Toolbar();
 		
 		ImGui::End();
+	}
+
+	void EditorLayer::OnOverlayRender() {
+		if (!m_ShowColliders)
+			return;
+
+
+		if (m_SceneState == SceneState::Play) {
+			Entity cam = m_ActiveScene->GetPrimaryCamera();
+			Renderer2D::BeginScene(cam.GetComponent<CameraComponent>().Camera, cam.GetComponent<TransformComponent>().CalculateMatrix());
+		} else
+			Renderer2D::BeginScene(m_EditorCam);
+
+		// Calculate z index for translation
+		float zIndex = 0.001f;
+		vec3 cameraForwardDirection = m_EditorCam.GetForwardDirection();
+		vec3 projectionCollider = cameraForwardDirection * vec3(zIndex);
+
+		auto CircleView = m_ActiveScene->GetAllEntitiesWith<TransformComponent, CircleColliderComponent>();
+		for (auto entity : CircleView) {
+			auto [tc, cc] = CircleView.get<TransformComponent, CircleColliderComponent>(entity);
+			
+			vec3 translation = tc.Translation + vec3(cc.Offset, -projectionCollider.z);
+			vec3 Scale = tc.Scale * vec3(cc.Radius * 2.0f);
+
+			mat4 transform = translate(vec3(translation)) * scale(Scale);
+			Renderer2D::DrawCircle(transform, vec4(0.0f, 1.0f, 0.0f, 1.0f), 0.05f);
+		}
+
+		auto BoxView = m_ActiveScene->GetAllEntitiesWith<TransformComponent, Box2DComponent>();
+		for (auto entity : BoxView) {
+			auto [tc, bc2d] = BoxView.get<TransformComponent, Box2DComponent>(entity);
+			
+			vec3 translation = tc.Translation + vec3(bc2d.Offset, 0.001f);
+			vec3 Scale = tc.Scale * vec3(bc2d.Size * 2.0f);
+
+			mat4 transform = translate(vec3(translation)) * toMat4(quat(tc.Rotation)) * scale(Scale) ;
+			Renderer2D::Draw(NB_RECT, transform, vec4(0.0f, 1.0f, 0.0f, 1.0f));
+		}
+
+		Renderer2D::EndScene();
 	}
 
 	void EditorLayer::UI_Toolbar() {

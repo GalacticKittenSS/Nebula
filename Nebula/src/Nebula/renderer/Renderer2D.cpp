@@ -362,31 +362,41 @@ namespace Nebula {
 	}
 
 	void Renderer2D::Draw(const uint32_t type, const mat4& transform, const vec4& colour, Ref<Texture2D> texture, float tiling) {
-		if (type == NB_RECT) {
-			vec3 position, size, rotation;
-			mat4 trans = transform;
-			DecomposeTransform(trans, position, rotation, size);
+		switch (type)
+		{
+			case NB_RECT: {
+				vec3 p0 = transform * vec4(-0.5f, -0.5f, 0.0f, 1.0f);
+				vec3 p1 = transform * vec4(0.5f, -0.5f, 0.0f, 1.0f);
+				vec3 p2 = transform * vec4(0.5f, 0.5f, 0.0f, 1.0f);
+				vec3 p3 = transform * vec4(-0.5f, 0.5f, 0.0f, 1.0f);
 
-			vec3 p0 = vec3(position.x - size.x * 0.5f, position.y - size.y * 0.5f, position.z);
-			vec3 p1 = vec3(position.x + size.x * 0.5f, position.y - size.y * 0.5f, position.z);
-			vec3 p2 = vec3(position.x + size.x * 0.5f, position.y + size.y * 0.5f, position.z);
-			vec3 p3 = vec3(position.x - size.x * 0.5f, position.y + size.y * 0.5f, position.z);
+				DrawLine(p0, p1, colour);
+				DrawLine(p1, p2, colour);
+				DrawLine(p2, p3, colour);
+				DrawLine(p3, p0, colour);
 
-			DrawLine(p0, p1, colour, -1);
-			DrawLine(p1, p2, colour, -1);
-			DrawLine(p2, p3, colour, -1);
-			DrawLine(p3, p0, colour, -1);
+				return;
+			}
 
-			return;
+			case NB_LINE: {
+				NB_WARN("Render2D::Draw(type = NB_LINE) is depreciated, please use Render2D::DrawLine(const vec3&, const vec3&, const vec4&, int)");
+
+				vec4 vertexPos[] = { { -0.5f, 0.0f, 0.0f, 1.0f }, { 0.5f, 0.0f, 0.0f, 1.0f } };
+				DrawLine(vertexPos[0] * transform[3], vertexPos[1] * transform[3], colour);
+
+				return;
+			}
+			
+			case NB_CIRCLE: {
+				DrawCircle(transform, colour);
+				return;
+			}
+
 		}
-		
-		uint32_t size = type;
-		if (type == NB_CIRCLE)
-			size = 4;
 
-		vec4* vertexPos = new vec4[size];
+		vec4* vertexPos = new vec4[type];
 
-		if (type == NB_QUAD || type == NB_CIRCLE) {
+		if (type == NB_QUAD) {
 			vertexPos[0] = { -0.5f, -0.5f, 0.0f, 1.0f };
 			vertexPos[1] = { 0.5f, -0.5f, 0.0f, 1.0f };
 			vertexPos[2] = { 0.5f,  0.5f, 0.0f, 1.0f };
@@ -397,18 +407,19 @@ namespace Nebula {
 			vertexPos[1] = {  0.5f, -0.5f, 0.0f, 1.0f };
 			vertexPos[2] = {  0.5f,  0.5f, 0.0f, 1.0f };
 		}
-		else if (type == NB_LINE) {
-			vertexPos[0] = { -0.5f, 0.0f, 0.0f, 1.0f };
-			vertexPos[1] = {  0.5f, 0.0f, 0.0f, 1.0f };
-		}
 
-		if (type == NB_CIRCLE)
-			Draw(type, vertexPos, transform, colour, -1);
-		else if (type == NB_LINE) {
-			NB_WARN("Render2D::Draw(type = NB_LINE) is depreciated, please use Render2D::DrawLine(const vec3&, const vec3&, const vec4&, int)");
-			DrawLine(vertexPos[0] * transform[3], vertexPos[1] * transform[3], colour);
-		} else
-			Draw(type, vertexPos, transform, colour, texture, tiling);
+		Draw(type, vertexPos, transform, colour, texture, tiling);
+	}
+
+	void Renderer2D::DrawCircle(const mat4& transform, const vec4& colour, const float thickness, const float fade, int EntityID) {
+		vec4 vertexPos[4] = {
+			{ -0.5f, -0.5f, 0.0f, 1.0f },
+			{  0.5f, -0.5f, 0.0f, 1.0f },
+			{  0.5f,  0.5f, 0.0f, 1.0f },
+			{ -0.5f,  0.5f, 0.0f, 1.0f },
+		};
+
+		Draw(NB_CIRCLE, vertexPos, transform, colour, thickness, fade, EntityID);
 	}
 
 	void Renderer2D::DrawLine(const vec3& p0, const vec3& p1, const vec4& colour, int entityID) {

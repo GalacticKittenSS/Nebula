@@ -18,6 +18,7 @@ namespace Nebula {
 		void Render() override;
 	
 		void ImGuiRender() override;
+		void OnOverlayRender();
 
 		void OnEvent(Nebula::Event& e) override;
 	private:
@@ -40,6 +41,7 @@ namespace Nebula {
 	private:
 		bool m_GameViewFocus = false, m_GameViewHovered = false;
 		bool m_UsingGizmo = false;
+		bool m_ShowColliders = true;
 		
 		vec2 m_GameViewSize = { 1280.0f, 720.0f };
 		vec2 m_ViewPortBounds[2];
