@@ -6,22 +6,18 @@
 #include <cstdarg>
 #include <cstdio>
 
-
 namespace Nebula {
 	template <typename T>
-	struct cast
-	{
+	struct cast {
 		typedef T value_type;
 	};
 
 	template <>
-	struct cast<float>
-	{
+	struct cast<float> {
 		typedef double value_type;
 	};
 
-	inline std::string format(const char* msg, ...)
-	{
+	inline std::string format(const char* msg, ...) {
 		std::size_t const STRING_BUFFER(4096);
 		char text[STRING_BUFFER];
 		va_list list;

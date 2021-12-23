@@ -144,6 +144,24 @@ namespace Nebula {
 			out << YAML::EndMap;
 		}
 
+		if (entity.HasComponent<ParentChildComponent>()) {
+			out << YAML::Key << "ParentChildComponent";
+			out << YAML::BeginMap;
+
+			auto& component = entity.GetComponent<ParentChildComponent>();
+
+			YAML::Node children;
+			for (uint32_t i = 0; i < component.ChildrenCount; i++)
+				children.push_back((uint64_t)component.ChildrenIDs[i]);
+			children.SetStyle(YAML::EmitterStyle::Flow);
+			
+			out << YAML::Key << "PrimaryParent" << YAML::Value << component.PrimaryParent;
+			out << YAML::Key << "Children" << YAML::Value << children;
+			out << YAML::Key << "ChildCount" << YAML::Value << component.ChildrenCount;
+
+			out << YAML::EndMap;
+		}
+
 		if (entity.HasComponent<TransformComponent>()) {
 			out << YAML::Key << "TransformComponent";
 			out << YAML::BeginMap;
@@ -311,6 +329,17 @@ namespace Nebula {
 					tc.Translation = transformComponent["Translation"].as<vec3>();
 					tc.Rotation = transformComponent["Rotation"].as<vec3>();
 					tc.Scale = transformComponent["Scale"].as<vec3>();
+				}
+
+				auto parentComponent = entity["ParentChildComponent"];
+				if (parentComponent) {
+					auto& pcc = deserializedEntity.GetComponent<ParentChildComponent>();
+					pcc.PrimaryParent = parentComponent["PrimaryParent"].as<uint64_t>();
+
+					pcc.ChildrenCount = parentComponent["ChildCount"].as<uint32_t>();
+					auto children = parentComponent["Children"];
+					for (uint32_t i = 0; i < pcc.ChildrenCount; i++)
+						pcc.ChildrenIDs[i] = children[i].as<uint64_t>();
 				}
 
 				auto cameraComponent = entity["CameraComponent"];

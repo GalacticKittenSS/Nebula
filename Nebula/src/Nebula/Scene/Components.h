@@ -25,18 +25,58 @@ namespace Nebula {
 		TagComponent(const std::string& tag) : Tag(tag) { }
 	};
 
+	struct ParentChildComponent {
+		UUID PrimaryParent = 0;
+		
+		UUID* ChildrenIDs = new UUID[32]; //Max 32 Children (TEMP), TODO: No Max
+		uint32_t ChildrenCount = 0;
+		
+		ParentChildComponent() = default;
+		ParentChildComponent(const ParentChildComponent&) = default;
+
+		UUID operator[](int index) { return ChildrenIDs[index]; }
+
+		void AddChild(UUID id) {
+			for (uint32_t i = 0; i < ChildrenCount; i++)
+				if (id == ChildrenIDs[i]) return;
+
+			ChildrenIDs[ChildrenCount] = id;
+			ChildrenCount++;
+		}
+
+		void RemoveChild(UUID id) {
+			int index = -1;
+			UUID* newChildren = new UUID[32];
+			
+			uint32_t nIndex = 0;
+			for (uint32_t i = 0; i < ChildrenCount; i++) {
+				if ((uint64_t)ChildrenIDs[i] != (uint64_t)id) {
+					newChildren[nIndex] = ChildrenIDs[i];
+					nIndex++;
+				}
+			}
+			
+			delete[] ChildrenIDs;
+			ChildrenIDs = newChildren;
+			ChildrenCount--;
+		}
+	};
+
 	struct TransformComponent {
 		vec3 Translation =	{ 0.0f, 0.0f, 0.0f };
 		vec3 Rotation =		{ 0.0f, 0.0f, 0.0f };
 		vec3 Scale =		{ 1.0f, 1.0f, 1.0f };
 
+		mat4 GlobalMatrix = CalculateMatrix();
+		bool ShouldRecalculateGlobalMatrix = true;
+		
 		TransformComponent() = default;
 		TransformComponent(const TransformComponent&) = default;
 		TransformComponent(const vec3& translation) : Translation(translation) { }
 
-		operator mat4 () { return CalculateMatrix(); }
+		inline operator mat4() { return CalculateMatrix(); }
 
-		mat4 CalculateMatrix() {
+		inline mat4 CalculateMatrix() {
 			return translate(Translation) * toMat4(quat(Rotation)) * scale(Scale);
 		}
 	};
@@ -125,4 +165,14 @@ namespace Nebula {
 		CircleColliderComponent() = default;
 		CircleColliderComponent(const CircleColliderComponent&) = default;
 	};
+
+	template<typename... Component>
+	struct ComponentGroup
+	{
+
+	};
+	using AllComponents =
+		ComponentGroup<ParentChildComponent, TransformComponent, SpriteRendererComponent, CircleRendererComponent,
+		CameraComponent, NativeScriptComponent,
+		Rigidbody2DComponent, Box2DComponent, CircleColliderComponent>; 
 }

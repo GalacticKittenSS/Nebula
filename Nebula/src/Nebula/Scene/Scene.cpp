@@ -18,35 +18,48 @@ namespace Nebula {
 	static b2BodyType Rigibody2DToBox2D(Rigidbody2DComponent::BodyType bodyType) {
 		switch (bodyType)
 		{
-			case Rigidbody2DComponent::BodyType::Static:	return b2BodyType::b2_staticBody;
-			case Rigidbody2DComponent::BodyType::Dynamic:	return b2BodyType::b2_dynamicBody;
-			case Rigidbody2DComponent::BodyType::Kinematic: return b2BodyType::b2_kinematicBody;
+		case Rigidbody2DComponent::BodyType::Static:	return b2BodyType::b2_staticBody;
+		case Rigidbody2DComponent::BodyType::Dynamic:	return b2BodyType::b2_dynamicBody;
+		case Rigidbody2DComponent::BodyType::Kinematic: return b2BodyType::b2_kinematicBody;
 		}
-		
+
 		NB_ASSERT(false, "Unknown Rigidbody Type!");
 		return b2BodyType::b2_staticBody;
 	}
 
-	template<typename T>
+	template<typename... Component>
 	static void CopyComponent(entt::registry& dst, entt::registry& src, const std::unordered_map<UUID, entt::entity>& map) {
-		auto view = src.view<T>();
+		([&]()
+			{
+				auto view = src.view<Component>();
+				for (auto srcEntity : view)
+				{
+					entt::entity dstEntity = map.at(src.get<IDComponent>(srcEntity).ID);
 
-		for (auto e : view) {
-			UUID uuid = src.get<IDComponent>(e).ID;
-			
-			NB_ASSERT(map.find(uuid) != map.end(), "");
-			entt::entity dstEnttID = map.at(uuid);
-
-			auto& Component = src.get<T>(e);
-			dst.emplace_or_replace<T>(dstEnttID, Component);
-
-		}
+					auto& srcComponent = src.get<Component>(srcEntity);
+					dst.emplace_or_replace<Component>(dstEntity, srcComponent);
+				}
+			}(), ...);
 	}
 
-	template<typename T>
+	template<typename... Component>
+	static void CopyComponent(ComponentGroup<Component...>, entt::registry& dst, entt::registry& src, const std::unordered_map<UUID, entt::entity>& enttMap) {
+		CopyComponent<Component...>(dst, src, enttMap);
+	}
+
+	template<typename... Component>
 	static void CopyComponent(Entity dst, Entity src) {
-		if (src.HasComponent<T>())
-			dst.AddOrReplaceComponent<T>(src.GetComponent<T>());
+		([&]()
+		{
+			if (src.HasComponent<Component>())
+				dst.AddOrReplaceComponent<Component>(src.GetComponent<Component>());
+		}(), ...);
+	}
+
+	template<typename... Component>
+	static void CopyComponent(ComponentGroup<Component...>, Entity dst, Entity src)
+	{
+		CopyComponent<Component...>(dst, src);
 	}
 
 	Ref<Scene> Scene::Copy(Ref<Scene> other) {
@@ -66,25 +79,13 @@ namespace Nebula {
 			enttMap[uuid] = (entt::entity)newEnt;
 		}
 
-		CopyComponent<TransformComponent>(dstSceneReg, srcSceneReg, enttMap);
-		CopyComponent<SpriteRendererComponent>(dstSceneReg, srcSceneReg, enttMap);
-		CopyComponent<CircleRendererComponent>(dstSceneReg, srcSceneReg, enttMap);
-		CopyComponent<CameraComponent>(dstSceneReg, srcSceneReg, enttMap);
-		CopyComponent<NativeScriptComponent>(dstSceneReg, srcSceneReg, enttMap);
-		CopyComponent<Rigidbody2DComponent>(dstSceneReg, srcSceneReg, enttMap);
-		CopyComponent<Box2DComponent>(dstSceneReg, srcSceneReg, enttMap);
-		CopyComponent<CircleColliderComponent>(dstSceneReg, srcSceneReg, enttMap);
-
+		CopyComponent(AllComponents{}, dstSceneReg, srcSceneReg, enttMap);
 		return newScene;
 	}
 
-	Scene::Scene() {
+	Scene::Scene() { }
 
-	}
-
-	Scene::~Scene() {
-
-	}
+	Scene::~Scene() { }
 
 	Entity Scene::CreateEntity(const std::string& name) {
 		return CreateEntity(UUID(), name);
@@ -95,6 +96,7 @@ namespace Nebula {
 		auto& idc = entity.AddComponent<IDComponent>();
 		idc.ID = uuid;
 		entity.AddComponent<TransformComponent>();
+		entity.AddComponent<ParentChildComponent>();
 		auto& tag = entity.AddComponent<TagComponent>();
 		tag.Tag = name.empty() ? "Entity" : name;
 		return entity;
@@ -108,19 +110,12 @@ namespace Nebula {
 		std::string name = entity.GetName();
 		Entity newEnt = CreateEntity(name);
 
-		CopyComponent<TransformComponent>(newEnt, entity);
-		CopyComponent<SpriteRendererComponent>(newEnt, entity);
-		CopyComponent<CircleRendererComponent>(newEnt, entity);
-		CopyComponent<CameraComponent>(newEnt, entity);
-		CopyComponent<NativeScriptComponent>(newEnt, entity);
-		CopyComponent<Rigidbody2DComponent>(newEnt, entity);
-		CopyComponent<Box2DComponent>(newEnt, entity);
-		CopyComponent<CircleColliderComponent>(newEnt, entity);
+		CopyComponent(AllComponents{}, newEnt, entity);
 	}
 
 	void Scene::OnRuntimeStart() {
 		m_PhysicsWorld = new b2World({ 0.0f, -9.8f });
-		
+
 		auto view = m_Registry.view<Rigidbody2DComponent>();
 		for (auto e : view) {
 			Entity entity = { e, this };
@@ -189,15 +184,15 @@ namespace Nebula {
 
 	void Scene::UpdateRuntime() {
 		m_Registry.view<NativeScriptComponent>().each([=](auto entity, NativeScriptComponent& nsc)
-		{
-			if (!nsc.Instance) {
-				nsc.Instance = nsc.InstantiateScript();
-				nsc.Instance->m_Entity = Entity{ entity, this };
-				nsc.Instance->Start();
-			}
+			{
+				if (!nsc.Instance) {
+					nsc.Instance = nsc.InstantiateScript();
+					nsc.Instance->m_Entity = Entity{ entity, this };
+					nsc.Instance->Start();
+				}
 
-			nsc.Instance->Update();
-		});
+				nsc.Instance->Update();
+			});
 
 		const int32_t velocityIterations = 6;
 		const int32_t positionIterations = 2;
@@ -218,7 +213,7 @@ namespace Nebula {
 	}
 
 	void Scene::UpdateEditor(EditorCamera& camera) {
-		Renderer2D::BeginScene(camera); 
+		Renderer2D::BeginScene(camera);
 
 		auto group = m_Registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
 		for (auto entity : group) {
@@ -253,12 +248,16 @@ namespace Nebula {
 
 			auto group = m_Registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
 			for (auto entity : group) {
-				Renderer2D::Draw(NB_QUAD, Entity{ entity, this });
+				Entity ent{ entity, this };
+				ent.GetComponent<TransformComponent>().ShouldRecalculateGlobalMatrix = true;
+				Renderer2D::Draw(NB_QUAD, ent);
 			}
 
 			auto CircleGroup = m_Registry.view<TransformComponent, CircleRendererComponent>();
 			for (auto entity : CircleGroup) {
-				Renderer2D::Draw(NB_CIRCLE, Entity{ entity, this });
+				Entity ent{ entity, this };
+				ent.GetComponent<TransformComponent>().ShouldRecalculateGlobalMatrix = true;
+				Renderer2D::Draw(NB_CIRCLE, ent);
 			}
 
 			Renderer2D::EndScene();
@@ -272,7 +271,7 @@ namespace Nebula {
 		auto view = m_Registry.view<CameraComponent>();
 		for (auto entity : view) {
 			auto& cameraComponent = view.get<CameraComponent>(entity);
-			
+
 			if (!cameraComponent.FixedAspectRatio) {
 				cameraComponent.Camera.SetViewPortSize(width, height);
 			}
@@ -301,7 +300,7 @@ namespace Nebula {
 	void Scene::OnComponentAdded<NativeScriptComponent>(Entity entity, NativeScriptComponent& component) { }
 
 	template<>
-	void Scene::OnComponentAdded<CameraComponent>(Entity entity, CameraComponent& component) { 
+	void Scene::OnComponentAdded<CameraComponent>(Entity entity, CameraComponent& component) {
 		if (m_ViewportWidth > 0 && m_ViewportHeight > 0)
 			component.Camera.SetViewPortSize(m_ViewportWidth, m_ViewportHeight);
 	}
@@ -314,7 +313,10 @@ namespace Nebula {
 
 	template<>
 	void Scene::OnComponentAdded<CircleColliderComponent>(Entity entity, CircleColliderComponent& component) { }
-	
+
 	template<>
 	void Scene::OnComponentAdded<IDComponent>(Entity entity, IDComponent& component) { }
+
+	template<>
+	void Scene::OnComponentAdded<ParentChildComponent>(Entity entity, ParentChildComponent& component) { }
 }

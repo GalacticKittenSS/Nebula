@@ -124,6 +124,7 @@ namespace Nebula {
 
 		Ref<IndexBuffer> indexBuffer = IndexBuffer::Create(indices, maxIndices);
 		vArray->SetIndexBuffer(indexBuffer);
+		delete[] indices;
 
 		if (Type == NB_QUAD) {
 			s_Data.QuadVertexArray = vArray;
@@ -142,11 +143,11 @@ namespace Nebula {
 			s_Data.LineVertexBuffer = vBuffer;
 			s_Data.LineVBBase = new LineVertex[s_Data.MaxVertices];
 		}
-
-		delete[] indices;
 	}
 
 	static void ResetBatch() {
+		NB_PROFILE_FUNCTION();
+
 		s_Data.QuadIndexCount = 0;
 		s_Data.QuadVBPtr = s_Data.QuadVBBase;
 
@@ -221,6 +222,8 @@ namespace Nebula {
 
 		delete[] s_Data.QuadVBBase;
 		delete[] s_Data.TriVBBase;
+		delete[] s_Data.CircleVBBase;
+		delete[] s_Data.LineVBBase;
 	}
 	
 	void Renderer2D::BeginScene(const Camera& camera, const mat4& transform) {
@@ -295,11 +298,42 @@ namespace Nebula {
 		s_Data.CircleIndexCount += 6;
 	}
 
+	mat4 CalculateTransform(Entity& entity) {
+		if (!entity.GetComponent<TransformComponent>().ShouldRecalculateGlobalMatrix)
+			return entity.GetComponent<TransformComponent>().GlobalMatrix;
+
+		vec3 pos = entity.GetComponent<TransformComponent>().Translation;
+		vec3 rot = entity.GetComponent<TransformComponent>().Rotation;
+		vec3 size = entity.GetComponent<TransformComponent>().Scale;
+		
+		UUID parentID = entity.GetComponent<ParentChildComponent>().PrimaryParent;
+		
+		if (parentID) {
+			Entity parent{ parentID, entity };
+
+			vec3 pSize, pRot, pPos;
+			DecomposeTransform(CalculateTransform(parent), pPos, pRot, pSize);
+
+			pos *= pSize;
+			
+			pos = vec4(pos, 1.0f) / toMat4(quat(pRot));
+			pos  += pPos;
+			rot  += pRot;
+			size *= pSize;
+		}
+
+		mat4 matrix = translate(pos) * toMat4(quat(rot)) * scale(size);
+		entity.GetComponent<TransformComponent>().GlobalMatrix = matrix;
+		entity.GetComponent<TransformComponent>().ShouldRecalculateGlobalMatrix = false;
+		
+		return matrix;
+	}
+
 	void Renderer2D::Draw(const uint32_t type, Entity& entity) {
 		NB_PROFILE_FUNCTION();
 
 		if (type == NB_RECT) {
-			mat4 transform = entity.GetComponent<TransformComponent>().CalculateMatrix();
+			mat4 transform = entity.GetComponent<TransformComponent>();
 			vec4 colour = { 1, 1, 1, 1 };
 
 			if (entity.HasComponent<SpriteRendererComponent>())
@@ -326,22 +360,32 @@ namespace Nebula {
 
 		vec4* vertexPos = new vec4[size];
 
-		if (type == NB_QUAD || type == NB_CIRCLE) {
-			vertexPos[0] = { -0.5f, -0.5f, 0.0f, 1.0f };
-			vertexPos[1] = {  0.5f, -0.5f, 0.0f, 1.0f };
-			vertexPos[2] = {  0.5f,  0.5f, 0.0f, 1.0f };
-			vertexPos[3] = { -0.5f,  0.5f, 0.0f, 1.0f };
-		} else if (type == NB_TRI) {
-			vertexPos[0] = { -0.5f, -0.5f, 0.0f, 1.0f };
-			vertexPos[1] = {  0.5f, -0.5f, 0.0f, 1.0f };
-			vertexPos[2] = {  0.5f,  0.5f, 0.0f, 1.0f };
-		} else if (type == NB_LINE) {
-			vertexPos[0] = { -0.5f, 0.0f, 0.0f, 1.0f };
-			vertexPos[1] = {  0.5f, 0.0f, 0.0f, 1.0f };
+		switch (type) {
+			case NB_QUAD: 
+			case NB_CIRCLE: {
+				vertexPos[0] = { -0.5f, -0.5f, 0.0f, 1.0f };
+				vertexPos[1] = {  0.5f, -0.5f, 0.0f, 1.0f };
+				vertexPos[2] = {  0.5f,  0.5f, 0.0f, 1.0f };
+				vertexPos[3] = { -0.5f,  0.5f, 0.0f, 1.0f };
+
+				break;
+			}
+			case NB_TRI: {
+				vertexPos[0] = { -0.5f, -0.5f, 0.0f, 1.0f };
+				vertexPos[1] = {  0.5f, -0.5f, 0.0f, 1.0f };
+				vertexPos[2] = {  0.5f,  0.5f, 0.0f, 1.0f };
+				break;
+			}
+			case NB_LINE: {
+				vertexPos[0] = { -0.5f, 0.0f, 0.0f, 1.0f };
+				vertexPos[1] = {  0.5f, 0.0f, 0.0f, 1.0f };
+				break;
+			}
 		}
 
+		mat4 transform = CalculateTransform(entity);
+		
 		if (type == NB_CIRCLE) {
-			mat4 transform = entity.GetComponent<TransformComponent>().CalculateMatrix();
 			auto& circleRenderer = entity.GetComponent<CircleRendererComponent>();
 
 			Draw(type, vertexPos, transform, circleRenderer.Colour, circleRenderer.Thickness, circleRenderer.Fade, entity);
@@ -349,12 +393,10 @@ namespace Nebula {
 
 		else if (type == NB_LINE) {
 			NB_WARN("Render2D::Draw(type = NB_LINE) is depreciated, Use Render2D::DrawLine(const vec3&, const vec3&, const vec4&, int) instead");
-			mat4 transform = entity.GetComponent<TransformComponent>().CalculateMatrix();
 			//TODO: Line Renderer Component
 			
 			DrawLine(vertexPos[0] * transform[3], vertexPos[1] * transform[3], { 1.0f, 1.0f, 1.0f, 1.0f });
 		} else {
-			mat4 transform = entity.GetComponent<TransformComponent>().CalculateMatrix();
 			auto& spriteRenderer = entity.GetComponent<SpriteRendererComponent>();
 
 			Draw(type, vertexPos, transform, spriteRenderer.Colour, spriteRenderer.Texture, spriteRenderer.Tiling, entity);
@@ -396,16 +438,21 @@ namespace Nebula {
 
 		vec4* vertexPos = new vec4[type];
 
-		if (type == NB_QUAD) {
-			vertexPos[0] = { -0.5f, -0.5f, 0.0f, 1.0f };
-			vertexPos[1] = { 0.5f, -0.5f, 0.0f, 1.0f };
-			vertexPos[2] = { 0.5f,  0.5f, 0.0f, 1.0f };
-			vertexPos[3] = { -0.5f,  0.5f, 0.0f, 1.0f };
-		}
-		else if (type == NB_TRI) {
-			vertexPos[0] = { -0.5f, -0.5f, 0.0f, 1.0f };
-			vertexPos[1] = {  0.5f, -0.5f, 0.0f, 1.0f };
-			vertexPos[2] = {  0.5f,  0.5f, 0.0f, 1.0f };
+		switch (type) {
+			case NB_QUAD: {
+				vertexPos[0] = { -0.5f, -0.5f, 0.0f, 1.0f };
+				vertexPos[1] = { 0.5f, -0.5f, 0.0f, 1.0f };
+				vertexPos[2] = { 0.5f,  0.5f, 0.0f, 1.0f };
+				vertexPos[3] = { -0.5f,  0.5f, 0.0f, 1.0f };
+
+				break;
+			}
+			case NB_TRI: {
+				vertexPos[0] = { -0.5f, -0.5f, 0.0f, 1.0f };
+				vertexPos[1] = { 0.5f, -0.5f, 0.0f, 1.0f };
+				vertexPos[2] = { 0.5f,  0.5f, 0.0f, 1.0f };
+				break;
+			}
 		}
 
 		Draw(type, vertexPos, transform, colour, texture, tiling);
@@ -491,11 +538,13 @@ namespace Nebula {
 	void Renderer2D::EndScene() {
 		NB_PROFILE_FUNCTION();
 		
-		s_Data.TextureShader->Bind();
+		if (s_Data.QuadIndexCount || s_Data.TriIndexCount) {
+			s_Data.TextureShader->Bind();
 		
-		for (uint32_t i = 0; i < s_Data.TextureSlotIndex; i++)
-			s_Data.TextureSlots[i]->Bind(i);
-		
+			for (uint32_t i = 0; i < s_Data.TextureSlotIndex; i++)
+				s_Data.TextureSlots[i]->Bind(i);
+		}
+
 		if (s_Data.TriIndexCount) {
 			uint32_t dataSize = (uint32_t)((uint8_t*)s_Data.TriVBPtr - (uint8_t*)s_Data.TriVBBase);
 			s_Data.TriangleVertexBuffer->SetData(s_Data.TriVBBase, dataSize);

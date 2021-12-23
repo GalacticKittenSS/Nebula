@@ -5,10 +5,6 @@
 
 #include <filesystem>
 
-#ifdef _MSVC_LANG
-	#define _CRT_SECURE_NO_WARNINGS
-#endif
-
 namespace Nebula {
 	extern const std::filesystem::path s_AssetPath;
 
@@ -27,7 +23,9 @@ namespace Nebula {
 		if (m_Context) {
 			m_Context->m_Registry.each([&](auto entityID) {
 				Entity entity{ entityID, m_Context.get() };
-				DrawEntityNode(entity);
+				UUID parent = entity.GetComponent<ParentChildComponent>().PrimaryParent;
+				if (!parent)
+					DrawEntityNode(entity);
 			});
 
 			if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered())
@@ -39,7 +37,6 @@ namespace Nebula {
 
 				ImGui::EndPopup();
 			}
-
 		}
 		
 		ImGui::End();
@@ -61,6 +58,55 @@ namespace Nebula {
 
 		bool opened = ImGui::TreeNodeEx((void*)(uint32_t)entity, flags, tag.c_str());
 
+		if (ImGui::BeginDragDropSource()) {
+			UUID entityID = entity.GetUUID();
+			ImGui::SetDragDropPayload("ENTITY", &entityID, sizeof(uint64_t), ImGuiCond_Once);
+			ImGui::EndDragDropSource();
+		}
+
+		if (ImGui::BeginDragDropTarget()) {
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENTITY")) {
+				const UUID entityID = *(const UUID*)payload->Data;
+				
+				bool isSafeToDrop = true;
+				if (entityID == entity.GetUUID())
+					isSafeToDrop = false;
+
+				auto& parent = entity.GetComponent<ParentChildComponent>();
+				
+				Entity dropEnt{ entityID, m_Context.get() };
+				auto& child = dropEnt.GetComponent<ParentChildComponent>();
+				
+
+				//Check if Dropped Entity is being dropped to parent of itself
+				if (child.PrimaryParent == entity.GetUUID())
+					isSafeToDrop = false;
+
+				//Check if Dropped Entity is being dropped to child of itself
+				for (uint32_t i = 0; i < child.ChildrenCount; i++) {
+					if (child[i] == entity.GetUUID())
+						isSafeToDrop = false; break;
+				}
+
+
+				//Go Ahead if safe
+				if (isSafeToDrop) {
+					UUID parentID = child.PrimaryParent;
+					if (parentID) {
+						Entity parent{ parentID, m_Context.get() };
+						parent.GetComponent<ParentChildComponent>().RemoveChild(entityID);
+					}
+					
+					parent.AddChild(entityID);
+					
+					child.PrimaryParent = entity.GetUUID();
+
+					dropEnt.GetComponent<TransformComponent>().ShouldRecalculateGlobalMatrix = true;
+				}
+			}
+			ImGui::EndDragDropTarget();
+		}
+
 		if (ImGui::IsItemClicked())
 			m_SelectionContext = entity;
 		
@@ -73,7 +119,11 @@ namespace Nebula {
 		}
 
 		if (opened) {
-			//Draw Children
+			if (entity.HasComponent<ParentChildComponent>()) {
+				auto& comp = entity.GetComponent<ParentChildComponent>();
+				for (uint32_t i = 0; i < comp.ChildrenCount; i++)
+					DrawEntityNode(Entity{ comp[i], m_Context.get() });
+			}
 			ImGui::TreePop();
 		}
 
@@ -81,7 +131,6 @@ namespace Nebula {
 			m_Context->DestroyEntity(entity);
 			if (m_SelectionContext == entity)
 				m_SelectionContext = {};
-
 		}
 	}
 
@@ -211,7 +260,7 @@ namespace Nebula {
 		ImGui::SameLine();
 		ImGui::PushItemWidth(-1);
 
-		if (ImGui::Button("Add Component"))
+		if (ImGui::Button("Add +"))
 			ImGui::OpenPopup("Add Component");
 
 		if (ImGui::BeginPopup("Add Component")) {
@@ -356,8 +405,8 @@ namespace Nebula {
 
 		DrawComponent<CircleRendererComponent>("Circle Renderer", entity, [](auto& component) {
 			ImGui::ColorEdit4("Colour", value_ptr(component.Colour));
-			ImGui::DragFloat("Thickness", &component.Thickness, 0.25f, 0.0f, 1.0f);
-			ImGui::DragFloat("Fade", &component.Fade, 0.00025f, 0.0f, 1.0f);
+			ImGui::DragFloat("Thickness", &component.Thickness, 0.01f, 0.01f, 1.0f);
+			ImGui::DragFloat("Fade", &component.Fade, 0.0025f, 0.01f, 1.0f);
 		}, true);
 
 		DrawComponent<Rigidbody2DComponent>("Rigidbody 2D", entity, [](auto& component) {
@@ -399,6 +448,6 @@ namespace Nebula {
 			ImGui::DragFloat("Friction", &component.Friction, 0.01f, 0.0f, 1.0f);
 			ImGui::DragFloat("Restitution", &component.Restitution, 0.01f, 0.0f, 1.0f);
 			ImGui::DragFloat("Restitution Threshold", &component.RestitutionThreshold, 0.01f, 0.0f);
-			}, true);
+		}, true);
 	}
 }

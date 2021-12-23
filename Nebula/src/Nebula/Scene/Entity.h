@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Scene.h"
-
 #include "Components.h"
 
 namespace Nebula {
@@ -9,6 +8,16 @@ namespace Nebula {
 	public:
 		Entity() = default;
 		Entity(entt::entity handle, Scene* scene) : m_EntityHandle(handle), m_Scene(scene) { }
+		Entity(UUID uuid, Scene* scene) : m_Scene(scene) {
+			auto& view = m_Scene->m_Registry.view<IDComponent>();
+			for (auto& ent : view) {
+				Entity entity{ ent, m_Scene };
+				if (entity.GetUUID() == uuid) {
+					m_EntityHandle = entity;
+					break;
+				}
+			}
+		}
 		Entity(const Entity& other) = default;
 
 		template<typename T, typename... Args>
@@ -48,7 +57,9 @@ namespace Nebula {
 
 		operator bool() const { return m_EntityHandle != entt::null; }
 		operator uint32_t() const { return (uint32_t)m_EntityHandle; }
+		operator int() const { return (int)m_EntityHandle; }
 		operator entt::entity() const { return m_EntityHandle; }
+		operator Scene*() const { return m_Scene; }
 
 		UUID GetUUID() { return GetComponent<IDComponent>().ID; }
 		const std::string& GetName() { return GetComponent<TagComponent>().Tag; }

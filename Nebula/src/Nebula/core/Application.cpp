@@ -35,7 +35,7 @@ namespace Nebula {
 		NB_PROFILE_FUNCTION();
 
 		while (m_Running) {
-			NB_PROFILE_SCOPE("Frame - Application::run()")
+			NB_PROFILE_SCOPE("Frame - Application::run()");
 			Time::Update();
 
 			float time = (float)glfwGetTime();

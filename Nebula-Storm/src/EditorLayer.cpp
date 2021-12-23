@@ -66,7 +66,7 @@ namespace Nebula {
 		RenderCommand::SetClearColour({ 0.1f, 0.1f, 0.1f, 1.0f });
 		RenderCommand::Clear();
 
-		RenderCommand::SetLineWidth(5.0f);
+		RenderCommand::SetLineWidth(1.0f);
 
 		frameBuffer->ClearAttachment(1, -1);
 
@@ -223,7 +223,15 @@ namespace Nebula {
 				float windowHeight = (float)ImGui::GetWindowHeight();
 				ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowWidth, windowHeight);
 
-				const mat4& cameraProj = m_EditorCam.GetProjection();
+				// GET PARENT GLOBAL TRANSFORM TO CORRECTLY PLACE GIZMO
+				UUID pID = selectedEntity.GetComponent<ParentChildComponent>().PrimaryParent;
+				mat4 parentTransform = mat4(1.0f);
+				if (pID) {
+					Entity parent{ pID, m_ActiveScene.get() };
+					parentTransform = parent.GetComponent<TransformComponent>().GlobalMatrix;
+				}
+
+				const mat4& cameraProj = m_EditorCam.GetProjection() * parentTransform;
 				mat4 cameraView = m_EditorCam.GetViewMatrix();
 
 				auto& tc = selectedEntity.GetComponent<TransformComponent>();
@@ -239,7 +247,6 @@ namespace Nebula {
 				ImGuizmo::Manipulate(value_ptr(cameraView), value_ptr(cameraProj), 
 					(ImGuizmo::OPERATION)m_GizmoType, ImGuizmo::LOCAL, value_ptr(transform), nullptr, snap ? snapValues : nullptr);
 
-
 				if (ImGuizmo::IsUsing()) {
 					vec3 translation, rotation, scale;
 					DecomposeTransform(transform, translation, rotation, scale);
@@ -248,6 +255,14 @@ namespace Nebula {
 					tc.Translation = translation;
 					tc.Rotation += deltaRotation;
 					tc.Scale = scale;
+
+					selectedEntity.GetComponent<TransformComponent>().ShouldRecalculateGlobalMatrix = true;
+
+					auto& pcc = selectedEntity.GetComponent<ParentChildComponent>();
+					for (uint32_t i = 0; i < pcc.ChildrenCount; i++) {
+						Entity child{ pcc.ChildrenIDs[i], m_ActiveScene.get() };
+						child.GetComponent<TransformComponent>().ShouldRecalculateGlobalMatrix = true;
+					}
 				}
 			}
 		}
@@ -266,7 +281,8 @@ namespace Nebula {
 
 		if (m_SceneState == SceneState::Play) {
 			Entity cam = m_ActiveScene->GetPrimaryCamera();
-			Renderer2D::BeginScene(cam.GetComponent<CameraComponent>().Camera, cam.GetComponent<TransformComponent>().CalculateMatrix());
+			if (cam)
+				Renderer2D::BeginScene(cam.GetComponent<CameraComponent>().Camera, cam.GetComponent<TransformComponent>().CalculateMatrix());
 		} else
 			Renderer2D::BeginScene(m_EditorCam);
 

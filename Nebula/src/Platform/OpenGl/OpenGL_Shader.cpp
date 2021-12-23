@@ -326,7 +326,7 @@ namespace Nebula {
 		for (auto&& [stage, spirv] : m_OpenGLSPIRV)
 		{
 			GLuint shaderID = shaderIDs.emplace_back(glCreateShader(stage));
-			glShaderBinary(1, &shaderID, GL_SHADER_BINARY_FORMAT_SPIR_V, spirv.data(), spirv.size() * sizeof(uint32_t));
+			glShaderBinary(1, &shaderID, GL_SHADER_BINARY_FORMAT_SPIR_V, spirv.data(), GLsizei(spirv.size() * sizeof(uint32_t)));
 			glSpecializeShader(shaderID, "main", 0, nullptr, nullptr);
 			glAttachShader(program, shaderID);
 		}
@@ -398,7 +398,7 @@ namespace Nebula {
 			uint32_t format = 0;
 			in.read((char*)&format, sizeof(uint32_t));
 			in.read((char*)data.data(), size);
-			glProgramBinary(program, format, data.data(), data.size());
+			glProgramBinary(program, format, data.data(), (GLsizei)data.size());
 
 			bool linked = VerifyProgramLink(program);
 
@@ -493,9 +493,9 @@ namespace Nebula {
 		for (const auto& resource : resources.uniform_buffers)
 		{
 			const auto& bufferType = compiler.get_type(resource.base_type_id);
-			uint32_t bufferSize = compiler.get_declared_struct_size(bufferType);
+			uint32_t bufferSize = (uint32_t)compiler.get_declared_struct_size(bufferType);
 			uint32_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
-			int memberCount = bufferType.member_types.size();
+			int memberCount = (int)bufferType.member_types.size();
 
 			NB_TRACE("  {0}", resource.name);
 			NB_TRACE("    Size = {0}", bufferSize);

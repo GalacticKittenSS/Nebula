@@ -97,7 +97,7 @@ namespace Nebula {
 	void OpenGL_FrameBuffer::Invalidate() {
 		if (m_RendererID) {
 			glDeleteFramebuffers(1, &m_RendererID);
-			glDeleteTextures(m_ColourAttachments.size(), m_ColourAttachments.data());
+			glDeleteTextures((GLsizei)m_ColourAttachments.size(), m_ColourAttachments.data());
 			glDeleteTextures(1, &m_DepthAttachment);
 
 			m_ColourAttachments.clear();
@@ -111,16 +111,16 @@ namespace Nebula {
 
 		if (m_ColourAttachmentSpecs.size()) {
 			m_ColourAttachments.resize(m_ColourAttachmentSpecs.size());
-			Utils::CreateTextures(multiSample, m_ColourAttachments.data(), m_ColourAttachments.size());
+			Utils::CreateTextures(multiSample, m_ColourAttachments.data(), (GLsizei)m_ColourAttachments.size());
 
 			for (size_t i = 0; i < m_ColourAttachments.size(); i++) {
 				Utils::BindTexture(multiSample, m_ColourAttachments[i]);
 				switch (m_ColourAttachmentSpecs[i].TextureFormat) {
 					case FramebufferTextureFormat::RGBA8:
-						Utils::AttachColourTexture(m_ColourAttachments[i], m_Specifications.samples, GL_RGBA8, GL_RGBA, m_Specifications.Width, m_Specifications.Height, i);
+						Utils::AttachColourTexture(m_ColourAttachments[i], m_Specifications.samples, GL_RGBA8, GL_RGBA, m_Specifications.Width, m_Specifications.Height, (int)i);
 						break;
 					case FramebufferTextureFormat::RED_INT:
-						Utils::AttachColourTexture(m_ColourAttachments[i], m_Specifications.samples, GL_R32I, GL_RED_INTEGER, m_Specifications.Width, m_Specifications.Height, i);
+						Utils::AttachColourTexture(m_ColourAttachments[i], m_Specifications.samples, GL_R32I, GL_RED_INTEGER, m_Specifications.Width, m_Specifications.Height, (int)i);
 						break;
 				}
 			}
@@ -141,7 +141,7 @@ namespace Nebula {
 			NB_ASSERT(m_ColourAttachments.size() <= 4, "");
 			GLenum buffers[4] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
 
-			glDrawBuffers(m_ColourAttachments.size(), buffers);
+			glDrawBuffers((GLsizei)m_ColourAttachments.size(), buffers);
 		}
 		else if (m_ColourAttachments.empty()) {
 			glDrawBuffer(GL_NONE);
