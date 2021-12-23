@@ -264,7 +264,6 @@ namespace Nebula {
 		if (!m_ShowColliders)
 			return;
 
-
 		if (m_SceneState == SceneState::Play) {
 			Entity cam = m_ActiveScene->GetPrimaryCamera();
 			Renderer2D::BeginScene(cam.GetComponent<CameraComponent>().Camera, cam.GetComponent<TransformComponent>().CalculateMatrix());
@@ -294,7 +293,7 @@ namespace Nebula {
 			vec3 translation = tc.Translation + vec3(bc2d.Offset, 0.001f);
 			vec3 Scale = tc.Scale * vec3(bc2d.Size * 2.0f);
 
-			mat4 transform = translate(vec3(translation)) * toMat4(quat(tc.Rotation)) * scale(Scale) ;
+			mat4 transform = translate(vec3(translation)) * toMat4(quat(tc.Rotation)) * scale(Scale);
 			Renderer2D::Draw(NB_RECT, transform, vec4(0.0f, 1.0f, 0.0f, 1.0f));
 		}
 
