@@ -250,6 +250,13 @@ namespace Nebula {
 				}
 			}
 
+			if (!m_SelectionContext.HasComponent<CircleColliderComponent>()) {
+				if (ImGui::MenuItem("Circle Collider")) {
+					m_SelectionContext.AddComponent<CircleColliderComponent>();
+					ImGui::CloseCurrentPopup();
+				}
+			}
+
 			ImGui::EndPopup();
 		}
 
@@ -384,5 +391,14 @@ namespace Nebula {
 			ImGui::DragFloat("Restitution", &component.Restitution, 0.01f, 0.0f, 1.0f);
 			ImGui::DragFloat("Restitution Threshold", &component.RestitutionThreshold, 0.01f, 0.0f);
 		}, true);
+
+		DrawComponent<CircleColliderComponent>("Circle Collider", entity, [](auto& component) {
+			ImGui::DragFloat2("Offset", value_ptr(component.Offset));
+			ImGui::DragFloat("Radius", &component.Radius, 0.01f);
+			ImGui::DragFloat("Density", &component.Density, 0.01f, 0.0f, 1.0f);
+			ImGui::DragFloat("Friction", &component.Friction, 0.01f, 0.0f, 1.0f);
+			ImGui::DragFloat("Restitution", &component.Restitution, 0.01f, 0.0f, 1.0f);
+			ImGui::DragFloat("Restitution Threshold", &component.RestitutionThreshold, 0.01f, 0.0f);
+			}, true);
 	}
 }

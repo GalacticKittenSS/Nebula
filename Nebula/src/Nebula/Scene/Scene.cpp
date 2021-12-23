@@ -10,6 +10,7 @@
 #include "box2d/b2_body.h"
 #include "box2d/b2_fixture.h"
 #include "box2d/b2_polygon_shape.h"
+#include "box2d/b2_circle_shape.h"
 
 #include "Nebula/Core/Time.h"
 
@@ -72,6 +73,7 @@ namespace Nebula {
 		CopyComponent<NativeScriptComponent>(dstSceneReg, srcSceneReg, enttMap);
 		CopyComponent<Rigidbody2DComponent>(dstSceneReg, srcSceneReg, enttMap);
 		CopyComponent<Box2DComponent>(dstSceneReg, srcSceneReg, enttMap);
+		CopyComponent<CircleColliderComponent>(dstSceneReg, srcSceneReg, enttMap);
 
 		return newScene;
 	}
@@ -113,6 +115,7 @@ namespace Nebula {
 		CopyComponent<NativeScriptComponent>(newEnt, entity);
 		CopyComponent<Rigidbody2DComponent>(newEnt, entity);
 		CopyComponent<Box2DComponent>(newEnt, entity);
+		CopyComponent<CircleColliderComponent>(newEnt, entity);
 	}
 
 	void Scene::OnRuntimeStart() {
@@ -145,6 +148,22 @@ namespace Nebula {
 				fixtureDef.friction = bc2d.Friction;
 				fixtureDef.restitution = bc2d.Restitution;
 				fixtureDef.restitutionThreshold = bc2d.RestitutionThreshold;
+				body->CreateFixture(&fixtureDef);
+			}
+
+			if (entity.HasComponent<CircleColliderComponent>()) {
+				auto& cc = entity.GetComponent<CircleColliderComponent>();
+
+				b2CircleShape circle;
+				circle.m_p.Set(cc.Offset.x, cc.Offset.y);
+				circle.m_radius = cc.Radius * entity.GetComponent<TransformComponent>().Scale.x;
+
+				b2FixtureDef fixtureDef;
+				fixtureDef.shape = &circle;
+				fixtureDef.density = cc.Density;
+				fixtureDef.friction = cc.Friction;
+				fixtureDef.restitution = cc.Restitution;
+				fixtureDef.restitutionThreshold = cc.RestitutionThreshold;
 				body->CreateFixture(&fixtureDef);
 			}
 		}
@@ -203,12 +222,12 @@ namespace Nebula {
 
 		auto group = m_Registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
 		for (auto entity : group) {
-			Renderer2D::Draw(NB_RECT, Entity{ entity, this });
+			Renderer2D::Draw(NB_QUAD, Entity{ entity, this });
 		}
 
 		auto CircleGroup = m_Registry.view<TransformComponent, CircleRendererComponent>();
 		for (auto entity : CircleGroup) {
-			Renderer2D::Draw(NB_RECT, Entity{ entity, this });
+			Renderer2D::Draw(NB_CIRCLE, Entity{ entity, this });
 		}
 
 		Renderer2D::EndScene();
@@ -288,10 +307,13 @@ namespace Nebula {
 	}
 
 	template<>
+	void Scene::OnComponentAdded<Rigidbody2DComponent>(Entity entity, Rigidbody2DComponent& component) { }
+
+	template<>
 	void Scene::OnComponentAdded<Box2DComponent>(Entity entity, Box2DComponent& component) { }
 
 	template<>
-	void Scene::OnComponentAdded<Rigidbody2DComponent>(Entity entity, Rigidbody2DComponent& component) { }
+	void Scene::OnComponentAdded<CircleColliderComponent>(Entity entity, CircleColliderComponent& component) { }
 	
 	template<>
 	void Scene::OnComponentAdded<IDComponent>(Entity entity, IDComponent& component) { }

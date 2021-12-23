@@ -233,6 +233,21 @@ namespace Nebula {
 			out << YAML::EndMap; // BoxCollider2DComponent
 		}
 
+		if (entity.HasComponent<CircleColliderComponent>()) {
+			out << YAML::Key << "CircleColliderComponent";
+			out << YAML::BeginMap; // CircleColliderComponent
+
+			auto& ccComponent = entity.GetComponent<CircleColliderComponent>();
+			out << YAML::Key << "Offset" << YAML::Value << ccComponent.Offset;
+			out << YAML::Key << "Radius" << YAML::Value << ccComponent.Radius;
+			out << YAML::Key << "Density" << YAML::Value << ccComponent.Density;
+			out << YAML::Key << "Friction" << YAML::Value << ccComponent.Friction;
+			out << YAML::Key << "Restitution" << YAML::Value << ccComponent.Restitution;
+			out << YAML::Key << "RestitutionThreshold" << YAML::Value << ccComponent.RestitutionThreshold;
+
+			out << YAML::EndMap; // CircleColliderComponent
+		}
+
 		out << YAML::EndMap;
 	}
 
@@ -357,6 +372,17 @@ namespace Nebula {
 					bc2d.Friction = box2DComponent["Friction"].as<float>();
 					bc2d.Restitution = box2DComponent["Restitution"].as<float>();
 					bc2d.RestitutionThreshold = box2DComponent["RestitutionThreshold"].as<float>();
+				}
+
+				auto circleColliderComponent = entity["CircleColliderComponent"];
+				if (circleColliderComponent) {
+					auto& cc = deserializedEntity.AddComponent<CircleColliderComponent>();
+					cc.Offset = circleColliderComponent["Offset"].as<vec2>();
+					cc.Radius = circleColliderComponent["Radius"].as<float>();
+					cc.Density = circleColliderComponent["Density"].as<float>();
+					cc.Friction = circleColliderComponent["Friction"].as<float>();
+					cc.Restitution = circleColliderComponent["Restitution"].as<float>();
+					cc.RestitutionThreshold = circleColliderComponent["RestitutionThreshold"].as<float>();
 				}
 			}
 		}
