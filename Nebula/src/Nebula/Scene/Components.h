@@ -28,7 +28,8 @@ namespace Nebula {
 	struct ParentChildComponent {
 		UUID PrimaryParent = 0;
 		
-		UUID* ChildrenIDs = new UUID[32]; //Max 32 Children (TEMP), TODO: No Max
+		//TODO: No Max
+		UUID* ChildrenIDs = new UUID[32]; //Max 32 Children (TEMP) 
 		uint32_t ChildrenCount = 0;
 		
 		ParentChildComponent() = default;
@@ -63,21 +64,35 @@ namespace Nebula {
 	};
 
 	struct TransformComponent {
-		vec3 Translation =	{ 0.0f, 0.0f, 0.0f };
-		vec3 Rotation =		{ 0.0f, 0.0f, 0.0f };
-		vec3 Scale =		{ 1.0f, 1.0f, 1.0f };
+		vec3 LocalTranslation =	{ 0.0f, 0.0f, 0.0f };
+		vec3 LocalRotation =	{ 0.0f, 0.0f, 0.0f };
+		vec3 LocalScale =		{ 1.0f, 1.0f, 1.0f };
 
-		mat4 GlobalMatrix = CalculateMatrix();
-		bool ShouldRecalculateGlobalMatrix = true;
-		
+		vec3 GlobalTranslation = { 0.0f, 0.0f, 0.0f };
+		vec3 GlobalRotation =	 { 0.0f, 0.0f, 0.0f };
+		vec3 GlobalScale =		 { 1.0f, 1.0f, 1.0f };
+
 		TransformComponent() = default;
 		TransformComponent(const TransformComponent&) = default;
-		TransformComponent(const vec3& translation) : Translation(translation) { }
 
 		inline operator mat4() { return CalculateMatrix(); }
 
 		inline mat4 CalculateMatrix() {
-			return translate(Translation) * toMat4(quat(Rotation)) * scale(Scale);
+			return translate(GlobalTranslation) * toMat4(quat(GlobalRotation)) * scale(GlobalScale);
+		}
+
+		inline mat4 CalculateLocalMatrix() {
+			return translate(LocalTranslation) * toMat4(quat(LocalRotation)) * scale(LocalScale);
+		}
+
+		void SetDeltaTransform(const vec3& translation, const vec3& rotation, const vec3& size) {
+			LocalTranslation += translation;
+			LocalRotation += rotation;
+			LocalScale += size;
+
+			GlobalTranslation += translation;
+			GlobalRotation += rotation;
+			GlobalScale += size;
 		}
 	};
 

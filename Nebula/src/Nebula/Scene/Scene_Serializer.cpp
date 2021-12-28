@@ -167,9 +167,9 @@ namespace Nebula {
 			out << YAML::BeginMap;
 
 			auto& component = entity.GetComponent<TransformComponent>();
-			out << YAML::Key << "Translation" << YAML::Value << component.Translation;
-			out << YAML::Key << "Rotation" << YAML::Value << component.Rotation;
-			out << YAML::Key << "Scale" << YAML::Value << component.Scale;
+			out << YAML::Key << "Translation" << YAML::Value << component.LocalTranslation;
+			out << YAML::Key << "Rotation" << YAML::Value << component.LocalRotation;
+			out << YAML::Key << "Scale" << YAML::Value << component.LocalScale;
 
 			out << YAML::EndMap;
 		}
@@ -326,9 +326,9 @@ namespace Nebula {
 				auto transformComponent = entity["TransformComponent"];
 				if (transformComponent) {
 					auto& tc = deserializedEntity.GetComponent<TransformComponent>();
-					tc.Translation = transformComponent["Translation"].as<vec3>();
-					tc.Rotation = transformComponent["Rotation"].as<vec3>();
-					tc.Scale = transformComponent["Scale"].as<vec3>();
+					tc.LocalTranslation = transformComponent["Translation"].as<vec3>();
+					tc.LocalRotation = transformComponent["Rotation"].as<vec3>();
+					tc.LocalScale = transformComponent["Scale"].as<vec3>();
 				}
 
 				auto parentComponent = entity["ParentChildComponent"];

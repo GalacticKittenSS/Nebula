@@ -299,12 +299,11 @@ namespace Nebula {
 	}
 
 	mat4 CalculateTransform(Entity& entity) {
-		if (!entity.GetComponent<TransformComponent>().ShouldRecalculateGlobalMatrix)
-			return entity.GetComponent<TransformComponent>().GlobalMatrix;
+		auto& transform = entity.GetComponent<TransformComponent>();
 
-		vec3 pos = entity.GetComponent<TransformComponent>().Translation;
-		vec3 rot = entity.GetComponent<TransformComponent>().Rotation;
-		vec3 size = entity.GetComponent<TransformComponent>().Scale;
+		vec3 pos =  transform.LocalTranslation;
+		vec3 rot =  transform.LocalRotation;
+		vec3 size = transform.LocalScale;
 		
 		UUID parentID = entity.GetComponent<ParentChildComponent>().PrimaryParent;
 		
@@ -322,11 +321,11 @@ namespace Nebula {
 			size *= pSize;
 		}
 
-		mat4 matrix = translate(pos) * toMat4(quat(rot)) * scale(size);
-		entity.GetComponent<TransformComponent>().GlobalMatrix = matrix;
-		entity.GetComponent<TransformComponent>().ShouldRecalculateGlobalMatrix = false;
+		transform.GlobalTranslation = pos;
+		transform.GlobalRotation = rot;
+		transform.GlobalScale = size;
 		
-		return matrix;
+		return transform.CalculateMatrix();
 	}
 
 	void Renderer2D::Draw(const uint32_t type, Entity& entity) {

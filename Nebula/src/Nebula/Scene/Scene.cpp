@@ -124,8 +124,8 @@ namespace Nebula {
 
 			b2BodyDef bodyDef;
 			bodyDef.type = Rigibody2DToBox2D(rb2d.Type);
-			bodyDef.position.Set(transform.Translation.x, transform.Translation.y);
-			bodyDef.angle = transform.Rotation.z;
+			bodyDef.position.Set(transform.GlobalTranslation.x, transform.GlobalTranslation.y);
+			bodyDef.angle = transform.GlobalRotation.z;
 
 			b2Body* body = m_PhysicsWorld->CreateBody(&bodyDef);
 			body->SetFixedRotation(rb2d.FixedRotation);
@@ -135,7 +135,7 @@ namespace Nebula {
 				auto& bc2d = entity.GetComponent<Box2DComponent>();
 
 				b2PolygonShape polygonShape;
-				polygonShape.SetAsBox(transform.Scale.x * bc2d.Size.x, transform.Scale.y * bc2d.Size.y);
+				polygonShape.SetAsBox(transform.GlobalScale.x * bc2d.Size.x, transform.GlobalScale.y * bc2d.Size.y);
 
 				b2FixtureDef fixtureDef;
 				fixtureDef.shape = &polygonShape;
@@ -151,7 +151,7 @@ namespace Nebula {
 
 				b2CircleShape circle;
 				circle.m_p.Set(cc.Offset.x, cc.Offset.y);
-				circle.m_radius = cc.Radius * entity.GetComponent<TransformComponent>().Scale.x;
+				circle.m_radius = cc.Radius * entity.GetComponent<TransformComponent>().GlobalScale.x;
 
 				b2FixtureDef fixtureDef;
 				fixtureDef.shape = &circle;
@@ -201,14 +201,16 @@ namespace Nebula {
 		auto view = m_Registry.view<Rigidbody2DComponent>();
 		for (auto e : view) {
 			Entity entity = { e, this };
-			auto& tranform = entity.GetComponent<TransformComponent>();
+			auto& transform = entity.GetComponent<TransformComponent>();
 			auto& rb2d = entity.GetComponent<Rigidbody2DComponent>();
 
 			b2Body* body = (b2Body*)rb2d.RuntimeBody;
 			const auto& position = body->GetPosition();
-			tranform.Translation.x = position.x;
-			tranform.Translation.y = position.y;
-			tranform.Rotation.z = body->GetAngle();
+			
+			vec3 deltaTranslation = { position.x - transform.GlobalTranslation.x , position.y - transform.GlobalTranslation.y, 0.0f };
+			vec3 deltaRotation = { 0.0f, 0.0f, body->GetAngle() - transform.GlobalRotation.z };
+
+			transform.SetDeltaTransform(deltaTranslation, deltaRotation, vec3(0.0f));
 		}
 	}
 
@@ -248,16 +250,12 @@ namespace Nebula {
 
 			auto group = m_Registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
 			for (auto entity : group) {
-				Entity ent{ entity, this };
-				ent.GetComponent<TransformComponent>().ShouldRecalculateGlobalMatrix = true;
-				Renderer2D::Draw(NB_QUAD, ent);
+				Renderer2D::Draw(NB_QUAD, Entity{ entity, this });
 			}
 
 			auto CircleGroup = m_Registry.view<TransformComponent, CircleRendererComponent>();
 			for (auto entity : CircleGroup) {
-				Entity ent{ entity, this };
-				ent.GetComponent<TransformComponent>().ShouldRecalculateGlobalMatrix = true;
-				Renderer2D::Draw(NB_CIRCLE, ent);
+				Renderer2D::Draw(NB_CIRCLE, Entity{ entity, this });
 			}
 
 			Renderer2D::EndScene();

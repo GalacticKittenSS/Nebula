@@ -100,8 +100,6 @@ namespace Nebula {
 					parent.AddChild(entityID);
 					
 					child.PrimaryParent = entity.GetUUID();
-
-					dropEnt.GetComponent<TransformComponent>().ShouldRecalculateGlobalMatrix = true;
 				}
 			}
 			ImGui::EndDragDropTarget();
@@ -260,7 +258,7 @@ namespace Nebula {
 		ImGui::SameLine();
 		ImGui::PushItemWidth(-1);
 
-		if (ImGui::Button("Add +"))
+		if (ImGui::Button("Add Component"))
 			ImGui::OpenPopup("Add Component");
 
 		if (ImGui::BeginPopup("Add Component")) {
@@ -310,16 +308,28 @@ namespace Nebula {
 		}
 
 		ImGui::PopItemWidth();
+		if (m_ShowGlobal) {
+			DrawComponent<TransformComponent>("Transform", entity, [](auto& component) {
+				vec3 rotation = degrees(component.GlobalRotation);
 
-		DrawComponent<TransformComponent>("Transform", entity, [](auto& component) {
-			vec3 rotation = degrees(component.Rotation);
+				DrawVec3Control("Position", component.GlobalTranslation);
+				DrawVec3Control("Rotation", rotation);
+				DrawVec3Control("Scale", component.GlobalScale, 1.0f);
 
-			DrawVec3Control("Position", component.Translation);
-			DrawVec3Control("Rotation", rotation);
-			DrawVec3Control("Scale", component.Scale, 1.0f);
+				component.GlobalRotation = radians(rotation);
+			});
+		}
+		else {
+			DrawComponent<TransformComponent>("Transform", entity, [](auto& component) {
+				vec3 rotation = degrees(component.LocalRotation);
 
-			component.Rotation = radians(rotation);
-		});
+				DrawVec3Control("Position", component.LocalTranslation);
+				DrawVec3Control("Rotation", rotation);
+				DrawVec3Control("Scale", component.LocalScale, 1.0f);
+
+				component.LocalRotation = radians(rotation);
+			});
+		}
 
 		DrawComponent<CameraComponent>("Camera", entity, [](auto& component) {
 			auto& camera = component.Camera;

@@ -150,6 +150,9 @@ namespace Nebula {
 			if (ImGui::BeginMenu("Settings")) {
 				if (ImGui::MenuItem("Show Physics Colliders", NULL, m_ShowColliders))
 					m_ShowColliders = !m_ShowColliders;
+				
+				if (ImGui::MenuItem("Show Global Transforms", NULL, m_SceneHierarchy.GetShowGlobalTransform()))
+					m_SceneHierarchy.SetShowGlobalTransform(!m_SceneHierarchy.GetShowGlobalTransform());
 
 				ImGui::EndMenu();
 			}
@@ -223,15 +226,7 @@ namespace Nebula {
 				float windowHeight = (float)ImGui::GetWindowHeight();
 				ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowWidth, windowHeight);
 
-				// GET PARENT GLOBAL TRANSFORM TO CORRECTLY PLACE GIZMO
-				UUID pID = selectedEntity.GetComponent<ParentChildComponent>().PrimaryParent;
-				mat4 parentTransform = mat4(1.0f);
-				if (pID) {
-					Entity parent{ pID, m_ActiveScene.get() };
-					parentTransform = parent.GetComponent<TransformComponent>().GlobalMatrix;
-				}
-
-				const mat4& cameraProj = m_EditorCam.GetProjection() * parentTransform;
+				const mat4& cameraProj = m_EditorCam.GetProjection();
 				mat4 cameraView = m_EditorCam.GetViewMatrix();
 
 				auto& tc = selectedEntity.GetComponent<TransformComponent>();
@@ -251,18 +246,11 @@ namespace Nebula {
 					vec3 translation, rotation, scale;
 					DecomposeTransform(transform, translation, rotation, scale);
 
-					vec3 deltaRotation = rotation - tc.Rotation;
-					tc.Translation = translation;
-					tc.Rotation += deltaRotation;
-					tc.Scale = scale;
+					vec3 deltaRotation = rotation - tc.GlobalRotation;
+					vec3 deltaTranslation = translation - tc.GlobalTranslation;
+					vec3 deltaScale = scale - tc.GlobalScale;
 
-					selectedEntity.GetComponent<TransformComponent>().ShouldRecalculateGlobalMatrix = true;
-
-					auto& pcc = selectedEntity.GetComponent<ParentChildComponent>();
-					for (uint32_t i = 0; i < pcc.ChildrenCount; i++) {
-						Entity child{ pcc.ChildrenIDs[i], m_ActiveScene.get() };
-						child.GetComponent<TransformComponent>().ShouldRecalculateGlobalMatrix = true;
-					}
+					tc.SetDeltaTransform(deltaTranslation, deltaRotation, deltaScale);
 				}
 			}
 		}
@@ -295,8 +283,8 @@ namespace Nebula {
 		for (auto entity : CircleView) {
 			auto [tc, cc] = CircleView.get<TransformComponent, CircleColliderComponent>(entity);
 			
-			vec3 translation = tc.Translation + vec3(cc.Offset, -projectionCollider.z);
-			vec3 Scale = tc.Scale * vec3(cc.Radius * 2.0f);
+			vec3 translation = tc.GlobalTranslation + vec3(cc.Offset, -projectionCollider.z);
+			vec3 Scale = tc.GlobalScale * vec3(cc.Radius * 2.0f);
 
 			mat4 transform = translate(vec3(translation)) * scale(Scale);
 			Renderer2D::DrawCircle(transform, vec4(0.0f, 1.0f, 0.0f, 1.0f), 0.05f);
@@ -306,10 +294,10 @@ namespace Nebula {
 		for (auto entity : BoxView) {
 			auto [tc, bc2d] = BoxView.get<TransformComponent, Box2DComponent>(entity);
 			
-			vec3 translation = tc.Translation + vec3(bc2d.Offset, 0.001f);
-			vec3 Scale = tc.Scale * vec3(bc2d.Size * 2.0f);
+			vec3 translation = tc.GlobalTranslation + vec3(bc2d.Offset, 0.001f);
+			vec3 Scale = tc.GlobalScale * vec3(bc2d.Size * 2.0f);
 
-			mat4 transform = translate(vec3(translation)) * toMat4(quat(tc.Rotation)) * scale(Scale);
+			mat4 transform = translate(vec3(translation)) * toMat4(quat(tc.GlobalRotation)) * scale(Scale);
 			Renderer2D::Draw(NB_RECT, transform, vec4(0.0f, 1.0f, 0.0f, 1.0f));
 		}
 
