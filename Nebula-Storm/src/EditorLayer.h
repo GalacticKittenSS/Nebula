@@ -37,11 +37,13 @@ namespace Nebula {
 		void DuplicateEntity();
 
 		//Panels
+		void UI_MenuBar();
 		void UI_Toolbar();
+		void UI_GameView();
 	private:
 		bool m_GameViewFocus = false, m_GameViewHovered = false;
 		bool m_UsingGizmo = false;
-		bool m_ShowColliders = true;
+		bool m_ShowColliders = false;
 		
 		vec2 m_GameViewSize = { 1280.0f, 720.0f };
 		vec2 m_ViewPortBounds[2];

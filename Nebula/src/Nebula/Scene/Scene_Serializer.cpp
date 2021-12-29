@@ -209,6 +209,9 @@ namespace Nebula {
 			else
 				out << YAML::Key << "Texture" << YAML::Value << "None";
 			out << YAML::Key << "Tiling" << YAML::Value << component.Tiling;
+			out << YAML::Key << "Offset" << YAML::Value << component.SubTextureOffset;
+			out << YAML::Key << "CellSize" << YAML::Value << component.SubTextureCellSize;
+			out << YAML::Key << "CellNum" << YAML::Value << component.SubTextureCellNum;
 
 			out << YAML::EndMap;
 		}
@@ -368,6 +371,9 @@ namespace Nebula {
 					auto& src = deserializedEntity.AddComponent<SpriteRendererComponent>();
 					src.Colour = spriteRendererComponent["Colour"].as<vec4>();
 					src.Tiling = spriteRendererComponent["Tiling"].as<float>();
+					src.SubTextureOffset = spriteRendererComponent["Offset"].as<vec2>();
+					src.SubTextureCellSize = spriteRendererComponent["CellSize"].as<vec2>();
+					src.SubTextureCellNum = spriteRendererComponent["CellNum"].as<vec2>();
 
 					std::string texture = spriteRendererComponent["Texture"].as<std::string>();
 					if (texture != "None")

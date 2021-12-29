@@ -4,7 +4,6 @@
 #include "Nebula/Core/API.h"
 //--------------------
 
-
 //----LAYERS---------
 #include "Nebula/Core/Layer.h"
 #include "Nebula/imgui/ImGui_Layer.h"
@@ -46,11 +45,14 @@
 #include "Nebula/Events/Window_Event.h"
 //--------------------
 
+//----UTILS-----------
 #include "Nebula/Utils/Platform_Utils.h"
+//--------------------
 
 //----Application-----
 #include "Nebula/Core/Time.h"
 #include "Nebula/Core/Window.h"
+#include "Nebula/Core/Random.h"
 
 #include "Nebula/Core/Application.h"
 //--------------------

@@ -1,12 +1,13 @@
 #pragma once
 
 #include <xhash>
+#include "Random.h"
 
 namespace Nebula {
 	class UUID {
 	public:
-		UUID();
-		UUID(uint64_t uuid);
+		UUID(): m_UUID(Rand64()) { }
+		UUID(uint64_t uuid) : m_UUID(uuid) { }
 		UUID(const UUID&) = default;
 
 		operator uint64_t() const { return m_UUID; }

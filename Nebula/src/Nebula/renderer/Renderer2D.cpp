@@ -245,7 +245,7 @@ namespace Nebula {
 	}
 	
 	void Renderer2D::Draw(const uint32_t type, const vec4* vertexPos, 
-		const mat4& transform, const vec4& colour, Ref<Texture2D> texture, float tiling, uint32_t entityID) {
+		const mat4& transform, const vec4& colour, Ref<Texture2D> texture, float tiling, vec2* texCoords, uint32_t entityID) {
 		NB_PROFILE_FUNCTION();
 		if (texture == nullptr)
 			texture = s_Data.WhiteTexture;
@@ -254,13 +254,15 @@ namespace Nebula {
 			if (s_Data.QuadIndexCount >= s_Data.MaxIndices)
 				FlushAndReset();
 
-			vec2* texCoords = new vec2[type];
-			for (uint32_t i = 0; i < type; i+=4) {
-				texCoords[i + 0] = { 0, 0 };
-				texCoords[i + 1] = { 1, 0 };
-				texCoords[i + 2] = { 1, 1 };
-				texCoords[i + 3] = { 0, 1 };
-			};
+			if (texCoords == nullptr) {
+				texCoords = new vec2[type];
+				for (uint32_t i = 0; i < type; i+=4) {
+					texCoords[i + 0] = { 0, 0 };
+					texCoords[i + 1] = { 1, 0 };
+					texCoords[i + 2] = { 1, 1 };
+					texCoords[i + 3] = { 0, 1 };
+				};
+			}
 
 			s_Data.QuadVBPtr = CalculateVertexData(s_Data.QuadVBPtr, type, vertexPos, transform, colour, texture, texCoords, tiling, entityID);
 			s_Data.QuadIndexCount += uint32_t(type * 1.5);
@@ -269,7 +271,7 @@ namespace Nebula {
 			if (s_Data.TriIndexCount >= s_Data.MaxIndices)
 				FlushAndReset();
 
-			vec2* texCoords = new vec2[type];
+			texCoords = new vec2[type];
 			for (uint32_t i = 0; i < type; i+=3) {
 				texCoords[i + 0] = { 0.0f, 0.0f };
 				texCoords[i + 1] = { 1.0f, 0.0f };
@@ -398,7 +400,15 @@ namespace Nebula {
 		} else {
 			auto& spriteRenderer = entity.GetComponent<SpriteRendererComponent>();
 
-			Draw(type, vertexPos, transform, spriteRenderer.Colour, spriteRenderer.Texture, spriteRenderer.Tiling, entity);
+			if (spriteRenderer.Texture != nullptr) {
+				Ref<SubTexture2D> subT = SubTexture2D::CreateFromCoords(spriteRenderer.Texture, spriteRenderer.SubTextureOffset, spriteRenderer.SubTextureCellSize, spriteRenderer.SubTextureCellNum);
+
+				Draw(type, vertexPos, transform, spriteRenderer.Colour, spriteRenderer.Texture, spriteRenderer.Tiling, subT->GetTextureCoords(), entity);
+			}
+			else {
+				Draw(type, vertexPos, transform, spriteRenderer.Colour, spriteRenderer.Texture, spriteRenderer.Tiling, nullptr, entity);
+			}
+
 		}
 	}
 

@@ -99,11 +99,13 @@ namespace Nebula {
 	struct SpriteRendererComponent {
 		vec4 Colour{ 1.0f, 1.0f, 1.0f, 1.0f };
 		Ref<Texture2D> Texture = nullptr;
+		vec2 SubTextureOffset = { 0.0f, 0.0f };
+		vec2 SubTextureCellSize = { 128.0f, 128.0f };
+		vec2 SubTextureCellNum = { 1, 1 };
 		float Tiling = 1.0f;
 
 		SpriteRendererComponent() = default;
 		SpriteRendererComponent(const SpriteRendererComponent&) = default;
-		SpriteRendererComponent(const vec4& colour, Ref<Texture2D> texture = nullptr, float tiling = 1.0f) : Colour(colour), Texture(texture), Tiling(tiling) { }
 	};
 
 	struct CircleRendererComponent {

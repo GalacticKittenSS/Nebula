@@ -11,39 +11,32 @@ namespace Nebula {
 		m_PlayIcon = Texture2D::Create("Resources/Icons/PlayButton.png");
 		m_StopIcon = Texture2D::Create("Resources/Icons/StopButton.png");
 
+		//Initialize Frame Buffer
 		FrameBufferSpecification fbSpec;
 		fbSpec.Attachments = { FramebufferTextureFormat::RGBA8, FramebufferTextureFormat::RED_INT, FramebufferTextureFormat::Depth };
 		fbSpec.Width = 1280;
 		fbSpec.Height = 720;
-
 		frameBuffer = FrameBuffer::Create(fbSpec);
-		timer = Timer();
+		
+		NewScene();
 
+		//Open Scene on Startup
 		auto commandLineArgs = Application::Get().GetCommandLineArgs();
 		if (commandLineArgs.Count > 1)
-		{
-			auto sceneFilePath = commandLineArgs[1];
-			SceneSerializer serializer(m_ActiveScene);
-			serializer.Deserialize(sceneFilePath);
-		}
-
+			LoadScene(commandLineArgs[1]);
+		
 		m_EditorCam = EditorCamera(60.0f, 16.0f / 9.0f, 0.01f, 1000.0f);
 
-		m_ActiveScene = CreateRef<Scene>();
-		m_ActiveScene->OnViewportResize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
 		m_SceneHierarchy.SetContext(m_ActiveScene);
-
-		NewScene();
+		Application::Get().GetImGuiLayer()->SetBlockEvents(false);
 	}
 
-	void EditorLayer::Detach() {
-
-	}
+	void EditorLayer::Detach() { }
 
 	void EditorLayer::Update(Timestep ts) {
 		NB_PROFILE_FUNCTION();
 
-
+		//Resize
 		FrameBufferSpecification spec = frameBuffer->GetFrameBufferSpecifications();
 		if (m_GameViewSize.x > 0.0f && m_GameViewSize.y > 0.0f && (spec.Width != m_GameViewSize.x || spec.Height != m_GameViewSize.y)) {
 			frameBuffer->Resize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
@@ -74,6 +67,7 @@ namespace Nebula {
 			case SceneState::Edit: {
 				m_ActiveScene->UpdateEditor(m_EditorCam);
 
+				//Get Pixel Data
 				auto [mx, my] = ImGui::GetMousePos();
 				mx -= m_ViewPortBounds[0].x;
 				my -= m_ViewPortBounds[0].y;
@@ -127,6 +121,18 @@ namespace Nebula {
 
 		style.WindowMinSize.x = minWinSize;
 		
+		UI_MenuBar();
+
+		m_SceneHierarchy.OnImGuiRender();
+		m_ContentBrowser.OnImGuiRender();
+		
+		UI_GameView();
+		UI_Toolbar();
+		
+		ImGui::End();
+	}
+
+	void EditorLayer::UI_MenuBar() {
 		if (ImGui::BeginMenuBar()) {
 			if (ImGui::BeginMenu("File")) {
 				if (ImGui::MenuItem("New", "Ctrl+N"))
@@ -137,29 +143,29 @@ namespace Nebula {
 
 				if (ImGui::MenuItem("Save", "Ctrl+S"))
 					SaveScene();
-				
+
 				if (ImGui::MenuItem("Save As...", "Ctrl+Shift+S"))
 					SaveSceneAs();
-				
-				if (ImGui::MenuItem("Quit")) 
+
+				if (ImGui::MenuItem("Quit"))
 					Application::Get().Close();
-				
+
 				ImGui::EndMenu();
 			}
 
 			if (ImGui::BeginMenu("Settings")) {
 				if (ImGui::MenuItem("Show Physics Colliders", NULL, m_ShowColliders))
 					m_ShowColliders = !m_ShowColliders;
-				
+
 				if (ImGui::MenuItem("Show Global Transforms", NULL, m_SceneHierarchy.GetShowGlobalTransform()))
 					m_SceneHierarchy.SetShowGlobalTransform(!m_SceneHierarchy.GetShowGlobalTransform());
 
 				ImGui::EndMenu();
 			}
-			
+
 			if (ImGui::BeginMenu("Scene")) {
 				if (ImGui::BeginMenu("Create Entity")) {
-					if (ImGui::MenuItem("Empty")) 
+					if (ImGui::MenuItem("Empty"))
 						auto& sprite = m_ActiveScene->CreateEntity("Entity");
 
 					if (ImGui::MenuItem("Sprite")) {
@@ -180,87 +186,6 @@ namespace Nebula {
 
 			ImGui::EndMenuBar();
 		}
-
-		m_SceneHierarchy.OnImGuiRender();
-		m_ContentBrowser.OnImGuiRender();
-		
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-		ImGui::Begin("Game View", nullptr, ImGuiWindowFlags_NoCollapse);
-
-		auto viewportMinRegion = ImGui::GetWindowContentRegionMin();
-		auto viewportMaxRegion = ImGui::GetWindowContentRegionMax();
-		auto viewportOffset = ImGui::GetWindowPos();
-		m_ViewPortBounds[0] = { viewportMinRegion.x + viewportOffset.x, viewportMinRegion.y + viewportOffset.y };
-		m_ViewPortBounds[1] = { viewportMaxRegion.x + viewportOffset.x, viewportMaxRegion.y + viewportOffset.y };
-
-		m_GameViewFocus = ImGui::IsWindowFocused();
-		m_GameViewHovered = ImGui::IsWindowHovered();
-		Application::Get().GetImGuiLayer()->SetBlockEvents(!m_GameViewFocus && !m_GameViewHovered);
-
-		ImVec2 panelSize = ImGui::GetContentRegionAvail();
-		m_GameViewSize = { panelSize.x, panelSize.y };
-
-		uint32_t textureID = frameBuffer->GetColourAttachmentRendererID();
-		ImGui::Image((void*)textureID, panelSize, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
-
-		if (ImGui::BeginDragDropTarget()) {
-			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
-				const wchar_t* path = (const wchar_t*)payload->Data;
-				LoadScene(s_AssetPath / path);
-			}
-			ImGui::EndDragDropTarget();
-		}
-		
-		m_UsingGizmo = ImGuizmo::IsOver();
-
-		//Gizmos
-		if (m_SceneState == SceneState::Edit) {
-			Entity selectedEntity = m_SceneHierarchy.GetSelectedEntity();
-			if (selectedEntity && m_GizmoType != -1) {
-				ImGuizmo::SetOrthographic(false);
-				ImGuizmo::SetDrawlist();
-
-				ImGuizmo::SetRect(m_ViewPortBounds[0].x, m_ViewPortBounds[0].y, m_ViewPortBounds[1].x - m_ViewPortBounds[0].x, m_ViewPortBounds[1].y - m_ViewPortBounds[0].y);
-
-				float windowWidth = (float)ImGui::GetWindowWidth();
-				float windowHeight = (float)ImGui::GetWindowHeight();
-				ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowWidth, windowHeight);
-
-				const mat4& cameraProj = m_EditorCam.GetProjection();
-				mat4 cameraView = m_EditorCam.GetViewMatrix();
-
-				auto& tc = selectedEntity.GetComponent<TransformComponent>();
-				mat4 transform = tc.CalculateMatrix();
-
-				bool snap = Input::IsKeyPressed(Key::LeftControl);
-				float snapValue = 0.25f;
-				if (m_GizmoType == ImGuizmo::OPERATION::ROTATE)
-					snapValue = 22.5f;
-
-				float snapValues[3] = { snapValue, snapValue, snapValue };
-
-				ImGuizmo::Manipulate(value_ptr(cameraView), value_ptr(cameraProj), 
-					(ImGuizmo::OPERATION)m_GizmoType, ImGuizmo::LOCAL, value_ptr(transform), nullptr, snap ? snapValues : nullptr);
-
-				if (ImGuizmo::IsUsing()) {
-					vec3 translation, rotation, scale;
-					DecomposeTransform(transform, translation, rotation, scale);
-
-					vec3 deltaRotation = rotation - tc.GlobalRotation;
-					vec3 deltaTranslation = translation - tc.GlobalTranslation;
-					vec3 deltaScale = scale - tc.GlobalScale;
-
-					tc.SetDeltaTransform(deltaTranslation, deltaRotation, deltaScale);
-				}
-			}
-		}
-
-		ImGui::End();
-		ImGui::PopStyleVar();
-
-		UI_Toolbar();
-		
-		ImGui::End();
 	}
 
 	void EditorLayer::OnOverlayRender() {
@@ -304,6 +229,82 @@ namespace Nebula {
 		Renderer2D::EndScene();
 	}
 
+	void EditorLayer::UI_GameView() {
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+		ImGui::Begin("Game View", nullptr, ImGuiWindowFlags_NoCollapse);
+
+		auto viewportMinRegion = ImGui::GetWindowContentRegionMin();
+		auto viewportMaxRegion = ImGui::GetWindowContentRegionMax();
+		auto viewportOffset = ImGui::GetWindowPos();
+		m_ViewPortBounds[0] = { viewportMinRegion.x + viewportOffset.x, viewportMinRegion.y + viewportOffset.y };
+		m_ViewPortBounds[1] = { viewportMaxRegion.x + viewportOffset.x, viewportMaxRegion.y + viewportOffset.y };
+
+		m_GameViewFocus = ImGui::IsWindowFocused();
+		m_GameViewHovered = ImGui::IsWindowHovered();
+		//Application::Get().GetImGuiLayer()->SetBlockEvents(!m_GameViewFocus && !m_GameViewHovered);
+
+		ImVec2 panelSize = ImGui::GetContentRegionAvail();
+		m_GameViewSize = { panelSize.x, panelSize.y };
+
+		uint32_t textureID = frameBuffer->GetColourAttachmentRendererID();
+		ImGui::Image((void*)textureID, panelSize, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+
+		if (ImGui::BeginDragDropTarget()) {
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
+				const wchar_t* path = (const wchar_t*)payload->Data;
+				LoadScene(s_AssetPath / path);
+			}
+			ImGui::EndDragDropTarget();
+		}
+
+		m_UsingGizmo = ImGuizmo::IsOver();
+
+		//Gizmos
+		if (m_SceneState == SceneState::Edit && m_GizmoType != -1) {
+			Entity selectedEntity = m_SceneHierarchy.GetSelectedEntity();
+			if (selectedEntity) {
+				ImGuizmo::SetOrthographic(false);
+				ImGuizmo::SetDrawlist();
+
+				ImGuizmo::SetRect(m_ViewPortBounds[0].x, m_ViewPortBounds[0].y, m_ViewPortBounds[1].x - m_ViewPortBounds[0].x, m_ViewPortBounds[1].y - m_ViewPortBounds[0].y);
+
+				float windowWidth = (float)ImGui::GetWindowWidth();
+				float windowHeight = (float)ImGui::GetWindowHeight();
+				ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowWidth, windowHeight);
+
+				const mat4& cameraProj = m_EditorCam.GetProjection();
+				mat4 cameraView = m_EditorCam.GetViewMatrix();
+
+				auto& tc = selectedEntity.GetComponent<TransformComponent>();
+				mat4 transform = tc.CalculateMatrix();
+
+				bool snap = Input::IsKeyPressed(Key::LeftControl);
+				float snapValue = 0.25f;
+				if (m_GizmoType == ImGuizmo::OPERATION::ROTATE)
+					snapValue = 22.5f;
+
+				float snapValues[3] = { snapValue, snapValue, snapValue };
+
+				ImGuizmo::Manipulate(value_ptr(cameraView), value_ptr(cameraProj),
+					(ImGuizmo::OPERATION)m_GizmoType, ImGuizmo::LOCAL, value_ptr(transform), nullptr, snap ? snapValues : nullptr);
+
+				if (ImGuizmo::IsUsing()) {
+					vec3 translation, rotation, scale;
+					DecomposeTransform(transform, translation, rotation, scale);
+
+					vec3 deltaRotation = rotation - tc.GlobalRotation;
+					vec3 deltaTranslation = translation - tc.GlobalTranslation;
+					vec3 deltaScale = scale - tc.GlobalScale;
+
+					tc.SetDeltaTransform(deltaTranslation, deltaRotation, deltaScale);
+				}
+			}
+		}
+
+		ImGui::End();
+		ImGui::PopStyleVar();
+	}
+
 	void EditorLayer::UI_Toolbar() {
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 2));
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemInnerSpacing, ImVec2(0, 0));
@@ -331,7 +332,8 @@ namespace Nebula {
 	}
 
 	void EditorLayer::OnEvent(Event& e) {
-		m_EditorCam.OnEvent(e);
+		if (m_SceneState == SceneState::Edit)
+			m_EditorCam.OnEvent(e);
 
 		Dispatcher d(e);
 		d.Dispatch<KeyPressedEvent>(BIND_EVENT(EditorLayer::OnKeyPressed));
@@ -339,7 +341,7 @@ namespace Nebula {
 	}
 
 	bool EditorLayer::OnKeyPressed(KeyPressedEvent& e) {
-		if (e.GetRepeatCount() > 0)
+		if (e.GetRepeatCount() > 0 || !m_GameViewFocus)
 			return false;
 
 		bool control = Input::IsKeyPressed(KeyCode::LeftControl) || Input::IsKeyPressed(KeyCode::RightControl);
@@ -411,7 +413,7 @@ namespace Nebula {
 
 		
 		m_EditorScene = CreateRef<Scene>();
-		m_ActiveScene->OnViewportResize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
+		m_EditorScene->OnViewportResize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
 		m_SceneHierarchy.SetContext(m_EditorScene);
 
 		m_ActiveScene = m_EditorScene;

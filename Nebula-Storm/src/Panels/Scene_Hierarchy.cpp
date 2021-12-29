@@ -203,6 +203,62 @@ namespace Nebula {
 
 		ImGui::PopID();
 	}
+
+	static void DrawVec2Control(const std::string& label, vec2& values, const vec2& min = vec2(0.0f), const vec2& max = vec2(0.0f), const vec2& resetvalue = vec2(0.0f), float columnWidth = 100.0f) {
+		ImGuiIO& io = ImGui::GetIO();
+		auto boldFont = io.Fonts->Fonts[0];
+
+		ImGui::PushID(label.c_str());
+
+		ImGui::Columns(2);
+		ImGui::SetColumnWidth(0, columnWidth);
+		ImGui::Text(label.c_str());
+		ImGui::NextColumn();
+
+		ImGui::PushMultiItemsWidths(2, ImGui::CalcItemWidth());
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 0, 0 });
+
+		float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
+		ImVec2 buttonSize = { lineHeight + 3.0f, lineHeight };
+
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.8f, 0.2f, 0.1f, 1.0f });
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 1.0f, 0.3f, 0.3f, 1.0f });
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.8f, 0.2f, 0.1f, 1.0f });
+		ImGui::PushFont(boldFont);
+
+		if (ImGui::Button("X", buttonSize))
+			values.x = resetvalue.x;
+
+		ImGui::PopFont();
+		ImGui::PopStyleColor(3);
+
+		ImGui::SameLine();
+		ImGui::DragFloat("##X", &values.x, 0.1f, min.x, max.x, "%.2f");
+		ImGui::PopItemWidth();
+		ImGui::SameLine();
+
+
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.3f, 0.8f, 0.3f, 1.0f });
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
+		ImGui::PushFont(boldFont);
+
+		if (ImGui::Button("Y", buttonSize))
+			values.y = resetvalue.y;
+
+		ImGui::PopFont();
+		ImGui::PopStyleColor(3);
+
+		ImGui::SameLine();
+		ImGui::DragFloat("##Y", &values.y, 0.1f, min.y, max.y, "%.2f");
+		ImGui::PopItemWidth();
+		
+		ImGui::PopStyleVar();
+		
+		ImGui::Columns(1);
+
+		ImGui::PopID();
+	}
 	
 	template<typename T, typename UIFunction>
 	static void DrawComponent(const std::string& name, Entity entity, UIFunction function, bool deletable = false) {
@@ -401,16 +457,40 @@ namespace Nebula {
 					const wchar_t* path = (const wchar_t*)payload->Data;
 					std::filesystem::path texturePath = std::filesystem::path(s_AssetPath) / path;
 					Ref<Texture2D> texture = Texture2D::Create(texturePath.string());
-					if (texture->IsLoaded())
+					if (texture->IsLoaded()) {
 						component.Texture = texture;
+						component.SubTextureCellSize = { (float)texture->GetWidth(), (float)texture->GetHeight() };
+					}
 					else
 						NB_WARN("Could not load texture {0}", texturePath.filename().string());
 				}
 				ImGui::EndDragDropTarget();
 			}
 
-			if (component.Texture != nullptr)
+			if (component.Texture != nullptr) {
 				ImGui::DragFloat("Texture Tiling Factor", &component.Tiling, 0.1f, 0.0f, 100.0f);
+				
+				if (ImGui::TreeNodeEx("Sub Texture")) {
+					vec2 textureSize = { (float)component.Texture->GetWidth(), (float)component.Texture->GetHeight() };
+					vec2 maxOffset = textureSize - component.SubTextureCellSize * component.SubTextureCellNum;
+
+					if (component.SubTextureOffset > maxOffset)
+						component.SubTextureOffset = maxOffset;
+
+					if (component.SubTextureOffset < vec2(0.0f))
+						component.SubTextureOffset = vec2(0.0f);
+
+					vec2 maxCellNum = textureSize / component.SubTextureCellSize;
+
+					if (component.SubTextureCellNum > maxCellNum)
+						component.SubTextureCellNum = maxCellNum;
+
+					DrawVec2Control("Offset", component.SubTextureOffset, vec2(0.0f), maxOffset != vec2(0.0f) ? maxOffset : vec2(0.001f));
+					DrawVec2Control("Cell Size", component.SubTextureCellSize, vec2(0.1f), textureSize, textureSize);
+					DrawVec2Control("Cell Number", component.SubTextureCellNum, vec2(0.01f), maxCellNum);
+					ImGui::TreePop();
+				}
+			}
 		}, true);
 
 		DrawComponent<CircleRendererComponent>("Circle Renderer", entity, [](auto& component) {

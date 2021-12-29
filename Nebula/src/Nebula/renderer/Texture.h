@@ -37,6 +37,7 @@ namespace Nebula {
 
 		const Ref<Texture2D> GetTexture() const { return m_Texture; }
 		const vec2* GetTextureCoords() const  { return m_TexCoords; }
+		vec2* GetTextureCoords() { return m_TexCoords; }
 
 		static Ref<SubTexture2D> CreateFromCoords(const Ref<Texture2D>& texture, const vec2& coords, 
 			const vec2& cellSize, const vec2& spriteSize = { 1, 1 });

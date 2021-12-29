@@ -1,41 +1,12 @@
 Scene: Untitled
 Entities:
-  - Entity: 3569121158399529359
-    TagComponent:
-      Tag: Right
-    TransformComponent:
-      Translation: [0.349999994, -0.5, 0.349999994]
-      Rotation: [0, 0.785398185, 0]
-      Scale: [1, 1, 1]
-    SpriteRendererComponent:
-      Colour: [0.370656192, 0, 0.370656371, 1]
-      Texture: None
-      Tiling: 1
-  - Entity: 2605563009129528535
-    TagComponent:
-      Tag: Left
-    TransformComponent:
-      Translation: [-0.349999994, -0.5, 0.349999994]
-      Rotation: [0, -0.785398185, 0]
-      Scale: [1, 1, 1]
-    SpriteRendererComponent:
-      Colour: [0.494208276, 0, 0.494208515, 1]
-      Texture: None
-      Tiling: 1
-  - Entity: 12439973311556186660
-    TagComponent:
-      Tag: Top
-    TransformComponent:
-      Translation: [0, 0, 0]
-      Rotation: [1.57079637, 0.785398185, 0]
-      Scale: [1, 1, 1]
-    SpriteRendererComponent:
-      Colour: [1, 0, 1, 1]
-      Texture: None
-      Tiling: 1
   - Entity: 14839156043936488729
     TagComponent:
       Tag: Camera
+    ParentChildComponent:
+      PrimaryParent: 0
+      Children: ~
+      ChildCount: 0
     TransformComponent:
       Translation: [0, 1.10000002, 4.19999981]
       Rotation: [-0.366519153, 0, 0]
@@ -51,3 +22,57 @@ Entities:
         OrthographicFar: 1
       Primary: true
       FixedAspectRatio: false
+  - Entity: 12439973311556186660
+    TagComponent:
+      Tag: Top
+    ParentChildComponent:
+      PrimaryParent: 0
+      Children: ~
+      ChildCount: 0
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [1.57079637, 0.785398185, 0]
+      Scale: [1, 1, 1]
+    SpriteRendererComponent:
+      Colour: [1, 0, 1, 1]
+      Texture: None
+      Tiling: 1
+      Offset: [0, 0]
+      CellSize: [128, 128]
+      CellNum: [1, 1]
+  - Entity: 2605563009129528535
+    TagComponent:
+      Tag: Left
+    ParentChildComponent:
+      PrimaryParent: 0
+      Children: ~
+      ChildCount: 0
+    TransformComponent:
+      Translation: [-0.349999994, -0.5, 0.349999994]
+      Rotation: [0, -0.785398185, 0]
+      Scale: [1, 1, 1]
+    SpriteRendererComponent:
+      Colour: [0.494208276, 0, 0.494208515, 1]
+      Texture: None
+      Tiling: 1
+      Offset: [0, 0]
+      CellSize: [128, 128]
+      CellNum: [1, 1]
+  - Entity: 3569121158399529359
+    TagComponent:
+      Tag: Right
+    ParentChildComponent:
+      PrimaryParent: 0
+      Children: ~
+      ChildCount: 0
+    TransformComponent:
+      Translation: [0.349999994, -0.5, 0.349999994]
+      Rotation: [0, 0.785398185, 0]
+      Scale: [1, 1, 1]
+    SpriteRendererComponent:
+      Colour: [0.370656192, 0, 0.370656371, 1]
+      Texture: None
+      Tiling: 1
+      Offset: [0, 0]
+      CellSize: [128, 128]
+      CellNum: [1, 1]

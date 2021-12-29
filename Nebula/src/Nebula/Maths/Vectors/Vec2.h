@@ -430,12 +430,32 @@ namespace Nebula {
 	// -- Boolean operators --
 
 	template<typename T>
-	inline constexpr bool  operator==(vec<2, T> const& v1, vec<2, T> const& v2) {
+	inline constexpr bool operator==(vec<2, T> const& v1, vec<2, T> const& v2) {
 		return v1.x == v2.x && v1.y == v2.y;
 	}
 
 	template<typename T>
 	inline constexpr bool operator!=(vec<2, T> const& v1, vec<2, T> const& v2) {
 		return !(v1 == v2);
+	}
+
+	template<typename T>
+	inline constexpr bool operator>=(vec<2, T> const& v1, vec<2, T> const& v2) {
+		return v1.x >= v2.x || v1.y >= v2.y;
+	}
+
+	template<typename T>
+	inline constexpr bool operator<=(vec<2, T> const& v1, vec<2, T> const& v2) {
+		return v1.x <= v2.x || v1.y <= v2.y;
+	}
+
+	template<typename T>
+	inline constexpr bool operator>(vec<2, T> const& v1, vec<2, T> const& v2) {
+		return v1.x > v2.x || v1.y > v2.y;
+	}
+
+	template<typename T>
+	inline constexpr bool operator<(vec<2, T> const& v1, vec<2, T> const& v2) {
+		return v1.x < v2.x || v1.y < v2.y;
 	}
 }
