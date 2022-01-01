@@ -8447,12 +8447,12 @@ public:
         static_assert(std::is_invocable_v<Func, entity_type>);
 
         if(destroyed == null) {
-            for(auto pos = entities.size(); pos; --pos) {
-                func(entities[pos-1]);
+            for(auto pos = 0; pos < entities.size(); ++pos) {
+                func(entities[pos]);
             }
         } else {
-            for(auto pos = entities.size(); pos; --pos) {
-                if(const auto entt = entities[pos - 1]; (to_integral(entt) & traits_type::entity_mask) == (pos - 1)) {
+            for(auto pos = 0; pos < entities.size(); ++pos) {
+                if(const auto entt = entities[pos]; (to_integral(entt) & traits_type::entity_mask) == (pos)) {
                     func(entt);
                 }
             }

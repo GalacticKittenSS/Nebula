@@ -8,6 +8,61 @@
 namespace Nebula {
 	extern const std::filesystem::path s_AssetPath;
 
+	template<typename T>
+	static std::vector<T> Move(std::vector<T>& v, uint32_t from, uint32_t to) {
+		T value = v[from];
+		if (from < to) {
+			for (uint32_t i = from; i < to; i++)
+				v[i] = v[i + 1];
+
+			v[to] = value;
+		}
+		else if (from > to) {
+			for (uint32_t i = from; i > to; i--)
+				v[i] = v[i - 1];
+
+			v[to] = value;
+		}
+
+		return v;
+	}
+
+	static void AddParent(UUID childID, Entity parentEntity, Scene* scene) {
+		bool isSafeToDrop = true;
+		if (childID == parentEntity.GetUUID())
+			isSafeToDrop = false;
+
+		auto& parent = parentEntity.GetComponent<ParentChildComponent>();
+
+		Entity dropEnt{ childID, scene };
+		auto& child = dropEnt.GetComponent<ParentChildComponent>();
+
+
+		//Check if Dropped Entity is being dropped to parent of itself
+		if (child.PrimaryParent == parentEntity.GetUUID())
+			isSafeToDrop = false;
+
+		//Check if Dropped Entity is being dropped to child of itself
+		for (uint32_t i = 0; i < child.ChildrenCount; i++) {
+			if (child[i] == parentEntity.GetUUID())
+				isSafeToDrop = false; break;
+		}
+
+
+		//Go Ahead if safe
+		if (isSafeToDrop) {
+			UUID parentID = child.PrimaryParent;
+			if (parentID) {
+				Entity parent{ parentID, scene };
+				parent.GetComponent<ParentChildComponent>().RemoveChild(childID);
+			}
+
+			parent.AddChild(childID);
+
+			child.PrimaryParent = parentEntity.GetUUID();
+		}
+	}
+
 	SceneHierarchyPanel::SceneHierarchyPanel(const Ref<Scene>& scene) {
 		SetContext(scene);
 	}
@@ -15,6 +70,7 @@ namespace Nebula {
 	void SceneHierarchyPanel::SetContext(const Ref<Scene>& context) {
 		m_Context = context;
 		m_SelectionContext = {};
+		m_EntityOrder.clear();
 	}
 
 	void SceneHierarchyPanel::OnImGuiRender() {
@@ -22,11 +78,39 @@ namespace Nebula {
 
 		if (m_Context) {
 			m_Context->m_Registry.each([&](auto entityID) {
-				Entity entity{ entityID, m_Context.get() };
-				UUID parent = entity.GetComponent<ParentChildComponent>().PrimaryParent;
-				if (!parent)
-					DrawEntityNode(entity);
+				UUID uuid = Entity{ entityID, m_Context.get() }.GetUUID();
+
+				bool found = false;
+				for (auto entity : m_EntityOrder) {
+					if (entity == uuid)
+						found = true;
+				}
+
+				if (!found)
+					m_EntityOrder.push_back(uuid);
 			});
+			
+			for (uint32_t n = 0; n < m_EntityOrder.size(); n++) {
+				Entity entity{ m_EntityOrder[n], m_Context.get()};
+				
+				if (!entity.GetComponent<ParentChildComponent>().PrimaryParent) {
+					DrawEntityNode(entity);
+					
+					if (m_SelectionContext == entity) {
+						if (m_MovedEntityIndex == -1)
+							m_MovedEntityIndex = n;
+
+						int32_t n_next = m_MovedEntityIndex + int32_t(ImGui::GetMouseDragDelta(0).y / 20);
+						if (n_next >= 0 && n_next < m_EntityOrder.size())
+							Move(m_EntityOrder, n, n_next);
+
+						if (ImGui::IsMouseReleased(0)) {
+							ImGui::ResetMouseDragDelta(0);
+							m_MovedEntityIndex = -1;
+						}
+					}
+				}
+			}
 
 			if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered())
 				m_SelectionContext = {};
@@ -63,45 +147,11 @@ namespace Nebula {
 			ImGui::SetDragDropPayload("ENTITY", &entityID, sizeof(uint64_t), ImGuiCond_Once);
 			ImGui::EndDragDropSource();
 		}
-
+		
 		if (ImGui::BeginDragDropTarget()) {
-			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENTITY")) {
-				const UUID entityID = *(const UUID*)payload->Data;
-				
-				bool isSafeToDrop = true;
-				if (entityID == entity.GetUUID())
-					isSafeToDrop = false;
-
-				auto& parent = entity.GetComponent<ParentChildComponent>();
-				
-				Entity dropEnt{ entityID, m_Context.get() };
-				auto& child = dropEnt.GetComponent<ParentChildComponent>();
-				
-
-				//Check if Dropped Entity is being dropped to parent of itself
-				if (child.PrimaryParent == entity.GetUUID())
-					isSafeToDrop = false;
-
-				//Check if Dropped Entity is being dropped to child of itself
-				for (uint32_t i = 0; i < child.ChildrenCount; i++) {
-					if (child[i] == entity.GetUUID())
-						isSafeToDrop = false; break;
-				}
-
-
-				//Go Ahead if safe
-				if (isSafeToDrop) {
-					UUID parentID = child.PrimaryParent;
-					if (parentID) {
-						Entity parent{ parentID, m_Context.get() };
-						parent.GetComponent<ParentChildComponent>().RemoveChild(entityID);
-					}
-					
-					parent.AddChild(entityID);
-					
-					child.PrimaryParent = entity.GetUUID();
-				}
-			}
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENTITY"))
+				AddParent(*(const UUID*)payload->Data, entity, m_Context.get());
+			
 			ImGui::EndDragDropTarget();
 		}
 

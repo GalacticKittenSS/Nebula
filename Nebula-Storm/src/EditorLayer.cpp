@@ -59,8 +59,6 @@ namespace Nebula {
 		RenderCommand::SetClearColour({ 0.1f, 0.1f, 0.1f, 1.0f });
 		RenderCommand::Clear();
 
-		RenderCommand::SetLineWidth(1.0f);
-
 		frameBuffer->ClearAttachment(1, -1);
 
 		switch (m_SceneState) {
@@ -241,7 +239,6 @@ namespace Nebula {
 
 		m_GameViewFocus = ImGui::IsWindowFocused();
 		m_GameViewHovered = ImGui::IsWindowHovered();
-		//Application::Get().GetImGuiLayer()->SetBlockEvents(!m_GameViewFocus && !m_GameViewHovered);
 
 		ImVec2 panelSize = ImGui::GetContentRegionAvail();
 		m_GameViewSize = { panelSize.x, panelSize.y };
@@ -257,24 +254,25 @@ namespace Nebula {
 			ImGui::EndDragDropTarget();
 		}
 
-		m_UsingGizmo = ImGuizmo::IsOver();
+		m_UsingGizmo = ImGuizmo::IsUsing();
 
 		//Gizmos
-		if (m_SceneState == SceneState::Edit && m_GizmoType != -1) {
+		if (m_SceneState == SceneState::Edit) {
 			Entity selectedEntity = m_SceneHierarchy.GetSelectedEntity();
-			if (selectedEntity) {
-				ImGuizmo::SetOrthographic(false);
-				ImGuizmo::SetDrawlist();
+			ImGuizmo::SetOrthographic(false);
+			ImGuizmo::SetDrawlist();
+			ImGuizmo::SetRect(m_ViewPortBounds[0].x, m_ViewPortBounds[0].y, m_ViewPortBounds[1].x - m_ViewPortBounds[0].x, m_ViewPortBounds[1].y - m_ViewPortBounds[0].y);
 
-				ImGuizmo::SetRect(m_ViewPortBounds[0].x, m_ViewPortBounds[0].y, m_ViewPortBounds[1].x - m_ViewPortBounds[0].x, m_ViewPortBounds[1].y - m_ViewPortBounds[0].y);
+			float windowWidth = (float)ImGui::GetWindowWidth();
+			float windowHeight = (float)ImGui::GetWindowHeight();
+			ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowWidth, windowHeight);
 
-				float windowWidth = (float)ImGui::GetWindowWidth();
-				float windowHeight = (float)ImGui::GetWindowHeight();
-				ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowWidth, windowHeight);
+			const mat4& cameraProj = m_EditorCam.GetProjection();
+			mat4 cameraView = m_EditorCam.GetViewMatrix();
 
-				const mat4& cameraProj = m_EditorCam.GetProjection();
-				mat4 cameraView = m_EditorCam.GetViewMatrix();
+			ImGuizmo::DrawGrid(value_ptr(cameraView), value_ptr(cameraProj), value_ptr(mat4(1.0f)), 50.0f);
 
+			if (selectedEntity && m_GizmoType != -1) {
 				auto& tc = selectedEntity.GetComponent<TransformComponent>();
 				mat4 transform = tc.CalculateMatrix();
 
@@ -341,7 +339,7 @@ namespace Nebula {
 	}
 
 	bool EditorLayer::OnKeyPressed(KeyPressedEvent& e) {
-		if (e.GetRepeatCount() > 0 || !m_GameViewFocus)
+		if (e.GetRepeatCount() > 0 || !m_GameViewFocus || m_SceneState != SceneState::Edit)
 			return false;
 
 		bool control = Input::IsKeyPressed(KeyCode::LeftControl) || Input::IsKeyPressed(KeyCode::RightControl);

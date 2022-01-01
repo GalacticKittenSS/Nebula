@@ -25,6 +25,9 @@ namespace Nebula {
 
 		bool m_ShowGlobal = false;
 
+		std::vector<UUID> m_EntityOrder;
+		int32_t m_MovedEntityIndex = -1;
+		
 		friend class Scene;
 	};
 }

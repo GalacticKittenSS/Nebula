@@ -72,9 +72,15 @@ namespace Nebula {
 		auto& srcSceneReg = other->m_Registry;
 		auto& dstSceneReg = newScene->m_Registry;
 		auto idView = srcSceneReg.view<IDComponent>();
-		for (auto e : idView) {
-			UUID uuid = srcSceneReg.get<IDComponent>(e).ID;
-			const auto& name = srcSceneReg.get<TagComponent>(e).Tag;
+
+		std::vector<entt::entity> entityVec;
+
+		for (auto e : idView)
+			entityVec.push_back(e);
+
+		for (uint32_t i = entityVec.size(); i; i--) {
+			UUID uuid = srcSceneReg.get<IDComponent>(entityVec[i - 1]).ID;
+			const auto& name = srcSceneReg.get<TagComponent>(entityVec[i -1]).Tag;
 			Entity newEnt = newScene->CreateEntity(uuid, name);
 			enttMap[uuid] = (entt::entity)newEnt;
 		}

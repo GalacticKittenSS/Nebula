@@ -29,7 +29,7 @@ namespace Nebula {
 
 
 		//Primitives
-		static void Draw(const uint32_t type, const vec4* vertexPos,
+		static void Draw(const uint32_t type, const uint32_t vertexCount, const vec4* vertexPos,
 			const mat4& transform, const vec4& colour, Ref<Texture2D> texture = nullptr, float tiling = 1.0f, vec2* texCoords = nullptr, uint32_t entityID = -1);
 		static void Draw(const uint32_t type, const vec4* vertexPos, const mat4& transform, const vec4& colour, const float thickness = 1.0f, const float fade = 0.005f, uint32_t entityID = -1);
 

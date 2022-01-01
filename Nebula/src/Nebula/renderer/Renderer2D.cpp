@@ -244,7 +244,7 @@ namespace Nebula {
 		ResetBatch();
 	}
 	
-	void Renderer2D::Draw(const uint32_t type, const vec4* vertexPos, 
+	void Renderer2D::Draw(const uint32_t type, const uint32_t vertexCount, const vec4* vertexPos,
 		const mat4& transform, const vec4& colour, Ref<Texture2D> texture, float tiling, vec2* texCoords, uint32_t entityID) {
 		NB_PROFILE_FUNCTION();
 		if (texture == nullptr)
@@ -256,7 +256,7 @@ namespace Nebula {
 
 			if (texCoords == nullptr) {
 				texCoords = new vec2[type];
-				for (uint32_t i = 0; i < type; i+=4) {
+				for (uint32_t i = 0; i < vertexCount; i+=4) {
 					texCoords[i + 0] = { 0, 0 };
 					texCoords[i + 1] = { 1, 0 };
 					texCoords[i + 2] = { 1, 1 };
@@ -264,22 +264,22 @@ namespace Nebula {
 				};
 			}
 
-			s_Data.QuadVBPtr = CalculateVertexData(s_Data.QuadVBPtr, type, vertexPos, transform, colour, texture, texCoords, tiling, entityID);
-			s_Data.QuadIndexCount += uint32_t(type * 1.5);
+			s_Data.QuadVBPtr = CalculateVertexData(s_Data.QuadVBPtr, vertexCount, vertexPos, transform, colour, texture, texCoords, tiling, entityID);
+			s_Data.QuadIndexCount += uint32_t(vertexCount * 1.5);
 		}
 		else if (type == NB_TRI) {
 			if (s_Data.TriIndexCount >= s_Data.MaxIndices)
 				FlushAndReset();
 
 			texCoords = new vec2[type];
-			for (uint32_t i = 0; i < type; i+=3) {
+			for (uint32_t i = 0; i < vertexCount; i+=3) {
 				texCoords[i + 0] = { 0.0f, 0.0f };
 				texCoords[i + 1] = { 1.0f, 0.0f };
 				texCoords[i + 2] = { 0.5f, 0.5f };
 			};
 
-			s_Data.TriVBPtr = CalculateVertexData(s_Data.TriVBPtr, type, vertexPos, transform, colour, texture, texCoords, tiling, entityID);
-			s_Data.TriIndexCount += type;
+			s_Data.TriVBPtr = CalculateVertexData(s_Data.TriVBPtr, vertexCount, vertexPos, transform, colour, texture, texCoords, tiling, entityID);
+			s_Data.TriIndexCount += vertexCount;
 		}
 	}
 
@@ -403,10 +403,10 @@ namespace Nebula {
 			if (spriteRenderer.Texture != nullptr) {
 				Ref<SubTexture2D> subT = SubTexture2D::CreateFromCoords(spriteRenderer.Texture, spriteRenderer.SubTextureOffset, spriteRenderer.SubTextureCellSize, spriteRenderer.SubTextureCellNum);
 
-				Draw(type, vertexPos, transform, spriteRenderer.Colour, spriteRenderer.Texture, spriteRenderer.Tiling, subT->GetTextureCoords(), entity);
+				Draw(type, type, vertexPos, transform, spriteRenderer.Colour, spriteRenderer.Texture, spriteRenderer.Tiling, subT->GetTextureCoords(), entity);
 			}
 			else {
-				Draw(type, vertexPos, transform, spriteRenderer.Colour, spriteRenderer.Texture, spriteRenderer.Tiling, nullptr, entity);
+				Draw(type, type, vertexPos, transform, spriteRenderer.Colour, spriteRenderer.Texture, spriteRenderer.Tiling, nullptr, entity);
 			}
 
 		}
@@ -450,8 +450,8 @@ namespace Nebula {
 		switch (type) {
 			case NB_QUAD: {
 				vertexPos[0] = { -0.5f, -0.5f, 0.0f, 1.0f };
-				vertexPos[1] = { 0.5f, -0.5f, 0.0f, 1.0f };
-				vertexPos[2] = { 0.5f,  0.5f, 0.0f, 1.0f };
+				vertexPos[1] = {  0.5f, -0.5f, 0.0f, 1.0f };
+				vertexPos[2] = {  0.5f,  0.5f, 0.0f, 1.0f };
 				vertexPos[3] = { -0.5f,  0.5f, 0.0f, 1.0f };
 
 				break;
@@ -464,7 +464,7 @@ namespace Nebula {
 			}
 		}
 
-		Draw(type, vertexPos, transform, colour, texture, tiling);
+		Draw(type, type, vertexPos, transform, colour, texture, tiling);
 	}
 
 	void Renderer2D::DrawCircle(const mat4& transform, const vec4& colour, const float thickness, const float fade, int EntityID) {
