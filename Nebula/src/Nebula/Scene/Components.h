@@ -26,7 +26,7 @@ namespace Nebula {
 	};
 
 	struct ParentChildComponent {
-		UUID PrimaryParent = 0;
+		UUID PrimaryParent = NULL;
 		
 		//TODO: No Max
 		UUID* ChildrenIDs = new UUID[32]; //Max 32 Children (TEMP) 

@@ -339,7 +339,7 @@ namespace Nebula {
 	}
 
 	bool EditorLayer::OnKeyPressed(KeyPressedEvent& e) {
-		if (e.GetRepeatCount() > 0 || !m_GameViewFocus || m_SceneState != SceneState::Edit)
+		if (e.GetRepeatCount() > 0 || m_SceneState != SceneState::Edit)
 			return false;
 
 		bool control = Input::IsKeyPressed(KeyCode::LeftControl) || Input::IsKeyPressed(KeyCode::RightControl);
@@ -363,12 +363,12 @@ namespace Nebula {
 			break;
 
 		case KeyCode::D:
-			if (control)
+			if (control && (m_GameViewFocus || m_SceneHierarchy.IsFocused()))
 				DuplicateEntity();
 			break;
 
 		case KeyCode::Backspace:
-			if (m_SceneHierarchy.GetSelectedEntity()) {
+			if (m_SceneHierarchy.GetSelectedEntity() && (m_GameViewFocus || m_SceneHierarchy.IsFocused())) {
 				if (m_SceneState == SceneState::Edit)
 					m_EditorScene->DestroyEntity(m_SceneHierarchy.GetSelectedEntity());
 
@@ -377,19 +377,19 @@ namespace Nebula {
 
 		//Gizmos
 		case KeyCode::Q:
-			if (!m_UsingGizmo)
+			if (!m_UsingGizmo && (!m_GameViewHovered || !m_SceneHierarchy.IsFocused()))
 				m_GizmoType = -1;
 			break;
 		case KeyCode::W:
-			if (!m_UsingGizmo)
+			if (!m_UsingGizmo && (!m_GameViewHovered || !m_SceneHierarchy.IsFocused()))
 				m_GizmoType = ImGuizmo::OPERATION::TRANSLATE;
 			break;
 		case KeyCode::E:
-			if (!m_UsingGizmo)
+			if (!m_UsingGizmo && (!m_GameViewHovered || !m_SceneHierarchy.IsFocused()))
 				m_GizmoType = ImGuizmo::OPERATION::ROTATE;
 			break;
 		case KeyCode::R:
-			if (!m_UsingGizmo)
+			if (!m_UsingGizmo && (!m_GameViewHovered || !m_SceneHierarchy.IsFocused()))
 				m_GizmoType = ImGuizmo::OPERATION::SCALE;
 			break;
 		}
@@ -399,7 +399,7 @@ namespace Nebula {
 
 
 	bool EditorLayer::OnMousePressed(MouseButtonPressedEvent& e) {
-		if (e.GetMouseButton() == Mouse::Button0 && !m_UsingGizmo && m_GameViewHovered && m_SceneState == SceneState::Edit)
+		if (e.GetMouseButton() == Mouse::Button0 && !ImGuizmo::IsOver() && m_GameViewHovered && m_SceneState == SceneState::Edit)
 			m_SceneHierarchy.SetSelectedEntity(m_HoveredEntity);
 
 		return false;
@@ -470,6 +470,8 @@ namespace Nebula {
 
 		m_ActiveScene = Scene::Copy(m_EditorScene);
 		m_ActiveScene->OnRuntimeStart();
+
+		m_ActiveScene->OnViewportResize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
 		
 		m_SceneHierarchy.SetContext(m_ActiveScene);
 		m_SceneState = SceneState::Play;

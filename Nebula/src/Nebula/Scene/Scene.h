@@ -37,6 +37,8 @@ namespace Nebula {
 		auto GetAllEntitiesWith() {
 			return m_Registry.view<Components...>();
 		}
+
+		std::vector<UUID> m_SceneOrder;
 	private:
 		template<typename T>
 		void OnComponentAdded(Entity entity, T& component);

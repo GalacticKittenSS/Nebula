@@ -16,6 +16,9 @@ namespace Nebula {
 
 		bool GetShowGlobalTransform() { return m_ShowGlobal; }
 		void SetShowGlobalTransform(bool show) { m_ShowGlobal = show; }
+
+		bool IsFocused() { return m_HierarchyFocused; }
+		bool IsHovered() { return m_HierarchyHovered; }
 	private:
 		void DrawEntityNode(Entity entity);
 		void DrawComponents(Entity entity);
@@ -24,8 +27,9 @@ namespace Nebula {
 		Entity m_SelectionContext;
 
 		bool m_ShowGlobal = false;
+		bool m_HierarchyFocused = false;
+		bool m_HierarchyHovered = false;
 
-		std::vector<UUID> m_EntityOrder;
 		int32_t m_MovedEntityIndex = -1;
 		
 		friend class Scene;

@@ -70,44 +70,31 @@ namespace Nebula {
 	void SceneHierarchyPanel::SetContext(const Ref<Scene>& context) {
 		m_Context = context;
 		m_SelectionContext = {};
-		m_EntityOrder.clear();
 	}
 
 	void SceneHierarchyPanel::OnImGuiRender() {
 		ImGui::Begin("Scene Hierarchy");
 
 		if (m_Context) {
-			m_Context->m_Registry.each([&](auto entityID) {
-				UUID uuid = Entity{ entityID, m_Context.get() }.GetUUID();
-
-				bool found = false;
-				for (auto entity : m_EntityOrder) {
-					if (entity == uuid)
-						found = true;
-				}
-
-				if (!found)
-					m_EntityOrder.push_back(uuid);
-			});
-			
-			for (uint32_t n = 0; n < m_EntityOrder.size(); n++) {
-				Entity entity{ m_EntityOrder[n], m_Context.get()};
+			for (uint32_t n = 0; n < m_Context->m_SceneOrder.size(); n++) {
+				Entity entity{ m_Context->m_SceneOrder[n], m_Context.get()};
 				
 				if (!entity.GetComponent<ParentChildComponent>().PrimaryParent) {
 					DrawEntityNode(entity);
-					
-					if (m_SelectionContext == entity) {
-						if (m_MovedEntityIndex == -1)
+
+					if (m_SelectionContext == entity && ImGui::IsWindowFocused()) {
+						if (ImGui::IsMouseClicked(0))
 							m_MovedEntityIndex = n;
 
-						int32_t n_next = m_MovedEntityIndex + int32_t(ImGui::GetMouseDragDelta(0).y / 20);
-						if (n_next >= 0 && n_next < m_EntityOrder.size())
-							Move(m_EntityOrder, n, n_next);
-
-						if (ImGui::IsMouseReleased(0)) {
-							ImGui::ResetMouseDragDelta(0);
-							m_MovedEntityIndex = -1;
-						}
+						int32_t n_next = m_MovedEntityIndex + int32_t(ImGui::GetMouseDragDelta(0).y / 24);
+						
+						if (n_next >= 0 && n_next < m_Context->m_SceneOrder.size() && n != n_next && !ImGui::IsAnyItemHovered())
+							Move(m_Context->m_SceneOrder, n, n_next);
+					}
+					
+					if (ImGui::IsMouseReleased(0)) {
+						ImGui::ResetMouseDragDelta(0);
+						m_MovedEntityIndex = -1;
 					}
 				}
 			}
@@ -121,8 +108,23 @@ namespace Nebula {
 
 				ImGui::EndPopup();
 			}
+
+			if (ImGui::IsMouseReleased(0) && ImGui::IsWindowHovered()) {
+				const ImGuiPayload* payload = ImGui::GetDragDropPayload();
+				if (payload != nullptr) {
+					auto& Parent = Entity{ *(const UUID*)payload->Data, m_Context.get() }.GetComponent<ParentChildComponent>();
+
+					if (Parent.PrimaryParent) {
+						Entity{ Parent.PrimaryParent, m_Context.get() }.GetComponent<ParentChildComponent>().RemoveChild(*(const UUID*)payload->Data);
+						Parent.PrimaryParent = NULL;
+					}
+				}
+			}
 		}
 		
+		m_HierarchyFocused = ImGui::IsWindowFocused();
+		m_HierarchyHovered = ImGui::IsWindowHovered();
+
 		ImGui::End();
 
 

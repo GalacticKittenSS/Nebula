@@ -52,7 +52,7 @@
 //----Application-----
 #include "Nebula/Core/Time.h"
 #include "Nebula/Core/Window.h"
-#include "Nebula/Core/Random.h"
+#include "Nebula/Utils/Random.h"
 
 #include "Nebula/Core/Application.h"
 //--------------------

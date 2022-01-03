@@ -86,6 +86,8 @@ namespace Nebula {
 		}
 
 		CopyComponent(AllComponents{}, dstSceneReg, srcSceneReg, enttMap);
+		newScene->m_SceneOrder = other->m_SceneOrder;
+
 		return newScene;
 	}
 
@@ -99,6 +101,8 @@ namespace Nebula {
 
 	Entity Scene::CreateEntity(UUID uuid, const std::string& name) {
 		Entity entity = { m_Registry.create(), this };
+		m_SceneOrder.push_back(uuid);
+
 		auto& idc = entity.AddComponent<IDComponent>();
 		idc.ID = uuid;
 		entity.AddComponent<TransformComponent>();
@@ -109,6 +113,20 @@ namespace Nebula {
 	}
 
 	void Scene::DestroyEntity(Entity entity) {
+		auto& Parent = entity.GetComponent<ParentChildComponent>();
+
+		if (Parent.PrimaryParent) {
+			Entity{ Parent.PrimaryParent, this }.GetComponent<ParentChildComponent>().RemoveChild(entity.GetUUID());
+			Parent.PrimaryParent = NULL;
+		}
+
+		std::vector<UUID> newVec;
+		for (uint32_t i = 0; i < m_SceneOrder.size(); i++) {
+			if (m_SceneOrder[i] != entity.GetUUID())
+				newVec.push_back(m_SceneOrder[i]);
+		}
+
+		m_SceneOrder = newVec;
 		m_Registry.destroy(entity);
 	}
 

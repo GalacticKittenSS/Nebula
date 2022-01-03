@@ -5,7 +5,7 @@ Entities:
       Tag: Enviroment
     ParentChildComponent:
       PrimaryParent: 0
-      Children: [11531482172220784666, 1734186555264958028, 16434448802742922228, 11691747497498017467, 2555061558569917065, 8525815086722917192, 6961276783589167595, 4238392629824766104, 17924338926232536196, 17945224244753102173, 12392182606285594567]
+      Children: [1734186555264958028, 16434448802742922228, 11691747497498017467, 2555061558569917065, 8525815086722917192, 6961276783589167595, 4238392629824766104, 17924338926232536196, 17945224244753102173, 12392182606285594567, 11531482172220784666]
       ChildCount: 11
     TransformComponent:
       Translation: [0, 0, 0]
@@ -204,28 +204,6 @@ Entities:
       Friction: 0
       Restitution: 0.810000002
       RestitutionThreshold: 0.720000029
-  - Entity: 14961826949240870393
-    TagComponent:
-      Tag: Camera
-    ParentChildComponent:
-      PrimaryParent: 0
-      Children: ~
-      ChildCount: 0
-    TransformComponent:
-      Translation: [0, 7.39061832, 0]
-      Rotation: [0, 0, 0]
-      Scale: [1, 1, 1]
-    CameraComponent:
-      Camera:
-        ProjectionType: 1
-        PerspectiveFOV: 0.785398185
-        PerspectiveNear: 0.00999999978
-        PerspectiveFar: 1000
-        OrthographicSize: 10
-        OrthographicNear: -1
-        OrthographicFar: 1
-      Primary: true
-      FixedAspectRatio: false
   - Entity: 4238392629824766104
     TagComponent:
       Tag: Sprite
@@ -234,7 +212,7 @@ Entities:
       Children: ~
       ChildCount: 0
     TransformComponent:
-      Translation: [-0.0343947411, -3.25, 0]
+      Translation: [-0.0343947411, -3, 0]
       Rotation: [0, 0, 0]
       Scale: [20.0815239, 1, 1]
     SpriteRendererComponent:
@@ -338,3 +316,25 @@ Entities:
       Friction: 0.5
       Restitution: 0
       RestitutionThreshold: 0.5
+  - Entity: 14961826949240870393
+    TagComponent:
+      Tag: Camera
+    ParentChildComponent:
+      PrimaryParent: 0
+      Children: ~
+      ChildCount: 0
+    TransformComponent:
+      Translation: [0, 2, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    CameraComponent:
+      Camera:
+        ProjectionType: 1
+        PerspectiveFOV: 0.785398185
+        PerspectiveNear: 0.00999999978
+        PerspectiveFar: 1000
+        OrthographicSize: 10
+        OrthographicNear: -1
+        OrthographicFar: 1
+      Primary: true
+      FixedAspectRatio: false
