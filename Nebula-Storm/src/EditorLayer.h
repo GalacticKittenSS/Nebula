@@ -44,6 +44,7 @@ namespace Nebula {
 		bool m_GameViewFocus = false, m_GameViewHovered = false;
 		bool m_UsingGizmo = false;
 		bool m_ShowColliders = false;
+		bool m_ShowGrid = false;
 		
 		vec2 m_GameViewSize = { 1280.0f, 720.0f };
 		vec2 m_ViewPortBounds[2];
@@ -71,6 +72,6 @@ namespace Nebula {
 		ContentBrowserPanel m_ContentBrowser;
 
 		//Editor Resources
-		Ref<Texture2D> m_PlayIcon, m_StopIcon;
+		Ref<Texture2D> m_PlayIcon, m_StopIcon, m_Backdrop;
 	};
 }

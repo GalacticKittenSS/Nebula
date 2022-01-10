@@ -80,7 +80,7 @@ namespace Nebula {
 	OpenGL_FrameBuffer::OpenGL_FrameBuffer(const FrameBufferSpecification& specifications): m_Specifications(specifications) {
 		for (auto spec : m_Specifications.Attachments.Attachments) {
 			if (!Utils::IsDepthFormat(spec.TextureFormat))
-				m_ColourAttachmentSpecs.emplace_back(spec);
+				m_ColourAttachmentSpecs.push_back(spec);
 			else
 				m_DepthAttachmentSpec = spec;
 		}

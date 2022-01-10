@@ -2,6 +2,7 @@
 
 #include "entt.hpp"
 #include "Nebula/Renderer/Camera.h"
+#include "Nebula/Utils/Arrays.h"
 
 class b2World;
 
@@ -26,7 +27,8 @@ namespace Nebula {
 		void OnRuntimeStop();
 
 		void UpdateRuntime();
-		void UpdateEditor(EditorCamera& camera);
+		void UpdateEditor();
+		void RenderEditor(EditorCamera& camera);
 		void RenderRuntime();
 		
 		void OnViewportResize(uint32_t width, uint32_t height);
@@ -38,7 +40,7 @@ namespace Nebula {
 			return m_Registry.view<Components...>();
 		}
 
-		std::vector<UUID> m_SceneOrder;
+		Array<UUID> m_SceneOrder;
 	private:
 		template<typename T>
 		void OnComponentAdded(Entity entity, T& component);

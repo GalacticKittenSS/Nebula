@@ -152,7 +152,7 @@ namespace Nebula {
 
 			YAML::Node children;
 			for (uint32_t i = 0; i < component.ChildrenCount; i++)
-				children.push_back((uint64_t)component.ChildrenIDs[i]);
+				children.push_back((uint64_t)component[i]);
 			children.SetStyle(YAML::EmitterStyle::Flow);
 			
 			out << YAML::Key << "PrimaryParent" << YAML::Value << component.PrimaryParent;
@@ -339,10 +339,10 @@ namespace Nebula {
 					auto& pcc = deserializedEntity.GetComponent<ParentChildComponent>();
 					pcc.PrimaryParent = parentComponent["PrimaryParent"].as<uint64_t>();
 
-					pcc.ChildrenCount = parentComponent["ChildCount"].as<uint32_t>();
+					uint32_t count = parentComponent["ChildCount"].as<uint32_t>();
 					auto children = parentComponent["Children"];
-					for (uint32_t i = 0; i < pcc.ChildrenCount; i++)
-						pcc.ChildrenIDs[i] = children[i].as<uint64_t>();
+					for (uint32_t i = 0; i < count; i++)
+						pcc.AddChild(children[i].as<uint64_t>());
 				}
 
 				auto cameraComponent = entity["CameraComponent"];

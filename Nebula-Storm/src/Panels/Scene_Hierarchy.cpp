@@ -8,25 +8,6 @@
 namespace Nebula {
 	extern const std::filesystem::path s_AssetPath;
 
-	template<typename T>
-	static std::vector<T> Move(std::vector<T>& v, uint32_t from, uint32_t to) {
-		T value = v[from];
-		if (from < to) {
-			for (uint32_t i = from; i < to; i++)
-				v[i] = v[i + 1];
-
-			v[to] = value;
-		}
-		else if (from > to) {
-			for (uint32_t i = from; i > to; i--)
-				v[i] = v[i - 1];
-
-			v[to] = value;
-		}
-
-		return v;
-	}
-
 	static void AddParent(UUID childID, Entity parentEntity, Scene* scene) {
 		bool isSafeToDrop = true;
 		if (childID == parentEntity.GetUUID())
@@ -89,7 +70,7 @@ namespace Nebula {
 						int32_t n_next = m_MovedEntityIndex + int32_t(ImGui::GetMouseDragDelta(0).y / 24);
 						
 						if (n_next >= 0 && n_next < m_Context->m_SceneOrder.size() && n != n_next && !ImGui::IsAnyItemHovered())
-							Move(m_Context->m_SceneOrder, n, n_next);
+							m_Context->m_SceneOrder.move(n, n_next);
 					}
 					
 					if (ImGui::IsMouseReleased(0)) {
@@ -103,8 +84,22 @@ namespace Nebula {
 				m_SelectionContext = {};
 
 			if (ImGui::BeginPopupContextWindow(0, 1, false)) {
-				if (ImGui::MenuItem("Create Empty"))
-					m_Context->CreateEntity("Empty Entity");
+				if (ImGui::BeginMenu("Create Entity")) {
+					if (ImGui::MenuItem("Empty"))
+						auto& entity = m_Context->CreateEntity("Entity");
+
+					if (ImGui::MenuItem("Sprite")) {
+						auto& sprite = m_Context->CreateEntity("Sprite");
+						sprite.AddComponent<SpriteRendererComponent>();
+					}
+
+					if (ImGui::MenuItem("Camera")) {
+						auto& cam = m_Context->CreateEntity("Camera");
+						cam.AddComponent<CameraComponent>();
+					}
+
+					ImGui::EndMenu();
+				}
 
 				ImGui::EndPopup();
 			}
@@ -112,11 +107,17 @@ namespace Nebula {
 			if (ImGui::IsMouseReleased(0) && ImGui::IsWindowHovered()) {
 				const ImGuiPayload* payload = ImGui::GetDragDropPayload();
 				if (payload != nullptr) {
-					auto& Parent = Entity{ *(const UUID*)payload->Data, m_Context.get() }.GetComponent<ParentChildComponent>();
+					Entity Ent{ *(const UUID*)payload->Data, m_Context.get() };
+					auto& ParentComp = Ent.GetParentChild();
 
-					if (Parent.PrimaryParent) {
-						Entity{ Parent.PrimaryParent, m_Context.get() }.GetComponent<ParentChildComponent>().RemoveChild(*(const UUID*)payload->Data);
-						Parent.PrimaryParent = NULL;
+					if (ParentComp.PrimaryParent) {
+						Entity{ ParentComp.PrimaryParent, m_Context.get() }.GetComponent<ParentChildComponent>().RemoveChild(*(const UUID*)payload->Data);
+						
+						UUID parentsParent = Entity{ ParentComp.PrimaryParent, m_Context.get() }.GetParentChild().PrimaryParent;
+						ParentComp.PrimaryParent = parentsParent;
+						
+						if (parentsParent)
+							Entity{ parentsParent, m_Context.get() }.GetParentChild().AddChild(Ent.GetUUID());
 					}
 				}
 			}
@@ -165,14 +166,53 @@ namespace Nebula {
 			if (ImGui::MenuItem("Delete Selected Entity"))
 				entityDeleted = true;
 
+			if (ImGui::BeginMenu("Create Entity")) {
+				if (ImGui::MenuItem("Empty")) {
+					auto& newEnt = m_Context->CreateEntity("Entity");
+					AddParent(newEnt.GetUUID(), entity, m_Context.get());
+				}
+
+				if (ImGui::MenuItem("Sprite")) {
+					auto& sprite = m_Context->CreateEntity("Sprite");
+					sprite.AddComponent<SpriteRendererComponent>();
+					AddParent(sprite.GetUUID(), entity, m_Context.get());
+				}
+
+				if (ImGui::MenuItem("Camera")) {
+					auto& cam = m_Context->CreateEntity("Camera");
+					cam.AddComponent<CameraComponent>();
+					AddParent(cam.GetUUID(), entity, m_Context.get());
+				}
+
+				ImGui::EndMenu();
+			}
+
 			ImGui::EndPopup();
 		}
 
 		if (opened) {
 			if (entity.HasComponent<ParentChildComponent>()) {
-				auto& comp = entity.GetComponent<ParentChildComponent>();
-				for (uint32_t i = 0; i < comp.ChildrenCount; i++)
-					DrawEntityNode(Entity{ comp[i], m_Context.get() });
+				auto& comp = entity.GetParentChild();
+				for (uint32_t i = 0; i < comp.ChildrenIDs.size(); i++) {
+					Entity child{ comp[i], m_Context.get() };
+					DrawEntityNode(child);
+
+					if (m_SelectionContext == child && ImGui::IsWindowFocused()) {
+						if (ImGui::IsMouseClicked(0))
+							m_MovedEntityIndex = i;
+
+						int32_t n_next = m_MovedEntityIndex + int32_t(ImGui::GetMouseDragDelta(0).y / 22);
+						
+
+						if (n_next >= 0 && n_next < entity.GetParentChild().ChildrenIDs.size() && i != n_next && !ImGui::IsAnyItemHovered())
+							entity.GetParentChild().ChildrenIDs.move(i, n_next);
+					}
+
+					if (ImGui::IsMouseReleased(0)) {
+						ImGui::ResetMouseDragDelta(0);
+						m_MovedEntityIndex = -1;
+					}
+				}
 			}
 			ImGui::TreePop();
 		}
@@ -419,23 +459,27 @@ namespace Nebula {
 		if (m_ShowGlobal) {
 			DrawComponent<TransformComponent>("Transform", entity, [](auto& component) {
 				vec3 rotation = degrees(component.GlobalRotation);
+				vec3 translation = component.GlobalTranslation;
+				vec3 scale = component.GlobalScale;
 
-				DrawVec3Control("Position", component.GlobalTranslation);
+				DrawVec3Control("Position", translation);
 				DrawVec3Control("Rotation", rotation);
-				DrawVec3Control("Scale", component.GlobalScale, 1.0f);
+				DrawVec3Control("Scale", scale, 1.0f);
 
-				component.GlobalRotation = radians(rotation);
+				component.SetDeltaTransform(translation - component.GlobalTranslation, radians(rotation) - component.GlobalRotation, scale - component.GlobalScale);
 			});
 		}
 		else {
 			DrawComponent<TransformComponent>("Transform", entity, [](auto& component) {
 				vec3 rotation = degrees(component.LocalRotation);
+				vec3 translation = component.LocalTranslation;
+				vec3 scale = component.LocalScale;
 
-				DrawVec3Control("Position", component.LocalTranslation);
+				DrawVec3Control("Position", translation);
 				DrawVec3Control("Rotation", rotation);
-				DrawVec3Control("Scale", component.LocalScale, 1.0f);
+				DrawVec3Control("Scale", scale, 1.0f);
 
-				component.LocalRotation = radians(rotation);
+				component.SetDeltaTransform(translation - component.LocalTranslation, radians(rotation) - component.LocalRotation, scale - component.LocalScale);
 			});
 		}
 

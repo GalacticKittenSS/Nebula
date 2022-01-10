@@ -8,6 +8,7 @@
 #include "Nebula/Core/UUID.h"
 
 #include "Nebula/Renderer/Texture.h"
+#include "Nebula/Utils/Arrays.h"
 
 namespace Nebula {
 	struct IDComponent {
@@ -29,7 +30,7 @@ namespace Nebula {
 		UUID PrimaryParent = NULL;
 		
 		//TODO: No Max
-		UUID* ChildrenIDs = new UUID[32]; //Max 32 Children (TEMP) 
+		Array<UUID> ChildrenIDs;
 		uint32_t ChildrenCount = 0;
 		
 		ParentChildComponent() = default;
@@ -38,28 +39,13 @@ namespace Nebula {
 		UUID operator[](int index) { return ChildrenIDs[index]; }
 
 		void AddChild(UUID id) {
-			for (uint32_t i = 0; i < ChildrenCount; i++)
-				if (id == ChildrenIDs[i]) return;
-
-			ChildrenIDs[ChildrenCount] = id;
-			ChildrenCount++;
+			ChildrenIDs.push_back(id);
+			ChildrenCount = ChildrenIDs.size();
 		}
 
 		void RemoveChild(UUID id) {
-			int index = -1;
-			UUID* newChildren = new UUID[32];
-			
-			uint32_t nIndex = 0;
-			for (uint32_t i = 0; i < ChildrenCount; i++) {
-				if ((uint64_t)ChildrenIDs[i] != (uint64_t)id) {
-					newChildren[nIndex] = ChildrenIDs[i];
-					nIndex++;
-				}
-			}
-			
-			delete[] ChildrenIDs;
-			ChildrenIDs = newChildren;
-			ChildrenCount--;
+			ChildrenIDs.remove(id);
+			ChildrenCount = ChildrenIDs.size();
 		}
 	};
 

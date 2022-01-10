@@ -255,7 +255,7 @@ namespace Nebula {
 				FlushAndReset();
 
 			if (texCoords == nullptr) {
-				texCoords = new vec2[type];
+				texCoords = new vec2[vertexCount];
 				for (uint32_t i = 0; i < vertexCount; i+=4) {
 					texCoords[i + 0] = { 0, 0 };
 					texCoords[i + 1] = { 1, 0 };
@@ -271,7 +271,7 @@ namespace Nebula {
 			if (s_Data.TriIndexCount >= s_Data.MaxIndices)
 				FlushAndReset();
 
-			texCoords = new vec2[type];
+			texCoords = new vec2[vertexCount];
 			for (uint32_t i = 0; i < vertexCount; i+=3) {
 				texCoords[i + 0] = { 0.0f, 0.0f };
 				texCoords[i + 1] = { 1.0f, 0.0f };
@@ -298,36 +298,6 @@ namespace Nebula {
 
 		s_Data.CircleVBPtr = CalculateVertexData(s_Data.CircleVBPtr, 4, vertexPos, transform, colour, thickness, fade, entityID);
 		s_Data.CircleIndexCount += 6;
-	}
-
-	mat4 CalculateTransform(Entity& entity) {
-		auto& transform = entity.GetComponent<TransformComponent>();
-
-		vec3 pos =  transform.LocalTranslation;
-		vec3 rot =  transform.LocalRotation;
-		vec3 size = transform.LocalScale;
-		
-		UUID parentID = entity.GetComponent<ParentChildComponent>().PrimaryParent;
-		
-		if (parentID) {
-			Entity parent{ parentID, entity };
-
-			vec3 pSize, pRot, pPos;
-			DecomposeTransform(CalculateTransform(parent), pPos, pRot, pSize);
-
-			pos *= pSize;
-			
-			pos = vec4(pos, 1.0f) / toMat4(quat(pRot));
-			pos  += pPos;
-			rot  += pRot;
-			size *= pSize;
-		}
-
-		transform.GlobalTranslation = pos;
-		transform.GlobalRotation = rot;
-		transform.GlobalScale = size;
-		
-		return transform.CalculateMatrix();
 	}
 
 	void Renderer2D::Draw(const uint32_t type, Entity& entity) {
@@ -384,7 +354,7 @@ namespace Nebula {
 			}
 		}
 
-		mat4 transform = CalculateTransform(entity);
+		mat4 transform = entity.GetTransform().CalculateMatrix();
 		
 		if (type == NB_CIRCLE) {
 			auto& circleRenderer = entity.GetComponent<CircleRendererComponent>();

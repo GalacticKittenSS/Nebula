@@ -47,12 +47,13 @@
 
 //----UTILS-----------
 #include "Nebula/Utils/Platform_Utils.h"
+#include "Nebula/Utils/Arrays.h"
+#include "Nebula/Utils/Random.h"
 //--------------------
 
 //----Application-----
 #include "Nebula/Core/Time.h"
 #include "Nebula/Core/Window.h"
-#include "Nebula/Utils/Random.h"
 
 #include "Nebula/Core/Application.h"
 //--------------------

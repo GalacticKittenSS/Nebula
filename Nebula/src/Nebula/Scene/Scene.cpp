@@ -73,7 +73,7 @@ namespace Nebula {
 		auto& dstSceneReg = newScene->m_Registry;
 		auto idView = srcSceneReg.view<IDComponent>();
 
-		std::vector<entt::entity> entityVec;
+		Array<entt::entity> entityVec;
 
 		for (auto e : idView)
 			entityVec.push_back(e);
@@ -120,7 +120,7 @@ namespace Nebula {
 			Parent.PrimaryParent = NULL;
 		}
 
-		std::vector<UUID> newVec;
+		Array<UUID> newVec;
 		for (uint32_t i = 0; i < m_SceneOrder.size(); i++) {
 			if (m_SceneOrder[i] != entity.GetUUID())
 				newVec.push_back(m_SceneOrder[i]);
@@ -206,6 +206,36 @@ namespace Nebula {
 		return {};
 	}
 
+	static mat4 CalculateGlobalTransform(Entity& entity) {
+		auto& transform = entity.GetTransform();
+
+		vec3 pos = transform.LocalTranslation;
+		vec3 rot = transform.LocalRotation;
+		vec3 size = transform.LocalScale;
+
+		UUID parentID = entity.GetParentChild().PrimaryParent;
+
+		if (parentID) {
+			Entity parent{ parentID, entity };
+
+			vec3 pSize, pRot, pPos;
+			DecomposeTransform(CalculateGlobalTransform(parent), pPos, pRot, pSize);
+
+			pos *= pSize;
+
+			pos = vec4(pos, 1.0f) / toMat4(quat(pRot));
+			pos += pPos;
+			rot += pRot;
+			size *= pSize;
+		}
+
+		transform.GlobalTranslation = pos;
+		transform.GlobalRotation = rot;
+		transform.GlobalScale = size;
+
+		return transform.CalculateMatrix();
+	}
+
 	void Scene::UpdateRuntime() {
 		m_Registry.view<NativeScriptComponent>().each([=](auto entity, NativeScriptComponent& nsc)
 			{
@@ -236,9 +266,14 @@ namespace Nebula {
 
 			transform.SetDeltaTransform(deltaTranslation, deltaRotation, vec3(0.0f));
 		}
+
+		for (uint32_t i = 0; i < m_SceneOrder.size(); i++) {
+			Entity entity{ m_SceneOrder[i], this };
+			CalculateGlobalTransform(entity);
+		}
 	}
 
-	void Scene::UpdateEditor(EditorCamera& camera) {
+	void Scene::RenderEditor(EditorCamera& camera) {
 		Renderer2D::BeginScene(camera);
 
 		auto group = m_Registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
@@ -252,6 +287,13 @@ namespace Nebula {
 		}
 
 		Renderer2D::EndScene();
+	}
+
+	void Scene::UpdateEditor() {
+		for (uint32_t i = 0; i < m_SceneOrder.size(); i++) {
+			Entity entity{ m_SceneOrder[i], this };
+			CalculateGlobalTransform(entity);
+		}
 	}
 
 	void Scene::RenderRuntime() {

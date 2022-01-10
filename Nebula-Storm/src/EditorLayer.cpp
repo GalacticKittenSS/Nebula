@@ -10,6 +10,7 @@ namespace Nebula {
 
 		m_PlayIcon = Texture2D::Create("Resources/Icons/PlayButton.png");
 		m_StopIcon = Texture2D::Create("Resources/Icons/StopButton.png");
+		m_Backdrop = Texture2D::Create("Resources/Textures/bg.png");
 
 		//Initialize Frame Buffer
 		FrameBufferSpecification fbSpec;
@@ -29,6 +30,7 @@ namespace Nebula {
 
 		m_SceneHierarchy.SetContext(m_ActiveScene);
 		Application::Get().GetImGuiLayer()->SetBlockEvents(false);
+		RenderCommand::SetClearColour({ 0.1f, 0.1f, 0.1f, 1.0f });
 	}
 
 	void EditorLayer::Detach() { }
@@ -47,23 +49,28 @@ namespace Nebula {
 		if (!m_UsingGizmo && m_GameViewHovered && m_SceneState == SceneState::Edit)
 			m_EditorCam.Update();
 
-		if (m_SceneState == SceneState::Play)
-			m_ActiveScene->UpdateRuntime();
+		switch (m_SceneState)
+		{
+			case SceneState::Edit:
+				m_ActiveScene->UpdateEditor();
+				break;
+			case SceneState::Play:
+				m_ActiveScene->UpdateRuntime();
+				break;
+		}
 	}
 
 	void EditorLayer::Render() {
 		NB_PROFILE_FUNCTION();
 
 		frameBuffer->Bind();
-
-		RenderCommand::SetClearColour({ 0.1f, 0.1f, 0.1f, 1.0f });
 		RenderCommand::Clear();
 
 		frameBuffer->ClearAttachment(1, -1);
 
 		switch (m_SceneState) {
 			case SceneState::Edit: {
-				m_ActiveScene->UpdateEditor(m_EditorCam);
+				m_ActiveScene->RenderEditor(m_EditorCam);
 
 				//Get Pixel Data
 				auto [mx, my] = ImGui::GetMousePos();
@@ -158,6 +165,9 @@ namespace Nebula {
 				if (ImGui::MenuItem("Show Global Transforms", NULL, m_SceneHierarchy.GetShowGlobalTransform()))
 					m_SceneHierarchy.SetShowGlobalTransform(!m_SceneHierarchy.GetShowGlobalTransform());
 
+				if (ImGui::MenuItem("Show Grid", NULL, m_ShowGrid))
+					m_ShowGrid = !m_ShowGrid;
+
 				ImGui::EndMenu();
 			}
 
@@ -187,42 +197,120 @@ namespace Nebula {
 	}
 
 	void EditorLayer::OnOverlayRender() {
-		if (!m_ShowColliders)
-			return;
-
 		if (m_SceneState == SceneState::Play) {
 			Entity cam = m_ActiveScene->GetPrimaryCamera();
 			if (cam)
 				Renderer2D::BeginScene(cam.GetComponent<CameraComponent>().Camera, cam.GetComponent<TransformComponent>().CalculateMatrix());
-		} else
+		}
+		else {
+			vec4 vertexPos[] = {
+				//Front
+				{ -0.5f, -0.5f, -0.5f, 1 },
+				{  0.5f, -0.5f, -0.5f, 1 },
+				{  0.5f,  0.5f, -0.5f, 1 },
+				{ -0.5f,  0.5f, -0.5f, 1 },
+
+				//Left
+				{  0.5f, -0.5f, -0.5f, 1 },
+				{  0.5f, -0.5f,  0.5f, 1 },
+				{  0.5f,  0.5f,  0.5f, 1 },
+				{  0.5f,  0.5f, -0.5f, 1 },
+
+				//Top
+				{ -0.5f,  0.5f, -0.5f, 1 },
+				{  0.5f,  0.5f, -0.5f, 1 },
+				{  0.5f,  0.5f,  0.5f, 1 },
+				{ -0.5f,  0.5f,  0.5f, 1 },
+
+				//Right
+				{ -0.5f, -0.5f,  0.5f, 1 },
+				{ -0.5f, -0.5f, -0.5f, 1 },
+				{ -0.5f,  0.5f, -0.5f, 1 },
+				{ -0.5f,  0.5f,  0.5f, 1 },
+
+				//Back
+				{ -0.5f, -0.5f,  0.5f, 1 },
+				{  0.5f, -0.5f,  0.5f, 1 },
+				{  0.5f,  0.5f,  0.5f, 1 },
+				{ -0.5f,  0.5f,  0.5f, 1 },
+
+				//Bottom
+				{ -0.5f, -0.5f, -0.5f, 1 },
+				{  0.5f, -0.5f, -0.5f, 1 },
+				{  0.5f, -0.5f,  0.5f, 1 },
+				{ -0.5f, -0.5f,  0.5f, 1 }
+			};
+			vec2 texturePos[] = {
+				//Front
+				{ 0.75f, 0.345f },
+				{ 0.50f, 0.345f },
+				{ 0.50f, 0.66f },
+				{ 0.75f, 0.66f },
+
+				//Left
+				{ 0.50f, 0.345f },
+				{ 0.25f, 0.345f },
+				{ 0.25f, 0.66f },
+				{ 0.50f, 0.66f },
+
+				//Top
+				{ 0.75f, 0.66f },
+				{ 0.50f, 0.66f },
+				{ 0.50f, 1.00f },
+				{ 0.75f, 1.00f },
+
+				//Right
+				{ 1.00f, 0.345f },
+				{ 0.75f, 0.345f },
+				{ 0.75f, 0.66f },
+				{ 1.00f, 0.66f },
+
+				//Back
+				{ 0.00f, 0.345f },
+				{ 0.25f, 0.345f },
+				{ 0.25f, 0.66f },
+				{ 0.00f, 0.66f },
+
+				//Bottom
+				{ 0.75f, 0.345f },
+				{ 0.50f, 0.345f },
+				{ 0.50f, 0.00f },
+				{ 0.75f, 0.00f }
+			};
+			
 			Renderer2D::BeginScene(m_EditorCam);
-
-		// Calculate z index for translation
-		float zIndex = 0.001f;
-		vec3 cameraForwardDirection = m_EditorCam.GetForwardDirection();
-		vec3 projectionCollider = cameraForwardDirection * vec3(zIndex);
-
-		auto CircleView = m_ActiveScene->GetAllEntitiesWith<TransformComponent, CircleColliderComponent>();
-		for (auto entity : CircleView) {
-			auto [tc, cc] = CircleView.get<TransformComponent, CircleColliderComponent>(entity);
-			
-			vec3 translation = tc.GlobalTranslation + vec3(cc.Offset, -projectionCollider.z);
-			vec3 Scale = tc.GlobalScale * vec3(cc.Radius * 2.0f);
-
-			mat4 transform = translate(vec3(translation)) * scale(Scale);
-			Renderer2D::DrawCircle(transform, vec4(0.0f, 1.0f, 0.0f, 1.0f), 0.05f);
+			Renderer2D::Draw(NB_QUAD, sizeof(vertexPos) / sizeof(vec4), vertexPos, translate(m_EditorCam.GetPosition()) * scale(vec3(1000.0f)), vec4(1.0f), m_Backdrop, 1.0f, texturePos);
 		}
 
-		auto BoxView = m_ActiveScene->GetAllEntitiesWith<TransformComponent, Box2DComponent>();
-		for (auto entity : BoxView) {
-			auto [tc, bc2d] = BoxView.get<TransformComponent, Box2DComponent>(entity);
-			
-			vec3 translation = tc.GlobalTranslation + vec3(bc2d.Offset, 0.001f);
-			vec3 Scale = tc.GlobalScale * vec3(bc2d.Size * 2.0f);
+		if (m_ShowColliders) {
+			// Calculate z index for translation
+			float zIndex = 0.001f;
+			vec3 cameraForwardDirection = m_EditorCam.GetForwardDirection();
+			vec3 projectionCollider = cameraForwardDirection * vec3(zIndex);
 
-			mat4 transform = translate(vec3(translation)) * toMat4(quat(tc.GlobalRotation)) * scale(Scale);
-			Renderer2D::Draw(NB_RECT, transform, vec4(0.0f, 1.0f, 0.0f, 1.0f));
+			auto CircleView = m_ActiveScene->GetAllEntitiesWith<TransformComponent, CircleColliderComponent>();
+			for (auto entity : CircleView) {
+				auto [tc, cc] = CircleView.get<TransformComponent, CircleColliderComponent>(entity);
+			
+				vec3 translation = tc.GlobalTranslation + vec3(cc.Offset, -projectionCollider.z);
+				vec3 Scale = tc.GlobalScale * vec3(cc.Radius * 2.0f);
+
+				mat4 transform = translate(vec3(translation)) * scale(Scale);
+				Renderer2D::DrawCircle(transform, vec4(0.0f, 1.0f, 0.0f, 1.0f), 0.05f);
+			}
+
+			auto BoxView = m_ActiveScene->GetAllEntitiesWith<TransformComponent, Box2DComponent>();
+			for (auto entity : BoxView) {
+				auto [tc, bc2d] = BoxView.get<TransformComponent, Box2DComponent>(entity);
+			
+				vec3 translation = tc.GlobalTranslation + vec3(bc2d.Offset, 0.001f);
+				vec3 Scale = tc.GlobalScale * vec3(bc2d.Size * 2.0f);
+
+				mat4 transform = translate(vec3(translation)) * toMat4(quat(tc.GlobalRotation)) * scale(Scale);
+				Renderer2D::Draw(NB_RECT, transform, vec4(0.0f, 1.0f, 0.0f, 1.0f));
+			}
 		}
+		
 
 		Renderer2D::EndScene();
 	}
@@ -261,16 +349,15 @@ namespace Nebula {
 			Entity selectedEntity = m_SceneHierarchy.GetSelectedEntity();
 			ImGuizmo::SetOrthographic(false);
 			ImGuizmo::SetDrawlist();
+			
 			ImGuizmo::SetRect(m_ViewPortBounds[0].x, m_ViewPortBounds[0].y, m_ViewPortBounds[1].x - m_ViewPortBounds[0].x, m_ViewPortBounds[1].y - m_ViewPortBounds[0].y);
-
-			float windowWidth = (float)ImGui::GetWindowWidth();
-			float windowHeight = (float)ImGui::GetWindowHeight();
-			ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowWidth, windowHeight);
+			ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, ImGui::GetWindowWidth(), ImGui::GetWindowHeight());
 
 			const mat4& cameraProj = m_EditorCam.GetProjection();
 			mat4 cameraView = m_EditorCam.GetViewMatrix();
 
-			ImGuizmo::DrawGrid(value_ptr(cameraView), value_ptr(cameraProj), value_ptr(mat4(1.0f)), 50.0f);
+			if (m_ShowGrid)
+				ImGuizmo::DrawGrid(value_ptr(cameraView), value_ptr(cameraProj), value_ptr(mat4(1.0f)), 50.0f);
 
 			if (selectedEntity && m_GizmoType != -1) {
 				auto& tc = selectedEntity.GetComponent<TransformComponent>();
@@ -377,19 +464,19 @@ namespace Nebula {
 
 		//Gizmos
 		case KeyCode::Q:
-			if (!m_UsingGizmo && (!m_GameViewHovered || !m_SceneHierarchy.IsFocused()))
+			if (!m_UsingGizmo && (!m_GameViewFocus || !m_SceneHierarchy.IsFocused()))
 				m_GizmoType = -1;
 			break;
 		case KeyCode::W:
-			if (!m_UsingGizmo && (!m_GameViewHovered || !m_SceneHierarchy.IsFocused()))
+			if (!m_UsingGizmo && (!m_GameViewFocus || !m_SceneHierarchy.IsFocused()))
 				m_GizmoType = ImGuizmo::OPERATION::TRANSLATE;
 			break;
 		case KeyCode::E:
-			if (!m_UsingGizmo && (!m_GameViewHovered || !m_SceneHierarchy.IsFocused()))
+			if (!m_UsingGizmo && (!m_GameViewFocus || !m_SceneHierarchy.IsFocused()))
 				m_GizmoType = ImGuizmo::OPERATION::ROTATE;
 			break;
 		case KeyCode::R:
-			if (!m_UsingGizmo && (!m_GameViewHovered || !m_SceneHierarchy.IsFocused()))
+			if (!m_UsingGizmo && (!m_GameViewFocus || !m_SceneHierarchy.IsFocused()))
 				m_GizmoType = ImGuizmo::OPERATION::SCALE;
 			break;
 		}

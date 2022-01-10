@@ -26,7 +26,7 @@ namespace Nebula {
 		uint32_t m_RendererID = 0;
 		FrameBufferSpecification m_Specifications;
 
-		std::vector<FramebufferTextureSpecification> m_ColourAttachmentSpecs;
+		Array<FramebufferTextureSpecification> m_ColourAttachmentSpecs;
 		FramebufferTextureSpecification m_DepthAttachmentSpec = FramebufferTextureFormat::None;
 
 		std::vector<uint32_t> m_ColourAttachments;
