@@ -27,6 +27,7 @@ namespace Nebula {
 		static void BeginScene(const EditorCamera& camera);
 		static void EndScene();
 
+		static void SetBackCulling(bool);
 
 		//Primitives
 		static void Draw(const uint32_t type, const uint32_t vertexCount, const vec4* vertexPos,

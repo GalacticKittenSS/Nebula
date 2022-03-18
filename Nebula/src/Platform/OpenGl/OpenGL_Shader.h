@@ -16,6 +16,8 @@ namespace Nebula {
 		void Unbind() const override;
 
 		const std::string& GetName() const override { return m_Name; }
+		
+		void SetBackfaceCulling(bool) override;
 
 		void SetInt(const std::string& name, int value) override;
 		void SetIntArray(const std::string& name, int* values, uint32_t count) override;

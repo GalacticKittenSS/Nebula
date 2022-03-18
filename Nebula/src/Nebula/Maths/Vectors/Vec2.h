@@ -70,7 +70,7 @@ namespace Nebula {
 		// -- Arithmetic operators --
 		
 		template<typename U>
-		inline constexpr vec<2, T>& operator=(vec<1, U> const& v) {
+		inline constexpr vec<2, T>& operator=(vec<2, U> const& v) {
 			this->x = static_cast<T>(v.x);
 			this->y = static_cast<T>(v.y);
 			return *this;
@@ -84,7 +84,7 @@ namespace Nebula {
 		}
 
 		template<typename U>
-		inline constexpr vec<2, T>& operator+=(vec<1, U> const& v) {
+		inline constexpr vec<2, T>& operator+=(vec<2, U> const& v) {
 			this->x += static_cast<T>(v.x);
 			this->y += static_cast<T>(v.y);
 			return *this;
@@ -98,7 +98,7 @@ namespace Nebula {
 		}
 
 		template<typename U>
-		inline constexpr vec<2, T>& operator-=(vec<1, U> const& v) {
+		inline constexpr vec<2, T>& operator-=(vec<2, U> const& v) {
 			this->x -= static_cast<T>(v.x);
 			this->y -= static_cast<T>(v.y);
 			return *this;
@@ -112,7 +112,7 @@ namespace Nebula {
 		}
 
 		template<typename U>
-		inline constexpr vec<2, T>& operator*=(vec<1, U> const& v) {
+		inline constexpr vec<2, T>& operator*=(vec<2, U> const& v) {
 			this->x *= static_cast<T>(v.x);
 			this->y *= static_cast<T>(v.y);
 			return *this;
@@ -126,7 +126,7 @@ namespace Nebula {
 		}
 
 		template<typename U>
-		inline constexpr vec<2, T>& operator/=(vec<1, U> const& v) {
+		inline constexpr vec<2, T>& operator/=(vec<2, U> const& v) {
 			this->x /= static_cast<T>(v.x);
 			this->y /= static_cast<T>(v.y);
 			return *this;
@@ -245,6 +245,9 @@ namespace Nebula {
 		}
 
 
+		inline float LenSqr() const {
+			return x * x + y * y;
+		}
 	};
 	
 	// -- Operators --
@@ -376,7 +379,7 @@ namespace Nebula {
 	//Operator ^
 	template<typename T>
 	inline constexpr vec<2, T> operator^(vec<2, T> const& v, T scalar) {
-		return vec<2, T>(v.x ^ scalar, v.y ^ v2.y);
+		return vec<2, T>(v.x ^ scalar, v.y ^ v.y);
 	}
 
 	template<typename T>

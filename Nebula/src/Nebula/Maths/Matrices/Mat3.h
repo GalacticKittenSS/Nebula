@@ -33,9 +33,9 @@ namespace Nebula {
 			T const& x0, T const& y0, T const& z0,
 			T const& x1, T const& y1, T const& z1,
 			T const& x2, T const& y2, T const& z2) {
-			this->value[0] = vec<4, T>(x0, y0, z0);
-			this->value[1] = vec<4, T>(x1, y1, z1);
-			this->value[2] = vec<4, T>(x2, y2, z2);
+			this->value[0] = vec<3, T>(x0, y0, z0);
+			this->value[1] = vec<3, T>(x1, y1, z1);
+			this->value[2] = vec<3, T>(x2, y2, z2);
 		}
 
 		constexpr mat(
@@ -367,7 +367,7 @@ namespace Nebula {
 
 	template<typename T>
 	inline mat<4, 3, T> operator*(mat<3, 3, T> const& m1, mat<4, 3, T> const& m2) {
-		return mat<4, 3, T, Q>(
+		return mat<4, 3, T>(
 			m1[0][0] * m2[0][0] + m1[1][0] * m2[0][1] + m1[2][0] * m2[0][2],
 			m1[0][1] * m2[0][0] + m1[1][1] * m2[0][1] + m1[2][1] * m2[0][2],
 			m1[0][2] * m2[0][0] + m1[1][2] * m2[0][1] + m1[2][2] * m2[0][2],

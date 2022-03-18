@@ -29,9 +29,8 @@ namespace Nebula {
 	struct ParentChildComponent {
 		UUID PrimaryParent = NULL;
 		
-		//TODO: No Max
 		Array<UUID> ChildrenIDs;
-		uint32_t ChildrenCount = 0;
+		size_t ChildrenCount = 0;
 		
 		ParentChildComponent() = default;
 		ParentChildComponent(const ParentChildComponent&) = default;

@@ -10,7 +10,7 @@
 
 #include <filesystem>
 
-#include "Nebula/Core/Time.h"
+#include "Nebula/Utils/Time.h"
 
 namespace Nebula {
 	namespace Utils {
@@ -110,7 +110,7 @@ namespace Nebula {
 				CompileOrGetOpenGLBinaries();
 				CreateProgram();
 			}
-			NB_WARN("Shader creation took {0} ms", timer.elapsed());
+			NB_WARN("Shader creation took {0} ms", timer.elapsed() * 1000);
 		}
 
 		// Extract name from filepath
@@ -516,6 +516,14 @@ namespace Nebula {
 		NB_PROFILE_FUNCTION();
 
 		glUseProgram(0);
+	}
+
+	void OpenGL_Shader::SetBackfaceCulling(bool cull) {
+		if (cull) {
+			glEnable(GL_CULL_FACE);
+		} else {
+			glDisable(GL_CULL_FACE);
+		}
 	}
 
 	void OpenGL_Shader::SetInt(const std::string& name, int value)

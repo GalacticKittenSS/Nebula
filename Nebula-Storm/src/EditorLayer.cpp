@@ -10,7 +10,7 @@ namespace Nebula {
 
 		m_PlayIcon = Texture2D::Create("Resources/Icons/PlayButton.png");
 		m_StopIcon = Texture2D::Create("Resources/Icons/StopButton.png");
-		m_Backdrop = Texture2D::Create("Resources/Textures/bg.png");
+		m_Backdrop = Texture2D::Create("Resources/Textures/bg2.png");
 
 		//Initialize Frame Buffer
 		FrameBufferSpecification fbSpec;
@@ -18,7 +18,8 @@ namespace Nebula {
 		fbSpec.Width = 1280;
 		fbSpec.Height = 720;
 		frameBuffer = FrameBuffer::Create(fbSpec);
-		
+
+		//Create New Scene
 		NewScene();
 
 		//Open Scene on Startup
@@ -32,8 +33,6 @@ namespace Nebula {
 		Application::Get().GetImGuiLayer()->SetBlockEvents(false);
 		RenderCommand::SetClearColour({ 0.1f, 0.1f, 0.1f, 1.0f });
 	}
-
-	void EditorLayer::Detach() { }
 
 	void EditorLayer::Update(Timestep ts) {
 		NB_PROFILE_FUNCTION();
@@ -242,47 +241,50 @@ namespace Nebula {
 			};
 			vec2 texturePos[] = {
 				//Front
-				{ 0.75f, 0.345f },
 				{ 0.50f, 0.345f },
+				{ 0.25f, 0.345f },
+				{ 0.25f, 0.66f },
 				{ 0.50f, 0.66f },
-				{ 0.75f, 0.66f },
 
 				//Left
-				{ 0.50f, 0.345f },
 				{ 0.25f, 0.345f },
+				{ 0.00f, 0.345f },
+				{ 0.00f, 0.66f },
 				{ 0.25f, 0.66f },
-				{ 0.50f, 0.66f },
 
 				//Top
-				{ 0.75f, 0.66f },
-				{ 0.50f, 0.66f },
-				{ 0.50f, 1.00f },
-				{ 0.75f, 1.00f },
+				{ 0.49f, 0.66f },
+				{ 0.26f, 0.66f },
+				{ 0.26f, 1.00f },
+				{ 0.49f, 1.00f },
 
 				//Right
-				{ 1.00f, 0.345f },
-				{ 0.75f, 0.345f },
-				{ 0.75f, 0.66f },
-				{ 1.00f, 0.66f },
-
-				//Back
-				{ 0.00f, 0.345f },
-				{ 0.25f, 0.345f },
-				{ 0.25f, 0.66f },
-				{ 0.00f, 0.66f },
-
-				//Bottom
 				{ 0.75f, 0.345f },
 				{ 0.50f, 0.345f },
-				{ 0.50f, 0.00f },
-				{ 0.75f, 0.00f }
+				{ 0.50f, 0.66f },
+				{ 0.75f, 0.66f },
+
+				//Back
+				{ 0.75f, 0.345f },
+				{ 1.00f, 0.345f },
+				{ 1.00f, 0.66f },
+				{ 0.75f, 0.66f },
+
+				//Bottom
+				{ 0.499f, 0.345f },
+				{ 0.256f, 0.345f },
+				{ 0.256f, 0.00f },
+				{ 0.499f, 0.00f }
 			};
-			
+
+			Renderer2D::SetBackCulling(false);
 			Renderer2D::BeginScene(m_EditorCam);
 			Renderer2D::Draw(NB_QUAD, sizeof(vertexPos) / sizeof(vec4), vertexPos, translate(m_EditorCam.GetPosition()) * scale(vec3(1000.0f)), vec4(1.0f), m_Backdrop, 1.0f, texturePos);
 		}
 
 		if (m_ShowColliders) {
+			RenderCommand::SetLineWidth(5.0f);
+
 			// Calculate z index for translation
 			float zIndex = 0.001f;
 			vec3 cameraForwardDirection = m_EditorCam.GetForwardDirection();
@@ -311,8 +313,8 @@ namespace Nebula {
 			}
 		}
 		
-
 		Renderer2D::EndScene();
+		Renderer2D::SetBackCulling(true);
 	}
 
 	void EditorLayer::UI_GameView() {
@@ -484,7 +486,6 @@ namespace Nebula {
 		return true;
 	}
 
-
 	bool EditorLayer::OnMousePressed(MouseButtonPressedEvent& e) {
 		if (e.GetMouseButton() == Mouse::Button0 && !ImGuizmo::IsOver() && m_GameViewHovered && m_SceneState == SceneState::Edit)
 			m_SceneHierarchy.SetSelectedEntity(m_HoveredEntity);
@@ -495,8 +496,7 @@ namespace Nebula {
 	void EditorLayer::NewScene() {
 		if (m_SceneState != SceneState::Edit)
 			OnSceneStop();
-
-		
+	
 		m_EditorScene = CreateRef<Scene>();
 		m_EditorScene->OnViewportResize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
 		m_SceneHierarchy.SetContext(m_EditorScene);

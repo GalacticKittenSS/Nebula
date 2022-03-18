@@ -38,6 +38,7 @@ namespace Nebula {
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LESS);
 
+		glEnable(GL_CULL_FACE);
 		glEnable(GL_LINE_SMOOTH);
 	}
 

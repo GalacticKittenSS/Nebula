@@ -243,6 +243,12 @@ namespace Nebula {
 
 		ResetBatch();
 	}
+
+	void Renderer2D::SetBackCulling(bool cull) {
+		s_Data.LineShader->SetBackfaceCulling(cull);
+		s_Data.CircleShader->SetBackfaceCulling(cull);
+		s_Data.TextureShader->SetBackfaceCulling(cull);
+	}
 	
 	void Renderer2D::Draw(const uint32_t type, const uint32_t vertexCount, const vec4* vertexPos,
 		const mat4& transform, const vec4& colour, Ref<Texture2D> texture, float tiling, vec2* texCoords, uint32_t entityID) {
