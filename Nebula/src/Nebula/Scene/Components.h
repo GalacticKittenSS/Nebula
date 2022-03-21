@@ -132,6 +132,11 @@ namespace Nebula {
 		BodyType Type = BodyType::Static;
 		bool FixedRotation = false;
 
+		float Density = 1.0f;
+		float Friction = 0.5f;
+		float Restitution = 0.0f;
+		float RestitutionThreshold = 0.5f;
+
 		void* RuntimeBody = nullptr;
 
 		Rigidbody2DComponent() = default;
@@ -139,13 +144,8 @@ namespace Nebula {
 	};
 
 	struct Box2DComponent {
-		vec2 Offset = { 0.0f, 0.0f };
 		vec2 Size = { 0.5f, 0.5f };
-
-		float Density = 1.0f;
-		float Friction = 0.5f;
-		float Restitution = 0.0f;
-		float RestitutionThreshold = 0.5f;
+		vec2 Offset = { 0.0f, 0.0f };
 
 		void* RuntimeFixture = nullptr;
 
@@ -156,11 +156,6 @@ namespace Nebula {
 	struct CircleColliderComponent {
 		vec2 Offset = { 0.0f, 0.0f };
 		float Radius = 0.5f;
-
-		float Density = 1.0f;
-		float Friction = 0.5f;
-		float Restitution = 0.0f;
-		float RestitutionThreshold = 0.5f;
 
 		void* RuntimeFixture = nullptr;
 

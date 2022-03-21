@@ -8,7 +8,7 @@ Entities:
       Children: [1734186555264958028, 16434448802742922228, 11691747497498017467, 2555061558569917065, 8525815086722917192, 6961276783589167595, 4238392629824766104, 17924338926232536196, 17945224244753102173, 12392182606285594567, 11531482172220784666]
       ChildCount: 11
     TransformComponent:
-      Translation: [0, 0, 0]
+      Translation: [0, 4, 0]
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
   - Entity: 11531482172220784666
@@ -19,8 +19,8 @@ Entities:
       Children: ~
       ChildCount: 0
     TransformComponent:
-      Translation: [0.217509508, 9.43798256, 0.151625976]
-      Rotation: [0.0611855835, -0.0414848924, 0.518017173]
+      Translation: [0.217509508, 9.43798256, 0]
+      Rotation: [0, 0, 0.518017173]
       Scale: [8.94352627, 2.62153292, 2.62153554]
     SpriteRendererComponent:
       Colour: [1, 1, 1, 1]
@@ -32,13 +32,13 @@ Entities:
     Rigidbody2DComponent:
       BodyType: Dynamic
       FixedRotation: false
-    Box2DComponent:
-      Offset: [0, 0]
-      Size: [0.5, 0.5]
       Density: 1
       Friction: 0.5
       Restitution: 0
       RestitutionThreshold: 0.5
+    Box2DComponent:
+      Offset: [0, 0]
+      Size: [0.5, 0.5]
   - Entity: 1734186555264958028
     TagComponent:
       Tag: Sprite
@@ -47,8 +47,8 @@ Entities:
       Children: ~
       ChildCount: 0
     TransformComponent:
-      Translation: [1.26666927, -1.29460537, -0.258725643]
-      Rotation: [0.0437219404, -1.39698386e-08, 0.52256012]
+      Translation: [1.26666927, -1.29460537, 0]
+      Rotation: [0, 0, 0.52256012]
       Scale: [2.56315613, 1.00000072, 1]
     SpriteRendererComponent:
       Colour: [1, 1, 1, 1]
@@ -60,13 +60,13 @@ Entities:
     Rigidbody2DComponent:
       BodyType: Dynamic
       FixedRotation: false
-    Box2DComponent:
-      Offset: [0, 0]
-      Size: [0.5, 0.5]
       Density: 1
       Friction: 0.5
       Restitution: 0
       RestitutionThreshold: 0.5
+    Box2DComponent:
+      Offset: [0, 0]
+      Size: [0.5, 0.5]
   - Entity: 16434448802742922228
     TagComponent:
       Tag: Circle
@@ -75,7 +75,7 @@ Entities:
       Children: ~
       ChildCount: 0
     TransformComponent:
-      Translation: [-1.81600773, 2.48056364, -0.0641231313]
+      Translation: [-1.06600773, 2.23056364, 0]
       Rotation: [2.50918532e-07, 0, 0]
       Scale: [2.92999983, 2.92999983, 1]
     CircleRendererComponent:
@@ -85,13 +85,13 @@ Entities:
     Rigidbody2DComponent:
       BodyType: Static
       FixedRotation: false
-    CircleColliderComponent:
-      Offset: [0, 0]
-      Radius: 0.5
       Density: 1
       Friction: 0.5
       Restitution: 0.75999999
       RestitutionThreshold: 0.689999998
+    CircleColliderComponent:
+      Offset: [0, 0]
+      Radius: 0.5
   - Entity: 11691747497498017467
     TagComponent:
       Tag: Sprite
@@ -100,8 +100,8 @@ Entities:
       Children: ~
       ChildCount: 0
     TransformComponent:
-      Translation: [4.82109356, 2.38461828, 0.157478318]
-      Rotation: [0.0902631357, -1.86264515e-08, -0.982672572]
+      Translation: [4.95990276, 1.2752347, 0]
+      Rotation: [0, 0, -0.982672572]
       Scale: [5.29204559, 3.22500587, 1.72999978]
     SpriteRendererComponent:
       Colour: [1, 1, 1, 1]
@@ -113,13 +113,13 @@ Entities:
     Rigidbody2DComponent:
       BodyType: Dynamic
       FixedRotation: false
-    Box2DComponent:
-      Offset: [0, 0]
-      Size: [0.5, 0.5]
       Density: 1
       Friction: 0.5
       Restitution: 0
       RestitutionThreshold: 0.5
+    Box2DComponent:
+      Offset: [0, 0]
+      Size: [0.5, 0.5]
   - Entity: 2555061558569917065
     TagComponent:
       Tag: Sprite
@@ -141,13 +141,13 @@ Entities:
     Rigidbody2DComponent:
       BodyType: Static
       FixedRotation: false
-    Box2DComponent:
-      Offset: [0, 0]
-      Size: [0.5, 0.5]
       Density: 1
       Friction: 1
       Restitution: 0.0900000036
       RestitutionThreshold: 1.14999998
+    Box2DComponent:
+      Offset: [0, 0]
+      Size: [0.5, 0.5]
   - Entity: 8525815086722917192
     TagComponent:
       Tag: Dynamic
@@ -156,7 +156,7 @@ Entities:
       Children: ~
       ChildCount: 0
     TransformComponent:
-      Translation: [-4.17908001, 3.65285921, 0.172859192]
+      Translation: [-4.17908001, 3.65285921, 0]
       Rotation: [0, 0, 0.000916032703]
       Scale: [0.999989986, 0.999989986, 1]
     SpriteRendererComponent:
@@ -169,13 +169,13 @@ Entities:
     Rigidbody2DComponent:
       BodyType: Dynamic
       FixedRotation: false
-    Box2DComponent:
-      Offset: [0, 0]
-      Size: [0.5, 0.5]
       Density: 1
       Friction: 0.5
       Restitution: 0.150000006
       RestitutionThreshold: 0.5
+    Box2DComponent:
+      Offset: [0, 0]
+      Size: [0.5, 0.5]
   - Entity: 6961276783589167595
     TagComponent:
       Tag: Static
@@ -184,7 +184,7 @@ Entities:
       Children: ~
       ChildCount: 0
     TransformComponent:
-      Translation: [-4.43225098, -0.70878619, -0.155935287]
+      Translation: [-4.57131147, -0.501031041, -0.00479459763]
       Rotation: [0, 0, -0.980940223]
       Scale: [6.1571002, 0.999999762, 1]
     SpriteRendererComponent:
@@ -197,13 +197,13 @@ Entities:
     Rigidbody2DComponent:
       BodyType: Static
       FixedRotation: false
-    Box2DComponent:
-      Offset: [0, 0]
-      Size: [0.5, 0.5]
       Density: 1
       Friction: 0
       Restitution: 0.810000002
       RestitutionThreshold: 0.720000029
+    Box2DComponent:
+      Offset: [0, 0]
+      Size: [0.5, 0.5]
   - Entity: 4238392629824766104
     TagComponent:
       Tag: Sprite
@@ -212,7 +212,7 @@ Entities:
       Children: ~
       ChildCount: 0
     TransformComponent:
-      Translation: [-0.0343947411, -3, 0]
+      Translation: [-0.0343947411, -3.25, 0]
       Rotation: [0, 0, 0]
       Scale: [20.0815239, 1, 1]
     SpriteRendererComponent:
@@ -225,13 +225,13 @@ Entities:
     Rigidbody2DComponent:
       BodyType: Static
       FixedRotation: false
-    Box2DComponent:
-      Offset: [0, 0]
-      Size: [0.5, 0.5]
       Density: 1
       Friction: 0.5
       Restitution: 0.219999999
       RestitutionThreshold: 0.800000012
+    Box2DComponent:
+      Offset: [0, 0]
+      Size: [0.5, 0.5]
   - Entity: 17924338926232536196
     TagComponent:
       Tag: Sprite
@@ -240,9 +240,9 @@ Entities:
       Children: ~
       ChildCount: 0
     TransformComponent:
-      Translation: [-9.4198637, 4.74628592, 0]
+      Translation: [-9.56470585, 4.74628592, 0]
       Rotation: [0, 0, 1.57079637]
-      Scale: [16.5212288, 0.999891937, 1]
+      Scale: [16.5205021, 0.999869227, 1]
     SpriteRendererComponent:
       Colour: [0.895752907, 0.26976344, 0.26976344, 1]
       Texture: None
@@ -253,13 +253,13 @@ Entities:
     Rigidbody2DComponent:
       BodyType: Static
       FixedRotation: false
-    Box2DComponent:
-      Offset: [0, 0]
-      Size: [0.5, 0.5]
       Density: 1
       Friction: 1
       Restitution: 0.0900000036
       RestitutionThreshold: 0.860000014
+    Box2DComponent:
+      Offset: [0, 0]
+      Size: [0.5, 0.5]
   - Entity: 17945224244753102173
     TagComponent:
       Tag: Sprite
@@ -268,9 +268,9 @@ Entities:
       Children: ~
       ChildCount: 0
     TransformComponent:
-      Translation: [0.878646493, 3.66195965, -0.0752548426]
-      Rotation: [0.0902630612, -1.86264515e-08, -0.982672572]
-      Scale: [1.00000012, 0.999999762, 0.99999994]
+      Translation: [1.50167811, 4.97888374, 0]
+      Rotation: [0, 0, -0.982672632]
+      Scale: [1.00000012, 0.99999994, 0.99999994]
     SpriteRendererComponent:
       Colour: [1, 1, 1, 1]
       Texture: None
@@ -281,13 +281,13 @@ Entities:
     Rigidbody2DComponent:
       BodyType: Dynamic
       FixedRotation: false
-    Box2DComponent:
-      Offset: [0, 0]
-      Size: [0.5, 0.5]
       Density: 1
       Friction: 0.5
       Restitution: 0
       RestitutionThreshold: 0.5
+    Box2DComponent:
+      Offset: [0, 0]
+      Size: [0.5, 0.5]
   - Entity: 12392182606285594567
     TagComponent:
       Tag: Sprite
@@ -296,8 +296,8 @@ Entities:
       Children: ~
       ChildCount: 0
     TransformComponent:
-      Translation: [6.05737209, 7.11534977, 0.488123536]
-      Rotation: [0.0902630612, -1.86264515e-08, -0.982672572]
+      Translation: [6.05737209, 7.11534977, 0]
+      Rotation: [0, 0, -0.982672572]
       Scale: [1.00000012, 0.999999762, 0.99999994]
     SpriteRendererComponent:
       Colour: [1, 1, 1, 1]
@@ -309,13 +309,13 @@ Entities:
     Rigidbody2DComponent:
       BodyType: Dynamic
       FixedRotation: false
-    Box2DComponent:
-      Offset: [0, 0]
-      Size: [0.5, 0.5]
       Density: 1
       Friction: 0.5
       Restitution: 0
       RestitutionThreshold: 0.5
+    Box2DComponent:
+      Offset: [0, 0]
+      Size: [0.5, 0.5]
   - Entity: 14961826949240870393
     TagComponent:
       Tag: Camera
@@ -324,16 +324,16 @@ Entities:
       Children: ~
       ChildCount: 0
     TransformComponent:
-      Translation: [0, 2, 0]
+      Translation: [0, 6.19999981, 0]
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
     CameraComponent:
       Camera:
         ProjectionType: 1
-        PerspectiveFOV: 0.785398185
+        PerspectiveFOV: 0.17976892
         PerspectiveNear: 0.00999999978
         PerspectiveFar: 1000
-        OrthographicSize: 10
+        OrthographicSize: 10.3000002
         OrthographicNear: -1
         OrthographicFar: 1
       Primary: true

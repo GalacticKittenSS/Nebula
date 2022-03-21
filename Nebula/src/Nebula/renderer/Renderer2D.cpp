@@ -202,9 +202,9 @@ namespace Nebula {
 		s_Data.TextureSlots[0] = s_Data.WhiteTexture;
 
 		//Shaders
-		s_Data.TextureShader = Shader::Create("assets/shaders/Default.glsl");
-		s_Data.CircleShader = Shader::Create("assets/shaders/Circle.glsl");
-		s_Data.LineShader = Shader::Create("assets/shaders/Line.glsl");
+		s_Data.TextureShader = Shader::Create("Resources/shaders/Default.glsl");
+		s_Data.CircleShader = Shader::Create("Resources/shaders/Circle.glsl");
+		s_Data.LineShader = Shader::Create("Resources/shaders/Line.glsl");
 		
 		int32_t samplers[s_Data.MaxTextureSlots];
 		for (uint32_t i = 0; i < s_Data.MaxTextureSlots; i++)

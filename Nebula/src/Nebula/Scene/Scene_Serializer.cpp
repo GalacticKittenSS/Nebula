@@ -235,6 +235,10 @@ namespace Nebula {
 			auto& rb2dComponent = entity.GetComponent<Rigidbody2DComponent>();
 			out << YAML::Key << "BodyType" << YAML::Value << RigidBody2DBodyTypeToString(rb2dComponent.Type);
 			out << YAML::Key << "FixedRotation" << YAML::Value << rb2dComponent.FixedRotation;
+			out << YAML::Key << "Density" << YAML::Value << rb2dComponent.Density;
+			out << YAML::Key << "Friction" << YAML::Value << rb2dComponent.Friction;
+			out << YAML::Key << "Restitution" << YAML::Value << rb2dComponent.Restitution;
+			out << YAML::Key << "RestitutionThreshold" << YAML::Value << rb2dComponent.RestitutionThreshold;
 
 			out << YAML::EndMap; // Rigidbody2DComponent
 		}
@@ -246,10 +250,6 @@ namespace Nebula {
 			auto& bc2dComponent = entity.GetComponent<Box2DComponent>();
 			out << YAML::Key << "Offset" << YAML::Value << bc2dComponent.Offset;
 			out << YAML::Key << "Size" << YAML::Value << bc2dComponent.Size;
-			out << YAML::Key << "Density" << YAML::Value << bc2dComponent.Density;
-			out << YAML::Key << "Friction" << YAML::Value << bc2dComponent.Friction;
-			out << YAML::Key << "Restitution" << YAML::Value << bc2dComponent.Restitution;
-			out << YAML::Key << "RestitutionThreshold" << YAML::Value << bc2dComponent.RestitutionThreshold;
 
 			out << YAML::EndMap; // BoxCollider2DComponent
 		}
@@ -261,10 +261,6 @@ namespace Nebula {
 			auto& ccComponent = entity.GetComponent<CircleColliderComponent>();
 			out << YAML::Key << "Offset" << YAML::Value << ccComponent.Offset;
 			out << YAML::Key << "Radius" << YAML::Value << ccComponent.Radius;
-			out << YAML::Key << "Density" << YAML::Value << ccComponent.Density;
-			out << YAML::Key << "Friction" << YAML::Value << ccComponent.Friction;
-			out << YAML::Key << "Restitution" << YAML::Value << ccComponent.Restitution;
-			out << YAML::Key << "RestitutionThreshold" << YAML::Value << ccComponent.RestitutionThreshold;
 
 			out << YAML::EndMap; // CircleColliderComponent
 		}
@@ -395,6 +391,10 @@ namespace Nebula {
 					auto& rb2d = deserializedEntity.AddComponent<Rigidbody2DComponent>();
 					rb2d.Type = RigidBody2DBodyTypeFromString(rigidbody2DComponent["BodyType"].as<std::string>());
 					rb2d.FixedRotation = rigidbody2DComponent["FixedRotation"].as<bool>();
+					rb2d.Density = rigidbody2DComponent["Density"].as<float>();
+					rb2d.Friction = rigidbody2DComponent["Friction"].as<float>();
+					rb2d.Restitution = rigidbody2DComponent["Restitution"].as<float>();
+					rb2d.RestitutionThreshold = rigidbody2DComponent["RestitutionThreshold"].as<float>();
 				}
 
 				auto box2DComponent = entity["Box2DComponent"];
@@ -403,10 +403,6 @@ namespace Nebula {
 					auto& bc2d = deserializedEntity.AddComponent<Box2DComponent>();
 					bc2d.Offset = box2DComponent["Offset"].as<vec2>();
 					bc2d.Size = box2DComponent["Size"].as<vec2>();
-					bc2d.Density = box2DComponent["Density"].as<float>();
-					bc2d.Friction = box2DComponent["Friction"].as<float>();
-					bc2d.Restitution = box2DComponent["Restitution"].as<float>();
-					bc2d.RestitutionThreshold = box2DComponent["RestitutionThreshold"].as<float>();
 				}
 
 				auto circleColliderComponent = entity["CircleColliderComponent"];
@@ -414,10 +410,6 @@ namespace Nebula {
 					auto& cc = deserializedEntity.AddComponent<CircleColliderComponent>();
 					cc.Offset = circleColliderComponent["Offset"].as<vec2>();
 					cc.Radius = circleColliderComponent["Radius"].as<float>();
-					cc.Density = circleColliderComponent["Density"].as<float>();
-					cc.Friction = circleColliderComponent["Friction"].as<float>();
-					cc.Restitution = circleColliderComponent["Restitution"].as<float>();
-					cc.RestitutionThreshold = circleColliderComponent["RestitutionThreshold"].as<float>();
 				}
 			}
 		}

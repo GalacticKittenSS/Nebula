@@ -40,7 +40,5 @@ namespace Nebula {
 			float Top = m_OrthographicSize * 0.5f;
 			m_ProjectionMatrix = ortho(Left, Right, Bottom, Top, m_OrthographicNear, m_OrthographicFar);
 		}
-
-
 	}
 }

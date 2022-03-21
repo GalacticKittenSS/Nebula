@@ -12,9 +12,49 @@
 #include "box2d/b2_polygon_shape.h"
 #include "box2d/b2_circle_shape.h"
 
-#include "Nebula/Core/Time.h"
+#include "Nebula/Utils/Time.h"
 
 namespace Nebula {
+	mat4 CalculateGlobalTransform(Entity& entity) {
+		auto& transform = entity.GetTransform();
+
+		vec3 pos = transform.LocalTranslation;
+		vec3 rot = transform.LocalRotation;
+		vec3 size = transform.LocalScale;
+
+		UUID parentID = entity.GetParentChild().PrimaryParent;
+
+		if (parentID) {
+			Entity parent = { parentID, entity };
+
+			vec3 pSize, pRot, pPos;
+			DecomposeTransform(CalculateGlobalTransform(parent), pPos, pRot, pSize);
+
+			pos *= pSize;
+
+			pos = vec4(pos, 1.0f) / toMat4(quat(pRot));
+			pos += pPos;
+			rot += pRot;
+			size *= pSize;
+		}
+
+		transform.GlobalTranslation = pos;
+		transform.GlobalRotation = rot;
+		transform.GlobalScale = size;
+
+		return transform.CalculateMatrix();
+	}
+
+	void UpdateChildTransform(Entity& entity) {
+		for (UUID child : entity.GetParentChild().ChildrenIDs) {
+			Entity c = { child, entity };
+			if (!c.GetParentChild().ChildrenIDs.size())
+				CalculateGlobalTransform(c);
+			else
+				UpdateChildTransform(c);
+		}
+	}
+
 	static b2BodyType Rigibody2DToBox2D(Rigidbody2DComponent::BodyType bodyType) {
 		switch (bodyType)
 		{
@@ -78,7 +118,7 @@ namespace Nebula {
 		for (auto e : idView)
 			entityVec.push_back(e);
 
-		for (uint32_t i = entityVec.size(); i; i--) {
+		for (size_t i = entityVec.size(); i; i--) {
 			UUID uuid = srcSceneReg.get<IDComponent>(entityVec[i - 1]).ID;
 			const auto& name = srcSceneReg.get<TagComponent>(entityVec[i -1]).Tag;
 			Entity newEnt = newScene->CreateEntity(uuid, name);
@@ -138,7 +178,7 @@ namespace Nebula {
 	}
 
 	void Scene::OnRuntimeStart() {
-		m_PhysicsWorld = new b2World({ 0.0f, -9.8f });
+		m_PhysicsWorld = new b2World({ 0.0f, -9.81f });
 
 		auto view = m_Registry.view<Rigidbody2DComponent>();
 		for (auto e : view) {
@@ -151,27 +191,32 @@ namespace Nebula {
 			bodyDef.position.Set(transform.GlobalTranslation.x, transform.GlobalTranslation.y);
 			bodyDef.angle = transform.GlobalRotation.z;
 
-			b2Body* body = m_PhysicsWorld->CreateBody(&bodyDef);
-			body->SetFixedRotation(rb2d.FixedRotation);
-			rb2d.RuntimeBody = body;
-
+			b2Body* body;
 			if (entity.HasComponent<Box2DComponent>()) {
 				auto& bc2d = entity.GetComponent<Box2DComponent>();
 
-				b2PolygonShape polygonShape;
-				polygonShape.SetAsBox(transform.GlobalScale.x * bc2d.Size.x, transform.GlobalScale.y * bc2d.Size.y);
+				bodyDef.position.x += bc2d.Offset.x;
+				bodyDef.position.y += bc2d.Offset.y;
+				body = m_PhysicsWorld->CreateBody(&bodyDef);
 
+				b2PolygonShape polygonShape;
+				polygonShape.SetAsBox(transform.GlobalScale.x * bc2d.Size.x, transform.GlobalScale.y * bc2d.Size.y); 
+				
 				b2FixtureDef fixtureDef;
 				fixtureDef.shape = &polygonShape;
-				fixtureDef.density = bc2d.Density;
-				fixtureDef.friction = bc2d.Friction;
-				fixtureDef.restitution = bc2d.Restitution;
-				fixtureDef.restitutionThreshold = bc2d.RestitutionThreshold;
+				fixtureDef.density = rb2d.Density;
+				fixtureDef.friction = rb2d.Friction;
+				fixtureDef.restitution = rb2d.Restitution;
+				fixtureDef.restitutionThreshold = rb2d.RestitutionThreshold;
 				body->CreateFixture(&fixtureDef);
 			}
 
 			if (entity.HasComponent<CircleColliderComponent>()) {
 				auto& cc = entity.GetComponent<CircleColliderComponent>();
+
+				bodyDef.position.x += cc.Offset.x;
+				bodyDef.position.y += cc.Offset.y;
+				body = m_PhysicsWorld->CreateBody(&bodyDef);
 
 				b2CircleShape circle;
 				circle.m_p.Set(cc.Offset.x, cc.Offset.y);
@@ -179,12 +224,15 @@ namespace Nebula {
 
 				b2FixtureDef fixtureDef;
 				fixtureDef.shape = &circle;
-				fixtureDef.density = cc.Density;
-				fixtureDef.friction = cc.Friction;
-				fixtureDef.restitution = cc.Restitution;
-				fixtureDef.restitutionThreshold = cc.RestitutionThreshold;
+				fixtureDef.density = rb2d.Density;
+				fixtureDef.friction = rb2d.Friction;
+				fixtureDef.restitution = rb2d.Restitution;
+				fixtureDef.restitutionThreshold = rb2d.RestitutionThreshold;
 				body->CreateFixture(&fixtureDef);
 			}
+
+			body->SetFixedRotation(rb2d.FixedRotation);
+			rb2d.RuntimeBody = body;
 		}
 	}
 
@@ -206,36 +254,6 @@ namespace Nebula {
 		return {};
 	}
 
-	static mat4 CalculateGlobalTransform(Entity& entity) {
-		auto& transform = entity.GetTransform();
-
-		vec3 pos = transform.LocalTranslation;
-		vec3 rot = transform.LocalRotation;
-		vec3 size = transform.LocalScale;
-
-		UUID parentID = entity.GetParentChild().PrimaryParent;
-
-		if (parentID) {
-			Entity parent{ parentID, entity };
-
-			vec3 pSize, pRot, pPos;
-			DecomposeTransform(CalculateGlobalTransform(parent), pPos, pRot, pSize);
-
-			pos *= pSize;
-
-			pos = vec4(pos, 1.0f) / toMat4(quat(pRot));
-			pos += pPos;
-			rot += pRot;
-			size *= pSize;
-		}
-
-		transform.GlobalTranslation = pos;
-		transform.GlobalRotation = rot;
-		transform.GlobalScale = size;
-
-		return transform.CalculateMatrix();
-	}
-
 	void Scene::UpdateRuntime() {
 		m_Registry.view<NativeScriptComponent>().each([=](auto entity, NativeScriptComponent& nsc)
 			{
@@ -248,9 +266,7 @@ namespace Nebula {
 				nsc.Instance->Update();
 			});
 
-		const int32_t velocityIterations = 6;
-		const int32_t positionIterations = 2;
-		m_PhysicsWorld->Step(Time::DeltaTime(), velocityIterations, positionIterations);
+		m_PhysicsWorld->Step(Time::DeltaTime(), 6, 2);
 
 		auto view = m_Registry.view<Rigidbody2DComponent>();
 		for (auto e : view) {
@@ -267,10 +283,8 @@ namespace Nebula {
 			transform.SetDeltaTransform(deltaTranslation, deltaRotation, vec3(0.0f));
 		}
 
-		for (uint32_t i = 0; i < m_SceneOrder.size(); i++) {
-			Entity entity{ m_SceneOrder[i], this };
-			CalculateGlobalTransform(entity);
-		}
+		for (uint32_t i = 0; i < m_SceneOrder.size(); i++)
+			CalculateGlobalTransform(Entity{ m_SceneOrder[i], this });
 	}
 
 	void Scene::RenderEditor(EditorCamera& camera) {
@@ -290,10 +304,8 @@ namespace Nebula {
 	}
 
 	void Scene::UpdateEditor() {
-		for (uint32_t i = 0; i < m_SceneOrder.size(); i++) {
-			Entity entity{ m_SceneOrder[i], this };
-			CalculateGlobalTransform(entity);
-		}
+		for (uint32_t i = 0; i < m_SceneOrder.size(); i++)
+			CalculateGlobalTransform(Entity{ m_SceneOrder[i], this });
 	}
 
 	void Scene::RenderRuntime() {

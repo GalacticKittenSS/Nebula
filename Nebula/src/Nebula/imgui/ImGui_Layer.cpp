@@ -1,9 +1,9 @@
 #include "nbpch.h"
 #include "ImGui_Layer.h"
 
-#include <imgui/imgui.h>
-#include <imgui/platform/imgui_impl_glfw.h>
-#include <imgui/platform/imgui_impl_opengl3.h>
+#include <imgui.h>
+#include <platform/imgui_impl_glfw.h>
+#include <platform/imgui_impl_opengl3.h>
 
 #include "Nebula/Core/Application.h"
 
@@ -30,8 +30,8 @@ namespace Nebula {
 		//io.ConfigFlags |= ImGuiConfigFlags_ViewportsNoTaskBarIcons;
 		//io.ConfigFlags |= ImGuiConfigFlags_ViewportsNoMerge;
 
-		io.Fonts->AddFontFromFileTTF("assets/fonts/OpenSans/Bold.ttf", 18.0f);
-		io.FontDefault = io.Fonts->AddFontFromFileTTF("assets/fonts/OpenSans/Regular.ttf", 18.0f);
+		io.Fonts->AddFontFromFileTTF("Resources/fonts/OpenSans/Bold.ttf", 18.0f);
+		io.FontDefault = io.Fonts->AddFontFromFileTTF("Resources/fonts/OpenSans/Regular.ttf", 18.0f);
 
 		SetDarkThemeColour();
 
@@ -91,8 +91,8 @@ namespace Nebula {
 
 	void ImGuiLayer::SetDarkThemeColour() {
 		auto& colours = ImGui::GetStyle().Colors;
-		colours[ImGuiCol_WindowBg] = ImVec4{ 0.1f, 0.105f, 0.11f, 1.0f };
-
+		colours[ImGuiCol_WindowBg] = ImVec4{ 0.2f, 0.205f, 0.21f, 1.0f };
+		
 		// Headers
 		colours[ImGuiCol_Header] = ImVec4{ 0.2f, 0.205f, 0.21f, 1.0f };
 		colours[ImGuiCol_HeaderHovered] = ImVec4{ 0.3f, 0.305f, 0.31f, 1.0f };
@@ -104,7 +104,7 @@ namespace Nebula {
 		colours[ImGuiCol_ButtonActive] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
 
 		// Frame BG
-		colours[ImGuiCol_FrameBg] = ImVec4{ 0.2f, 0.205f, 0.21f, 1.0f };
+		colours[ImGuiCol_FrameBg] = ImVec4{ 0.1f, 0.105f, 0.11f, 1.0f };
 		colours[ImGuiCol_FrameBgHovered] = ImVec4{ 0.3f, 0.305f, 0.31f, 1.0f };
 		colours[ImGuiCol_FrameBgActive] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
 

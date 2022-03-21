@@ -50,7 +50,7 @@ namespace Nebula {
 		static const char* GetCacheDirectory()
 		{
 			// TODO: make sure the assets directory is valid
-			return "assets/cache/shader/opengl";
+			return "Resources/cache/shader/opengl";
 		}
 
 		static void CreateCacheDirectoryIfNeeded()

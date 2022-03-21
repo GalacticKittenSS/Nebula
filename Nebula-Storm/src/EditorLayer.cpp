@@ -3,6 +3,81 @@
 namespace Nebula {
 	extern const std::filesystem::path s_AssetPath = "assets";
 
+	static vec4 s_CubeVertexPos[] = {
+		//Front
+		{ -0.5f, -0.5f, -0.5f, 1 },
+		{  0.5f, -0.5f, -0.5f, 1 },
+		{  0.5f,  0.5f, -0.5f, 1 },
+		{ -0.5f,  0.5f, -0.5f, 1 },
+
+		//Left
+		{  0.5f, -0.5f, -0.5f, 1 },
+		{  0.5f, -0.5f,  0.5f, 1 },
+		{  0.5f,  0.5f,  0.5f, 1 },
+		{  0.5f,  0.5f, -0.5f, 1 },
+
+		//Top
+		{ -0.5f,  0.5f, -0.5f, 1 },
+		{  0.5f,  0.5f, -0.5f, 1 },
+		{  0.5f,  0.5f,  0.5f, 1 },
+		{ -0.5f,  0.5f,  0.5f, 1 },
+
+		//Right
+		{ -0.5f, -0.5f,  0.5f, 1 },
+		{ -0.5f, -0.5f, -0.5f, 1 },
+		{ -0.5f,  0.5f, -0.5f, 1 },
+		{ -0.5f,  0.5f,  0.5f, 1 },
+
+		//Back
+		{ -0.5f, -0.5f,  0.5f, 1 },
+		{  0.5f, -0.5f,  0.5f, 1 },
+		{  0.5f,  0.5f,  0.5f, 1 },
+		{ -0.5f,  0.5f,  0.5f, 1 },
+
+		//Bottom
+		{ -0.5f, -0.5f, -0.5f, 1 },
+		{  0.5f, -0.5f, -0.5f, 1 },
+		{  0.5f, -0.5f,  0.5f, 1 },
+		{ -0.5f, -0.5f,  0.5f, 1 }
+	};
+	static vec2 s_CubeTexturePos[] = {
+		//Front
+		{ 0.50f, 0.345f },
+		{ 0.25f, 0.345f },
+		{ 0.25f, 0.66f },
+		{ 0.50f, 0.66f },
+
+		//Left
+		{ 0.25f, 0.345f },
+		{ 0.00f, 0.345f },
+		{ 0.00f, 0.66f },
+		{ 0.25f, 0.66f },
+
+		//Top
+		{ 0.49f, 0.66f },
+		{ 0.26f, 0.66f },
+		{ 0.26f, 1.00f },
+		{ 0.49f, 1.00f },
+
+		//Right
+		{ 0.75f, 0.345f },
+		{ 0.50f, 0.345f },
+		{ 0.50f, 0.66f },
+		{ 0.75f, 0.66f },
+
+		//Back
+		{ 0.75f, 0.345f },
+		{ 1.00f, 0.345f },
+		{ 1.00f, 0.66f },
+		{ 0.75f, 0.66f },
+
+		//Bottom
+		{ 0.499f, 0.345f },
+		{ 0.256f, 0.345f },
+		{ 0.256f, 0.00f },
+		{ 0.499f, 0.00f }
+	};
+
 	EditorLayer::EditorLayer() : Layer("Editor") { }
 
 	void EditorLayer::Attach() {
@@ -30,7 +105,6 @@ namespace Nebula {
 		m_EditorCam = EditorCamera(60.0f, 16.0f / 9.0f, 0.01f, 1000.0f);
 
 		m_SceneHierarchy.SetContext(m_ActiveScene);
-		Application::Get().GetImGuiLayer()->SetBlockEvents(false);
 		RenderCommand::SetClearColour({ 0.1f, 0.1f, 0.1f, 1.0f });
 	}
 
@@ -98,9 +172,6 @@ namespace Nebula {
 	}
 
 	void EditorLayer::ImGuiRender() {
-		static bool dockspaceOpen = true;
-		static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
-
 		ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
 		
 		ImGuiViewport* viewport = ImGui::GetMainViewport();
@@ -113,7 +184,7 @@ namespace Nebula {
 		window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 		
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-		ImGui::Begin("Nebula Storm", &dockspaceOpen, window_flags);
+		ImGui::Begin("Nebula Storm", nullptr, window_flags);
 		ImGui::PopStyleVar(3);
 
 		ImGuiStyle& style = ImGui::GetStyle();
@@ -121,7 +192,7 @@ namespace Nebula {
 		style.WindowMinSize.x = 370.0f;
 
 		ImGuiID dockspace_id = ImGui::GetID("Nebula Storm");
-		ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+		ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
 
 		style.WindowMinSize.x = minWinSize;
 		
@@ -129,9 +200,11 @@ namespace Nebula {
 
 		m_SceneHierarchy.OnImGuiRender();
 		m_ContentBrowser.OnImGuiRender();
-		
+
 		UI_GameView();
 		UI_Toolbar();
+
+		Application::Get().GetImGuiLayer()->SetBlockEvents(!m_GameViewFocus && !m_GameViewHovered);
 		
 		ImGui::End();
 	}
@@ -202,84 +275,9 @@ namespace Nebula {
 				Renderer2D::BeginScene(cam.GetComponent<CameraComponent>().Camera, cam.GetComponent<TransformComponent>().CalculateMatrix());
 		}
 		else {
-			vec4 vertexPos[] = {
-				//Front
-				{ -0.5f, -0.5f, -0.5f, 1 },
-				{  0.5f, -0.5f, -0.5f, 1 },
-				{  0.5f,  0.5f, -0.5f, 1 },
-				{ -0.5f,  0.5f, -0.5f, 1 },
-
-				//Left
-				{  0.5f, -0.5f, -0.5f, 1 },
-				{  0.5f, -0.5f,  0.5f, 1 },
-				{  0.5f,  0.5f,  0.5f, 1 },
-				{  0.5f,  0.5f, -0.5f, 1 },
-
-				//Top
-				{ -0.5f,  0.5f, -0.5f, 1 },
-				{  0.5f,  0.5f, -0.5f, 1 },
-				{  0.5f,  0.5f,  0.5f, 1 },
-				{ -0.5f,  0.5f,  0.5f, 1 },
-
-				//Right
-				{ -0.5f, -0.5f,  0.5f, 1 },
-				{ -0.5f, -0.5f, -0.5f, 1 },
-				{ -0.5f,  0.5f, -0.5f, 1 },
-				{ -0.5f,  0.5f,  0.5f, 1 },
-
-				//Back
-				{ -0.5f, -0.5f,  0.5f, 1 },
-				{  0.5f, -0.5f,  0.5f, 1 },
-				{  0.5f,  0.5f,  0.5f, 1 },
-				{ -0.5f,  0.5f,  0.5f, 1 },
-
-				//Bottom
-				{ -0.5f, -0.5f, -0.5f, 1 },
-				{  0.5f, -0.5f, -0.5f, 1 },
-				{  0.5f, -0.5f,  0.5f, 1 },
-				{ -0.5f, -0.5f,  0.5f, 1 }
-			};
-			vec2 texturePos[] = {
-				//Front
-				{ 0.50f, 0.345f },
-				{ 0.25f, 0.345f },
-				{ 0.25f, 0.66f },
-				{ 0.50f, 0.66f },
-
-				//Left
-				{ 0.25f, 0.345f },
-				{ 0.00f, 0.345f },
-				{ 0.00f, 0.66f },
-				{ 0.25f, 0.66f },
-
-				//Top
-				{ 0.49f, 0.66f },
-				{ 0.26f, 0.66f },
-				{ 0.26f, 1.00f },
-				{ 0.49f, 1.00f },
-
-				//Right
-				{ 0.75f, 0.345f },
-				{ 0.50f, 0.345f },
-				{ 0.50f, 0.66f },
-				{ 0.75f, 0.66f },
-
-				//Back
-				{ 0.75f, 0.345f },
-				{ 1.00f, 0.345f },
-				{ 1.00f, 0.66f },
-				{ 0.75f, 0.66f },
-
-				//Bottom
-				{ 0.499f, 0.345f },
-				{ 0.256f, 0.345f },
-				{ 0.256f, 0.00f },
-				{ 0.499f, 0.00f }
-			};
-
 			Renderer2D::SetBackCulling(false);
 			Renderer2D::BeginScene(m_EditorCam);
-			Renderer2D::Draw(NB_QUAD, sizeof(vertexPos) / sizeof(vec4), vertexPos, translate(m_EditorCam.GetPosition()) * scale(vec3(1000.0f)), vec4(1.0f), m_Backdrop, 1.0f, texturePos);
+			Renderer2D::Draw(NB_QUAD, sizeof(s_CubeVertexPos) / sizeof(vec4), s_CubeVertexPos, translate(m_EditorCam.GetPosition()) * scale(vec3(1000.0f)), vec4(1.0f), m_Backdrop, 1.0f, s_CubeTexturePos);
 		}
 
 		if (m_ShowColliders) {
@@ -364,7 +362,7 @@ namespace Nebula {
 			if (selectedEntity && m_GizmoType != -1) {
 				auto& tc = selectedEntity.GetComponent<TransformComponent>();
 				mat4 transform = tc.CalculateMatrix();
-
+				
 				bool snap = Input::IsKeyPressed(Key::LeftControl);
 				float snapValue = 0.25f;
 				if (m_GizmoType == ImGuizmo::OPERATION::ROTATE)
@@ -428,7 +426,7 @@ namespace Nebula {
 	}
 
 	bool EditorLayer::OnKeyPressed(KeyPressedEvent& e) {
-		if (e.GetRepeatCount() > 0 || m_SceneState != SceneState::Edit)
+		if (e.GetRepeatCount() > 0 || m_SceneState != SceneState::Edit || !m_GameViewFocus)
 			return false;
 
 		bool control = Input::IsKeyPressed(KeyCode::LeftControl) || Input::IsKeyPressed(KeyCode::RightControl);
