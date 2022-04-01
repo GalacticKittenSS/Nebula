@@ -11,6 +11,8 @@ namespace Nebula {
 		void SetContext(const Ref<Scene>& scene);
 		void OnImGuiRender();
 
+		void DrawSceneHierarchy();
+
 		Entity GetSelectedEntity() { return m_SelectionContext; }
 		void SetSelectedEntity(Entity entity) { m_SelectionContext = entity; }
 

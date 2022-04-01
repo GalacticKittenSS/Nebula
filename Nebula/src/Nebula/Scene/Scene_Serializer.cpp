@@ -151,13 +151,13 @@ namespace Nebula {
 			auto& component = entity.GetComponent<ParentChildComponent>();
 
 			YAML::Node children;
-			for (uint32_t i = 0; i < component.ChildrenCount; i++)
+			for (uint32_t i = 0; i < component.ChildrenIDs.size(); i++)
 				children.push_back((uint64_t)component[i]);
 			children.SetStyle(YAML::EmitterStyle::Flow);
 			
-			out << YAML::Key << "PrimaryParent" << YAML::Value << component.PrimaryParent;
+			out << YAML::Key << "PrimaryParent" << YAML::Value << component.Parent;
 			out << YAML::Key << "Children" << YAML::Value << children;
-			out << YAML::Key << "ChildCount" << YAML::Value << component.ChildrenCount;
+			out << YAML::Key << "ChildCount" << YAML::Value << component.ChildrenIDs.size();
 
 			out << YAML::EndMap;
 		}
@@ -333,7 +333,7 @@ namespace Nebula {
 				auto parentComponent = entity["ParentChildComponent"];
 				if (parentComponent) {
 					auto& pcc = deserializedEntity.GetComponent<ParentChildComponent>();
-					pcc.PrimaryParent = parentComponent["PrimaryParent"].as<uint64_t>();
+					pcc.Parent = parentComponent["PrimaryParent"].as<uint64_t>();
 
 					uint32_t count = parentComponent["ChildCount"].as<uint32_t>();
 					auto children = parentComponent["Children"];
@@ -412,6 +412,9 @@ namespace Nebula {
 					cc.Radius = circleColliderComponent["Radius"].as<float>();
 				}
 			}
+
+			for (auto entity : m_Scene->GetAllEntitiesWith<TransformComponent>())
+				CalculateGlobalTransform(Entity{ entity, m_Scene.get() });
 		}
 
 		return true;

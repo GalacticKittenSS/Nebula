@@ -85,7 +85,7 @@ namespace Nebula {
 
 		m_PlayIcon = Texture2D::Create("Resources/Icons/PlayButton.png");
 		m_StopIcon = Texture2D::Create("Resources/Icons/StopButton.png");
-		m_Backdrop = Texture2D::Create("Resources/Textures/bg2.png");
+		m_Backdrop = Texture2D::Create("Resources/Textures/bg.png");
 
 		//Initialize Frame Buffer
 		FrameBufferSpecification fbSpec;
@@ -382,6 +382,7 @@ namespace Nebula {
 					vec3 deltaScale = scale - tc.GlobalScale;
 
 					tc.SetDeltaTransform(deltaTranslation, deltaRotation, deltaScale);
+					UpdateChildTransform(selectedEntity);
 				}
 			}
 		}

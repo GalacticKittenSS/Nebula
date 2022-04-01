@@ -1,8 +1,7 @@
 #include "Scene_Hierarchy.h"
-#include <cstring>
-
 #include "../../Nebula/Modules/imgui/src/imgui.cpp"
 
+#include <cstring>
 #include <filesystem>
 
 namespace Nebula {
@@ -24,19 +23,21 @@ namespace Nebula {
 
 
 		//Check if Dropped Entity is being dropped to parent of itself
-		if (child.PrimaryParent == parentEntity.GetUUID())
+		if (child.Parent == parentEntity.GetUUID())
 			isSafeToDrop = false;
 
 		//Check if Dropped Entity is being dropped to child of itself
-		for (uint32_t i = 0; i < child.ChildrenCount; i++) {
-			if (child[i] == parentEntity.GetUUID())
-				isSafeToDrop = false; break;
+		for (UUID& c : child.ChildrenIDs) {
+			if (c == parentEntity.GetUUID()) {
+				isSafeToDrop = false; 
+				break;
+			}
 		}
 
 
 		//Go Ahead if safe
 		if (isSafeToDrop) {
-			UUID parentID = child.PrimaryParent;
+			UUID parentID = child.Parent;
 			if (parentID) {
 				Entity parent{ parentID, scene };
 				parent.GetComponent<ParentChildComponent>().RemoveChild(childID);
@@ -44,8 +45,29 @@ namespace Nebula {
 
 			parent.AddChild(childID);
 
-			child.PrimaryParent = parentEntity.GetUUID();
+			child.Parent = parentEntity.GetUUID();
+			UpdateChildTransform(parentEntity);
 		}
+	}
+	
+	static void EntityPayload(Scene* currentScene) {
+		const ImGuiPayload* payload = ImGui::GetDragDropPayload();
+		if (!payload)
+			return;
+	
+		Entity Ent{ *(const UUID*)payload->Data, currentScene };
+		auto& ParentComp = Ent.GetParentChild();
+
+		if (!ParentComp.Parent)
+			return;
+
+		Entity{ ParentComp.Parent, currentScene }.GetComponent<ParentChildComponent>().RemoveChild(*(const UUID*)payload->Data);
+
+		UUID parentsParent = Entity{ ParentComp.Parent, currentScene }.GetParentChild().Parent;
+		ParentComp.Parent = parentsParent;
+
+		if (parentsParent)
+			Entity{ parentsParent, currentScene }.GetParentChild().AddChild(Ent.GetUUID());
 	}
 
 	SceneHierarchyPanel::SceneHierarchyPanel(const Ref<Scene>& scene) {
@@ -60,73 +82,8 @@ namespace Nebula {
 	void SceneHierarchyPanel::OnImGuiRender() {
 		ImGui::Begin("Scene Hierarchy");
 
-		if (m_Context) {
-			for (uint32_t n = 0; n < m_Context->m_SceneOrder.size(); n++) {
-				Entity entity{ m_Context->m_SceneOrder[n], m_Context.get()};
-				
-				if (!entity.GetComponent<ParentChildComponent>().PrimaryParent) {
-					DrawEntityNode(entity);
+		DrawSceneHierarchy();
 
-					if (m_SelectionContext == entity && ImGui::IsWindowFocused()) {
-						if (ImGui::IsMouseClicked(0))
-							m_MovedEntityIndex = n;
-
-						int32_t n_next = m_MovedEntityIndex + int32_t(ImGui::GetMouseDragDelta(0).y / 24);
-						
-						if (n_next >= 0 && n_next < m_Context->m_SceneOrder.size() && n != n_next && !ImGui::IsAnyItemHovered())
-							m_Context->m_SceneOrder.move(n, n_next);
-					}
-					
-					if (ImGui::IsMouseReleased(0)) {
-						ImGui::ResetMouseDragDelta(0);
-						m_MovedEntityIndex = -1;
-					}
-				}
-			}
-
-			if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered())
-				m_SelectionContext = {};
-
-			if (ImGui::BeginPopupContextWindow(0, 1, false)) {
-				if (ImGui::BeginMenu("Create Entity")) {
-					if (ImGui::MenuItem("Empty"))
-						auto& entity = m_Context->CreateEntity("Entity");
-
-					if (ImGui::MenuItem("Sprite")) {
-						auto& sprite = m_Context->CreateEntity("Sprite");
-						sprite.AddComponent<SpriteRendererComponent>();
-					}
-
-					if (ImGui::MenuItem("Camera")) {
-						auto& cam = m_Context->CreateEntity("Camera");
-						cam.AddComponent<CameraComponent>();
-					}
-
-					ImGui::EndMenu();
-				}
-
-				ImGui::EndPopup();
-			}
-
-			if (ImGui::IsMouseReleased(0) && ImGui::IsWindowHovered()) {
-				const ImGuiPayload* payload = ImGui::GetDragDropPayload();
-				if (payload != nullptr) {
-					Entity Ent{ *(const UUID*)payload->Data, m_Context.get() };
-					auto& ParentComp = Ent.GetParentChild();
-
-					if (ParentComp.PrimaryParent) {
-						Entity{ ParentComp.PrimaryParent, m_Context.get() }.GetComponent<ParentChildComponent>().RemoveChild(*(const UUID*)payload->Data);
-						
-						UUID parentsParent = Entity{ ParentComp.PrimaryParent, m_Context.get() }.GetParentChild().PrimaryParent;
-						ParentComp.PrimaryParent = parentsParent;
-						
-						if (parentsParent)
-							Entity{ parentsParent, m_Context.get() }.GetParentChild().AddChild(Ent.GetUUID());
-					}
-				}
-			}
-		}
-		
 		m_HierarchyFocused = ImGui::IsWindowFocused();
 		m_HierarchyHovered = ImGui::IsWindowHovered();
 
@@ -141,13 +98,90 @@ namespace Nebula {
 		ImGui::End();
 	}
 
+	void SceneHierarchyPanel::DrawSceneHierarchy() {
+		if (!m_Context)
+			return;
+
+		for (uint32_t n = 0; n < m_Context->m_SceneOrder.size(); n++) {
+			Entity entity{ m_Context->m_SceneOrder[n], m_Context.get() };
+
+			if (entity.GetComponent<ParentChildComponent>().Parent)
+				continue;
+
+			DrawEntityNode(entity);
+			
+			if (m_SelectionContext == entity && ImGui::IsWindowFocused()) {
+				if (ImGui::IsMouseClicked(0))
+					m_MovedEntityIndex = n;
+			
+				int32_t n_next = m_MovedEntityIndex + int32_t(ImGui::GetMouseDragDelta(0).y / 24);
+				if (n_next >= 0 && n_next < m_Context->m_SceneOrder.size() && n != n_next && !ImGui::IsAnyItemHovered())
+					m_Context->m_SceneOrder.move(n, n_next);
+			}
+			
+			if (ImGui::IsMouseReleased(0)) {
+				ImGui::ResetMouseDragDelta(0);
+				m_MovedEntityIndex = -1;
+			}
+		}
+
+		if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered())
+			m_SelectionContext = {};
+
+		if (ImGui::BeginPopupContextWindow(0, 1, false)) {
+			if (ImGui::BeginMenu("Create Entity")) {
+				if (ImGui::MenuItem("Empty"))
+					auto& entity = m_Context->CreateEntity("Entity");
+
+				if (ImGui::MenuItem("Sprite")) {
+					auto& sprite = m_Context->CreateEntity("Sprite");
+					sprite.AddComponent<SpriteRendererComponent>();
+				}
+
+				if (ImGui::MenuItem("Cube")) {
+					auto& sprite = m_Context->CreateEntity("Cube");
+					sprite.AddComponent<SpriteRendererComponent>();
+					sprite.AddComponent<Rigidbody2DComponent>();
+					sprite.AddComponent<Box2DComponent>();
+				}
+
+				if (ImGui::MenuItem("Circle")) {
+					auto& sprite = m_Context->CreateEntity("Circle");
+					sprite.AddComponent<CircleRendererComponent>();
+					sprite.AddComponent<Rigidbody2DComponent>();
+					sprite.AddComponent<CircleColliderComponent>();
+				}
+
+				if (ImGui::MenuItem("Camera")) {
+					auto& cam = m_Context->CreateEntity("Camera");
+					cam.AddComponent<CameraComponent>();
+				}
+
+				ImGui::EndMenu();
+			}
+
+			ImGui::EndPopup();
+		}
+
+		if (ImGui::IsMouseReleased(0) && ImGui::IsWindowHovered())
+			EntityPayload(m_Context.get());
+
+		float width = 25.0f;
+		int32_t n_next = m_MovedEntityIndex + int32_t(ImGui::GetMouseDragDelta(0).y / width);
+		ImGui::SetCursorPosY(n_next * width);
+		ImGui::Separator();
+	}
+
 	void SceneHierarchyPanel::DrawEntityNode(Entity entity) {
 		auto& tag = entity.GetComponent<TagComponent>().Tag;
 
-		ImGuiTreeNodeFlags flags = ((m_SelectionContext == entity) ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow;
-		flags |= ImGuiTreeNodeFlags_SpanAvailWidth;
+		ImGuiTreeNodeFlags flags = m_SelectionContext == entity ? ImGuiTreeNodeFlags_Selected : ImGuiTreeNodeFlags_None;
+		flags |= ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_OpenOnArrow;
 
 		bool opened = ImGui::TreeNodeEx((void*)(uint32_t)entity, flags, tag.c_str());
+
+		if (ImGui::IsItemClicked())
+			m_SelectionContext = entity;
 
 		if (ImGui::BeginDragDropSource()) {
 			UUID entityID = entity.GetUUID();
@@ -162,9 +196,7 @@ namespace Nebula {
 			ImGui::EndDragDropTarget();
 		}
 
-		if (ImGui::IsItemClicked())
-			m_SelectionContext = entity;
-		
+
 		bool entityDeleted = false;
 		if (ImGui::BeginPopupContextItem()) {
 			if (ImGui::MenuItem("Delete Selected Entity"))
@@ -194,28 +226,26 @@ namespace Nebula {
 			ImGui::EndPopup();
 		}
 
-		if (opened) {
-			if (entity.HasComponent<ParentChildComponent>()) {
-				auto& comp = entity.GetParentChild();
-				for (uint32_t i = 0; i < comp.ChildrenIDs.size(); i++) {
-					Entity child{ comp[i], m_Context.get() };
-					DrawEntityNode(child);
-
-					if (m_SelectionContext == child && ImGui::IsWindowFocused()) {
-						if (ImGui::IsMouseClicked(0))
-							m_MovedEntityIndex = i;
-
-						int32_t n_next = m_MovedEntityIndex + int32_t(ImGui::GetMouseDragDelta(0).y / 22);
+		if (opened && entity.HasComponent<ParentChildComponent>()) {
+			auto& comp = entity.GetParentChild();
+			for (uint32_t i = 0; i < comp.ChildrenIDs.size(); i++) {
+				Entity child{ comp[i], m_Context.get() };
+				DrawEntityNode(child);
+			
+				if (m_SelectionContext == child && ImGui::IsWindowFocused()) {
+					if (ImGui::IsMouseClicked(0))
+						m_MovedEntityIndex = i;
+			
+					int32_t n_next = m_MovedEntityIndex + int32_t(ImGui::GetMouseDragDelta(0).y / 22);
 						
-
-						if (n_next >= 0 && n_next < entity.GetParentChild().ChildrenIDs.size() && i != n_next && !ImGui::IsAnyItemHovered())
-							entity.GetParentChild().ChildrenIDs.move(i, n_next);
-					}
-
-					if (ImGui::IsMouseReleased(0)) {
-						ImGui::ResetMouseDragDelta(0);
-						m_MovedEntityIndex = -1;
-					}
+			
+					if (n_next >= 0 && n_next < entity.GetParentChild().ChildrenIDs.size() && i != n_next && !ImGui::IsAnyItemHovered())
+						entity.GetParentChild().ChildrenIDs.move(i, n_next);
+				}
+			
+				if (ImGui::IsMouseReleased(0)) {
+					ImGui::ResetMouseDragDelta(0);
+					m_MovedEntityIndex = -1;
 				}
 			}
 			ImGui::TreePop();
@@ -308,7 +338,7 @@ namespace Nebula {
 		ImGui::PopID();
 	}
 
-	static void DrawVec3Transform(const std::string& label, vec3& values, float resetvalue = 0.0f, float columnWidth = 100.0f) {
+	static bool DrawVec3Transform(const std::string& label, vec3& values, float resetvalue = 0.0f, float columnWidth = 100.0f) {
 		ImGuiIO& io = ImGui::GetIO();
 		auto boldFont = io.Fonts->Fonts[0];
 
@@ -338,7 +368,8 @@ namespace Nebula {
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.8f, 0.2f, 0.1f, 1.0f });
 		ImGui::PushFont(boldFont);
 
-		if (ImGui::Button("X", buttonSize))
+		bool x = ImGui::Button("X", buttonSize);
+		if (x)
 			values.x = resetvalue;
 
 		ImGui::PopFont();
@@ -346,7 +377,7 @@ namespace Nebula {
 
 		ImGui::SameLine();
 		ImGui::SetNextItemWidth(width);
-		ImGui::DragFloat("##X", &values.x, 0.1f, 0.0f, 0.0f, "%.2f");
+		x = x || ImGui::DragFloat("##X", &values.x, 0.1f, 0.0f, 0.0f, "%.2f");
 		ImGui::PopItemWidth();
 		ImGui::SameLine();
 
@@ -355,7 +386,8 @@ namespace Nebula {
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
 		ImGui::PushFont(boldFont);
 
-		if (ImGui::Button("Y", buttonSize))
+		bool y = ImGui::Button("Y", buttonSize);
+		if (y)
 			values.y = resetvalue;
 
 		ImGui::PopFont();
@@ -363,7 +395,7 @@ namespace Nebula {
 
 		ImGui::SameLine();
 		ImGui::SetNextItemWidth(width);
-		ImGui::DragFloat("##Y", &values.y, 0.1f, 0.0f, 0.0f, "%.2f");
+		y = y || ImGui::DragFloat("##Y", &values.y, 0.1f, 0.0f, 0.0f, "%.2f");
 		ImGui::PopItemWidth();
 		ImGui::SameLine();
 
@@ -372,7 +404,8 @@ namespace Nebula {
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.1f, 0.25f, 0.8f, 1.0f });
 		ImGui::PushFont(boldFont);
 
-		if (ImGui::Button("Z", buttonSize))
+		bool z = ImGui::Button("Z", buttonSize);
+		if (z)
 			values.z = resetvalue;
 
 		ImGui::PopFont();
@@ -380,7 +413,7 @@ namespace Nebula {
 
 		ImGui::SameLine();
 		ImGui::SetNextItemWidth(width);
-		ImGui::DragFloat("##Z", &values.z, 0.1f, 0.0f, 0.0f, "%.2f");
+		z = z || ImGui::DragFloat("##Z", &values.z, 0.1f, 0.0f, 0.0f, "%.2f");
 		ImGui::PopItemWidth();
 
 		ImGui::PopStyleVar();
@@ -388,6 +421,7 @@ namespace Nebula {
 		ImGui::Columns(1);
 
 		ImGui::PopID();
+		return x || y || z;
 	}
 
 	static void DrawVec2Control(const std::string& label, vec2& values, const vec2& min = vec2(0.0f), const vec2& max = vec2(0.0f), const vec2& resetvalue = vec2(0.0f), float columnWidth = 100.0f) {
@@ -569,7 +603,7 @@ namespace Nebula {
 			}
 
 			if (open) {
-				function(component);
+				function(component, entity);
 				ImGui::TreePop();
 			}
 
@@ -647,35 +681,41 @@ namespace Nebula {
 
 		ImGui::PopItemWidth();
 		if (m_ShowGlobal) {
-			DrawComponent<TransformComponent>("Transform", entity, [](auto& component) {
+			DrawComponent<TransformComponent>("Transform", entity, [](auto& component, Entity entity) {
 				vec3 rotation = degrees(component.GlobalRotation);
 				vec3 translation = component.GlobalTranslation;
 				vec3 scale = component.GlobalScale;
 
-				DrawVec3Transform("Position", translation);
-				DrawVec3Transform("Rotation", rotation);
-				DrawVec3Transform("Scale", scale, 1.0f);
+				bool p = DrawVec3Transform("Position", translation);
+				bool r = DrawVec3Transform("Rotation", rotation);
+				bool s = DrawVec3Transform("Scale", scale, 1.0f);
 				ImGui::Spacing();
 
 				component.SetDeltaTransform(translation - component.GlobalTranslation, radians(rotation) - component.GlobalRotation, scale - component.GlobalScale);
+
+				if (p || r || s)
+					UpdateChildTransform(entity);
 			});
 		}
 		else {
-			DrawComponent<TransformComponent>("Transform", entity, [](auto& component) {
+			DrawComponent<TransformComponent>("Transform", entity, [](auto& component, Entity entity) {
 				vec3 rotation = degrees(component.LocalRotation);
 				vec3 translation = component.LocalTranslation;
 				vec3 scale = component.LocalScale;
 
-				DrawVec3Transform("Position", translation);
-				DrawVec3Transform("Rotation", rotation);
-				DrawVec3Transform("Scale", scale, 1.0f);
+				bool p = DrawVec3Transform("Position", translation);
+				bool r = DrawVec3Transform("Rotation", rotation);
+				bool s = DrawVec3Transform("Scale", scale, 1.0f);
 				ImGui::Spacing();
 
 				component.SetDeltaTransform(translation - component.LocalTranslation, radians(rotation) - component.LocalRotation, scale - component.LocalScale);
+
+				if (p || r || s)
+					UpdateChildTransform(entity);
 			});
 		}
 
-		DrawComponent<CameraComponent>("Camera", entity, [](auto& component) {
+		DrawComponent<CameraComponent>("Camera", entity, [](auto& component, Entity entity) {
 			auto& camera = component.Camera;
 
 			DrawBool("Primary", component.Primary);
@@ -735,7 +775,7 @@ namespace Nebula {
 			}
 		}, true);
 
-		DrawComponent<SpriteRendererComponent>("Sprite Renderer", entity, [](auto& component) {
+		DrawComponent<SpriteRendererComponent>("Sprite Renderer", entity, [](auto& component, Entity entity) {
 			ImGui::ColorEdit4("Colour", value_ptr(component.Colour));
 
 			std::string text;
@@ -804,13 +844,13 @@ namespace Nebula {
 			}
 		}, true);
 
-		DrawComponent<CircleRendererComponent>("Circle Renderer", entity, [](auto& component) {
+		DrawComponent<CircleRendererComponent>("Circle Renderer", entity, [](auto& component, Entity entity) {
 			ImGui::ColorEdit4("Colour", value_ptr(component.Colour));
 			DrawVec1Control("Thickness", component.Thickness, 0.01f, 0.01f, 1.0f);
 			DrawVec1Control("Fade", component.Fade, 0.0025f, 0.01f, 1.0f);
 		}, true);
 
-		DrawComponent<Rigidbody2DComponent>("Rigidbody 2D", entity, [](auto& component) {
+		DrawComponent<Rigidbody2DComponent>("Rigidbody 2D", entity, [](auto& component, Entity entity) {
 			int componentType = (int)component.Type;
 			const char* BodyTypeStrings[] = { "Static", "Dynamic", "Kinenmatic"};
 			const char* CurrentBodyTypeString = BodyTypeStrings[componentType];
@@ -827,12 +867,12 @@ namespace Nebula {
 			DrawVec1Control("Restitution Threshold", component.RestitutionThreshold, 0.01f, 0.0f);
 		}, true);
 
-		DrawComponent<Box2DComponent>("Box Collider 2D", entity, [](auto& component) {
+		DrawComponent<Box2DComponent>("Box Collider 2D", entity, [](auto& component, Entity entity) {
 			DrawVec2Control("Offset", component.Offset);
 			DrawVec2Control("Size",   component.Size);
 		}, true);
 
-		DrawComponent<CircleColliderComponent>("Circle Collider", entity, [](auto& component) {
+		DrawComponent<CircleColliderComponent>("Circle Collider", entity, [](auto& component, Entity entity) {
 			DrawVec2Control("Offset", component.Offset);
 			DrawVec1Control("Radius", component.Radius, 0.01f);
 		}, true);

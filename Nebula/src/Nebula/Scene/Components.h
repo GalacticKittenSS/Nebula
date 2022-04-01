@@ -27,10 +27,8 @@ namespace Nebula {
 	};
 
 	struct ParentChildComponent {
-		UUID PrimaryParent = NULL;
-		
+		UUID Parent = NULL;
 		Array<UUID> ChildrenIDs;
-		size_t ChildrenCount = 0;
 		
 		ParentChildComponent() = default;
 		ParentChildComponent(const ParentChildComponent&) = default;
@@ -39,12 +37,10 @@ namespace Nebula {
 
 		void AddChild(UUID id) {
 			ChildrenIDs.push_back(id);
-			ChildrenCount = ChildrenIDs.size();
 		}
 
 		void RemoveChild(UUID id) {
 			ChildrenIDs.remove(id);
-			ChildrenCount = ChildrenIDs.size();
 		}
 	};
 
@@ -56,6 +52,8 @@ namespace Nebula {
 		vec3 GlobalTranslation = { 0.0f, 0.0f, 0.0f };
 		vec3 GlobalRotation =	 { 0.0f, 0.0f, 0.0f };
 		vec3 GlobalScale =		 { 1.0f, 1.0f, 1.0f };
+
+		mat4 global = mat4(1.0f);
 
 		TransformComponent() = default;
 		TransformComponent(const TransformComponent&) = default;
@@ -129,7 +127,7 @@ namespace Nebula {
 	//Physics
 	struct Rigidbody2DComponent {
 		enum class BodyType { Static = 0, Dynamic, Kinematic };
-		BodyType Type = BodyType::Static;
+		BodyType Type = BodyType::Dynamic;
 		bool FixedRotation = false;
 
 		float Density = 1.0f;

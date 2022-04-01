@@ -15,34 +15,19 @@
 #include "Nebula/Utils/Time.h"
 
 namespace Nebula {
-	mat4 CalculateGlobalTransform(Entity& entity) {
+	void CalculateGlobalTransform(Entity& entity) {
 		auto& transform = entity.GetTransform();
+		UUID parentID = entity.GetParentChild().Parent;
 
-		vec3 pos = transform.LocalTranslation;
-		vec3 rot = transform.LocalRotation;
-		vec3 size = transform.LocalScale;
-
-		UUID parentID = entity.GetParentChild().PrimaryParent;
-
+		transform.global = transform.CalculateLocalMatrix();
 		if (parentID) {
 			Entity parent = { parentID, entity };
-
-			vec3 pSize, pRot, pPos;
-			DecomposeTransform(CalculateGlobalTransform(parent), pPos, pRot, pSize);
-
-			pos *= pSize;
-
-			pos = vec4(pos, 1.0f) / toMat4(quat(pRot));
-			pos += pPos;
-			rot += pRot;
-			size *= pSize;
+			CalculateGlobalTransform(parent);
+			auto& p = parent.GetTransform();
+			transform.global = p.global * transform.CalculateLocalMatrix();
 		}
 
-		transform.GlobalTranslation = pos;
-		transform.GlobalRotation = rot;
-		transform.GlobalScale = size;
-
-		return transform.CalculateMatrix();
+		DecomposeTransform(transform.global, transform.GlobalTranslation, transform.GlobalRotation, transform.GlobalScale);
 	}
 
 	void UpdateChildTransform(Entity& entity) {
@@ -155,9 +140,9 @@ namespace Nebula {
 	void Scene::DestroyEntity(Entity entity) {
 		auto& Parent = entity.GetComponent<ParentChildComponent>();
 
-		if (Parent.PrimaryParent) {
-			Entity{ Parent.PrimaryParent, this }.GetComponent<ParentChildComponent>().RemoveChild(entity.GetUUID());
-			Parent.PrimaryParent = NULL;
+		if (Parent.Parent) {
+			Entity{ Parent.Parent, this }.GetComponent<ParentChildComponent>().RemoveChild(entity.GetUUID());
+			Parent.Parent = NULL;
 		}
 
 		Array<UUID> newVec;
@@ -255,16 +240,15 @@ namespace Nebula {
 	}
 
 	void Scene::UpdateRuntime() {
-		m_Registry.view<NativeScriptComponent>().each([=](auto entity, NativeScriptComponent& nsc)
-			{
-				if (!nsc.Instance) {
-					nsc.Instance = nsc.InstantiateScript();
-					nsc.Instance->m_Entity = Entity{ entity, this };
-					nsc.Instance->Start();
-				}
+		m_Registry.view<NativeScriptComponent>().each([=](auto entity, NativeScriptComponent& nsc) {
+			if (!nsc.Instance) {
+				nsc.Instance = nsc.InstantiateScript();
+				nsc.Instance->m_Entity = Entity{ entity, this };
+				nsc.Instance->Start();
+			}
 
-				nsc.Instance->Update();
-			});
+			nsc.Instance->Update();
+		});
 
 		m_PhysicsWorld->Step(Time::DeltaTime(), 6, 2);
 
@@ -283,8 +267,8 @@ namespace Nebula {
 			transform.SetDeltaTransform(deltaTranslation, deltaRotation, vec3(0.0f));
 		}
 
-		for (uint32_t i = 0; i < m_SceneOrder.size(); i++)
-			CalculateGlobalTransform(Entity{ m_SceneOrder[i], this });
+		//for (uint32_t i = 0; i < m_SceneOrder.size(); i++)
+		//	CalculateGlobalTransform(Entity{ m_SceneOrder[i], this });
 	}
 
 	void Scene::RenderEditor(EditorCamera& camera) {
@@ -304,8 +288,8 @@ namespace Nebula {
 	}
 
 	void Scene::UpdateEditor() {
-		for (uint32_t i = 0; i < m_SceneOrder.size(); i++)
-			CalculateGlobalTransform(Entity{ m_SceneOrder[i], this });
+		//for (uint32_t i = 0; i < m_SceneOrder.size(); i++)
+		//	CalculateGlobalTransform(Entity{ m_SceneOrder[i], this });
 	}
 
 	void Scene::RenderRuntime() {

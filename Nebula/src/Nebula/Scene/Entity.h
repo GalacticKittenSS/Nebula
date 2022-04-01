@@ -90,6 +90,6 @@ namespace Nebula {
 		friend class Scene;
 	};
 
-	mat4 CalculateGlobalTransform(Entity& entity);
+	void CalculateGlobalTransform(Entity& entity);
 	void UpdateChildTransform(Entity& entity);
 }
