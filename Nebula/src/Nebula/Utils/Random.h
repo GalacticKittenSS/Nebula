@@ -7,6 +7,9 @@ namespace Nebula {
 		Random() { Shuffle(); }
 		T Shuffle();
 
+		Random(T Min, T Max) { Shuffle(Min, Max); }
+		T Shuffle(T Min, T Max);
+
 		T GetRandom() { return m_Random; }
 		operator T() const { return m_Random; }
 	private:

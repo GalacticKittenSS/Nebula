@@ -3,6 +3,8 @@
 #include <Nebula.h>
 
 namespace Nebula {
+	struct RectData;
+
 	class SceneHierarchyPanel {
 	public:
 		SceneHierarchyPanel() = default;
@@ -22,11 +24,14 @@ namespace Nebula {
 		bool IsFocused() { return m_HierarchyFocused; }
 		bool IsHovered() { return m_HierarchyHovered; }
 	private:
-		void DrawEntityNode(Entity entity);
+		void DrawEntityNode(Entity entity, uint32_t index);
+		void DrawArray(Array<UUID>& entities, bool showIfParent = false);
 		void DrawComponents(Entity entity);
 	private:
 		Ref<Scene> m_Context;
 		Entity m_SelectionContext;
+
+		Array<RectData> Rects;
 
 		bool m_ShowGlobal = false;
 		bool m_HierarchyFocused = false;

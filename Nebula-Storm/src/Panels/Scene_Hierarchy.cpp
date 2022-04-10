@@ -11,43 +11,47 @@ namespace Nebula {
 
 	extern const std::filesystem::path s_AssetPath;
 
-	static void AddParent(UUID childID, Entity parentEntity, Scene* scene) {
-		bool isSafeToDrop = true;
-		if (childID == parentEntity.GetUUID())
-			isSafeToDrop = false;
+	struct RectData {
+		UUID Parent;
+		ImRect Rect;
+		uint32_t index;
+	};
 
+	static bool DroppedIntoChildren(Entity child, Entity parentEntity) {
+		if (parentEntity.GetUUID() == child.GetUUID())
+			return true;
+
+		UUID parent = parentEntity.GetParentChild().Parent;
+		if (!parent)
+			return false;
+
+		return DroppedIntoChildren(child, Entity(parent, parentEntity));
+	}
+
+	static void AddParent(UUID childID, Entity parentEntity, Scene* scene) {
 		auto& parent = parentEntity.GetComponent<ParentChildComponent>();
 
 		Entity dropEnt{ childID, scene };
 		auto& child = dropEnt.GetComponent<ParentChildComponent>();
 
-
 		//Check if Dropped Entity is being dropped to parent of itself
 		if (child.Parent == parentEntity.GetUUID())
-			isSafeToDrop = false;
+			return;
 
-		//Check if Dropped Entity is being dropped to child of itself
-		for (UUID& c : child.ChildrenIDs) {
-			if (c == parentEntity.GetUUID()) {
-				isSafeToDrop = false; 
-				break;
-			}
-		}
-
+		if (DroppedIntoChildren(dropEnt, parentEntity))
+			return;
 
 		//Go Ahead if safe
-		if (isSafeToDrop) {
-			UUID parentID = child.Parent;
-			if (parentID) {
-				Entity parent{ parentID, scene };
-				parent.GetComponent<ParentChildComponent>().RemoveChild(childID);
-			}
-
-			parent.AddChild(childID);
-
-			child.Parent = parentEntity.GetUUID();
-			UpdateChildTransform(parentEntity);
+		UUID parentID = child.Parent;
+		if (parentID) {
+			Entity parent{ parentID, scene };
+			parent.GetParentChild().RemoveChild(childID);
 		}
+
+		parent.AddChild(childID);
+
+		child.Parent = parentEntity.GetUUID();
+		UpdateChildTransform(parentEntity);
 	}
 	
 	static void EntityPayload(Scene* currentScene) {
@@ -80,6 +84,8 @@ namespace Nebula {
 	}
 
 	void SceneHierarchyPanel::OnImGuiRender() {
+		Rects.clear();
+
 		ImGui::Begin("Scene Hierarchy");
 
 		DrawSceneHierarchy();
@@ -101,28 +107,47 @@ namespace Nebula {
 	void SceneHierarchyPanel::DrawSceneHierarchy() {
 		if (!m_Context)
 			return;
+		
+		DrawArray(m_Context->m_SceneOrder);
 
-		for (uint32_t n = 0; n < m_Context->m_SceneOrder.size(); n++) {
-			Entity entity{ m_Context->m_SceneOrder[n], m_Context.get() };
+		for (uint32_t i = 0; i < Rects.size(); i++) {
+			RectData& data = Rects[i];
+			if (!ImGui::IsMouseHoveringRect(data.Rect.Min, data.Rect.Max)) continue;
 
-			if (entity.GetComponent<ParentChildComponent>().Parent)
-				continue;
+			if (ImGui::BeginDragDropTargetCustom(data.Rect, 1)) {
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENTITY")) {
+					const UUID child = *(const UUID*)payload->Data;
+						
+					if (data.Parent) {
+						Entity parent = { data.Parent, m_Context.get() };
+						AddParent(child, parent, m_Context.get());
+						if (data.index > parent.GetParentChild().ChildrenIDs.size() - 1)
+							data.index = parent.GetParentChild().ChildrenIDs.size() - 1;
 
-			DrawEntityNode(entity);
-			
-			if (m_SelectionContext == entity && ImGui::IsWindowFocused()) {
-				if (ImGui::IsMouseClicked(0))
-					m_MovedEntityIndex = n;
-			
-				int32_t n_next = m_MovedEntityIndex + int32_t(ImGui::GetMouseDragDelta(0).y / 24);
-				if (n_next >= 0 && n_next < m_Context->m_SceneOrder.size() && n != n_next && !ImGui::IsAnyItemHovered())
-					m_Context->m_SceneOrder.move(n, n_next);
+						uint32_t childIndex = parent.GetParentChild().ChildrenIDs.FindIndex(child);
+						
+						if (data.index > childIndex && data.index != parent.GetParentChild().ChildrenIDs.size() - 1)
+							data.index -= 1;
+
+						parent.GetParentChild().ChildrenIDs.move(childIndex, data.index);
+					} else {
+						Entity childE = { child, m_Context.get() };
+						if (childE.GetParentChild().Parent)
+							Entity{ childE.GetParentChild().Parent, m_Context.get() }.GetParentChild().RemoveChild(child);
+						childE.GetParentChild().Parent = NULL;
+
+						uint32_t childIndex = m_Context->m_SceneOrder.FindIndex(child);
+
+						if (data.index > childIndex && data.index != m_Context->m_SceneOrder.size() - 1)
+							data.index -= 1;
+
+						m_Context->m_SceneOrder.move(childIndex, data.index);
+					}
+				}
+				ImGui::EndDragDropTarget();
 			}
-			
-			if (ImGui::IsMouseReleased(0)) {
-				ImGui::ResetMouseDragDelta(0);
-				m_MovedEntityIndex = -1;
-			}
+
+			break;
 		}
 
 		if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered())
@@ -163,21 +188,65 @@ namespace Nebula {
 			ImGui::EndPopup();
 		}
 
-		if (ImGui::IsMouseReleased(0) && ImGui::IsWindowHovered())
+		if (ImGui::IsMouseReleased(0) && ImGui::IsWindowHovered() && !ImGui::IsDragDropPayloadBeingAccepted())
 			EntityPayload(m_Context.get());
-
-		float width = 25.0f;
-		int32_t n_next = m_MovedEntityIndex + int32_t(ImGui::GetMouseDragDelta(0).y / width);
-		ImGui::SetCursorPosY(n_next * width);
-		ImGui::Separator();
 	}
 
-	void SceneHierarchyPanel::DrawEntityNode(Entity entity) {
+
+	void SceneHierarchyPanel::DrawArray(Array<UUID>& entities, bool showIfParent) {
+		Array<UUID> drawn;
+		for (uint32_t n = 0; n < entities.size(); n++) {
+			Entity entity{ entities[n], m_Context.get() };
+
+			if (entity.GetComponent<ParentChildComponent>().Parent && !showIfParent)
+				continue;
+			
+			drawn.push_back(entities[n]);
+			entities.move(n, drawn.size() - 1);
+			DrawEntityNode(entity, drawn.size() - 1);
+		}
+
+		if (drawn.size()) {
+			Entity entity{ drawn[drawn.size() - 1], m_Context.get() };
+			ImVec2 cursorPos = ImGui::GetCursorPos();
+			ImVec2 elementSize = ImGui::GetItemRectSize();
+			elementSize.x -= ImGui::GetStyle().FramePadding.x;
+			elementSize.y = ImGui::GetStyle().FramePadding.y;
+			cursorPos.y -= ImGui::GetStyle().FramePadding.y;
+			ImVec2 windowPos = ImGui::GetCurrentWindow()->Pos;
+			RectData data;
+			data.Parent = entity.GetParentChild().Parent;
+			data.Rect = ImRect(windowPos.x + cursorPos.x, windowPos.y + cursorPos.y, windowPos.x + cursorPos.x + elementSize.x, windowPos.y + cursorPos.y + elementSize.y);
+			data.index = m_Context->m_SceneOrder.size() - 1;
+			Rects.push_back(data);
+		}
+	}
+
+	void SceneHierarchyPanel::DrawEntityNode(Entity entity, uint32_t index) {
+		ImVec2 cursorPos = ImGui::GetCursorPos();
+		ImVec2 elementSize = ImGui::GetItemRectSize();
+		elementSize.x -= ImGui::GetStyle().FramePadding.x;
+		elementSize.y = ImGui::GetStyle().FramePadding.y;
+		cursorPos.y -= ImGui::GetStyle().FramePadding.y;
+		ImVec2 windowPos = ImGui::GetCurrentWindow()->Pos;
+		RectData data;
+		data.Parent = entity.GetParentChild().Parent;
+
+		if (index == 0)
+			elementSize.x = ImGui::GetContentRegionAvailWidth();
+
+		data.Rect = ImRect(windowPos.x + cursorPos.x, windowPos.y + cursorPos.y, windowPos.x + cursorPos.x + elementSize.x, windowPos.y + cursorPos.y + elementSize.y);
+		data.index = index;
+		Rects.push_back(data);
+
 		auto& tag = entity.GetComponent<TagComponent>().Tag;
 
 		ImGuiTreeNodeFlags flags = m_SelectionContext == entity ? ImGuiTreeNodeFlags_Selected : ImGuiTreeNodeFlags_None;
-		flags |= ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_OpenOnArrow;
+		flags |= ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_FramePadding;
 
+		if (entity.GetParentChild().ChildrenIDs.size() == 0)
+			flags |= ImGuiTreeNodeFlags_Leaf;
+		
 		bool opened = ImGui::TreeNodeEx((void*)(uint32_t)entity, flags, tag.c_str());
 
 		if (ImGui::IsItemClicked())
@@ -186,6 +255,7 @@ namespace Nebula {
 		if (ImGui::BeginDragDropSource()) {
 			UUID entityID = entity.GetUUID();
 			ImGui::SetDragDropPayload("ENTITY", &entityID, sizeof(uint64_t), ImGuiCond_Once);
+			ImGui::Text(tag.c_str());
 			ImGui::EndDragDropSource();
 		}
 		
@@ -195,7 +265,6 @@ namespace Nebula {
 			
 			ImGui::EndDragDropTarget();
 		}
-
 
 		bool entityDeleted = false;
 		if (ImGui::BeginPopupContextItem()) {
@@ -226,31 +295,15 @@ namespace Nebula {
 			ImGui::EndPopup();
 		}
 
-		if (opened && entity.HasComponent<ParentChildComponent>()) {
-			auto& comp = entity.GetParentChild();
-			for (uint32_t i = 0; i < comp.ChildrenIDs.size(); i++) {
-				Entity child{ comp[i], m_Context.get() };
-				DrawEntityNode(child);
-			
-				if (m_SelectionContext == child && ImGui::IsWindowFocused()) {
-					if (ImGui::IsMouseClicked(0))
-						m_MovedEntityIndex = i;
-			
-					int32_t n_next = m_MovedEntityIndex + int32_t(ImGui::GetMouseDragDelta(0).y / 22);
-						
-			
-					if (n_next >= 0 && n_next < entity.GetParentChild().ChildrenIDs.size() && i != n_next && !ImGui::IsAnyItemHovered())
-						entity.GetParentChild().ChildrenIDs.move(i, n_next);
-				}
-			
-				if (ImGui::IsMouseReleased(0)) {
-					ImGui::ResetMouseDragDelta(0);
-					m_MovedEntityIndex = -1;
-				}
+		if (opened) {
+			if (entity.HasComponent<ParentChildComponent>()) {
+				auto& comp = entity.GetParentChild();
+				DrawArray(comp.ChildrenIDs, true);
 			}
+
 			ImGui::TreePop();
 		}
-
+		
 		if (entityDeleted) {
 			m_Context->DestroyEntity(entity);
 			if (m_SelectionContext == entity)

@@ -78,8 +78,6 @@ namespace Nebula {
 		{ 0.499f, 0.00f }
 	};
 
-	EditorLayer::EditorLayer() : Layer("Editor") { }
-
 	void EditorLayer::Attach() {
 		NB_PROFILE_FUNCTION();
 
@@ -277,11 +275,11 @@ namespace Nebula {
 		else {
 			Renderer2D::SetBackCulling(false);
 			Renderer2D::BeginScene(m_EditorCam);
-			Renderer2D::Draw(NB_QUAD, sizeof(s_CubeVertexPos) / sizeof(vec4), s_CubeVertexPos, translate(m_EditorCam.GetPosition()) * scale(vec3(1000.0f)), vec4(1.0f), m_Backdrop, 1.0f, s_CubeTexturePos);
+			Renderer2D::DrawQuad(sizeof(s_CubeVertexPos) / sizeof(vec4), s_CubeVertexPos, s_CubeTexturePos, translate(m_EditorCam.GetPosition()) * scale(vec3(1000.0f)), vec4(1.0f), m_Backdrop, 1.0f);
 		}
 
 		if (m_ShowColliders) {
-			RenderCommand::SetLineWidth(5.0f);
+			RenderCommand::SetLineWidth(3.0f);
 
 			// Calculate z index for translation
 			float zIndex = 0.001f;

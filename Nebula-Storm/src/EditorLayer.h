@@ -8,7 +8,7 @@
 namespace Nebula {
 	class EditorLayer : public Layer {
 	public:
-		EditorLayer();
+		EditorLayer() : Layer("Editor") { }
 		~EditorLayer() = default;
 
 		void Attach() override;

@@ -109,6 +109,15 @@ namespace Nebula {
 			head[a] = value;
 		}
 
+		count_t FindIndex(const T& e) {
+			for (uint32_t i = 0; i < elems; i++) {
+				if (head[i] == e)
+					return i;
+			}
+
+			return FLT_MAX;
+		}
+
 		count_t size() { return elems; }
 		const count_t size() const { return elems; }
 

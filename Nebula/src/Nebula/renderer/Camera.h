@@ -70,7 +70,7 @@ namespace Nebula {
 		float m_ViewportWidth = 1280, m_ViewportHeight = 720;
 	};
 
-	class OrthographicCamera {
+	class OrthographicCamera : public Camera {
 	public:
 		OrthographicCamera(float left, float right, float bottom, float top);
 
@@ -88,7 +88,6 @@ namespace Nebula {
 	private:
 		void RecalculateViewMatrix();
 	private:
-		mat4 m_ProjectionMatrix;
 		mat4 m_ViewMatrix;
 		mat4 m_ViewProjectionMatrix;
 
