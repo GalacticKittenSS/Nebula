@@ -54,18 +54,26 @@ namespace Nebula {
 		vec3 GlobalScale =		 { 1.0f, 1.0f, 1.0f };
 
 		mat4 global = mat4(1.0f);
+		mat4 local = mat4(1.0f);
 
 		TransformComponent() = default;
 		TransformComponent(const TransformComponent&) = default;
 
 		inline operator mat4() { return CalculateMatrix(); }
 
+		void UpdateMatrix() {
+			CalculateMatrix();
+			CalculateLocalMatrix();
+		}
+
 		inline mat4 CalculateMatrix() {
-			return translate(GlobalTranslation) * toMat4(quat(GlobalRotation)) * scale(GlobalScale);
+			global = translate(GlobalTranslation) * toMat4(quat(GlobalRotation)) * scale(GlobalScale);
+			return global;
 		}
 
 		inline mat4 CalculateLocalMatrix() {
-			return translate(LocalTranslation) * toMat4(quat(LocalRotation)) * scale(LocalScale);
+			local = translate(LocalTranslation) * toMat4(quat(LocalRotation)) * scale(LocalScale);
+			return local;
 		}
 
 		void SetDeltaTransform(const vec3& translation, const vec3& rotation, const vec3& size) {
@@ -76,6 +84,8 @@ namespace Nebula {
 			GlobalTranslation += translation;
 			GlobalRotation += rotation;
 			GlobalScale += size;
+
+			UpdateMatrix();
 		}
 	};
 

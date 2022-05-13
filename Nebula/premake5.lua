@@ -76,7 +76,7 @@ project "Nebula"
 		defines "NB_ENABLE_ASSERTS"
 
 	filter "configurations:Release"
-		defines "NB_DEBUG"
+		defines "NB_RELEASE"
 		runtime "Release"
 		optimize "on"
 

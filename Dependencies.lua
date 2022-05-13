@@ -3,6 +3,7 @@
 VULKAN_SDK = os.getenv("VULKAN_SDK")
 
 includedir = {}
+includedir["Nebula"] =		"%{wks.location}/Nebula/include"
 includedir["Box2D"] =		"%{wks.location}/Nebula/Modules/Box2D/include"
 includedir["Entt"] =		"%{wks.location}/Nebula/Modules/entt/include"
 includedir["GLad"] =		"%{wks.location}/Nebula/Modules/glad/include"
