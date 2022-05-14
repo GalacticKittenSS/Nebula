@@ -80,6 +80,11 @@ namespace Nebula {
 		glTextureSubImage2D(m_RendererID, 0, 0, 0, m_Width, m_Height, m_Format, GL_UNSIGNED_BYTE, data);
 	}
 
+	void OpenGL_Texture2D::SetFilterNearest(bool nearest) {
+		glTextureParameteri(m_RendererID, GL_TEXTURE_MIN_FILTER, nearest ? GL_NEAREST : GL_LINEAR);
+		glTextureParameteri(m_RendererID, GL_TEXTURE_MAG_FILTER, nearest ? GL_NEAREST : GL_LINEAR);
+	}
+
 	void OpenGL_Texture2D::Bind(uint32_t slot = 0) const {
 		NB_PROFILE_FUNCTION();
 
