@@ -3,12 +3,21 @@
 #include "Nebula/Maths/Maths.h"
 
 #include "Nebula/Renderer/Camera.h"
-#include "Entity.h"
 #include "Scene_Camera.h"
 
+#include "Nebula/Core/UUID.h"
+
 #include "Nebula/Renderer/Texture.h"
+#include "Nebula/Utils/Arrays.h"
 
 namespace Nebula {
+	struct IDComponent {
+		UUID ID;
+
+		IDComponent() = default;
+		IDComponent(const IDComponent&) = default;
+	};
+
 	struct TagComponent {
 		std::string Tag;
 
@@ -17,30 +26,89 @@ namespace Nebula {
 		TagComponent(const std::string& tag) : Tag(tag) { }
 	};
 
+	struct ParentChildComponent {
+		UUID Parent = NULL;
+		Array<UUID> ChildrenIDs;
+		
+		ParentChildComponent() = default;
+		ParentChildComponent(const ParentChildComponent&) = default;
+
+		UUID operator[](int index) { return ChildrenIDs[index]; }
+
+		void AddChild(UUID id) {
+			ChildrenIDs.push_back(id);
+		}
+
+		void RemoveChild(UUID id) {
+			ChildrenIDs.remove(id);
+		}
+	};
+
 	struct TransformComponent {
-		vec3 Translation =	{ 0.0f, 0.0f, 0.0f };
-		vec3 Rotation =		{ 0.0f, 0.0f, 0.0f };
-		vec3 Scale =		{ 1.0f, 1.0f, 1.0f };
+		vec3 LocalTranslation =	{ 0.0f, 0.0f, 0.0f };
+		vec3 LocalRotation =	{ 0.0f, 0.0f, 0.0f };
+		vec3 LocalScale =		{ 1.0f, 1.0f, 1.0f };
+
+		vec3 GlobalTranslation = { 0.0f, 0.0f, 0.0f };
+		vec3 GlobalRotation =	 { 0.0f, 0.0f, 0.0f };
+		vec3 GlobalScale =		 { 1.0f, 1.0f, 1.0f };
+
+		mat4 global = mat4(1.0f);
+		mat4 local = mat4(1.0f);
 
 		TransformComponent() = default;
 		TransformComponent(const TransformComponent&) = default;
-		TransformComponent(const vec3& translation) : Translation(translation) { }
 
-		operator mat4 () { return CalculateMatrix(); }
+		inline operator mat4() { return CalculateMatrix(); }
 
-		mat4 CalculateMatrix() {
-			return translate(Translation) * toMat4(quat(Rotation)) * scale(Scale);
+		void UpdateMatrix() {
+			CalculateMatrix();
+			CalculateLocalMatrix();
+		}
+
+		inline mat4 CalculateMatrix() {
+			global = translate(GlobalTranslation) * toMat4(quat(GlobalRotation)) * scale(GlobalScale);
+			return global;
+		}
+
+		inline mat4 CalculateLocalMatrix() {
+			local = translate(LocalTranslation) * toMat4(quat(LocalRotation)) * scale(LocalScale);
+			return local;
+		}
+
+		void SetDeltaTransform(const vec3& translation, const vec3& rotation, const vec3& size) {
+			LocalTranslation += translation;
+			LocalRotation += rotation;
+			LocalScale += size;
+
+			GlobalTranslation += translation;
+			GlobalRotation += rotation;
+			GlobalScale += size;
+
+			UpdateMatrix();
 		}
 	};
 
 	struct SpriteRendererComponent {
 		vec4 Colour{ 1.0f, 1.0f, 1.0f, 1.0f };
 		Ref<Texture2D> Texture = nullptr;
+		vec2 SubTextureOffset = { 0.0f, 0.0f };
+		vec2 SubTextureCellSize = { 128.0f, 128.0f };
+		vec2 SubTextureCellNum = { 1, 1 };
 		float Tiling = 1.0f;
 
 		SpriteRendererComponent() = default;
 		SpriteRendererComponent(const SpriteRendererComponent&) = default;
-		SpriteRendererComponent(const vec4& colour, Ref<Texture2D> texture = nullptr, float tiling = 1.0f) : Colour(colour), Texture(texture), Tiling(tiling) { }
+	};
+
+	struct CircleRendererComponent {
+		vec4 Colour{ 1.0f, 1.0f, 1.0f, 1.0f };
+		float Radius = 0.5f;
+		float Thickness = 1.0f;
+		float Fade = 0.005f;
+
+		CircleRendererComponent() = default;
+		CircleRendererComponent(const CircleRendererComponent&) = default;
 	};
 
 	struct CameraComponent {
@@ -52,6 +120,7 @@ namespace Nebula {
 		CameraComponent(const CameraComponent&) = default;
 	};
 
+	class ScriptableEntity;
 	struct NativeScriptComponent {
 		ScriptableEntity* Instance = nullptr;
 
@@ -64,4 +133,51 @@ namespace Nebula {
 			DestroyScript = [](NativeScriptComponent* nsc) { delete nsc->Instance; nsc->Instance = nullptr; };
 		}
 	};
+
+	//Physics
+	struct Rigidbody2DComponent {
+		enum class BodyType { Static = 0, Dynamic, Kinematic };
+		BodyType Type = BodyType::Dynamic;
+		bool FixedRotation = false;
+
+		float Density = 1.0f;
+		float Friction = 0.5f;
+		float Restitution = 0.0f;
+		float RestitutionThreshold = 0.5f;
+
+		void* RuntimeBody = nullptr;
+
+		Rigidbody2DComponent() = default;
+		Rigidbody2DComponent(const Rigidbody2DComponent&) = default;
+	};
+
+	struct Box2DComponent {
+		vec2 Size = { 0.5f, 0.5f };
+		vec2 Offset = { 0.0f, 0.0f };
+
+		void* RuntimeFixture = nullptr;
+
+		Box2DComponent() = default;
+		Box2DComponent(const Box2DComponent&) = default;
+	};
+
+	struct CircleColliderComponent {
+		vec2 Offset = { 0.0f, 0.0f };
+		float Radius = 0.5f;
+
+		void* RuntimeFixture = nullptr;
+
+		CircleColliderComponent() = default;
+		CircleColliderComponent(const CircleColliderComponent&) = default;
+	};
+
+	template<typename... Component>
+	struct ComponentGroup
+	{
+
+	};
+	using AllComponents =
+		ComponentGroup<ParentChildComponent, TransformComponent, SpriteRendererComponent, CircleRendererComponent,
+		CameraComponent, NativeScriptComponent,
+		Rigidbody2DComponent, Box2DComponent, CircleColliderComponent>; 
 }

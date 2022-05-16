@@ -46,9 +46,9 @@ namespace Nebula {
 		{
 			vec<L, float> tmp(x);
 			vec<L, float> xhalf(tmp * 0.5f);
-			vec<L, uint, lowp>* p = reinterpret_cast<vec<L, uint, lowp>*>(const_cast<vec<L, float, lowp>*>(&x));
-			vec<L, uint, lowp> i = vec<L, uint, lowp>(0x5f375a86) - (*p >> vec<L, uint, lowp>(1));
-			vec<L, float, lowp>* ptmp = reinterpret_cast<vec<L, float, lowp>*>(&i);
+			vec<L, uint32_t>* p = reinterpret_cast<vec<L, uint32_t>*>(const_cast<vec<L, float>*>(&x));
+			vec<L, uint32_t> i = vec<L, uint32_t>(0x5f375a86) - (*p >> vec<L, uint32_t>(1));
+			vec<L, float>* ptmp = reinterpret_cast<vec<L, float>*>(&i);
 			tmp = *ptmp;
 			tmp = tmp * (1.5f - xhalf * tmp * tmp);
 			return tmp;

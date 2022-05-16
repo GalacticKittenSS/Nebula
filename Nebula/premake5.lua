@@ -32,20 +32,22 @@ project "Nebula"
 
 	includedirs {
 		"src",
-		"%{includedir.spdlog}",
+		"%{includedir.Box2D}",
+		"%{includedir.Entt}",
 		"%{includedir.GLFW}",
 		"%{includedir.GLad}",
 		"%{includedir.ImGui}",
-		"%{includedir.stb}",
-		"%{includedir.entt}",
-		"%{includedir.yaml}",		
-		"%{includedir.imguizmo}",
+		"%{includedir.ImGuizmo}",
+		"%{includedir.Spdlog}",
+		"%{includedir.Stb}",
+		"%{includedir.Yaml}",
 		"%{includedir.VulkanSDK}"
 	}
 
 	links { 
-		"GLFW",
+		"Box2D",
 		"GLad",
+		"GLFW",
 		"ImGui",
 		"yaml-cpp",
 		"opengl32.lib"
@@ -74,7 +76,7 @@ project "Nebula"
 		defines "NB_ENABLE_ASSERTS"
 
 	filter "configurations:Release"
-		defines "NB_DEBUG"
+		defines "NB_RELEASE"
 		runtime "Release"
 		optimize "on"
 

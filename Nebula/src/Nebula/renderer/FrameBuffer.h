@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Nebula/Core/API.h"
+#include "Nebula/Utils/Arrays.h"
 
 namespace Nebula {
 	enum class FramebufferTextureFormat {
@@ -30,7 +31,7 @@ namespace Nebula {
 		FrameBufferAttachmentSpecification(std::initializer_list<FramebufferTextureSpecification> attachments) :
 			Attachments(attachments) { }
 
-		std::vector<FramebufferTextureSpecification> Attachments;
+		Array<FramebufferTextureSpecification> Attachments;
 	};
 
 	struct FrameBufferSpecification {

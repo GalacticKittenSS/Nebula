@@ -358,7 +358,6 @@ namespace Nebula {
 
 	template<typename T>
 	inline typename vec<4, T> operator*(mat<4, 4, T> const& m, vec<4, T> const& v) {
-
 		vec<4, T> const Mov0(v[0]);
 		vec<4, T> const Mov1(v[1]);
 		vec<4, T> const Mul0 = m[0] * Mov0;
@@ -384,7 +383,7 @@ namespace Nebula {
 
 	template<typename T>
 	inline mat<2, 4, T> operator*(mat<4, 4, T> const& m1, mat<2, 4, T> const& m2) {
-		return mat<2, 4, T, Q>(
+		return mat<2, 4, T>(
 			m1[0][0] * m2[0][0] + m1[1][0] * m2[0][1] + m1[2][0] * m2[0][2] + m1[3][0] * m2[0][3],
 			m1[0][1] * m2[0][0] + m1[1][1] * m2[0][1] + m1[2][1] * m2[0][2] + m1[3][1] * m2[0][3],
 			m1[0][2] * m2[0][0] + m1[1][2] * m2[0][1] + m1[2][2] * m2[0][2] + m1[3][2] * m2[0][3],

@@ -70,6 +70,13 @@ namespace Nebula {
 			z(static_cast<T>(_z.x)),
 			w(static_cast<T>(_w.x)) { }
 
+		template <typename A, typename B, typename C>
+		inline explicit constexpr vec(const vec<2, A>& _v, B const& _z, C const& _w) :
+			x(static_cast<T>(_v.x)),
+			y(static_cast<T>(_v.y)),
+			z(static_cast<T>(_z)),
+			w(static_cast<T>(_w)) { }
+
 		template <typename A, typename B>
 		inline explicit constexpr vec(const vec<2, A>& _v1, vec<2, B> const& _v2) :
 			x(static_cast<T>(_v1.x)),
@@ -104,6 +111,9 @@ namespace Nebula {
 
 		template<typename U>
 		inline constexpr vec(vec<4, U> const& v) : x(static_cast<T>(v.x)), y(static_cast<T>(v.y)), z(static_cast<T>(v.z)), w(static_cast<T>(v.w)) { }
+
+		inline vec<2, T> xy() { return vec<2, T>(this->x, this->y); }
+		inline vec<3, T> xyz() { return vec<3, T>(this->x, this->y, this->z); }
 
 		// -- Arithmetic operators --
 

@@ -14,12 +14,12 @@ namespace Nebula {
 		void AddVertexBuffer(const Ref<VertexBuffer>& buffer) override;
 		void SetIndexBuffer(const Ref<IndexBuffer>& buffer) override;
 
-		const std::vector<Ref<VertexBuffer>>& GetVertexBuffers() const { return m_VertexBuffers; }
+		const Array<Ref<VertexBuffer>>& GetVertexBuffers() const { return m_VertexBuffers; }
 		const Ref<IndexBuffer>& GetIndexBuffer() const { return m_IndexBuffer; }
 	private:
 		uint32_t m_RendererID;
 		uint32_t m_VertexBufferIndex = 0;
-		std::vector<Ref<VertexBuffer>> m_VertexBuffers;
+		Array<Ref<VertexBuffer>> m_VertexBuffers;
 		Ref<IndexBuffer> m_IndexBuffer;
 	};
 }

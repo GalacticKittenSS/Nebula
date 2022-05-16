@@ -13,36 +13,16 @@ namespace Nebula {
 	struct Renderer2DData {
 		static const uint32_t MaxSprites = 10000;
 		static const uint32_t MaxTextureSlots = 32;
+		static const uint32_t MaxVertices  = MaxSprites * 4;
+		static const uint32_t MaxIndices   = MaxSprites * 6;
 		
-		Ref<Shader>				 TextureShader;
-		Ref<Texture2D>			  whiteTexture;
+		Ref<Shader>		TextureShader;
+		Ref<Shader>		 CircleShader;
+		Ref<Shader>		   LineShader;
+		Ref<Texture2D>	 WhiteTexture;
 
 		std::array<Ref<Texture2D>, MaxTextureSlots> TextureSlots;
-		uint32_t TextureSlotIndex = 1;
-		
-		//Quad
-		static const uint32_t MaxQuadVertices  = MaxSprites * 4;
-		static const uint32_t MaxQuadIndices   = MaxSprites * 6;
-		
-		Ref<VertexArray>	   QuadVertexArray;
-		Ref<VertexBuffer>	  QuadVertexBuffer;
-		
-		uint32_t QuadIndexCount = 0;
-		
-		Vertex* QuadVBBase = nullptr;
-		Vertex* QuadVBPtr  = nullptr;
-
-		//Tri
-		static const uint32_t MaxTriVertices = MaxSprites * 3;
-		static const uint32_t MaxTriIndices  = MaxSprites * 3;
-
-		Ref<VertexArray>   TriangleVertexArray;
-		Ref<VertexBuffer> TriangleVertexBuffer;
-
-		uint32_t TriIndexCount = 0;
-		
-		Vertex* TriVBBase = nullptr;
-		Vertex* TriVBPtr = nullptr; 
+		uint32_t TextureSlotIndex = 1; 
 		
 		struct CameraData
 		{
@@ -50,6 +30,47 @@ namespace Nebula {
 		};
 		CameraData CameraBuffer;
 		Ref<UniformBuffer> CameraUniformBuffer;
+
+		//Quad
+		Ref<VertexArray>	   QuadVertexArray;
+		Ref<VertexBuffer>	  QuadVertexBuffer;
+		
+		vec4* QuadVertexPos = new vec4[4];
+		vec2* QuadTexCoords = new vec2[4];
+		uint32_t QuadIndexCount = 0;
+		
+		Vertex* QuadVBBase = nullptr;
+		Vertex* QuadVBPtr  = nullptr;
+
+		//Tri
+		Ref<VertexArray>   TriangleVertexArray;
+		Ref<VertexBuffer> TriangleVertexBuffer;
+
+		vec4* TriVertexPos = new vec4[3];
+		vec2* TriTexCoords = new vec2[3];
+		uint32_t TriIndexCount = 0;
+		
+		Vertex* TriVBBase = nullptr;
+		Vertex* TriVBPtr  = nullptr; 
+
+		//Circle
+		Ref<VertexArray>	CircleVertexArray;
+		Ref<VertexBuffer>  CircleVertexBuffer;
+
+		uint32_t CircleIndexCount = 0;
+
+		CircleVertex* CircleVBBase = nullptr;
+		CircleVertex* CircleVBPtr  = nullptr;
+
+		//Line
+		Ref<VertexArray>	LineVertexArray;
+		Ref<VertexBuffer>  LineVertexBuffer;
+
+		vec4* LineVertexPos = new vec4[2];
+		uint32_t LineVertexCount = 0;
+
+		LineVertex* LineVBBase = nullptr;
+		LineVertex* LineVBPtr  = nullptr;
 	};
 	static Renderer2DData s_Data;
 	
@@ -62,8 +83,92 @@ namespace Nebula {
 
 		//Editor Only
 		int EntityID;
-	}; 
+	};
+	struct CircleVertex {
+		vec3 Position;
+		vec3 LocalPosition;
+		vec4 Colour;
+		float Thickness;
+		float Fade;
 
+		//Editor Only
+		int EntityID;
+	};
+	struct LineVertex {
+		vec3 Position;
+		vec4 Colour;
+		
+		//Editor Only
+		int EntityID;
+	};
+
+	static void SetupShape(const uint32_t Type, BufferLayout layout, uint32_t maxVertices, uint32_t maxIndices, 
+		uint32_t indicesPerShape, uint32_t verticesPerShape) {
+		Ref<VertexArray> vArray  = VertexArray::Create();
+		Ref<VertexBuffer> vBuffer = VertexBuffer::Create(maxVertices * sizeof(Vertex));
+		vBuffer->SetLayout(layout);
+		vArray->AddVertexBuffer(vBuffer); 
+		
+		uint32_t* indices = new uint32_t[maxIndices];
+
+		uint32_t offset = 0;
+		for (uint32_t i = 0; i < maxIndices; i += 6) {
+			indices[i + 0] = offset + 0;
+			indices[i + 1] = offset + 1;
+			
+			if (indicesPerShape >= 3)
+				indices[i + 2] = offset + 2;
+
+			if (indicesPerShape == 6) {
+				indices[i + 3] = offset + 2;
+				indices[i + 4] = offset + 3;
+				indices[i + 5] = offset + 0;
+			};
+			
+			offset += verticesPerShape;
+		}
+
+		Ref<IndexBuffer> indexBuffer = IndexBuffer::Create(indices, maxIndices);
+		vArray->SetIndexBuffer(indexBuffer);
+		delete[] indices;
+
+		if (Type == NB_QUAD) {
+			s_Data.QuadVertexArray = vArray;
+			s_Data.QuadVertexBuffer = vBuffer;
+			s_Data.QuadVBBase = new Vertex[s_Data.MaxVertices];
+		} else if (Type == NB_TRI) {
+			s_Data.TriangleVertexArray = vArray;
+			s_Data.TriangleVertexBuffer = vBuffer;
+			s_Data.TriVBBase = new Vertex[s_Data.MaxVertices];
+		} else if (Type == NB_CIRCLE) {
+			s_Data.CircleVertexArray = vArray;
+			s_Data.CircleVertexBuffer = vBuffer;
+			s_Data.CircleVBBase = new CircleVertex[s_Data.MaxVertices];
+		} else if (Type == NB_LINE) { 
+			s_Data.LineVertexArray = vArray;
+			s_Data.LineVertexBuffer = vBuffer;
+			s_Data.LineVBBase = new LineVertex[s_Data.MaxVertices];
+		}
+	}
+
+	static void ResetBatch() {
+		NB_PROFILE_FUNCTION();
+
+		s_Data.QuadIndexCount = 0;
+		s_Data.QuadVBPtr = s_Data.QuadVBBase;
+
+		s_Data.TriIndexCount = 0;
+		s_Data.TriVBPtr = s_Data.TriVBBase;
+
+		s_Data.CircleIndexCount = 0;
+		s_Data.CircleVBPtr = s_Data.CircleVBBase;
+
+		s_Data.LineVertexCount = 0;
+		s_Data.LineVBPtr = s_Data.LineVBBase;
+
+		s_Data.TextureSlotIndex = 1;
+	}
+	
 	void Renderer2D::Init() {
 		NB_PROFILE_FUNCTION();
 
@@ -76,73 +181,66 @@ namespace Nebula {
 			{ShaderDataType::Int, "entityID"}
 		};
 
-		//QUAD
-		s_Data.QuadVertexArray = VertexArray::Create();
-		s_Data.QuadVertexBuffer = VertexBuffer::Create(s_Data.MaxQuadVertices * sizeof(Vertex));
-		s_Data.QuadVertexBuffer->SetLayout(layout);
-		s_Data.QuadVertexArray->AddVertexBuffer(s_Data.QuadVertexBuffer);
+		BufferLayout CircleLayout = {
+			{ShaderDataType::Float3, "position"},
+			{ShaderDataType::Float3, "localPosition"},
+			{ShaderDataType::Float4, "colour"},
+			{ShaderDataType::Float, "thickness"},
+			{ShaderDataType::Float, "fade"},
+			{ShaderDataType::Int, "entityID"}
+		};
 
-		s_Data.QuadVBBase = new Vertex[s_Data.MaxQuadVertices];
+		BufferLayout LineLayout = {
+			{ShaderDataType::Float3, "position"},
+			{ShaderDataType::Float4, "colour"},
+			{ShaderDataType::Int, "entityID"}
+		};
 
-		uint32_t* quadIndices = new uint32_t[s_Data.MaxQuadIndices];
+		SetupShape(NB_QUAD, layout, s_Data.MaxVertices, s_Data.MaxIndices, 6, 4);
+		SetupShape(NB_CIRCLE, CircleLayout, s_Data.MaxVertices, s_Data.MaxIndices, 6, 4);
+		SetupShape(NB_TRI, layout, s_Data.MaxVertices, s_Data.MaxIndices, 3, 3);
+		SetupShape(NB_LINE, LineLayout, s_Data.MaxVertices, s_Data.MaxIndices, 2, 2);
 
-		uint32_t offset = 0;
-		for (uint32_t i = 0; i < s_Data.MaxQuadIndices; i += 6) {
-			quadIndices[i + 0] = offset + 0;
-			quadIndices[i + 1] = offset + 1;
-			quadIndices[i + 2] = offset + 2;
+		s_Data.QuadVertexPos[0] = { -0.5f, -0.5f, 0.0f, 1.0f };
+		s_Data.QuadVertexPos[1] = {  0.5f, -0.5f, 0.0f, 1.0f };
+		s_Data.QuadVertexPos[2] = {  0.5f,  0.5f, 0.0f, 1.0f };
+		s_Data.QuadVertexPos[3] = { -0.5f,  0.5f, 0.0f, 1.0f };
 
-			quadIndices[i + 3] = offset + 2;
-			quadIndices[i + 4] = offset + 3;
-			quadIndices[i + 5] = offset + 0;
+		s_Data.QuadTexCoords[0] = { 0.0f, 0.0f };
+		s_Data.QuadTexCoords[1] = { 1.0f, 0.0f };
+		s_Data.QuadTexCoords[2] = { 1.0f, 1.0f };
+		s_Data.QuadTexCoords[3] = { 0.0f, 1.0f };
 
-			offset += 4;
-		}
+		s_Data.TriVertexPos[0] = { -0.5f, -0.5f, 0.0f, 1.0f };
+		s_Data.TriVertexPos[1] = {  0.5f, -0.5f, 0.0f, 1.0f };
+		s_Data.TriVertexPos[2] = {  0.5f,  0.5f, 0.0f, 1.0f };
 
-		Ref<IndexBuffer> squareIB = IndexBuffer::Create(quadIndices, s_Data.MaxQuadIndices);
-		s_Data.QuadVertexArray->SetIndexBuffer(squareIB);
-		delete[] quadIndices;
+		s_Data.TriTexCoords[0] = { 0.0f, 0.0f };
+		s_Data.TriTexCoords[1] = { 1.0f, 0.0f };
+		s_Data.TriTexCoords[2] = { 0.5f, 0.5f };
 
-		//TRIANGLE
-		s_Data.TriangleVertexArray = VertexArray::Create();
-		s_Data.TriangleVertexBuffer = VertexBuffer::Create(s_Data.MaxTriVertices * sizeof(Vertex));
-		s_Data.TriangleVertexBuffer->SetLayout(layout);
-		s_Data.TriangleVertexArray->AddVertexBuffer(s_Data.TriangleVertexBuffer);
-		
-		s_Data.TriVBBase = new Vertex[s_Data.MaxTriVertices];
-		
-		uint32_t* triIndices = new uint32_t[s_Data.MaxTriIndices];
-		
-		offset = 0;
-		for (uint32_t i = 0; i < s_Data.MaxTriIndices; i += 3) {
-			triIndices[i + 0] = offset + 0;
-			triIndices[i + 1] = offset + 1;
-			triIndices[i + 2] = offset + 2;
-		
-			offset += 3;
-		}
-		 
-		Ref<IndexBuffer> triangleIB = IndexBuffer::Create(triIndices, s_Data.MaxTriIndices);
-		s_Data.TriangleVertexArray->SetIndexBuffer(triangleIB);
-		delete[] triIndices;
-
-		//Shaders
-		s_Data.TextureShader = Shader::Create("assets/shaders/Default.glsl");
+		s_Data.LineVertexPos[0] = { -0.5f, 0.0f, 0.0f, 1.0f };
+		s_Data.LineVertexPos[1] = {  0.5f, 0.0f, 0.0f, 1.0f };
 
 		//White Texture
-		s_Data.whiteTexture = Texture2D::Create(1, 1);
+		s_Data.WhiteTexture = Texture2D::Create(1, 1);
 		uint32_t whiteTextureData = 0xffffffff;
-		s_Data.whiteTexture->SetData(&whiteTextureData, sizeof(uint32_t));
-		s_Data.TextureSlots[0] = s_Data.whiteTexture;
+		s_Data.WhiteTexture->SetData(&whiteTextureData, sizeof(uint32_t));
+		s_Data.TextureSlots[0] = s_Data.WhiteTexture;
 
+		//Shaders
+		s_Data.TextureShader = Shader::Create("Resources/shaders/Default.glsl");
+		s_Data.CircleShader = Shader::Create("Resources/shaders/Circle.glsl");
+		s_Data.LineShader = Shader::Create("Resources/shaders/Line.glsl");
+		
 		int32_t samplers[s_Data.MaxTextureSlots];
 		for (uint32_t i = 0; i < s_Data.MaxTextureSlots; i++)
 			samplers[i] = i;
 
 		s_Data.TextureShader->Bind();
 		s_Data.TextureShader->SetIntArray("u_Textures", samplers, s_Data.MaxTextureSlots);
-
-
+		
+		//Camera Uniform
 		s_Data.CameraUniformBuffer = UniformBuffer::Create(sizeof(Renderer2DData::CameraData), 0);
 	}
 
@@ -151,6 +249,15 @@ namespace Nebula {
 
 		delete[] s_Data.QuadVBBase;
 		delete[] s_Data.TriVBBase;
+		delete[] s_Data.CircleVBBase;
+		delete[] s_Data.LineVBBase;
+
+		delete[] s_Data.QuadVertexPos;
+		delete[] s_Data.TriVertexPos;
+		delete[] s_Data.LineVertexPos;
+
+		delete[] s_Data.QuadTexCoords;
+		delete[] s_Data.TriTexCoords;
 	}
 	
 	void Renderer2D::BeginScene(const Camera& camera, const mat4& transform) {
@@ -159,13 +266,7 @@ namespace Nebula {
 		s_Data.CameraBuffer.ViewProjection = camera.GetProjection() * inverse(transform);
 		s_Data.CameraUniformBuffer->SetData(&s_Data.CameraBuffer, sizeof(Renderer2DData::CameraData));
 
-		s_Data.QuadIndexCount = 0;
-		s_Data.QuadVBPtr = s_Data.QuadVBBase;
-
-		s_Data.TriIndexCount = 0;
-		s_Data.TriVBPtr = s_Data.TriVBBase;
-
-		s_Data.TextureSlotIndex = 1;
+		ResetBatch();
 	}
 
 	void Renderer2D::BeginScene(const EditorCamera& camera) {
@@ -174,89 +275,181 @@ namespace Nebula {
 		s_Data.CameraBuffer.ViewProjection = camera.GetViewProjection();
 		s_Data.CameraUniformBuffer->SetData(&s_Data.CameraBuffer, sizeof(Renderer2DData::CameraData));
 
-		s_Data.QuadIndexCount = 0;
-		s_Data.QuadVBPtr = s_Data.QuadVBBase;
-
-		s_Data.TriIndexCount = 0;
-		s_Data.TriVBPtr = s_Data.TriVBBase;
-
-		s_Data.TextureSlotIndex = 1;
+		ResetBatch();
 	}
-	
-	void Renderer2D::Draw(const uint32_t type, const vec4* vertexPos, 
+
+	void Renderer2D::SetBackCulling(bool cull) {
+		s_Data.LineShader->SetBackfaceCulling(cull);
+		s_Data.CircleShader->SetBackfaceCulling(cull);
+		s_Data.TextureShader->SetBackfaceCulling(cull);
+	}
+
+	void Renderer2D::DrawTri(const uint32_t vertexCount, const vec4* vertexPos, vec2* texCoords,
 		const mat4& transform, const vec4& colour, Ref<Texture2D> texture, float tiling, uint32_t entityID) {
 		NB_PROFILE_FUNCTION();
-		
-		if (s_Data.TriIndexCount >= s_Data.MaxTriIndices)
+
+		if (s_Data.TriIndexCount >= s_Data.MaxIndices)
 			FlushAndReset();
 
-		if (texture == nullptr)
-			texture = s_Data.whiteTexture;
+		texture = texture ? texture : s_Data.WhiteTexture;
+		s_Data.TriVBPtr = CalculateVertexData(s_Data.TriVBPtr, vertexCount, vertexPos, transform, colour, texture, texCoords, tiling, entityID);
+		s_Data.TriIndexCount += vertexCount;
+	}
 
-		if (type == NB_QUAD) {
-			vec2* texCoords = new vec2[type];
-			for (uint32_t i = 0; i < type; i+=4) {
-				texCoords[i + 0] = { 0, 0 };
-				texCoords[i + 1] = { 1, 0 };
-				texCoords[i + 2] = { 1, 1 };
-				texCoords[i + 3] = { 0, 1 };
-			};
+	void Renderer2D::DrawQuad(const uint32_t vertexCount, const vec4* vertexPos, vec2* texCoords,
+		const mat4& transform, const vec4& colour, Ref<Texture2D> texture, float tiling, uint32_t entityID) {
+		NB_PROFILE_FUNCTION();
+		if (s_Data.QuadIndexCount >= s_Data.MaxIndices)
+			FlushAndReset();
 
-			s_Data.QuadVBPtr = CalculateVertexData(s_Data.QuadVBPtr, type, vertexPos, transform, colour, texture, texCoords, tiling, entityID);
-			s_Data.QuadIndexCount += uint32_t(type * 1.5);
-		}
-		else if (type == NB_TRI) {
-			vec2* texCoords = new vec2[type];
-			for (uint32_t i = 0; i < type; i+=3) {
-				texCoords[i + 0] = { 0.0f, 0.0f };
-				texCoords[i + 1] = { 1.0f, 0.0f };
-				texCoords[i + 2] = { 0.5f, 0.5f };
-			};
+		texture = texture ? texture : s_Data.WhiteTexture;
+		s_Data.QuadVBPtr = CalculateVertexData(s_Data.QuadVBPtr, vertexCount, vertexPos, transform, colour, texture, texCoords, tiling, entityID);
+		s_Data.QuadIndexCount += uint32_t(vertexCount * 1.5);
+	}
 
-			s_Data.TriVBPtr = CalculateVertexData(s_Data.TriVBPtr, type, vertexPos, transform, colour, texture, texCoords, tiling, entityID);
-			s_Data.TriIndexCount += type;
-		}
+	void Renderer2D::DrawCircle(const mat4& transform, const vec4& colour, const float thickness, const float fade, uint32_t entityID) {
+		NB_PROFILE_FUNCTION();
+
+		if (s_Data.CircleIndexCount >= s_Data.MaxIndices)
+			FlushAndReset();
+
+		s_Data.CircleVBPtr = CalculateVertexData(s_Data.CircleVBPtr, 4, s_Data.QuadVertexPos, transform, colour, thickness, fade, entityID);
+		s_Data.CircleIndexCount += 6;
+	}
+
+	void Renderer2D::DrawLine(const vec3& p0, const vec3& p1, const vec4& colour, int entityID) {
+		s_Data.LineVBPtr->Position = p0;
+		s_Data.LineVBPtr->Colour = colour;
+		s_Data.LineVBPtr->EntityID = entityID;
+		s_Data.LineVBPtr++;
+
+		s_Data.LineVBPtr->Position = p1;
+		s_Data.LineVBPtr->Colour = colour;
+		s_Data.LineVBPtr->EntityID = entityID;
+		s_Data.LineVBPtr++;
+
+		s_Data.LineVertexCount += 2;
 	}
 
 	void Renderer2D::Draw(const uint32_t type, Entity& entity) {
 		NB_PROFILE_FUNCTION();
 
-		vec4* vertexPos = new vec4[type];
+		mat4 transform = entity.GetTransform().CalculateMatrix();
+		switch (type)
+		{
+		case NB_RECT: {
+			vec4 colour = { 1, 1, 1, 1 };
 
-		if (type == NB_QUAD) {
-			vertexPos[0] = { -0.5f, -0.5f, 0.0f, 1.0f };
-			vertexPos[1] = { 0.5f, -0.5f, 0.0f, 1.0f };
-			vertexPos[2] = { 0.5f,  0.5f, 0.0f, 1.0f };
-			vertexPos[3] = { -0.5f,  0.5f, 0.0f, 1.0f };
-		}
-		else if (type == NB_TRI) {
-			vertexPos[0] = { -0.5f, -0.5f, 0.0f, 1.0f };
-			vertexPos[1] = { 0.5f, -0.5f, 0.0f, 1.0f };
-			vertexPos[2] = { 0.5f,  0.5f, 0.0f, 1.0f };
-		}
+			if (entity.HasComponent<SpriteRendererComponent>())
+				colour = entity.GetComponent<SpriteRendererComponent>().Colour;
+			else if (entity.HasComponent<CircleRendererComponent>())
+				colour = entity.GetComponent<CircleRendererComponent>().Colour;
 
-		mat4 transform = entity.GetComponent<TransformComponent>().CalculateMatrix();
-		auto& spriteRenderer = entity.GetComponent<SpriteRendererComponent>();
-		
-		Draw(type, vertexPos, transform, spriteRenderer.Colour, spriteRenderer.Texture, spriteRenderer.Tiling, entity);
+			vec3 p0 = transform * vec4(-0.5f, -0.5f, 0.0f, 1.0f);
+			vec3 p1 = transform * vec4(0.5f, -0.5f, 0.0f, 1.0f);
+			vec3 p2 = transform * vec4(0.5f, 0.5f, 0.0f, 1.0f);
+			vec3 p3 = transform * vec4(-0.5f, 0.5f, 0.0f, 1.0f);
+
+			DrawLine(p0, p1, colour, entity);
+			DrawLine(p1, p2, colour, entity);
+			DrawLine(p2, p3, colour, entity);
+			DrawLine(p3, p0, colour, entity);
+
+			break;
+		}
+		case NB_CIRCLE: {
+			auto& circleRenderer = entity.GetComponent<CircleRendererComponent>();
+			DrawCircle(transform, circleRenderer.Colour, circleRenderer.Thickness, circleRenderer.Fade, entity);
+			break;
+		}
+		case NB_LINE: {
+			//TODO: Line Renderer Component
+			DrawLine(s_Data.LineVertexPos[0] * transform[3], s_Data.LineVertexPos[1] * transform[3], vec4(1.0f));
+			break;
+		}
+		case NB_QUAD: {
+			auto& spriteRenderer = entity.GetComponent<SpriteRendererComponent>();
+
+			vec2* coords = s_Data.QuadTexCoords;
+			if (spriteRenderer.Texture) {
+				Ref<SubTexture2D> SubT = SubTexture2D::CreateFromCoords(spriteRenderer.Texture,
+					spriteRenderer.SubTextureOffset, spriteRenderer.SubTextureCellSize, spriteRenderer.SubTextureCellNum);
+				coords = SubT->GetTextureCoords();
+			}
+
+			DrawQuad(4, s_Data.QuadVertexPos, coords, transform, spriteRenderer.Colour, spriteRenderer.Texture, spriteRenderer.Tiling, entity);
+			break;
+		}
+		default:
+			NB_ERROR("[Renderer2D] Unknown Type Specified");
+			break;
+		}
 	}
 
 	void Renderer2D::Draw(const uint32_t type, const mat4& transform, const vec4& colour, Ref<Texture2D> texture, float tiling) {
-		vec4* vertexPos = new vec4[type];
+		switch (type) {
+		case NB_RECT: {
+			vec3 p0 = transform * s_Data.QuadVertexPos[0];
+			vec3 p1 = transform * s_Data.QuadVertexPos[1];
+			vec3 p2 = transform * s_Data.QuadVertexPos[2];
+			vec3 p3 = transform * s_Data.QuadVertexPos[3];
 
-		if (type == NB_QUAD) {
-			vertexPos[0] = { -0.5f, -0.5f, 0.0f, 1.0f };
-			vertexPos[1] = {  0.5f, -0.5f, 0.0f, 1.0f };
-			vertexPos[2] = {  0.5f,  0.5f, 0.0f, 1.0f };
-			vertexPos[3] = { -0.5f,  0.5f, 0.0f, 1.0f };
-		}
-		else if (type == NB_TRI) {
-			vertexPos[0] = { -0.5f, -0.5f, 0.0f, 1.0f };
-			vertexPos[1] = {  0.5f, -0.5f, 0.0f, 1.0f };
-			vertexPos[2] = {  0.5f,  0.5f, 0.0f, 1.0f };
+			DrawLine(p0, p1, colour);
+			DrawLine(p1, p2, colour);
+			DrawLine(p2, p3, colour);
+			DrawLine(p3, p0, colour);
+
+			break;
 		}
 
-		Draw(type, vertexPos, transform, colour, texture, tiling);
+		case NB_LINE:
+			DrawLine(s_Data.LineVertexPos[0] * transform[3], s_Data.LineVertexPos[1] * transform[3], colour);
+			break;
+
+		case NB_CIRCLE:
+			DrawCircle(transform, colour);
+			break;
+
+		case NB_QUAD:
+			DrawQuad(4, s_Data.QuadVertexPos, s_Data.QuadTexCoords, transform, colour, texture, tiling);
+			break;
+
+		case NB_TRI:
+			DrawTri(3, s_Data.TriVertexPos, s_Data.TriTexCoords, transform, colour, texture, tiling);
+			break;
+		}
+	}
+	
+	void Renderer2D::Draw(const uint32_t type, const vec4* vertexPos, vec2* texCoords, 
+		const mat4& transform, const vec4& colour, Ref<Texture2D> texture, float tiling) {
+		uint32_t size = sizeof(vertexPos) / sizeof(vec4);
+		switch (type) {
+			case NB_QUAD:
+				if (!texCoords) {
+					texCoords = new vec2[size];
+					for (uint32_t i = 0; i < size; i += 4) {
+						texCoords[i + 0] = s_Data.QuadVertexPos[0];
+						texCoords[i + 1] = s_Data.QuadVertexPos[1];
+						texCoords[i + 2] = s_Data.QuadVertexPos[2];
+						texCoords[i + 3] = s_Data.QuadVertexPos[3];
+					};
+				}
+
+				DrawQuad(size, vertexPos, texCoords, transform, colour, texture, tiling);
+				break;
+
+			case NB_TRI:
+				if (!texCoords) {
+					texCoords = new vec2[size];
+					for (uint32_t i = 0; i < size; i += 4) {
+						texCoords[i + 0] = s_Data.TriVertexPos[0];
+						texCoords[i + 1] = s_Data.TriVertexPos[1];
+						texCoords[i + 2] = s_Data.TriVertexPos[2];
+					};
+				}
+				DrawTri(size, vertexPos, texCoords, transform, colour, texture, tiling);
+				break;
+		}
 	}
 
 	Vertex* Renderer2D::CalculateVertexData(Vertex* vertexPtr, const uint32_t vertexCount, const vec4* vertexPos, 
@@ -294,40 +487,66 @@ namespace Nebula {
 		return vertexPtr;
 	}
 
-	void Renderer2D::EndScene() {
+	CircleVertex* Renderer2D::CalculateVertexData(CircleVertex* vertexPtr, const uint32_t vertexCount, const vec4* vertexPos,
+		const mat4& transform, const vec4& colour, float thickness, float fade, uint32_t entityID) {
 		NB_PROFILE_FUNCTION();
 
-		uint32_t dataSize = (uint32_t)((uint8_t*)s_Data.QuadVBPtr - (uint8_t*)s_Data.QuadVBBase);
-		s_Data.QuadVertexBuffer->SetData(s_Data.QuadVBBase, dataSize);
+		for (size_t i = 0; i < vertexCount; i++) {
+			vertexPtr->Position = transform * vertexPos[i];
+			vertexPtr->LocalPosition = vertexPos[i] * 2.0f;
+			vertexPtr->Colour = colour;
+			vertexPtr->Thickness = thickness;
+			vertexPtr->Fade = fade;
+			vertexPtr->EntityID = entityID;
+			vertexPtr++;
+		}
 
-		dataSize = (uint32_t)((uint8_t*)s_Data.TriVBPtr - (uint8_t*)s_Data.TriVBBase);
-		s_Data.TriangleVertexBuffer->SetData(s_Data.TriVBBase, dataSize);
-
-		Flush(s_Data.TriangleVertexArray, s_Data.TriIndexCount);
-		Flush(s_Data.QuadVertexArray, s_Data.QuadIndexCount);
+		return vertexPtr;
 	}
 
-	void Renderer2D::Flush(Ref<VertexArray> vertexArray, uint32_t IndexCount) {
+	void Renderer2D::EndScene() {
 		NB_PROFILE_FUNCTION();
+		
+		if (s_Data.QuadIndexCount || s_Data.TriIndexCount) {
+			s_Data.TextureShader->Bind();
+		
+			for (uint32_t i = 0; i < s_Data.TextureSlotIndex; i++)
+				s_Data.TextureSlots[i]->Bind(i);
+		}
 
-		if (!IndexCount)
-			return;
+		if (s_Data.TriIndexCount) {
+			uint32_t dataSize = (uint32_t)((uint8_t*)s_Data.TriVBPtr - (uint8_t*)s_Data.TriVBBase);
+			s_Data.TriangleVertexBuffer->SetData(s_Data.TriVBBase, dataSize);
+			
+			RenderCommand::DrawIndexed(s_Data.TriangleVertexArray, s_Data.TriIndexCount);
+		}
 
-		for (uint32_t i = 0; i < s_Data.TextureSlotIndex; i++)
-			s_Data.TextureSlots[i]->Bind(i);
+		if (s_Data.QuadIndexCount) {
+			uint32_t dataSize = (uint32_t)((uint8_t*)s_Data.QuadVBPtr - (uint8_t*)s_Data.QuadVBBase);
+			s_Data.QuadVertexBuffer->SetData(s_Data.QuadVBBase, dataSize);
 
-		RenderCommand::DrawIndexed(vertexArray, IndexCount);
+			RenderCommand::DrawIndexed(s_Data.QuadVertexArray, s_Data.QuadIndexCount);
+		}
+		
+		if (s_Data.CircleIndexCount) {
+			uint32_t dataSize = (uint32_t)((uint8_t*)s_Data.CircleVBPtr - (uint8_t*)s_Data.CircleVBBase);
+			s_Data.CircleVertexBuffer->SetData(s_Data.CircleVBBase, dataSize);
+			
+			s_Data.CircleShader->Bind();
+			RenderCommand::DrawIndexed(s_Data.CircleVertexArray, s_Data.CircleIndexCount);
+		}
+
+		if (s_Data.LineVertexCount) {
+			uint32_t dataSize = (uint32_t)((uint8_t*)s_Data.LineVBPtr - (uint8_t*)s_Data.LineVBBase);
+			s_Data.LineVertexBuffer->SetData(s_Data.LineVBBase, dataSize);
+
+			s_Data.LineShader->Bind();
+			RenderCommand::DrawLines(s_Data.LineVertexArray, s_Data.LineVertexCount);
+		}
 	}
 
 	void Renderer2D::FlushAndReset() {
 		EndScene();
-		
-		s_Data.QuadIndexCount = 0;
-		s_Data.QuadVBPtr = s_Data.QuadVBBase;
-
-		s_Data.TriIndexCount = 0;
-		s_Data.TriVBPtr = s_Data.TriVBBase;
-
-		s_Data.TextureSlotIndex = 1;
+		ResetBatch();
 	}
 }

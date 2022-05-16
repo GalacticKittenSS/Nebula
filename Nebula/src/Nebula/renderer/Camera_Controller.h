@@ -2,11 +2,11 @@
 
 #include "Camera.h"
 
-#include "Nebula/core/Time.h"
+#include "Nebula/Utils/Time.h"
 
-#include "Nebula/events/Event.h"
-#include "Nebula/events/Window_Event.h"
-#include "Nebula/events/Mouse_Event.h"
+#include "Nebula/Events/Event.h"
+#include "Nebula/Events/Window_Event.h"
+#include "Nebula/Events/Mouse_Event.h"
 
 
 namespace Nebula {

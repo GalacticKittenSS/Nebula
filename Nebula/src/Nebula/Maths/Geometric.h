@@ -75,6 +75,19 @@ namespace Nebula {
 				x.z * y.x - y.z * x.x,
 				x.x * y.y - y.x * x.y);
 		}
+
+
+		inline constexpr static float call(vec<2, T> const& a, vec<2, T> const& b)
+		{
+			NB_ASSERT(std::numeric_limits<T>::is_iec559, "'cross' accepts only floating-point inputs");
+			return a.x * b.y - a.y * b.x;
+		}
+
+		inline constexpr static vec<2, T> call(float const& a, vec<2, T> const& v)
+		{
+			NB_ASSERT(std::numeric_limits<T>::is_iec559, "'cross' accepts only floating-point inputs");
+			return vec<2, T>(-a * v.y, a* v.x);
+		}
 	};
 
 	template<length_t L, typename T>
@@ -173,7 +186,19 @@ namespace Nebula {
 	{
 		return compute_cross<T>::call(x, y);
 	}
-	
+
+	template<typename T>
+	inline constexpr float cross(vec<2, T> const& x, vec<2, T> const& y)
+	{
+		return compute_cross<T>::call(x, y);
+	}
+
+	template<typename T>
+	inline constexpr vec<2, T> cross(float const& x, vec<2, T> const& y)
+	{
+		return compute_cross<T>::call(x, y);
+	}
+
 	// normalize
 	template<typename genType>
 	inline genType normalize(genType const& x)
@@ -214,14 +239,14 @@ namespace Nebula {
 	template<length_t L, typename T>
 	inline vec<L, T> reflect(vec<L, T> const& I, vec<L, T> const& N)
 	{
-		return compute_reflect<L, T, detail::is_aligned<Q>::value>::call(I, N);
+		return compute_reflect<L, T>::call(I, N);
 	}
 
 	// refract
 	template<typename genType>
 	inline genType refract(genType const& I, genType const& N, genType eta)
 	{
-		GLM_STATIC_ASSERT(std::numeric_limits<genType>::is_iec559, "'refract' accepts only floating-point inputs");
+		NB_ASSERT(std::numeric_limits<genType>::is_iec559, "'refract' accepts only floating-point inputs");
 		genType const dotValue(dot(N, I));
 		genType const k(static_cast<genType>(1) - eta * eta * (static_cast<genType>(1) - dotValue * dotValue));
 		return (eta * I - (eta * dotValue + sqrt(k)) * N) * static_cast<genType>(k >= static_cast<genType>(0));
@@ -230,7 +255,7 @@ namespace Nebula {
 	template<length_t L, typename T>
 	inline vec<L, T> refract(vec<L, T> const& I, vec<L, T> const& N, T eta)
 	{
-		GLM_STATIC_ASSERT(std::numeric_limits<T>::is_iec559, "'refract' accepts only floating-point inputs");
+		NB_ASSERT(std::numeric_limits<T>::is_iec559, "'refract' accepts only floating-point inputs");
 		return compute_refract<L, T>::call(I, N, eta);
 	}
 

@@ -8,16 +8,17 @@
 namespace Nebula {
 	class EditorLayer : public Layer {
 	public:
-		EditorLayer();
+		EditorLayer() : Layer("Editor") { }
 		~EditorLayer() = default;
 
 		void Attach() override;
-		void Detach() override;
+		void Detach() override { }
 
 		void Update(Nebula::Timestep ts) override;
 		void Render() override;
 	
 		void ImGuiRender() override;
+		void OnOverlayRender();
 
 		void OnEvent(Nebula::Event& e) override;
 	private:
@@ -25,6 +26,7 @@ namespace Nebula {
 		bool OnMousePressed(MouseButtonPressedEvent& e);
 
 		void NewScene();
+		void SaveScene();
 		void SaveSceneAs();
 		void LoadScene();
 		void LoadScene(const std::filesystem::path& path);
@@ -32,16 +34,23 @@ namespace Nebula {
 		void OnScenePlay();
 		void OnSceneStop();
 
+		void DuplicateEntity();
+
 		//Panels
+		void UI_MenuBar();
 		void UI_Toolbar();
+		void UI_GameView();
 	private:
 		bool m_GameViewFocus = false, m_GameViewHovered = false;
 		bool m_UsingGizmo = false;
+		bool m_ShowColliders = false;
+		bool m_ShowGrid = false;
 		
 		vec2 m_GameViewSize = { 1280.0f, 720.0f };
 		vec2 m_ViewPortBounds[2];
 
-		Ref<Scene> m_ActiveScene;
+		Ref<Scene> m_ActiveScene, m_EditorScene;
+		std::string m_ScenePath;
 		Ref<FrameBuffer> frameBuffer;
 		Timer timer;
 
@@ -63,6 +72,6 @@ namespace Nebula {
 		ContentBrowserPanel m_ContentBrowser;
 
 		//Editor Resources
-		Ref<Texture2D> m_PlayIcon, m_StopIcon;
+		Ref<Texture2D> m_PlayIcon, m_StopIcon, m_Backdrop;
 	};
 }

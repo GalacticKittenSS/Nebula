@@ -16,6 +16,7 @@ namespace Nebula {
 		virtual std::string GetPath() const = 0;
 
 		virtual void SetData(void* data, uint32_t size) = 0;
+		virtual void SetFilterNearest(bool nearest = true) = 0;
 
 		virtual void Bind(uint32_t slot = 0) const = 0;
 		virtual void Unbind() const = 0;
@@ -37,6 +38,7 @@ namespace Nebula {
 
 		const Ref<Texture2D> GetTexture() const { return m_Texture; }
 		const vec2* GetTextureCoords() const  { return m_TexCoords; }
+		vec2* GetTextureCoords() { return m_TexCoords; }
 
 		static Ref<SubTexture2D> CreateFromCoords(const Ref<Texture2D>& texture, const vec2& coords, 
 			const vec2& cellSize, const vec2& spriteSize = { 1, 1 });

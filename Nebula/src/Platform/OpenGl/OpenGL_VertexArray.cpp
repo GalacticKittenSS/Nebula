@@ -118,7 +118,6 @@ namespace Nebula {
 		}
 
 		m_VertexBuffers.push_back(buffer);
-
 	}
 
 	void OpenGL_VertexArray::SetIndexBuffer(const Ref<IndexBuffer>& buffer) {

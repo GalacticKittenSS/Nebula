@@ -1,12 +1,34 @@
 #include "nbpch.h"
 #include "Scene_Serializer.h"
 
-#include "Components.h"
+#include "Entity.h"
 
 #include <fstream>
 #include <yaml-cpp/yaml.h>
 
 namespace YAML {
+	template<>
+	struct convert<Nebula::vec2>
+	{
+		static Node encode(const Nebula::vec2& rhs)
+		{
+			Node node;
+			node.push_back(rhs.x);
+			node.push_back(rhs.y);
+			node.SetStyle(EmitterStyle::Flow);
+			return node;
+		}
+
+		static bool decode(const Node& node, Nebula::vec2& rhs)
+		{
+			if (!node.IsSequence() || node.size() != 2)
+				return false;
+
+			rhs.x = node[0].as<float>();
+			rhs.y = node[1].as<float>();
+			return true;
+		}
+	};
 
 	template<>
 	struct convert <Nebula::vec3>
@@ -63,6 +85,13 @@ namespace YAML {
 }
 
 namespace Nebula {
+	YAML::Emitter& operator<<(YAML::Emitter& out, const vec2& v)
+	{
+		out << YAML::Flow;
+		out << YAML::BeginSeq << v.x << v.y << YAML::EndSeq;
+		return out;
+	}
+
 	YAML::Emitter& operator<<(YAML::Emitter& out, const vec3& v) {
 		out << YAML::Flow;
 		out << YAML::BeginSeq << v.x << v.y << v.z << YAML::EndSeq;
@@ -75,12 +104,35 @@ namespace Nebula {
 		return out;
 	}
 
+	static std::string RigidBody2DBodyTypeToString(Rigidbody2DComponent::BodyType bodyType)
+	{
+		switch (bodyType)
+		{
+		case Rigidbody2DComponent::BodyType::Static:    return "Static";
+		case Rigidbody2DComponent::BodyType::Dynamic:   return "Dynamic";
+		case Rigidbody2DComponent::BodyType::Kinematic: return "Kinematic";
+		}
+
+		NB_ASSERT(false, "Unknown body type");
+		return {};
+	}
+
+	static Rigidbody2DComponent::BodyType RigidBody2DBodyTypeFromString(const std::string& bodyTypeString)
+	{
+		if (bodyTypeString == "Static")    return Rigidbody2DComponent::BodyType::Static;
+		if (bodyTypeString == "Dynamic")   return Rigidbody2DComponent::BodyType::Dynamic;
+		if (bodyTypeString == "Kinematic") return Rigidbody2DComponent::BodyType::Kinematic;
+
+		NB_ASSERT(false, "Unknown body type");
+		return Rigidbody2DComponent::BodyType::Static;
+	}
+
 	SceneSerializer::SceneSerializer(const Ref<Scene>& scene): m_Scene(scene) { }
 
 	static void SerializeEntity(YAML::Emitter& out, Entity entity) {
 		out << YAML::BeginMap;
 		out << YAML::Key << "Entity";
-		out << YAML::Value << (uint32_t)entity;
+		out << YAML::Value << entity.GetUUID();
 
 		if (entity.HasComponent<TagComponent>()) {
 			out << YAML::Key << "TagComponent";
@@ -92,14 +144,32 @@ namespace Nebula {
 			out << YAML::EndMap;
 		}
 
+		if (entity.HasComponent<ParentChildComponent>()) {
+			out << YAML::Key << "ParentChildComponent";
+			out << YAML::BeginMap;
+
+			auto& component = entity.GetComponent<ParentChildComponent>();
+
+			YAML::Node children;
+			for (uint32_t i = 0; i < component.ChildrenIDs.size(); i++)
+				children.push_back((uint64_t)component[i]);
+			children.SetStyle(YAML::EmitterStyle::Flow);
+			
+			out << YAML::Key << "PrimaryParent" << YAML::Value << component.Parent;
+			out << YAML::Key << "Children" << YAML::Value << children;
+			out << YAML::Key << "ChildCount" << YAML::Value << component.ChildrenIDs.size();
+
+			out << YAML::EndMap;
+		}
+
 		if (entity.HasComponent<TransformComponent>()) {
 			out << YAML::Key << "TransformComponent";
 			out << YAML::BeginMap;
 
 			auto& component = entity.GetComponent<TransformComponent>();
-			out << YAML::Key << "Translation" << YAML::Value << component.Translation;
-			out << YAML::Key << "Rotation" << YAML::Value << component.Rotation;
-			out << YAML::Key << "Scale" << YAML::Value << component.Scale;
+			out << YAML::Key << "Translation" << YAML::Value << component.LocalTranslation;
+			out << YAML::Key << "Rotation" << YAML::Value << component.LocalRotation;
+			out << YAML::Key << "Scale" << YAML::Value << component.LocalScale;
 
 			out << YAML::EndMap;
 		}
@@ -139,18 +209,60 @@ namespace Nebula {
 			else
 				out << YAML::Key << "Texture" << YAML::Value << "None";
 			out << YAML::Key << "Tiling" << YAML::Value << component.Tiling;
+			out << YAML::Key << "Offset" << YAML::Value << component.SubTextureOffset;
+			out << YAML::Key << "CellSize" << YAML::Value << component.SubTextureCellSize;
+			out << YAML::Key << "CellNum" << YAML::Value << component.SubTextureCellNum;
 
 			out << YAML::EndMap;
 		}
 
-		if (entity.HasComponent<NativeScriptComponent>()) {
-			out << YAML::Key << "NativeScriptComponent";
+		if (entity.HasComponent<CircleRendererComponent>()) {
+			out << YAML::Key << "CircleRendererComponent";
 			out << YAML::BeginMap;
 
-			auto& component = entity.GetComponent<NativeScriptComponent>();
-			out << YAML::Key << "Instance" << YAML::Value << component.Instance;
-
+			auto& component = entity.GetComponent<CircleRendererComponent>();
+			out << YAML::Key << "Colour" << YAML::Value << component.Colour;
+			out << YAML::Key << "Thickness" << YAML::Value << component.Thickness;
+			out << YAML::Key << "Fade" << YAML::Value << component.Fade;
+			
 			out << YAML::EndMap;
+		}
+
+		if (entity.HasComponent<Rigidbody2DComponent>()) {
+			out << YAML::Key << "Rigidbody2DComponent";
+			out << YAML::BeginMap; // Rigidbody2DComponent
+
+			auto& rb2dComponent = entity.GetComponent<Rigidbody2DComponent>();
+			out << YAML::Key << "BodyType" << YAML::Value << RigidBody2DBodyTypeToString(rb2dComponent.Type);
+			out << YAML::Key << "FixedRotation" << YAML::Value << rb2dComponent.FixedRotation;
+			out << YAML::Key << "Density" << YAML::Value << rb2dComponent.Density;
+			out << YAML::Key << "Friction" << YAML::Value << rb2dComponent.Friction;
+			out << YAML::Key << "Restitution" << YAML::Value << rb2dComponent.Restitution;
+			out << YAML::Key << "RestitutionThreshold" << YAML::Value << rb2dComponent.RestitutionThreshold;
+
+			out << YAML::EndMap; // Rigidbody2DComponent
+		}
+
+		if (entity.HasComponent<Box2DComponent>()) {
+			out << YAML::Key << "Box2DComponent";
+			out << YAML::BeginMap; // BoxCollider2DComponent
+
+			auto& bc2dComponent = entity.GetComponent<Box2DComponent>();
+			out << YAML::Key << "Offset" << YAML::Value << bc2dComponent.Offset;
+			out << YAML::Key << "Size" << YAML::Value << bc2dComponent.Size;
+
+			out << YAML::EndMap; // BoxCollider2DComponent
+		}
+
+		if (entity.HasComponent<CircleColliderComponent>()) {
+			out << YAML::Key << "CircleColliderComponent";
+			out << YAML::BeginMap; // CircleColliderComponent
+
+			auto& ccComponent = entity.GetComponent<CircleColliderComponent>();
+			out << YAML::Key << "Offset" << YAML::Value << ccComponent.Offset;
+			out << YAML::Key << "Radius" << YAML::Value << ccComponent.Radius;
+
+			out << YAML::EndMap; // CircleColliderComponent
 		}
 
 		out << YAML::EndMap;
@@ -162,13 +274,13 @@ namespace Nebula {
 		out << YAML::Key << "Scene" << YAML::Value << "Untitled";
 		out << YAML::Key << "Entities" << YAML::Value << YAML::BeginSeq;
 
-		m_Scene->m_Registry.each([&](auto entityID) {
-			Entity entity = { entityID, m_Scene.get() };
+		for (uint32_t i = 0; i < m_Scene->m_SceneOrder.size(); i++) {
+			Entity entity = { m_Scene->m_SceneOrder[i], m_Scene.get() };
 			if (!entity)
 				return;
 
 			SerializeEntity(out, entity);
-		});
+		}
 
 		out << YAML::EndSeq;
 		out << YAML::EndMap;
@@ -208,14 +320,25 @@ namespace Nebula {
 
 				NB_TRACE("Deserialized Entity with ID = {0}, name = {1}", uuid, name);
 
-				Entity deserializedEntity = m_Scene->CreateEntity(name);
+				Entity deserializedEntity = m_Scene->CreateEntity(uuid, name);
 
 				auto transformComponent = entity["TransformComponent"];
 				if (transformComponent) {
 					auto& tc = deserializedEntity.GetComponent<TransformComponent>();
-					tc.Translation = transformComponent["Translation"].as<vec3>();
-					tc.Rotation = transformComponent["Rotation"].as<vec3>();
-					tc.Scale = transformComponent["Scale"].as<vec3>();
+					tc.LocalTranslation = transformComponent["Translation"].as<vec3>();
+					tc.LocalRotation = transformComponent["Rotation"].as<vec3>();
+					tc.LocalScale = transformComponent["Scale"].as<vec3>();
+				}
+
+				auto parentComponent = entity["ParentChildComponent"];
+				if (parentComponent) {
+					auto& pcc = deserializedEntity.GetComponent<ParentChildComponent>();
+					pcc.Parent = parentComponent["PrimaryParent"].as<uint64_t>();
+
+					uint32_t count = parentComponent["ChildCount"].as<uint32_t>();
+					auto children = parentComponent["Children"];
+					for (uint32_t i = 0; i < count; i++)
+						pcc.AddChild(children[i].as<uint64_t>());
 				}
 
 				auto cameraComponent = entity["CameraComponent"];
@@ -244,12 +367,54 @@ namespace Nebula {
 					auto& src = deserializedEntity.AddComponent<SpriteRendererComponent>();
 					src.Colour = spriteRendererComponent["Colour"].as<vec4>();
 					src.Tiling = spriteRendererComponent["Tiling"].as<float>();
+					src.SubTextureOffset = spriteRendererComponent["Offset"].as<vec2>();
+					src.SubTextureCellSize = spriteRendererComponent["CellSize"].as<vec2>();
+					src.SubTextureCellNum = spriteRendererComponent["CellNum"].as<vec2>();
 
 					std::string texture = spriteRendererComponent["Texture"].as<std::string>();
 					if (texture != "None")
 						src.Texture = Texture2D::Create(texture);
 				}
+
+				auto circleRendererComponent = entity["CircleRendererComponent"];
+				if (circleRendererComponent)
+				{
+					auto& crc = deserializedEntity.AddComponent<CircleRendererComponent>();
+					crc.Colour = circleRendererComponent["Colour"].as<vec4>();
+					crc.Thickness = circleRendererComponent["Thickness"].as<float>();
+					crc.Fade = circleRendererComponent["Fade"].as<float>();
+				}
+
+				auto rigidbody2DComponent = entity["Rigidbody2DComponent"];
+				if (rigidbody2DComponent)
+				{
+					auto& rb2d = deserializedEntity.AddComponent<Rigidbody2DComponent>();
+					rb2d.Type = RigidBody2DBodyTypeFromString(rigidbody2DComponent["BodyType"].as<std::string>());
+					rb2d.FixedRotation = rigidbody2DComponent["FixedRotation"].as<bool>();
+					rb2d.Density = rigidbody2DComponent["Density"].as<float>();
+					rb2d.Friction = rigidbody2DComponent["Friction"].as<float>();
+					rb2d.Restitution = rigidbody2DComponent["Restitution"].as<float>();
+					rb2d.RestitutionThreshold = rigidbody2DComponent["RestitutionThreshold"].as<float>();
+				}
+
+				auto box2DComponent = entity["Box2DComponent"];
+				if (box2DComponent)
+				{
+					auto& bc2d = deserializedEntity.AddComponent<Box2DComponent>();
+					bc2d.Offset = box2DComponent["Offset"].as<vec2>();
+					bc2d.Size = box2DComponent["Size"].as<vec2>();
+				}
+
+				auto circleColliderComponent = entity["CircleColliderComponent"];
+				if (circleColliderComponent) {
+					auto& cc = deserializedEntity.AddComponent<CircleColliderComponent>();
+					cc.Offset = circleColliderComponent["Offset"].as<vec2>();
+					cc.Radius = circleColliderComponent["Radius"].as<float>();
+				}
 			}
+
+			for (auto entity : m_Scene->GetAllEntitiesWith<TransformComponent>())
+				CalculateGlobalTransform(Entity{ entity, m_Scene.get() });
 		}
 
 		return true;

@@ -128,7 +128,7 @@ namespace Nebula {
 		}
 		
 		//explicit qua(mat<3, 3, T> const& q);
-		explicit qua(mat<4, 4, T> const& q) { *this = quat_cast(m); }
+		explicit qua(mat<4, 4, T> const& q) { *this = quat_cast(q); }
 
 		// -- Unary arithmetic operators --
 
@@ -145,18 +145,18 @@ namespace Nebula {
 
 		template<typename U>
 		constexpr qua<T>& operator+=(qua<U> const& q) {
-			return (*this = detail::compute_quat_add<T, detail::is_aligned<Q>::value>::call(*this, qua<T>(q)));
+			return (*this = compute_quat_add<T>::call(*this, qua<T>(q)));
 		}
 
 		template<typename U>
 		constexpr qua<T>& operator-=(qua<U> const& q) {
-			return (*this = detail::compute_quat_sub<T, detail::is_aligned<Q>::value>::call(*this, qua<T>(q)));
+			return (*this = compute_quat_sub<T>::call(*this, qua<T>(q)));
 		}
 
 		template<typename U>
 		constexpr qua<T>& operator*=(qua<U> const& q) {
 			 qua<T> const p(*this);
-			 qua<T> const q(r);
+			 qua<T> const q(q);
 
 			 this->w = p.w * q.w - p.x * q.x - p.y * q.y - p.z * q.z;
 			 this->x = p.w * q.x + p.x * q.w + p.y * q.z - p.z * q.y;
@@ -216,17 +216,17 @@ namespace Nebula {
 
 	template<typename T>
 	constexpr vec<3, T> operator*(vec<3, T> const& v, qua<T> const& q) {
-		return glm::inverse(q) * v;
+		return inverse(q) * v;
 	}
 
 	template<typename T>
 	constexpr vec<4, T> operator*(qua<T> const& q, vec<4, T> const& v) {
-		return detail::compute_quat_mul_vec4<T, detail::is_aligned<Q>::value>::call(q, v);
+		return compute_quat_mul_vec4<T>::call(q, v);
 	}
 
 	template<typename T>
 	constexpr vec<4, T> operator*(vec<4, T> const& v, qua<T> const& q) {
-		return glm::inverse(q) * v;
+		return inverse(q) * v;
 	}
 
 	template<typename T>
@@ -299,7 +299,7 @@ namespace Nebula {
 			return qua<T>((m[0][1] - m[1][0]) * mult, (m[2][0] + m[0][2]) * mult, (m[1][2] + m[2][1]) * mult, biggestVal);
 		default: // Silence a -Wswitch-default warning in GCC. Should never actually get here. Assert is just for sanity.
 			assert(false);
-			return qua<T, Q>(1, 0, 0, 0);
+			return qua<T>(1, 0, 0, 0);
 		}
 	}
 

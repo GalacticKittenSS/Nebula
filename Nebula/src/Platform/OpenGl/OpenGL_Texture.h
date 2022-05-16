@@ -12,6 +12,7 @@ namespace Nebula {
 		~OpenGL_Texture2D();
 
 		void SetData(void* data, uint32_t size) override;
+		void SetFilterNearest(bool nearest) override;
 		
 		uint32_t GetWidth() const override { return m_Width; }
 		uint32_t GetHeight() const override { return m_Height; }

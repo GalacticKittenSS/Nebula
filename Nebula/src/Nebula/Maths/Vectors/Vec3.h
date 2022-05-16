@@ -101,6 +101,8 @@ namespace Nebula {
 		template<typename U>
 		inline constexpr vec(vec<4, U> const& v) : x(static_cast<T>(v.x)), y(static_cast<T>(v.y)), z(static_cast<T>(v.z)) { }
 
+		inline vec<2, T> xy() { return vec<2, T>(this->x, this->y); }
+
 		// -- Arithmetic operators --
 
 		template<typename U>

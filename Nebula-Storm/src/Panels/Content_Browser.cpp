@@ -11,19 +11,29 @@ namespace Nebula {
 	void ContentBrowserPanel::OnImGuiRender() {
 		ImGui::Begin("Content Browser");
 
-		if (m_CurrentDirectory != std::filesystem::path(s_AssetPath)) {
-			if (ImGui::Button("<-"))
-				m_CurrentDirectory = m_CurrentDirectory.parent_path();
-		}
-
-		static float padding = 16.0f;
-		static float thumbnailSize = 128.0f;
-		float cellSize = thumbnailSize + padding;
+		static float size = 1.0f;
+		ImGui::SliderFloat("##thumbnail", &size, 0, 2);
+		
+		float thumbnailSize = (size + 1) * 128.0f;
+		float cellSize = thumbnailSize + 16.0f;
 
 		float panelWidth = ImGui::GetContentRegionAvail().x;
 		int columCount = (int)(panelWidth / cellSize);
 		if (columCount < 1)
 			columCount = 1;
+
+		if (m_CurrentDirectory != std::filesystem::path(s_AssetPath)) {
+			ImGuiIO& io = ImGui::GetIO();
+			ImFont* boldFont = io.Fonts->Fonts[0];
+			boldFont->Scale = size + 1;
+
+			ImGui::PushFont(boldFont);
+			float buttonSize = (size + 2) * 15.0f;
+			if (ImGui::Button("<", ImVec2{ buttonSize, buttonSize }))
+				m_CurrentDirectory = m_CurrentDirectory.parent_path();
+			ImGui::PopFont();
+			boldFont->Scale = 1;
+		}
 
 		ImGui::Columns(columCount, 0, false);
 
@@ -51,17 +61,28 @@ namespace Nebula {
 					m_CurrentDirectory /= path.filename();
 			}
 
-			ImGui::TextWrapped(filename.c_str());
+			ImVec2 text = ImGui::CalcTextSize(filename.c_str());
+			float text_width = text.x;
 
+			float text_indentation = (cellSize - text_width) * 0.5f;
+			float min_indentation = 20.0f;
+			if (text_indentation <= min_indentation) {
+				text_indentation = min_indentation;
+			}
+
+			ImGui::SameLine(text_indentation);
+			ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + cellSize - text_indentation);
+			ImGui::SetCursorPosY(ImGui::GetCursorPosY() + cellSize);
+			ImGui::TextWrapped(filename.c_str());
+			ImGui::SetCursorPosY(ImGui::GetCursorPosY() - cellSize + text.y + ImGui::GetStyle().ItemSpacing.y * 3.0f);
+			ImGui::PopTextWrapPos();
+			
 			ImGui::NextColumn();
 
 			ImGui::PopID();
 		}
 
 		ImGui::Columns(1);
-
-		ImGui::SliderFloat("Thumbnail Size", &thumbnailSize, 16, 512);
-		ImGui::SliderFloat("Padding", &padding, 0, 32);
 		
 		ImGui::End();
 	}
