@@ -2,9 +2,11 @@
 
 #include "Camera.h"
 #include "Texture.h"
+#include "Fonts.h"
 
 #include "Nebula/Scene/Entity.h"
 
+#define NB_STRING	6
 #define NB_RECT		5
 #define NB_QUAD		4
 #define NB_TRI		3
@@ -35,6 +37,8 @@ namespace Nebula {
 			const mat4& transform, const vec4& colour, Ref<Texture2D> texture, float tiling);
 
 		//Primitives
+		static void DrawString(const std::string& text, Font& font,
+			const mat4& transform, const vec4& colour, uint32_t entityID = -1);
 		static void DrawTri(const uint32_t vertexCount, const vec4* vertexPos, vec2* texCoords,
 			const mat4& transform, const vec4& colour, Ref<Texture2D> texture = nullptr, float tiling = 1.0f, uint32_t entityID = -1);
 		static void DrawQuad(const uint32_t vertexCount, const vec4* vertexPos, vec2* texCoords,
@@ -43,6 +47,7 @@ namespace Nebula {
 		static void DrawLine(const vec3& p0, const vec3& p1, const vec4& colour, int entityID = -1);
 	private:
 		static void FlushAndReset();
+		static float GetTextureIndex(const Ref<Texture2D>& texture);
 		static Vertex* CalculateVertexData(Vertex* vertexPtr, const uint32_t vertexCount, const vec4* vertexPos,
 			const mat4& transform, const vec4& colour, Ref<Texture2D> texture, vec2* texCoord, float tiling, uint32_t entityID);
 		static CircleVertex* CalculateVertexData(CircleVertex* vertexPtr, const uint32_t vertexCount, const vec4* vertexPos,

@@ -111,10 +111,13 @@ namespace Nebula {
 
 		//Resize
 		FrameBufferSpecification spec = frameBuffer->GetFrameBufferSpecifications();
-		if (m_GameViewSize.x > 0.0f && m_GameViewSize.y > 0.0f && (spec.Width != m_GameViewSize.x || spec.Height != m_GameViewSize.y)) {
+		if (m_GameViewSize.x > 0.0f && m_GameViewSize.y > 0.0f 
+			&& (spec.Width != m_GameViewSize.x || spec.Height != m_GameViewSize.y))
+		{
 			frameBuffer->Resize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
 			m_ActiveScene->OnViewportResize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
 			m_EditorCam.SetViewPortSize(m_GameViewSize.x, m_GameViewSize.y);
+			OpenSans.SetScale({ m_GameViewSize.x / 32.0f, m_GameViewSize.y / 18.0f });
 		}
 
 		if (!m_UsingGizmo && m_GameViewHovered && m_SceneState == SceneState::Edit)
@@ -142,6 +145,8 @@ namespace Nebula {
 		switch (m_SceneState) {
 			case SceneState::Edit: {
 				m_ActiveScene->RenderEditor(m_EditorCam);
+				OnOverlayRender();
+				m_ActiveScene->RenderEditorOverlay(m_EditorCam);
 
 				//Get Pixel Data
 				auto [mx, my] = ImGui::GetMousePos();
@@ -160,11 +165,11 @@ namespace Nebula {
 			
 			case SceneState::Play: {
 				m_ActiveScene->RenderRuntime();
+				OnOverlayRender();
+				m_ActiveScene->RenderRuntimeOverlay();
 				break;
 			}
 		}
-
-		OnOverlayRender();
 
 		frameBuffer->Unbind();
 	}
@@ -201,6 +206,31 @@ namespace Nebula {
 
 		UI_GameView();
 		UI_Toolbar();
+
+		m_Frames++; m_TotalFrames++;
+		if (Time::Elapsed() - m_LastTime >= 1.0f) {
+			m_LastTime = Time::Elapsed();
+			m_LastFrame = m_Frames;
+			m_Frames = 0;
+		}
+
+		if (m_ShowDebug) {
+			ImGui::Begin("Debug Profiling", &m_ShowDebug);
+			ImGui::Text("Time since last Frame: %.3fms", Time::DeltaTime() * 1000.0f);
+			ImGui::Text("FPS: %.3f", m_Frames / (Time::Elapsed() - m_LastTime));
+			ImGui::Text("");
+			ImGui::Text("Time Elapsed: %.3f", Time::Elapsed() - m_TimeSinceReset);
+			ImGui::Text("Total Frames: %i", m_TotalFrames);
+			ImGui::Text("Average FPS: %.1f", m_TotalFrames / (Time::Elapsed() - m_TimeSinceReset));
+
+			ImGui::SetCursorPosX(ImGui::GetContentRegionAvailWidth() / 2.0f);
+			if (ImGui::Button("Reset")) {
+				m_TotalFrames = m_LastFrame;
+				m_TimeSinceReset = Time::Elapsed();
+			}
+
+			ImGui::End();
+		}
 
 		Application::Get().GetImGuiLayer()->SetBlockEvents(!m_GameViewFocus && !m_GameViewHovered);
 		
@@ -258,6 +288,13 @@ namespace Nebula {
 
 					ImGui::EndMenu();
 				}
+
+				ImGui::EndMenu();
+			}
+
+			if (ImGui::BeginMenu("Windows")) {
+				if (ImGui::MenuItem("Debug Profiling"))
+					m_ShowDebug = true;
 
 				ImGui::EndMenu();
 			}

@@ -27,9 +27,12 @@ namespace Nebula {
 		void OnRuntimeStop();
 
 		void UpdateRuntime();
-		void UpdateEditor();
 		void RenderEditor(EditorCamera& camera);
+		void RenderEditorOverlay(EditorCamera& camera);
+		
+		void UpdateEditor();
 		void RenderRuntime();
+		void RenderRuntimeOverlay();
 		
 		void OnViewportResize(uint32_t width, uint32_t height);
 
@@ -49,6 +52,9 @@ namespace Nebula {
 		uint32_t m_ViewportWidth = 0, m_ViewportHeight = 0;
 
 		b2World* m_PhysicsWorld = nullptr;
+
+		Camera* mainCam = nullptr;
+		mat4 mainCamTransform;
 
 		friend class Entity;
 		friend class SceneHierarchyPanel;

@@ -45,6 +45,13 @@ namespace Nebula {
 		bool m_UsingGizmo = false;
 		bool m_ShowColliders = false;
 		bool m_ShowGrid = false;
+
+		bool m_ShowDebug = false;
+		uint32_t m_Frames = 0;
+		uint32_t m_LastFrame = 0;
+		uint32_t m_TotalFrames = 0;
+		float m_LastTime;
+		float m_TimeSinceReset = 0;
 		
 		vec2 m_GameViewSize = { 1280.0f, 720.0f };
 		vec2 m_ViewPortBounds[2];
@@ -73,5 +80,7 @@ namespace Nebula {
 
 		//Editor Resources
 		Ref<Texture2D> m_PlayIcon, m_StopIcon, m_Backdrop;
+
+		Font OpenSans = Font("OpenSans", "Resources/fonts/OpenSans/Regular.ttf", 64);
 	};
 }

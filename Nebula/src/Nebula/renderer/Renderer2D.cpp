@@ -9,6 +9,10 @@
 
 #include "Nebula/Scene/Components.h"
 
+#define GL_WITH_GLAD
+#define NOT_USING_FT_GL_NAMESPACE
+#include <texture-font.h>
+
 namespace Nebula {
 	struct Renderer2DData {
 		static const uint32_t MaxSprites = 10000;
@@ -71,6 +75,8 @@ namespace Nebula {
 
 		LineVertex* LineVBBase = nullptr;
 		LineVertex* LineVBPtr  = nullptr;
+
+		Ref<Texture2D> FontTexture;
 	};
 	static Renderer2DData s_Data;
 	
@@ -284,8 +290,74 @@ namespace Nebula {
 		s_Data.TextureShader->SetBackfaceCulling(cull);
 	}
 
+	void Renderer2D::DrawString(const std::string& text, Font& font, 
+		const mat4& transform, const vec4& colour, uint32_t entityID) 
+	{
+		NB_PROFILE_FUNCTION();
+		if (s_Data.QuadIndexCount >= s_Data.MaxIndices)
+			FlushAndReset();
+
+		float x = 0.0f;
+		const vec2& fontScale = font.GetScale();
+		float textureIndex = GetTextureIndex(font.getTexture());
+
+		for (uint32_t i = 0; i < text.length(); i++) {
+			ftgl::texture_glyph_t* glyph = font.getGlyph(&text[i]);
+			if (glyph == NULL) continue;
+
+			if (i > 0)
+				x += font.getGlyphKerning(glyph, &text[i - 1]) / fontScale.x;
+
+			float x0 = x + glyph->offset_x / fontScale.x;
+			float y0 =	   glyph->offset_y / fontScale.y;
+			float x1 = x0 +  glyph->width  / fontScale.x;
+			float y1 = y0 - glyph->height  / fontScale.y;
+
+			float u0 = glyph->s0;
+			float v0 = glyph->t0;
+			float u1 = glyph->s1;
+			float v1 = glyph->t1;
+
+			s_Data.QuadVBPtr->Position = transform * vec4(x0, y0, 0.0f, 1.0f);
+			s_Data.QuadVBPtr->TexCoord = vec2(u0, v0);
+			s_Data.QuadVBPtr->TexIndex = textureIndex;
+			s_Data.QuadVBPtr->TilingFactor = 1.0f;
+			s_Data.QuadVBPtr->Colour = colour;
+			s_Data.QuadVBPtr->EntityID = entityID;
+			s_Data.QuadVBPtr++;
+
+			s_Data.QuadVBPtr->Position = transform * vec4(x0, y1, 0.0f, 1.0f);
+			s_Data.QuadVBPtr->TexCoord = vec2(u0, v1);
+			s_Data.QuadVBPtr->TexIndex = textureIndex;
+			s_Data.QuadVBPtr->TilingFactor = 1.0f;
+			s_Data.QuadVBPtr->Colour = colour;
+			s_Data.QuadVBPtr->EntityID = entityID;
+			s_Data.QuadVBPtr++;
+
+			s_Data.QuadVBPtr->Position = transform * vec4(x1, y1, 0.0f, 1.0f);
+			s_Data.QuadVBPtr->TexCoord = vec2(u1, v1);
+			s_Data.QuadVBPtr->TexIndex = textureIndex;
+			s_Data.QuadVBPtr->TilingFactor = 1.0f;
+			s_Data.QuadVBPtr->Colour = colour;
+			s_Data.QuadVBPtr->EntityID = entityID;
+			s_Data.QuadVBPtr++;
+
+			s_Data.QuadVBPtr->Position = transform * vec4(x1, y0, 0.0f, 1.0f);
+			s_Data.QuadVBPtr->TexCoord = vec2(u1, v0);
+			s_Data.QuadVBPtr->TexIndex = textureIndex;
+			s_Data.QuadVBPtr->TilingFactor = 1.0f;
+			s_Data.QuadVBPtr->Colour = colour;
+			s_Data.QuadVBPtr->EntityID = entityID;
+			s_Data.QuadVBPtr++;
+
+			s_Data.QuadIndexCount += 6;
+			x += glyph->advance_x / fontScale.x;
+		}
+	}
+
 	void Renderer2D::DrawTri(const uint32_t vertexCount, const vec4* vertexPos, vec2* texCoords,
-		const mat4& transform, const vec4& colour, Ref<Texture2D> texture, float tiling, uint32_t entityID) {
+		const mat4& transform, const vec4& colour, Ref<Texture2D> texture, float tiling, uint32_t entityID)
+	{
 		NB_PROFILE_FUNCTION();
 
 		if (s_Data.TriIndexCount >= s_Data.MaxIndices)
@@ -297,7 +369,8 @@ namespace Nebula {
 	}
 
 	void Renderer2D::DrawQuad(const uint32_t vertexCount, const vec4* vertexPos, vec2* texCoords,
-		const mat4& transform, const vec4& colour, Ref<Texture2D> texture, float tiling, uint32_t entityID) {
+		const mat4& transform, const vec4& colour, Ref<Texture2D> texture, float tiling, uint32_t entityID)
+	{
 		NB_PROFILE_FUNCTION();
 		if (s_Data.QuadIndexCount >= s_Data.MaxIndices)
 			FlushAndReset();
@@ -334,7 +407,7 @@ namespace Nebula {
 	void Renderer2D::Draw(const uint32_t type, Entity& entity) {
 		NB_PROFILE_FUNCTION();
 
-		mat4 transform = entity.GetTransform().CalculateMatrix();
+		mat4 transform = entity.GetTransform().global;
 		switch (type)
 		{
 		case NB_RECT: {
@@ -380,6 +453,14 @@ namespace Nebula {
 			DrawQuad(4, s_Data.QuadVertexPos, coords, transform, spriteRenderer.Colour, spriteRenderer.Texture, spriteRenderer.Tiling, entity);
 			break;
 		}
+		case NB_STRING: {
+			static Font OpenSans = Font("OpenSans", "Resources/fonts/OpenSans/Regular.ttf", 64);
+			
+			auto& stringRender = entity.GetComponent<StringRendererComponent>();
+			DrawString(stringRender.String, OpenSans, transform, stringRender.Colour, entity);
+
+			break;
+		}
 		default:
 			NB_ERROR("[Renderer2D] Unknown Type Specified");
 			break;
@@ -417,6 +498,10 @@ namespace Nebula {
 		case NB_TRI:
 			DrawTri(3, s_Data.TriVertexPos, s_Data.TriTexCoords, transform, colour, texture, tiling);
 			break;
+
+		case NB_STRING:
+			NB_WARN("[Render2D] Please Use Renderer2D::DrawString to render text");
+			break;
 		}
 	}
 	
@@ -452,12 +537,8 @@ namespace Nebula {
 		}
 	}
 
-	Vertex* Renderer2D::CalculateVertexData(Vertex* vertexPtr, const uint32_t vertexCount, const vec4* vertexPos, 
-		const mat4& transform, const vec4& colour, Ref<Texture2D> texture, vec2* texCoord, float tiling, uint32_t entityID) {
-		NB_PROFILE_FUNCTION();
-
+	float Renderer2D::GetTextureIndex(const Ref<Texture2D>& texture) {
 		float textureIndex = 0.0f;
-
 		for (uint32_t i = 1; i < s_Data.TextureSlotIndex; i++) {
 			if (*s_Data.TextureSlots[i].get() == *texture.get()) {
 				textureIndex = (float)i;
@@ -473,6 +554,15 @@ namespace Nebula {
 			s_Data.TextureSlots[s_Data.TextureSlotIndex] = texture;
 			s_Data.TextureSlotIndex++;
 		}
+		return textureIndex;
+	}
+
+	Vertex* Renderer2D::CalculateVertexData(Vertex* vertexPtr, const uint32_t vertexCount, const vec4* vertexPos,
+		const mat4& transform, const vec4& colour, Ref<Texture2D> texture, vec2* texCoord, float tiling, uint32_t entityID)
+	{
+		NB_PROFILE_FUNCTION();
+
+		float textureIndex = GetTextureIndex(texture);
 		
 		for (size_t i = 0; i < vertexCount; i++) {
 			vertexPtr->Position = transform * vertexPos[i];
@@ -487,8 +577,8 @@ namespace Nebula {
 		return vertexPtr;
 	}
 
-	CircleVertex* Renderer2D::CalculateVertexData(CircleVertex* vertexPtr, const uint32_t vertexCount, const vec4* vertexPos,
-		const mat4& transform, const vec4& colour, float thickness, float fade, uint32_t entityID) {
+	CircleVertex* Renderer2D::CalculateVertexData(CircleVertex* vertexPtr, const uint32_t vertexCount, const vec4* vertexPos, const mat4& transform, const vec4& colour, float thickness, float fade, uint32_t entityID) 
+	{
 		NB_PROFILE_FUNCTION();
 
 		for (size_t i = 0; i < vertexCount; i++) {

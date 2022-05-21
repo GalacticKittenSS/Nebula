@@ -117,6 +117,18 @@ namespace Nebula {
 		return {};
 	}
 
+	static std::string FontTypeToString(StringRendererComponent::FontType font)
+	{
+		switch (font)
+		{
+		case StringRendererComponent::FontType::Default:    return "Default";
+		case StringRendererComponent::FontType::OpenSans:   return "OpenSans";
+		}
+
+		NB_ASSERT(false, "Unknown body type");
+		return {};
+	}
+
 	static Rigidbody2DComponent::BodyType RigidBody2DBodyTypeFromString(const std::string& bodyTypeString)
 	{
 		if (bodyTypeString == "Static")    return Rigidbody2DComponent::BodyType::Static;
@@ -125,6 +137,15 @@ namespace Nebula {
 
 		NB_ASSERT(false, "Unknown body type");
 		return Rigidbody2DComponent::BodyType::Static;
+	}
+
+	static StringRendererComponent::FontType FontTypeFromString(const std::string& fontString)
+	{
+		if (fontString == "Default")    return StringRendererComponent::FontType::Default;
+		if (fontString == "OpenSans")   return StringRendererComponent::FontType::OpenSans;
+
+		NB_ASSERT(false, "Unknown font type");
+		return StringRendererComponent::FontType::Default;
 	}
 
 	SceneSerializer::SceneSerializer(const Ref<Scene>& scene): m_Scene(scene) { }
@@ -225,6 +246,18 @@ namespace Nebula {
 			out << YAML::Key << "Thickness" << YAML::Value << component.Thickness;
 			out << YAML::Key << "Fade" << YAML::Value << component.Fade;
 			
+			out << YAML::EndMap;
+		}
+		
+		if (entity.HasComponent<StringRendererComponent>()) {
+			out << YAML::Key << "StringRendererComponent";
+			out << YAML::BeginMap;
+
+			auto& component = entity.GetComponent<StringRendererComponent>();
+			out << YAML::Key << "String" << YAML::Value << component.String;
+			out << YAML::Key << "Colour" << YAML::Value << component.Colour;
+			out << YAML::Key << "Font" << YAML::Value << FontTypeToString(component.Font);
+
 			out << YAML::EndMap;
 		}
 
@@ -383,6 +416,15 @@ namespace Nebula {
 					crc.Colour = circleRendererComponent["Colour"].as<vec4>();
 					crc.Thickness = circleRendererComponent["Thickness"].as<float>();
 					crc.Fade = circleRendererComponent["Fade"].as<float>();
+				}
+
+				auto stringRendererComponent = entity["StringRendererComponent"];
+				if (stringRendererComponent)
+				{
+					auto& src = deserializedEntity.AddComponent<StringRendererComponent>();
+					src.String = stringRendererComponent["String"].as<std::string>();
+					src.Colour = stringRendererComponent["Colour"].as<vec4>();
+					src.Font = FontTypeFromString(stringRendererComponent["Font"].as<std::string>());
 				}
 
 				auto rigidbody2DComponent = entity["Rigidbody2DComponent"];

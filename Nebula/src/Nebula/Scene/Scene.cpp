@@ -240,6 +240,17 @@ namespace Nebula {
 	}
 
 	void Scene::UpdateRuntime() {
+		auto camView = m_Registry.view<TransformComponent, CameraComponent>();
+		for (auto entity : camView) {
+			auto [transform, camera] = camView.get<TransformComponent, CameraComponent>(entity);
+
+			if (camera.Primary) {
+				mainCam = &camera.Camera;
+				mainCamTransform = transform;
+				break;
+			}
+		}
+
 		m_Registry.view<NativeScriptComponent>().each([=](auto entity, NativeScriptComponent& nsc) {
 			if (!nsc.Instance) {
 				nsc.Instance = nsc.InstantiateScript();
@@ -273,7 +284,7 @@ namespace Nebula {
 
 	void Scene::RenderEditor(EditorCamera& camera) {
 		Renderer2D::BeginScene(camera);
-
+		
 		auto group = m_Registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
 		for (auto entity : group) {
 			Renderer2D::Draw(NB_QUAD, Entity{ entity, this });
@@ -293,35 +304,41 @@ namespace Nebula {
 	}
 
 	void Scene::RenderRuntime() {
-		Camera* mainCam = nullptr;
-		mat4 mainCamTransform;
+		if (!mainCam) return;
 
-		auto view = m_Registry.view<TransformComponent, CameraComponent>();
-		for (auto entity : view) {
-			auto [transform, camera] = view.get<TransformComponent, CameraComponent>(entity);
+		Renderer2D::BeginScene(*mainCam, mainCamTransform);
 
-			if (camera.Primary) {
-				mainCam = &camera.Camera;
-				mainCamTransform = transform;
-				break;
-			}
+		auto group = m_Registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
+		for (auto entity : group) {
+			Renderer2D::Draw(NB_QUAD, Entity{ entity, this });
 		}
 
-		if (mainCam) {
-			Renderer2D::BeginScene(*mainCam, mainCamTransform);
-
-			auto group = m_Registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
-			for (auto entity : group) {
-				Renderer2D::Draw(NB_QUAD, Entity{ entity, this });
-			}
-
-			auto CircleGroup = m_Registry.view<TransformComponent, CircleRendererComponent>();
-			for (auto entity : CircleGroup) {
-				Renderer2D::Draw(NB_CIRCLE, Entity{ entity, this });
-			}
-
-			Renderer2D::EndScene();
+		auto CircleGroup = m_Registry.view<CircleRendererComponent>();
+		for (auto entity : CircleGroup) {
+			Renderer2D::Draw(NB_CIRCLE, Entity{ entity, this });
 		}
+
+		Renderer2D::EndScene();
+	}
+
+	void Scene::RenderEditorOverlay(EditorCamera& camera) {
+		Renderer2D::BeginScene(camera);
+		auto StringGroup = m_Registry.view<StringRendererComponent>();
+		for (auto entity : StringGroup) {
+			Renderer2D::Draw(NB_STRING, Entity{ entity, this });
+		}
+		Renderer2D::EndScene();
+	}
+
+	void Scene::RenderRuntimeOverlay() {
+		if (!mainCam) return;
+		
+		Renderer2D::BeginScene(*mainCam, mainCamTransform);
+		auto StringGroup = m_Registry.view<StringRendererComponent>();
+		for (auto entity : StringGroup) {
+			Renderer2D::Draw(NB_STRING, Entity{ entity, this });
+		}
+		Renderer2D::EndScene();
 	}
 
 	void Scene::OnViewportResize(uint32_t width, uint32_t height) {
@@ -352,6 +369,9 @@ namespace Nebula {
 
 	template<>
 	void Scene::OnComponentAdded<CircleRendererComponent>(Entity entity, CircleRendererComponent& component) { }
+
+	template<>
+	void Scene::OnComponentAdded<StringRendererComponent>(Entity entity, StringRendererComponent& component) { }
 
 	template<>
 	void Scene::OnComponentAdded<TagComponent>(Entity entity, TagComponent& component) { }

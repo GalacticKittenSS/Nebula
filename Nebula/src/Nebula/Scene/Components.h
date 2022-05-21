@@ -111,6 +111,21 @@ namespace Nebula {
 		CircleRendererComponent(const CircleRendererComponent&) = default;
 	};
 
+	struct StringRendererComponent {
+		enum class FontType { Default = 0, OpenSans };
+		FontType Font = FontType::Default;
+		
+		//To Implement
+		// BOLD
+		float size;
+		
+		std::string String;
+		vec4 Colour{ 1.0f, 1.0f, 1.0f, 1.0f };
+
+		StringRendererComponent() = default;
+		StringRendererComponent(const StringRendererComponent&) = default;
+	};
+
 	struct CameraComponent {
 		SceneCamera Camera;
 		bool Primary = true;
@@ -177,7 +192,8 @@ namespace Nebula {
 
 	};
 	using AllComponents =
-		ComponentGroup<ParentChildComponent, TransformComponent, SpriteRendererComponent, CircleRendererComponent,
+		ComponentGroup < ParentChildComponent, TransformComponent,
+		SpriteRendererComponent, CircleRendererComponent, StringRendererComponent,
 		CameraComponent, NativeScriptComponent,
 		Rigidbody2DComponent, Box2DComponent, CircleColliderComponent>; 
 }

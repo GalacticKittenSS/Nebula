@@ -709,6 +709,13 @@ namespace Nebula {
 				}
 			}
 
+			if (!m_SelectionContext.HasComponent<StringRendererComponent>()) {
+				if (ImGui::MenuItem("String Renderer")) {
+					m_SelectionContext.AddComponent<StringRendererComponent>();
+					ImGui::CloseCurrentPopup();
+				}
+			}
+
 			if (!m_SelectionContext.HasComponent<Rigidbody2DComponent>()) {
 				if (ImGui::MenuItem("Rigidbody 2D")) {
 					m_SelectionContext.AddComponent<Rigidbody2DComponent>();
@@ -902,6 +909,25 @@ namespace Nebula {
 			ImGui::ColorEdit4("Colour", value_ptr(component.Colour));
 			DrawVec1Control("Thickness", component.Thickness, 0.01f, 0.01f, 1.0f);
 			DrawVec1Control("Fade", component.Fade, 0.0025f, 0.01f, 1.0f);
+		}, true);
+
+		DrawComponent<StringRendererComponent>("String Renderer", entity, [](auto& component, Entity entity) {
+			char buffer[256];
+			memset(buffer, 0, sizeof(buffer));
+			strncpy(buffer, component.String.c_str(), sizeof(buffer));
+
+			if (ImGui::InputText("##String", buffer, sizeof(buffer))) {
+				component.String = std::string(buffer);
+			}
+			
+			ImGui::ColorEdit4("Colour", value_ptr(component.Colour));
+			
+			int font = (int)component.Font;
+			const char* fontStrings[] = { "Default", "OpenSans" };
+			const char* CurrentFontString = fontStrings[font];
+
+			if (DrawCombo("Font", fontStrings, CurrentFontString, font))
+				component.Font = (StringRendererComponent::FontType)font;
 		}, true);
 
 		DrawComponent<Rigidbody2DComponent>("Rigidbody 2D", entity, [](auto& component, Entity entity) {
