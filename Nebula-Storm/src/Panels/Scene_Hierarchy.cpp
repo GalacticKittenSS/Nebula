@@ -193,7 +193,6 @@ namespace Nebula {
 			EntityPayload(m_Context.get());
 	}
 
-
 	void SceneHierarchyPanel::DrawArray(Array<UUID>& entities, bool showIfParent) {
 		Array<UUID> drawn;
 		for (uint32_t n = 0; n < entities.size(); n++) {
@@ -422,16 +421,15 @@ namespace Nebula {
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.8f, 0.2f, 0.1f, 1.0f });
 		ImGui::PushFont(boldFont);
 
-		bool x = ImGui::Button("X", buttonSize);
-		if (x)
+		if (ImGui::Button("X", buttonSize))
 			values.x = resetvalue;
-
+		
 		ImGui::PopFont();
 		ImGui::PopStyleColor(3);
 
 		ImGui::SameLine();
 		ImGui::SetNextItemWidth(width);
-		x = x || ImGui::DragFloat("##X", &values.x, 0.1f, 0.0f, 0.0f, "%.2f");
+		bool x = ImGui::DragFloat("##X", &values.x, 0.1f, 0.0f, 0.0f, "%.2f");
 		ImGui::PopItemWidth();
 		ImGui::SameLine();
 
@@ -440,16 +438,15 @@ namespace Nebula {
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
 		ImGui::PushFont(boldFont);
 
-		bool y = ImGui::Button("Y", buttonSize);
-		if (y)
+		if (ImGui::Button("Y", buttonSize))
 			values.y = resetvalue;
-
+		
 		ImGui::PopFont();
 		ImGui::PopStyleColor(3);
 
 		ImGui::SameLine();
 		ImGui::SetNextItemWidth(width);
-		y = y || ImGui::DragFloat("##Y", &values.y, 0.1f, 0.0f, 0.0f, "%.2f");
+		bool y = ImGui::DragFloat("##Y", &values.y, 0.1f, 0.0f, 0.0f, "%.2f");
 		ImGui::PopItemWidth();
 		ImGui::SameLine();
 
@@ -458,16 +455,15 @@ namespace Nebula {
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.1f, 0.25f, 0.8f, 1.0f });
 		ImGui::PushFont(boldFont);
 
-		bool z = ImGui::Button("Z", buttonSize);
-		if (z)
+		if (ImGui::Button("Z", buttonSize))
 			values.z = resetvalue;
-
+		
 		ImGui::PopFont();
 		ImGui::PopStyleColor(3);
 
 		ImGui::SameLine();
 		ImGui::SetNextItemWidth(width);
-		z = z || ImGui::DragFloat("##Z", &values.z, 0.1f, 0.0f, 0.0f, "%.2f");
+		bool z = ImGui::DragFloat("##Z", &values.z, 0.1f, 0.0f, 0.0f, "%.2f");
 		ImGui::PopItemWidth();
 
 		ImGui::PopStyleVar();
