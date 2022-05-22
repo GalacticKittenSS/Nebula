@@ -290,7 +290,7 @@ namespace Nebula {
 		s_Data.TextureShader->SetBackfaceCulling(cull);
 	}
 
-	void Renderer2D::DrawString(const std::string& text, Font& font, 
+	void Renderer2D::DrawString(const std::string& text, Font* font, 
 		const mat4& transform, const vec4& colour, uint32_t entityID) 
 	{
 		NB_PROFILE_FUNCTION();
@@ -298,15 +298,15 @@ namespace Nebula {
 			FlushAndReset();
 
 		float x = 0.0f;
-		const vec2& fontScale = font.GetScale();
-		float textureIndex = GetTextureIndex(font.getTexture());
+		const vec2& fontScale = font->GetScale();
+		float textureIndex = GetTextureIndex(font->GetTexture());
 
 		for (uint32_t i = 0; i < text.length(); i++) {
-			ftgl::texture_glyph_t* glyph = font.getGlyph(&text[i]);
+			ftgl::texture_glyph_t* glyph = font->GetGlyph(&text[i]);
 			if (glyph == NULL) continue;
 
 			if (i > 0)
-				x += font.getGlyphKerning(glyph, &text[i - 1]) / fontScale.x;
+				x += font->GetGlyphKerning(glyph, &text[i - 1]) / fontScale.x;
 
 			float x0 = x + glyph->offset_x / fontScale.x;
 			float y0 =	   glyph->offset_y / fontScale.y;
@@ -454,11 +454,10 @@ namespace Nebula {
 			break;
 		}
 		case NB_STRING: {
-			static Font OpenSans = Font("OpenSans", "Resources/fonts/OpenSans/Regular.ttf", 64);
-			
 			auto& stringRender = entity.GetComponent<StringRendererComponent>();
-			DrawString(stringRender.String, OpenSans, transform, stringRender.Colour, entity);
+			const char* fontStrings[] = StringRenderFontTypeStrings;
 
+			DrawString(stringRender.Text, stringRender.Ft, transform, stringRender.Colour, entity);
 			break;
 		}
 		default:

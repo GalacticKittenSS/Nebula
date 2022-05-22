@@ -3,6 +3,7 @@
 #include "Nebula/Maths/Maths.h"
 
 #include "Nebula/Renderer/Camera.h"
+#include "Nebula/Renderer/Fonts.h"
 #include "Scene_Camera.h"
 
 #include "Nebula/Core/UUID.h"
@@ -111,19 +112,44 @@ namespace Nebula {
 		CircleRendererComponent(const CircleRendererComponent&) = default;
 	};
 
+#define StringRenderFontTypeStrings { "Default", "OpenSans", "Roboto" }
 	struct StringRendererComponent {
-		enum class FontType { Default = 0, OpenSans };
-		FontType Font = FontType::Default;
-		
-		//To Implement
-		// BOLD
-		float size;
-		
-		std::string String;
+		std::string Text;
 		vec4 Colour{ 1.0f, 1.0f, 1.0f, 1.0f };
+
+		float Resolution = 86.0f;
+		bool Bold = false;
+		bool Italic = false;
+
+		int FontTypeIndex = 0;
+		Font* Ft = nullptr;
 
 		StringRendererComponent() = default;
 		StringRendererComponent(const StringRendererComponent&) = default;
+
+		void InitiateFont() {
+			static const char* fontStrings[] = StringRenderFontTypeStrings;
+			std::string name = fontStrings[FontTypeIndex];
+			if (name == "Default")
+				name = "OpenSans";
+
+			std::string filepath = "Resources/fonts/" + name + "/";
+
+			if (Bold) {
+				filepath += "Bold";
+				name += " Bold";
+			}
+
+			if (Italic) {
+				filepath += "Italic";
+				name += " Italic";
+			}
+
+			if (!Bold && !Italic)
+				filepath += "Regular";
+
+			Ft = new Font(name, filepath + ".ttf", Resolution);
+		}
 	};
 
 	struct CameraComponent {

@@ -37,7 +37,7 @@ namespace Nebula {
 			const mat4& transform, const vec4& colour, Ref<Texture2D> texture, float tiling);
 
 		//Primitives
-		static void DrawString(const std::string& text, Font& font,
+		static void DrawString(const std::string& text, Font* font,
 			const mat4& transform, const vec4& colour, uint32_t entityID = -1);
 		static void DrawTri(const uint32_t vertexCount, const vec4* vertexPos, vec2* texCoords,
 			const mat4& transform, const vec4& colour, Ref<Texture2D> texture = nullptr, float tiling = 1.0f, uint32_t entityID = -1);

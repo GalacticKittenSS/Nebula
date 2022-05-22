@@ -52,13 +52,16 @@ Entities:
       Children: ~
       ChildCount: 0
     TransformComponent:
-      Translation: [-7.77313185, 7.19124699, 0.0120809963]
+      Translation: [-6.77313232, 8.19124699, 0.00999999978]
       Rotation: [0, 0, 0]
-      Scale: [0.0370999947, 0.0370999947, 0.0370999947]
+      Scale: [2, 2, 1]
     StringRendererComponent:
-      String: This is a String
+      Text: This is a String
       Colour: [0.126861542, 0.843947768, 0.888030887, 1]
-      Font: Default
+      FontIndex: 2
+      Bold: true
+      Italic: false
+      Resolution: 198
   - Entity: 11531482172220784666
     TagComponent:
       Tag: Sprite

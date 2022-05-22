@@ -12,7 +12,7 @@ namespace Nebula {
 		~EditorLayer() = default;
 
 		void Attach() override;
-		void Detach() override { }
+		void Detach() override;
 
 		void Update(Nebula::Timestep ts) override;
 		void Render() override;

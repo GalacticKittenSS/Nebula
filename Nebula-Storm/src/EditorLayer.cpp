@@ -104,6 +104,14 @@ namespace Nebula {
 
 		m_SceneHierarchy.SetContext(m_ActiveScene);
 		RenderCommand::SetClearColour({ 0.1f, 0.1f, 0.1f, 1.0f });
+
+		FontManager::Add(new Font("Default",	  "Resources/fonts/OpenSans/Regular.ttf", 86));
+		FontManager::Add(new Font("OpenSans",	  "Resources/fonts/OpenSans/Regular.ttf", 86));
+		FontManager::Add(new Font("OpenSans - BOLD", "Resources/fonts/OpenSans/Bold.ttf", 86));
+	}
+
+	void EditorLayer::Detach() {
+		FontManager::Clean();
 	}
 
 	void EditorLayer::Update(Timestep ts) {
@@ -339,9 +347,9 @@ namespace Nebula {
 				auto [tc, bc2d] = BoxView.get<TransformComponent, Box2DComponent>(entity);
 			
 				vec3 translation = tc.GlobalTranslation + vec3(bc2d.Offset, 0.001f);
-				vec3 Scale = tc.GlobalScale * vec3(bc2d.Size * 2.0f);
+				vec3 Scale = tc.GlobalScale * vec3(bc2d.Size) * 2.0f;
 
-				mat4 transform = translate(vec3(translation)) * toMat4(quat(tc.GlobalRotation)) * scale(Scale);
+				mat4 transform = translate(translation) * toMat4(quat(tc.GlobalRotation)) * scale(Scale);
 				Renderer2D::Draw(NB_RECT, transform, vec4(0.0f, 1.0f, 0.0f, 1.0f));
 			}
 		}
@@ -602,6 +610,12 @@ namespace Nebula {
 		m_ActiveScene->OnRuntimeStop();
 		m_ActiveScene = m_EditorScene;
 		m_SceneState = SceneState::Edit;
+
+		auto& entities = m_ActiveScene->GetAllEntitiesWith<StringRendererComponent>();
+		for (auto& ent : entities) {
+			auto& src = Entity{ ent, m_ActiveScene.get() }.GetComponent<StringRendererComponent>();
+			src.InitiateFont();
+		}
 
 		m_SceneHierarchy.SetContext(m_EditorScene);
 	}

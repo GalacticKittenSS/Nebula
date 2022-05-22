@@ -270,16 +270,28 @@ namespace Nebula {
 			auto& rb2d = entity.GetComponent<Rigidbody2DComponent>();
 
 			b2Body* body = (b2Body*)rb2d.RuntimeBody;
-			const auto& position = body->GetPosition();
+			auto position = body->GetPosition();
 			
-			vec3 deltaTranslation = { position.x - transform.GlobalTranslation.x , position.y - transform.GlobalTranslation.y, 0.0f };
+			if (entity.HasComponent<Box2DComponent>()) {
+				auto& bc2d = entity.GetComponent<Box2DComponent>();
+
+				position.x -= bc2d.Offset.x;
+				position.y -= bc2d.Offset.y;
+			}
+
+			if (entity.HasComponent<CircleColliderComponent>()) {
+				auto& cc = entity.GetComponent<CircleColliderComponent>();
+
+				position.x -= cc.Offset.x;
+				position.y -= cc.Offset.y;
+			}
+
+			vec3 deltaTranslation = { position.x - transform.GlobalTranslation.x , 
+				position.y - transform.GlobalTranslation.y, 0.0f };
 			vec3 deltaRotation = { 0.0f, 0.0f, body->GetAngle() - transform.GlobalRotation.z };
 
 			transform.SetDeltaTransform(deltaTranslation, deltaRotation, vec3(0.0f));
 		}
-
-		//for (uint32_t i = 0; i < m_SceneOrder.size(); i++)
-		//	CalculateGlobalTransform(Entity{ m_SceneOrder[i], this });
 	}
 
 	void Scene::RenderEditor(EditorCamera& camera) {
@@ -298,10 +310,7 @@ namespace Nebula {
 		Renderer2D::EndScene();
 	}
 
-	void Scene::UpdateEditor() {
-		//for (uint32_t i = 0; i < m_SceneOrder.size(); i++)
-		//	CalculateGlobalTransform(Entity{ m_SceneOrder[i], this });
-	}
+	void Scene::UpdateEditor() { }
 
 	void Scene::RenderRuntime() {
 		if (!mainCam) return;

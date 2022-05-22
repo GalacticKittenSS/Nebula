@@ -117,18 +117,6 @@ namespace Nebula {
 		return {};
 	}
 
-	static std::string FontTypeToString(StringRendererComponent::FontType font)
-	{
-		switch (font)
-		{
-		case StringRendererComponent::FontType::Default:    return "Default";
-		case StringRendererComponent::FontType::OpenSans:   return "OpenSans";
-		}
-
-		NB_ASSERT(false, "Unknown body type");
-		return {};
-	}
-
 	static Rigidbody2DComponent::BodyType RigidBody2DBodyTypeFromString(const std::string& bodyTypeString)
 	{
 		if (bodyTypeString == "Static")    return Rigidbody2DComponent::BodyType::Static;
@@ -137,15 +125,6 @@ namespace Nebula {
 
 		NB_ASSERT(false, "Unknown body type");
 		return Rigidbody2DComponent::BodyType::Static;
-	}
-
-	static StringRendererComponent::FontType FontTypeFromString(const std::string& fontString)
-	{
-		if (fontString == "Default")    return StringRendererComponent::FontType::Default;
-		if (fontString == "OpenSans")   return StringRendererComponent::FontType::OpenSans;
-
-		NB_ASSERT(false, "Unknown font type");
-		return StringRendererComponent::FontType::Default;
 	}
 
 	SceneSerializer::SceneSerializer(const Ref<Scene>& scene): m_Scene(scene) { }
@@ -254,10 +233,13 @@ namespace Nebula {
 			out << YAML::BeginMap;
 
 			auto& component = entity.GetComponent<StringRendererComponent>();
-			out << YAML::Key << "String" << YAML::Value << component.String;
+			out << YAML::Key << "Text" << YAML::Value << component.Text;
 			out << YAML::Key << "Colour" << YAML::Value << component.Colour;
-			out << YAML::Key << "Font" << YAML::Value << FontTypeToString(component.Font);
-
+			out << YAML::Key << "FontIndex" << YAML::Value << component.FontTypeIndex;
+			out << YAML::Key << "Bold" << YAML::Value << component.Bold;
+			out << YAML::Key << "Italic" << YAML::Value << component.Italic;
+			out << YAML::Key << "Resolution" << YAML::Value << component.Resolution;
+			
 			out << YAML::EndMap;
 		}
 
@@ -422,9 +404,14 @@ namespace Nebula {
 				if (stringRendererComponent)
 				{
 					auto& src = deserializedEntity.AddComponent<StringRendererComponent>();
-					src.String = stringRendererComponent["String"].as<std::string>();
+					src.Text = stringRendererComponent["Text"].as<std::string>();
 					src.Colour = stringRendererComponent["Colour"].as<vec4>();
-					src.Font = FontTypeFromString(stringRendererComponent["Font"].as<std::string>());
+					src.FontTypeIndex = stringRendererComponent["FontIndex"].as<int>();
+					src.Bold = stringRendererComponent["Bold"].as<bool>();
+					src.Italic = stringRendererComponent["Italic"].as<bool>();
+					src.Resolution = stringRendererComponent["Resolution"].as<float>();
+
+					src.InitiateFont();
 				}
 
 				auto rigidbody2DComponent = entity["Rigidbody2DComponent"];
