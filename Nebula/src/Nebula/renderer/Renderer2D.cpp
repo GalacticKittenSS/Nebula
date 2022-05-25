@@ -312,13 +312,14 @@ namespace Nebula {
 			float y0 =	   glyph->offset_y / fontScale.y;
 			float x1 = x0 +  glyph->width  / fontScale.x;
 			float y1 = y0 - glyph->height  / fontScale.y;
+			float z = i / 1000.0f;
 
 			float u0 = glyph->s0;
 			float v0 = glyph->t0;
 			float u1 = glyph->s1;
 			float v1 = glyph->t1;
 
-			s_Data.QuadVBPtr->Position = transform * vec4(x0, y0, 0.0f, 1.0f);
+			s_Data.QuadVBPtr->Position = transform * vec4(x0, y0, z, 1.0f);
 			s_Data.QuadVBPtr->TexCoord = vec2(u0, v0);
 			s_Data.QuadVBPtr->TexIndex = textureIndex;
 			s_Data.QuadVBPtr->TilingFactor = 1.0f;
@@ -326,7 +327,7 @@ namespace Nebula {
 			s_Data.QuadVBPtr->EntityID = entityID;
 			s_Data.QuadVBPtr++;
 
-			s_Data.QuadVBPtr->Position = transform * vec4(x0, y1, 0.0f, 1.0f);
+			s_Data.QuadVBPtr->Position = transform * vec4(x0, y1, z, 1.0f);
 			s_Data.QuadVBPtr->TexCoord = vec2(u0, v1);
 			s_Data.QuadVBPtr->TexIndex = textureIndex;
 			s_Data.QuadVBPtr->TilingFactor = 1.0f;
@@ -334,7 +335,7 @@ namespace Nebula {
 			s_Data.QuadVBPtr->EntityID = entityID;
 			s_Data.QuadVBPtr++;
 
-			s_Data.QuadVBPtr->Position = transform * vec4(x1, y1, 0.0f, 1.0f);
+			s_Data.QuadVBPtr->Position = transform * vec4(x1, y1, z, 1.0f);
 			s_Data.QuadVBPtr->TexCoord = vec2(u1, v1);
 			s_Data.QuadVBPtr->TexIndex = textureIndex;
 			s_Data.QuadVBPtr->TilingFactor = 1.0f;
@@ -342,7 +343,7 @@ namespace Nebula {
 			s_Data.QuadVBPtr->EntityID = entityID;
 			s_Data.QuadVBPtr++;
 
-			s_Data.QuadVBPtr->Position = transform * vec4(x1, y0, 0.0f, 1.0f);
+			s_Data.QuadVBPtr->Position = transform * vec4(x1, y0, z, 1.0f);
 			s_Data.QuadVBPtr->TexCoord = vec2(u1, v0);
 			s_Data.QuadVBPtr->TexIndex = textureIndex;
 			s_Data.QuadVBPtr->TilingFactor = 1.0f;
