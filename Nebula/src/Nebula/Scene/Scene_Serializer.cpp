@@ -227,6 +227,21 @@ namespace Nebula {
 			
 			out << YAML::EndMap;
 		}
+		
+		if (entity.HasComponent<StringRendererComponent>()) {
+			out << YAML::Key << "StringRendererComponent";
+			out << YAML::BeginMap;
+
+			auto& component = entity.GetComponent<StringRendererComponent>();
+			out << YAML::Key << "Text" << YAML::Value << component.Text;
+			out << YAML::Key << "Colour" << YAML::Value << component.Colour;
+			out << YAML::Key << "FontIndex" << YAML::Value << component.FontTypeIndex;
+			out << YAML::Key << "Bold" << YAML::Value << component.Bold;
+			out << YAML::Key << "Italic" << YAML::Value << component.Italic;
+			out << YAML::Key << "Resolution" << YAML::Value << component.Resolution;
+			
+			out << YAML::EndMap;
+		}
 
 		if (entity.HasComponent<Rigidbody2DComponent>()) {
 			out << YAML::Key << "Rigidbody2DComponent";
@@ -383,6 +398,20 @@ namespace Nebula {
 					crc.Colour = circleRendererComponent["Colour"].as<vec4>();
 					crc.Thickness = circleRendererComponent["Thickness"].as<float>();
 					crc.Fade = circleRendererComponent["Fade"].as<float>();
+				}
+
+				auto stringRendererComponent = entity["StringRendererComponent"];
+				if (stringRendererComponent)
+				{
+					auto& src = deserializedEntity.AddComponent<StringRendererComponent>();
+					src.Text = stringRendererComponent["Text"].as<std::string>();
+					src.Colour = stringRendererComponent["Colour"].as<vec4>();
+					src.FontTypeIndex = stringRendererComponent["FontIndex"].as<int>();
+					src.Bold = stringRendererComponent["Bold"].as<bool>();
+					src.Italic = stringRendererComponent["Italic"].as<bool>();
+					src.Resolution = stringRendererComponent["Resolution"].as<float>();
+
+					src.InitiateFont();
 				}
 
 				auto rigidbody2DComponent = entity["Rigidbody2DComponent"];

@@ -23,7 +23,6 @@
 //----RENDERER--------
 #include "Nebula/Renderer/Shader.h"
 #include "Nebula/Renderer/Texture.h"
-#include "Nebula/Renderer/GameObjects.h"
 #include "Nebula/renderer/Camera_Controller.h"
 #include "Nebula/Renderer/FrameBuffer.h"
 

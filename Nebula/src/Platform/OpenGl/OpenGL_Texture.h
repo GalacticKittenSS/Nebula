@@ -8,7 +8,7 @@ namespace Nebula {
 	class OpenGL_Texture2D : public Texture2D {
 	public:
 		OpenGL_Texture2D(const std::string& path);
-		OpenGL_Texture2D(uint32_t width, uint32_t height);
+		OpenGL_Texture2D(uint32_t width, uint32_t height, bool alphaOnly);
 		~OpenGL_Texture2D();
 
 		void SetData(void* data, uint32_t size) override;

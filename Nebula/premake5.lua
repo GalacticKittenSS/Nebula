@@ -41,7 +41,8 @@ project "Nebula"
 		"%{includedir.Spdlog}",
 		"%{includedir.Stb}",
 		"%{includedir.Yaml}",
-		"%{includedir.VulkanSDK}"
+		"%{includedir.VulkanSDK}",
+		"%{includedir.FreetypeGL}"
 	}
 
 	links { 
@@ -50,6 +51,7 @@ project "Nebula"
 		"GLFW",
 		"ImGui",
 		"yaml-cpp",
+		"FreetypeGL",
 		"opengl32.lib"
 	}
 	
@@ -57,6 +59,12 @@ project "Nebula"
 	flags { "NoPCH" }
 
 	filter "files:Modules/imgui/src/**.cpp"
+	flags { "NoPCH" }
+
+	filter "files:Modules/FreetypeGL/**.c"
+	flags { "NoPCH" }
+
+	filter "files:Modules/Freetype/**.c"
 	flags { "NoPCH" }
 
 	filter "system:windows"

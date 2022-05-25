@@ -20,6 +20,7 @@ group "Dependencies"
 	include "Nebula/Modules/GLad"
 	include "Nebula/Modules/ImGui"
 	include "Nebula/Modules/yaml-cpp"
+	include "Nebula/Modules/FreetypeGL"
 group ""
 
 --The Nebula Engine

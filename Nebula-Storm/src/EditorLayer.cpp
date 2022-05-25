@@ -104,6 +104,14 @@ namespace Nebula {
 
 		m_SceneHierarchy.SetContext(m_ActiveScene);
 		RenderCommand::SetClearColour({ 0.1f, 0.1f, 0.1f, 1.0f });
+
+		FontManager::Add(new Font("Default",	  "Resources/fonts/OpenSans/Regular.ttf", 86));
+		FontManager::Add(new Font("OpenSans",	  "Resources/fonts/OpenSans/Regular.ttf", 86));
+		FontManager::Add(new Font("OpenSans - BOLD", "Resources/fonts/OpenSans/Bold.ttf", 86));
+	}
+
+	void EditorLayer::Detach() {
+		FontManager::Clean();
 	}
 
 	void EditorLayer::Update(Timestep ts) {
@@ -111,10 +119,13 @@ namespace Nebula {
 
 		//Resize
 		FrameBufferSpecification spec = frameBuffer->GetFrameBufferSpecifications();
-		if (m_GameViewSize.x > 0.0f && m_GameViewSize.y > 0.0f && (spec.Width != m_GameViewSize.x || spec.Height != m_GameViewSize.y)) {
+		if (m_GameViewSize.x > 0.0f && m_GameViewSize.y > 0.0f 
+			&& (spec.Width != m_GameViewSize.x || spec.Height != m_GameViewSize.y))
+		{
 			frameBuffer->Resize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
 			m_ActiveScene->OnViewportResize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
 			m_EditorCam.SetViewPortSize(m_GameViewSize.x, m_GameViewSize.y);
+			OpenSans.SetScale({ m_GameViewSize.x / 32.0f, m_GameViewSize.y / 18.0f });
 		}
 
 		if (!m_UsingGizmo && m_GameViewHovered && m_SceneState == SceneState::Edit)
@@ -142,6 +153,8 @@ namespace Nebula {
 		switch (m_SceneState) {
 			case SceneState::Edit: {
 				m_ActiveScene->RenderEditor(m_EditorCam);
+				OnOverlayRender();
+				m_ActiveScene->RenderEditorOverlay(m_EditorCam);
 
 				//Get Pixel Data
 				auto [mx, my] = ImGui::GetMousePos();
@@ -160,11 +173,11 @@ namespace Nebula {
 			
 			case SceneState::Play: {
 				m_ActiveScene->RenderRuntime();
+				OnOverlayRender();
+				m_ActiveScene->RenderRuntimeOverlay();
 				break;
 			}
 		}
-
-		OnOverlayRender();
 
 		frameBuffer->Unbind();
 	}
@@ -201,6 +214,31 @@ namespace Nebula {
 
 		UI_GameView();
 		UI_Toolbar();
+
+		m_Frames++; m_TotalFrames++;
+		if (Time::Elapsed() - m_LastTime >= 1.0f) {
+			m_LastTime = Time::Elapsed();
+			m_LastFrame = m_Frames;
+			m_Frames = 0;
+		}
+
+		if (m_ShowDebug) {
+			ImGui::Begin("Debug Profiling", &m_ShowDebug);
+			ImGui::Text("Time since last Frame: %.3fms", Time::DeltaTime() * 1000.0f);
+			ImGui::Text("FPS: %.3f", m_Frames / (Time::Elapsed() - m_LastTime));
+			ImGui::Text("");
+			ImGui::Text("Time Elapsed: %.3f", Time::Elapsed() - m_TimeSinceReset);
+			ImGui::Text("Total Frames: %i", m_TotalFrames);
+			ImGui::Text("Average FPS: %.1f", m_TotalFrames / (Time::Elapsed() - m_TimeSinceReset));
+
+			ImGui::SetCursorPosX(ImGui::GetContentRegionAvailWidth() / 2.0f);
+			if (ImGui::Button("Reset")) {
+				m_TotalFrames = m_LastFrame;
+				m_TimeSinceReset = Time::Elapsed();
+			}
+
+			ImGui::End();
+		}
 
 		Application::Get().GetImGuiLayer()->SetBlockEvents(!m_GameViewFocus && !m_GameViewHovered);
 		
@@ -262,6 +300,13 @@ namespace Nebula {
 				ImGui::EndMenu();
 			}
 
+			if (ImGui::BeginMenu("Windows")) {
+				if (ImGui::MenuItem("Debug Profiling"))
+					m_ShowDebug = true;
+
+				ImGui::EndMenu();
+			}
+
 			ImGui::EndMenuBar();
 		}
 	}
@@ -302,9 +347,9 @@ namespace Nebula {
 				auto [tc, bc2d] = BoxView.get<TransformComponent, Box2DComponent>(entity);
 			
 				vec3 translation = tc.GlobalTranslation + vec3(bc2d.Offset, 0.001f);
-				vec3 Scale = tc.GlobalScale * vec3(bc2d.Size * 2.0f);
+				vec3 Scale = tc.GlobalScale * vec3(bc2d.Size) * 2.0f;
 
-				mat4 transform = translate(vec3(translation)) * toMat4(quat(tc.GlobalRotation)) * scale(Scale);
+				mat4 transform = translate(translation) * toMat4(quat(tc.GlobalRotation)) * scale(Scale);
 				Renderer2D::Draw(NB_RECT, transform, vec4(0.0f, 1.0f, 0.0f, 1.0f));
 			}
 		}
@@ -565,6 +610,12 @@ namespace Nebula {
 		m_ActiveScene->OnRuntimeStop();
 		m_ActiveScene = m_EditorScene;
 		m_SceneState = SceneState::Edit;
+
+		auto& entities = m_ActiveScene->GetAllEntitiesWith<StringRendererComponent>();
+		for (auto& ent : entities) {
+			auto& src = Entity{ ent, m_ActiveScene.get() }.GetComponent<StringRendererComponent>();
+			src.InitiateFont();
+		}
 
 		m_SceneHierarchy.SetContext(m_EditorScene);
 	}
