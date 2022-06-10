@@ -21,7 +21,7 @@ namespace Nebula {
 		Entity CreateEntity(UUID uuid, const std::string& name);
 		void DestroyEntity(Entity entity);
 
-		void DuplicateEntity(Entity entity);
+		Entity DuplicateEntity(Entity entity);
 		
 		void OnRuntimeStart();
 		void OnRuntimeStop();
@@ -29,6 +29,7 @@ namespace Nebula {
 		void UpdateRuntime();
 		void RenderEditor(EditorCamera& camera);
 		void RenderEditorOverlay(EditorCamera& camera);
+
 		
 		void UpdateEditor();
 		void RenderRuntime();
@@ -45,6 +46,8 @@ namespace Nebula {
 
 		Array<UUID> m_SceneOrder;
 	private:
+		void UpdatePhysics();
+
 		template<typename T>
 		void OnComponentAdded(Entity entity, T& component);
 	private:

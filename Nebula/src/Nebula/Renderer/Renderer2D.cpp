@@ -444,14 +444,15 @@ namespace Nebula {
 		case NB_QUAD: {
 			auto& spriteRenderer = entity.GetComponent<SpriteRendererComponent>();
 
-			vec2* coords = s_Data.QuadTexCoords;
 			if (spriteRenderer.Texture) {
 				Ref<SubTexture2D> SubT = SubTexture2D::CreateFromCoords(spriteRenderer.Texture,
 					spriteRenderer.SubTextureOffset, spriteRenderer.SubTextureCellSize, spriteRenderer.SubTextureCellNum);
-				coords = SubT->GetTextureCoords();
+				DrawQuad(4, s_Data.QuadVertexPos, SubT->GetTextureCoords(), transform,
+					spriteRenderer.Colour, spriteRenderer.Texture, spriteRenderer.Tiling, entity);
 			}
-
-			DrawQuad(4, s_Data.QuadVertexPos, coords, transform, spriteRenderer.Colour, spriteRenderer.Texture, spriteRenderer.Tiling, entity);
+			else
+				DrawQuad(4, s_Data.QuadVertexPos, s_Data.QuadTexCoords, transform, 
+					spriteRenderer.Colour, spriteRenderer.Texture, spriteRenderer.Tiling, entity);
 			break;
 		}
 		case NB_STRING: {

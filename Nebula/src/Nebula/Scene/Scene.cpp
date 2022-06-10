@@ -31,6 +31,16 @@ namespace Nebula {
 	}
 
 	void UpdateChildTransform(Entity& entity) {
+		if (entity.HasComponent<Rigidbody2DComponent>()) {
+			Rigidbody2DComponent& rb2d = entity.GetComponent<Rigidbody2DComponent>();
+			if (rb2d.RuntimeBody) {
+				TransformComponent& transform = entity.GetComponent<TransformComponent>();
+
+				b2Body* body = (b2Body*)rb2d.RuntimeBody;
+				body->SetTransform({ transform.GlobalTranslation.x, transform.GlobalTranslation.y }, transform.GlobalRotation.z);
+			}
+		}
+
 		for (UUID child : entity.GetParentChild().ChildrenIDs) {
 			Entity c = { child, entity };
 			if (!c.GetParentChild().ChildrenIDs.size())
@@ -38,6 +48,30 @@ namespace Nebula {
 			else
 				UpdateChildTransform(c);
 		}
+	}
+
+	void Rigidbody2DComponent::ApplyAngularImpulse(float impulse) {
+		((b2Body*)RuntimeBody)->ApplyAngularImpulse(impulse, true);
+	}
+
+	void Rigidbody2DComponent::ApplyForce(vec2 force, vec2 point) {
+		((b2Body*)RuntimeBody)->ApplyForce({ force.x, force.y }, { point.x, point.y }, true);
+	}
+
+	void Rigidbody2DComponent::ApplyLinearImpulse(vec2 impulse, vec2 point) {
+		((b2Body*)RuntimeBody)->ApplyLinearImpulse({ impulse.x, impulse.y }, { point.x, point.y }, true);
+	}
+
+	void Rigidbody2DComponent::ApplyTorque(float torque) {
+		((b2Body*)RuntimeBody)->ApplyTorque(torque, true);
+	}
+
+	void Rigidbody2DComponent::ApplyForceToCenter(vec2 force) {
+		((b2Body*)RuntimeBody)->ApplyForceToCenter({ force.x, force.y }, true);
+	}
+
+	void Rigidbody2DComponent::ApplyLinearImpulseToCenter(vec2 impulse) {
+		((b2Body*)RuntimeBody)->ApplyLinearImpulseToCenter({ impulse.x, impulse.y }, true);
 	}
 
 	static b2BodyType Rigibody2DToBox2D(Rigidbody2DComponent::BodyType bodyType) {
@@ -140,6 +174,9 @@ namespace Nebula {
 	void Scene::DestroyEntity(Entity entity) {
 		auto& Parent = entity.GetComponent<ParentChildComponent>();
 
+		for (auto& childID : Parent.ChildrenIDs)
+			DestroyEntity({ childID, this });
+
 		if (Parent.Parent) {
 			Entity{ Parent.Parent, this }.GetComponent<ParentChildComponent>().RemoveChild(entity.GetUUID());
 			Parent.Parent = NULL;
@@ -155,15 +192,31 @@ namespace Nebula {
 		m_Registry.destroy(entity);
 	}
 
-	void Scene::DuplicateEntity(Entity entity) {
+	Entity Scene::DuplicateEntity(Entity entity) {
 		std::string name = entity.GetName();
 		Entity newEnt = CreateEntity(name);
 
 		CopyComponent(AllComponents{}, newEnt, entity);
+		
+		ParentChildComponent& pcc = newEnt.GetParentChild();
+		pcc.ChildrenIDs.clear();
+		pcc.Parent = NULL;
+
+		for (UUID& childID : entity.GetParentChild().ChildrenIDs) {
+			Entity child = { childID, this };
+
+			Entity newChild = DuplicateEntity(child);
+			
+			newEnt.GetParentChild().AddChild(newChild.GetUUID());
+			newChild.GetParentChild().Parent = newEnt.GetUUID();
+		}
+
+		return newEnt;
 	}
 
 	void Scene::OnRuntimeStart() {
 		m_PhysicsWorld = new b2World({ 0.0f, -9.81f });
+		m_PhysicsWorld->SetAllowSleeping(false);
 
 		auto view = m_Registry.view<Rigidbody2DComponent>();
 		for (auto e : view) {
@@ -239,6 +292,40 @@ namespace Nebula {
 		return {};
 	}
 
+	void Scene::UpdatePhysics() {
+		m_PhysicsWorld->Step(Time::DeltaTime(), 6, 2);
+
+		auto view = m_Registry.view<Rigidbody2DComponent>();
+		for (auto e : view) {
+			Entity entity = { e, this };
+			auto& transform = entity.GetComponent<TransformComponent>();
+			auto& rb2d = entity.GetComponent<Rigidbody2DComponent>();
+
+			b2Body* body = (b2Body*)rb2d.RuntimeBody;
+			auto position = body->GetPosition();
+
+			if (entity.HasComponent<Box2DComponent>()) {
+				auto& bc2d = entity.GetComponent<Box2DComponent>();
+
+				position.x -= bc2d.Offset.x;
+				position.y -= bc2d.Offset.y;
+			}
+
+			if (entity.HasComponent<CircleColliderComponent>()) {
+				auto& cc = entity.GetComponent<CircleColliderComponent>();
+
+				position.x -= cc.Offset.x;
+				position.y -= cc.Offset.y;
+			}
+
+			vec3 deltaTranslation = { position.x - transform.GlobalTranslation.x ,
+				position.y - transform.GlobalTranslation.y, 0.0f };
+			vec3 deltaRotation = { 0.0f, 0.0f, body->GetAngle() - transform.GlobalRotation.z };
+
+			transform.SetDeltaTransform(deltaTranslation, deltaRotation, vec3(0.0f));
+		}
+	}
+
 	void Scene::UpdateRuntime() {
 		auto camView = m_Registry.view<TransformComponent, CameraComponent>();
 		for (auto entity : camView) {
@@ -261,37 +348,7 @@ namespace Nebula {
 			nsc.Instance->Update();
 		});
 
-		m_PhysicsWorld->Step(Time::DeltaTime(), 6, 2);
-
-		auto view = m_Registry.view<Rigidbody2DComponent>();
-		for (auto e : view) {
-			Entity entity = { e, this };
-			auto& transform = entity.GetComponent<TransformComponent>();
-			auto& rb2d = entity.GetComponent<Rigidbody2DComponent>();
-
-			b2Body* body = (b2Body*)rb2d.RuntimeBody;
-			auto position = body->GetPosition();
-			
-			if (entity.HasComponent<Box2DComponent>()) {
-				auto& bc2d = entity.GetComponent<Box2DComponent>();
-
-				position.x -= bc2d.Offset.x;
-				position.y -= bc2d.Offset.y;
-			}
-
-			if (entity.HasComponent<CircleColliderComponent>()) {
-				auto& cc = entity.GetComponent<CircleColliderComponent>();
-
-				position.x -= cc.Offset.x;
-				position.y -= cc.Offset.y;
-			}
-
-			vec3 deltaTranslation = { position.x - transform.GlobalTranslation.x , 
-				position.y - transform.GlobalTranslation.y, 0.0f };
-			vec3 deltaRotation = { 0.0f, 0.0f, body->GetAngle() - transform.GlobalRotation.z };
-
-			transform.SetDeltaTransform(deltaTranslation, deltaRotation, vec3(0.0f));
-		}
+		UpdatePhysics();
 	}
 
 	void Scene::RenderEditor(EditorCamera& camera) {

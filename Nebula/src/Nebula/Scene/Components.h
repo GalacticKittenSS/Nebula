@@ -190,6 +190,15 @@ namespace Nebula {
 
 		Rigidbody2DComponent() = default;
 		Rigidbody2DComponent(const Rigidbody2DComponent&) = default;
+
+		void ApplyForce(vec2 force, vec2 point);
+		void ApplyLinearImpulse(vec2 impulse, vec2 point);
+
+		void ApplyAngularImpulse(float impulse);
+		void ApplyTorque(float torque);
+
+		void ApplyForceToCenter(vec2 force);
+		void ApplyLinearImpulseToCenter(vec2 impulse);
 	};
 
 	struct Box2DComponent {

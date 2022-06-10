@@ -81,12 +81,26 @@ namespace Nebula {
 		T& GetComponent() {
 			return m_Entity.GetComponent<T>();
 		}
+
+		Entity CreateEntity(const std::string& name) {
+			return m_Scene->CreateEntity(name);
+		}
+
+		Entity DuplicateEntity(const Entity& entity) {
+			return m_Scene->DuplicateEntity(entity);
+		}
+
+		void DestroyThis() {
+			Destroy();
+			m_Scene->DestroyEntity(m_Entity);
+		}
 	protected:
-		virtual void Start()   { }
-		virtual void Update()  { }
+		virtual void Start() { }
+		virtual void Update() { }
 		virtual void Destroy() { }
 	private:
 		Entity m_Entity;
+		Scene* m_Scene;
 		friend class Scene;
 	};
 

@@ -63,9 +63,14 @@ namespace Nebula {
 	//-----------------------------------------------------//
 
 	SubTexture2D::SubTexture2D(const Ref<Texture2D>& texture, vec2& min, vec2& max): m_Texture(texture) {
+		m_TexCoords = new vec2[4];
 		m_TexCoords[0] = { min.x, min.y };
 		m_TexCoords[1] = { max.x, min.y };
 		m_TexCoords[2] = { max.x, max.y };
 		m_TexCoords[3] = { min.x, max.y };
+	}
+
+	SubTexture2D::~SubTexture2D() {
+		delete[] m_TexCoords;
 	}
 }

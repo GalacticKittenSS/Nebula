@@ -103,11 +103,11 @@ Entities:
       Scale: [2.56315613, 1.00000072, 1]
     SpriteRendererComponent:
       Colour: [1, 1, 1, 1]
-      Texture: None
+      Texture: assets\textures\Checkerboard.png
       Tiling: 1
       Offset: [0, 0]
-      CellSize: [128, 128]
-      CellNum: [1, 1]
+      CellSize: [10, 10]
+      CellNum: [2, 2]
     Rigidbody2DComponent:
       BodyType: Dynamic
       FixedRotation: false

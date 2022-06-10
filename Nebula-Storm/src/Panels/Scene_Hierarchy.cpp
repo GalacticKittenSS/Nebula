@@ -201,9 +201,14 @@ namespace Nebula {
 			if (entity.GetComponent<ParentChildComponent>().Parent && !showIfParent)
 				continue;
 			
+			bool deleted;
+			DrawEntityNode(entity, drawn.size() - 1, deleted);
+			
+			if (deleted)
+				continue;
+
 			drawn.push_back(entities[n]);
 			entities.move(n, drawn.size() - 1);
-			DrawEntityNode(entity, drawn.size() - 1);
 		}
 
 		if (drawn.size()) {
@@ -222,7 +227,7 @@ namespace Nebula {
 		}
 	}
 
-	void SceneHierarchyPanel::DrawEntityNode(Entity entity, uint32_t index) {
+	void SceneHierarchyPanel::DrawEntityNode(Entity entity, uint32_t index, bool& entityDeleted) {
 		ImVec2 cursorPos = ImGui::GetCursorPos();
 		ImVec2 elementSize = ImGui::GetItemRectSize();
 		elementSize.x -= ImGui::GetStyle().FramePadding.x;
@@ -266,7 +271,7 @@ namespace Nebula {
 			ImGui::EndDragDropTarget();
 		}
 
-		bool entityDeleted = false;
+		entityDeleted = false;
 		if (ImGui::BeginPopupContextItem()) {
 			if (ImGui::MenuItem("Delete Selected Entity"))
 				entityDeleted = true;

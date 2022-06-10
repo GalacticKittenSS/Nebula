@@ -3,8 +3,6 @@
 
 #include "Nebula/Renderer/Renderer.h"
 
-#include <GLFW/glfw3.h>
-
 namespace Nebula {
 	Application* Application::s_Instance = nullptr;
 
@@ -34,18 +32,14 @@ namespace Nebula {
 	void Application::run() {
 		NB_PROFILE_FUNCTION();
 
-		while (m_Running) {
+		while (m_Running) 
+		{
 			NB_PROFILE_SCOPE("Frame - Application::run()");
 			Time::Update();
 
-			float time = (float)glfwGetTime();
-			Timestep timestep = time - m_LastFrameTime;
-			m_LastFrameTime = time;
-
-			
 			if (!m_Minimized) {
 				for (Layer* layer : m_LayerStack) {
-					layer->Update(timestep);
+					layer->Update(Time::DeltaTime());
 					layer->Render();
 				}
 			}
