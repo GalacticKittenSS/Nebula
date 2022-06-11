@@ -163,4 +163,12 @@ namespace Nebula {
 	bool Win_Window::IsVSync() const {
 		return m_Data.Vsync;
 	}
+
+	void Win_Window::LockAspectRatio(uint8_t width, uint8_t height) {
+		glfwSetWindowAspectRatio(m_Window, width, height);
+	}
+
+	void Win_Window::UnlockAspectRatio() {
+		glfwSetWindowAspectRatio(m_Window, GLFW_DONT_CARE, GLFW_DONT_CARE);
+	}
 }

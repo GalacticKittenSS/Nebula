@@ -73,6 +73,9 @@ namespace Nebula {
 		Scene* m_Scene = nullptr;
 	};
 
+	void CalculateGlobalTransform(Entity& entity);
+	void UpdateChildTransform(Entity& entity);
+
 	class ScriptableEntity {
 	public:
 		virtual ~ScriptableEntity() { }
@@ -90,6 +93,10 @@ namespace Nebula {
 			return m_Scene->DuplicateEntity(entity);
 		}
 
+		void UpdateTransform() {
+			UpdateChildTransform(m_Entity);
+		}
+
 		void DestroyThis() {
 			Destroy();
 			m_Scene->DestroyEntity(m_Entity);
@@ -98,12 +105,12 @@ namespace Nebula {
 		virtual void Start() { }
 		virtual void Update() { }
 		virtual void Destroy() { }
+		virtual void OnCollisionEnter(Entity other) { }
+		virtual void OnCollisionExit(Entity other) { }
 	private:
 		Entity m_Entity;
 		Scene* m_Scene;
 		friend class Scene;
+		friend class Listener;
 	};
-
-	void CalculateGlobalTransform(Entity& entity);
-	void UpdateChildTransform(Entity& entity);
 }

@@ -33,6 +33,9 @@ namespace Nebula {
 		virtual void SetVSync(bool enabled) = 0;
 		virtual bool IsVSync() const = 0;
 
+		virtual void LockAspectRatio(uint8_t width = 16, uint8_t height = 9) = 0;
+		virtual void UnlockAspectRatio() = 0;
+
 		virtual void* GetNativeWindow() const = 0;
 
 		static Scope<Window> Create(const WindowProps& props = WindowProps());

@@ -11,10 +11,42 @@
 #include "box2d/b2_fixture.h"
 #include "box2d/b2_polygon_shape.h"
 #include "box2d/b2_circle_shape.h"
+#include "box2d/b2_contact.h"
 
 #include "Nebula/Utils/Time.h"
 
 namespace Nebula {
+	class Listener : public b2ContactListener {
+	public:
+		void BeginContact(b2Contact* contact) override {
+			Entity* a = (Entity*)contact->GetFixtureA()->GetBody()->GetUserData().pointer;
+			Entity* b = (Entity*)contact->GetFixtureB()->GetBody()->GetUserData().pointer;
+			
+			CallEntityEnter(a, b); CallEntityEnter(b, a);
+		}
+
+		void EndContact(b2Contact* contact) override {
+			Entity* a = (Entity*)contact->GetFixtureA()->GetBody()->GetUserData().pointer;
+			Entity* b = (Entity*)contact->GetFixtureB()->GetBody()->GetUserData().pointer;
+
+			CallEntityExit(a, b); CallEntityExit(b, a);
+		}
+
+		void CallEntityEnter(Entity* entity, Entity* other) {
+			if (!entity->HasComponent<NativeScriptComponent>())
+				return;
+
+			entity->GetComponent<NativeScriptComponent>().Instance->OnCollisionEnter(*other);
+		}
+
+		void CallEntityExit(Entity* entity, Entity* other) {
+			if (!entity->HasComponent<NativeScriptComponent>())
+				return;
+
+			entity->GetComponent<NativeScriptComponent>().Instance->OnCollisionExit(*other);
+		}
+	};
+
 	void CalculateGlobalTransform(Entity& entity) {
 		auto& transform = entity.GetTransform();
 		UUID parentID = entity.GetParentChild().Parent;
@@ -217,6 +249,7 @@ namespace Nebula {
 	void Scene::OnRuntimeStart() {
 		m_PhysicsWorld = new b2World({ 0.0f, -9.81f });
 		m_PhysicsWorld->SetAllowSleeping(false);
+		m_PhysicsWorld->SetContactListener(new Listener());
 
 		auto view = m_Registry.view<Rigidbody2DComponent>();
 		for (auto e : view) {
@@ -228,7 +261,11 @@ namespace Nebula {
 			bodyDef.type = Rigibody2DToBox2D(rb2d.Type);
 			bodyDef.position.Set(transform.GlobalTranslation.x, transform.GlobalTranslation.y);
 			bodyDef.angle = transform.GlobalRotation.z;
-
+			
+			b2BodyUserData data;
+			data.pointer = reinterpret_cast<uintptr_t>(new Entity(e, this));
+			bodyDef.userData = data;
+			
 			b2Body* body;
 			if (entity.HasComponent<Box2DComponent>()) {
 				auto& bc2d = entity.GetComponent<Box2DComponent>();
@@ -275,6 +312,14 @@ namespace Nebula {
 	}
 
 	void Scene::OnRuntimeStop() {
+		auto view = m_Registry.view<Rigidbody2DComponent>();
+		for (auto e : view) {
+			Entity entity = { e, this };
+			auto& rb2d = entity.GetComponent<Rigidbody2DComponent>();
+			if (rb2d.RuntimeBody)
+				delete (Entity*)((b2Body*)rb2d.RuntimeBody)->GetUserData().pointer;
+		}
+
 		delete m_PhysicsWorld;
 		m_PhysicsWorld = nullptr;
 	}
