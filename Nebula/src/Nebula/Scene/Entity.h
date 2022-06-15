@@ -7,6 +7,8 @@ namespace Nebula {
 	class Entity {
 	public:
 		Entity() = default;
+		Entity(const Entity & other) = default;
+
 		Entity(entt::entity handle, Scene* scene) : m_EntityHandle(handle), m_Scene(scene) { }
 		Entity(UUID uuid, Scene* scene) : m_Scene(scene) {
 			auto& view = m_Scene->m_Registry.view<IDComponent>();
@@ -18,7 +20,6 @@ namespace Nebula {
 				}
 			}
 		}
-		Entity(const Entity& other) = default;
 
 		template<typename T, typename... Args>
 		T& AddComponent(Args&&... args) {
@@ -74,7 +75,7 @@ namespace Nebula {
 	};
 
 	void CalculateGlobalTransform(Entity& entity);
-	void UpdateChildTransform(Entity& entity);
+	void UpdateChildrenAndTransform(Entity& entity);
 
 	class ScriptableEntity {
 	public:
@@ -85,22 +86,16 @@ namespace Nebula {
 			return m_Entity.GetComponent<T>();
 		}
 
-		Entity CreateEntity(const std::string& name) {
-			return m_Scene->CreateEntity(name);
+		void DestroyObject(ScriptableEntity* obj) {
+			m_Scene->DestroyEntity(obj->m_Entity);
 		}
 
-		Entity DuplicateEntity(const Entity& entity) {
-			return m_Scene->DuplicateEntity(entity);
+		void DestroyObject(Entity entity) {
+			m_Scene->DestroyEntity(entity);
 		}
 
-		void UpdateTransform() {
-			UpdateChildTransform(m_Entity);
-		}
-
-		void DestroyThis() {
-			Destroy();
-			m_Scene->DestroyEntity(m_Entity);
-		}
+		Scene* GetActiveScene() { return m_Scene; }
+		Entity GetCurrentEntity() { return m_Entity; }
 	protected:
 		virtual void Start() { }
 		virtual void Update() { }
@@ -111,6 +106,6 @@ namespace Nebula {
 		Entity m_Entity;
 		Scene* m_Scene;
 		friend class Scene;
-		friend class Listener;
+		friend class ContactListener;
 	};
 }

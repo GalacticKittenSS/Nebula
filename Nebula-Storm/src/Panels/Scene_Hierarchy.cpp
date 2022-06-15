@@ -51,7 +51,7 @@ namespace Nebula {
 		parent.AddChild(childID);
 		
 		child.Parent = parentEntity.GetUUID();
-		UpdateChildTransform(parentEntity);
+		UpdateChildrenAndTransform(parentEntity);
 	}
 	
 	static void EntityPayload(Scene* currentScene) {
@@ -756,7 +756,7 @@ namespace Nebula {
 				component.SetDeltaTransform(translation - component.GlobalTranslation, radians(rotation) - component.GlobalRotation, scale - component.GlobalScale);
 
 				if (p || r || s)
-					UpdateChildTransform(entity);
+					UpdateChildrenAndTransform(entity);
 			});
 		}
 		else {
@@ -773,7 +773,7 @@ namespace Nebula {
 				component.SetDeltaTransform(translation - component.LocalTranslation, radians(rotation) - component.LocalRotation, scale - component.LocalScale);
 
 				if (p || r || s)
-					UpdateChildTransform(entity);
+					UpdateChildrenAndTransform(entity);
 			});
 		}
 

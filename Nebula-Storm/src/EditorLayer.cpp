@@ -425,7 +425,7 @@ namespace Nebula {
 					vec3 deltaScale = scale - tc.GlobalScale;
 
 					tc.SetDeltaTransform(deltaTranslation, deltaRotation, deltaScale);
-					UpdateChildTransform(selectedEntity);
+					UpdateChildrenAndTransform(selectedEntity);
 				}
 			}
 		}
