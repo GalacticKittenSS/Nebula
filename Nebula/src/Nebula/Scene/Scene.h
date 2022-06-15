@@ -26,13 +26,18 @@ namespace Nebula {
 		void OnRuntimeStart();
 		void OnRuntimeStop();
 
-		void UpdateRuntime();
-		void RenderEditor(EditorCamera& camera);
-		void RenderEditorOverlay(EditorCamera& camera);
+		void OnSimulationStart();
+		void OnSimulationStop();
 
+		void UpdateSimulation();
 		void UpdateEditor();
+		void UpdateRuntime();
+
 		void RenderRuntime();
 		void RenderRuntimeOverlay();
+
+		void Render(EditorCamera& camera);
+		void RenderOverlay(EditorCamera& camera);
 		
 		void OnViewportResize(uint32_t width, uint32_t height);
 
@@ -47,7 +52,10 @@ namespace Nebula {
 		Array<UUID> m_SceneOrder;
 	private:
 		void CreateBox2DBody(Entity entity);
+
+		void InitPhysics();
 		void UpdatePhysics();
+		void DestroyPhysics();
 
 		template<typename T>
 		void OnComponentAdded(Entity entity, T& component);

@@ -29,7 +29,10 @@ project "Nebula Storm"
 		systemversion "latest"
 
 	filter "configurations:Debug"
-		defines "NB_DEBUG"
+		defines  {
+			"NB_DEBUG",
+			"NB_ENABLE_ASSERT"
+		}
 		runtime "Debug"
 		symbols "on"
 

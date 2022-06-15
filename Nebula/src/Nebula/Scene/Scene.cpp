@@ -64,7 +64,9 @@ namespace Nebula {
 
 	Scene::Scene() { }
 
-	Scene::~Scene() { }
+	Scene::~Scene() {
+		DestroyPhysics();
+	}
 
 	Ref<Scene> Scene::Copy(Ref<Scene> other) {
 		Ref<Scene> newScene = CreateRef<Scene>();
@@ -244,7 +246,7 @@ namespace Nebula {
 		rb2d.RuntimeBody = body;
 	}
 
-	void Scene::OnRuntimeStart() {
+	void Scene::InitPhysics() {
 		m_PhysicsWorld = new b2World({ 0.0f, -9.81f });
 		m_PhysicsWorld->SetAllowSleeping(false);
 		m_PhysicsWorld->SetContactListener(new ContactListener());
@@ -252,33 +254,6 @@ namespace Nebula {
 		auto view = m_Registry.view<Rigidbody2DComponent>();
 		for (auto e : view)
 			CreateBox2DBody(Entity{ e, this });
-
-		m_Registry.view<NativeScriptComponent>().each([=](auto entity, NativeScriptComponent& nsc) {
-			nsc.Instance = nsc.InstantiateScript();
-			nsc.Instance->m_Entity = Entity{ entity, this };
-			nsc.Instance->m_Scene = this;
-			nsc.Instance->Start();
-		});
-	}
-
-	void Scene::OnRuntimeStop() {
-		m_Registry.view<NativeScriptComponent>().each([=](auto entity, NativeScriptComponent& nsc) {
-			if (!nsc.Instance)
-				return;
-
-			nsc.Instance->Destroy();
-			nsc.DestroyScript(&nsc);
-		});
-
-		auto view = m_Registry.view<Rigidbody2DComponent>();
-		for (auto e : view) {
-			Entity entity = { e, this };
-			auto& rb2d = entity.GetComponent<Rigidbody2DComponent>();
-			if (rb2d.RuntimeBody)
-				delete (Entity*)((b2Body*)rb2d.RuntimeBody)->GetUserData().pointer;
-		}
-
-		delete m_PhysicsWorld; m_PhysicsWorld = nullptr;
 	}
 
 	void Scene::UpdatePhysics() {
@@ -313,6 +288,41 @@ namespace Nebula {
 
 			transform.SetDeltaTransform(deltaTranslation, deltaRotation, vec3(0.0f));
 		}
+	}
+
+	void Scene::DestroyPhysics() {
+		auto view = m_Registry.view<Rigidbody2DComponent>();
+		for (auto e : view) {
+			Entity entity = { e, this };
+			auto& rb2d = entity.GetComponent<Rigidbody2DComponent>();
+			if (rb2d.RuntimeBody)
+				delete (Entity*)((b2Body*)rb2d.RuntimeBody)->GetUserData().pointer;
+		}
+
+		delete m_PhysicsWorld; m_PhysicsWorld = nullptr;
+	}
+
+	void Scene::OnRuntimeStart() {
+		InitPhysics();
+
+		m_Registry.view<NativeScriptComponent>().each([=](auto entity, NativeScriptComponent& nsc) {
+			nsc.Instance = nsc.InstantiateScript();
+			nsc.Instance->m_Entity = Entity{ entity, this };
+			nsc.Instance->m_Scene = this;
+			nsc.Instance->Start();
+		});
+	}
+
+	void Scene::OnRuntimeStop() {
+		m_Registry.view<NativeScriptComponent>().each([=](auto entity, NativeScriptComponent& nsc) {
+			if (!nsc.Instance)
+				return;
+
+			nsc.Instance->Destroy();
+			nsc.DestroyScript(&nsc);
+		});
+
+		DestroyPhysics();
 	}
 
 	void Scene::UpdateRuntime() {
@@ -370,9 +380,21 @@ namespace Nebula {
 		Renderer2D::EndScene();
 	}
 
+	void Scene::OnSimulationStart() {
+		InitPhysics();
+	}
+
+	void Scene::OnSimulationStop() {
+		DestroyPhysics();
+	}
+
+	void Scene::UpdateSimulation() {
+		UpdatePhysics();
+	}
+
 	void Scene::UpdateEditor() { }
 
-	void Scene::RenderEditor(EditorCamera& camera) {
+	void Scene::Render(EditorCamera& camera) {
 		Renderer2D::BeginScene(camera);
 
 		auto group = m_Registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
@@ -388,12 +410,14 @@ namespace Nebula {
 		Renderer2D::EndScene();
 	}
 
-	void Scene::RenderEditorOverlay(EditorCamera& camera) {
+	void Scene::RenderOverlay(EditorCamera& camera) {
 		Renderer2D::BeginScene(camera);
+
 		auto StringGroup = m_Registry.view<StringRendererComponent>();
 		for (auto entity : StringGroup) {
 			Renderer2D::Draw(NB_STRING, Entity{ entity, this });
 		}
+		
 		Renderer2D::EndScene();
 	}
 

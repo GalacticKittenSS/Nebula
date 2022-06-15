@@ -25,6 +25,9 @@ namespace Nebula {
 		bool OnKeyPressed(KeyPressedEvent& e);
 		bool OnMousePressed(MouseButtonPressedEvent& e);
 
+		void Resize();
+		void GetPixelData();
+
 		void NewScene();
 		void SaveScene();
 		void SaveSceneAs();
@@ -33,7 +36,9 @@ namespace Nebula {
 
 		void OnScenePlay();
 		void OnSceneStop();
-
+		
+		void OnSceneSimulate();
+		
 		void DuplicateEntity();
 
 		//Panels
@@ -69,7 +74,7 @@ namespace Nebula {
 		int m_GizmoType = -1;
 
 		enum class SceneState {
-			Edit = 0, Play = 1
+			Edit = 0, Simulate = 1, Play = 2
 		};
 
 		SceneState m_SceneState = SceneState::Edit;
@@ -79,7 +84,7 @@ namespace Nebula {
 		ContentBrowserPanel m_ContentBrowser;
 
 		//Editor Resources
-		Ref<Texture2D> m_PlayIcon, m_StopIcon, m_Backdrop;
+		Ref<Texture2D> m_PlayIcon, m_SimulateIcon, m_StopIcon, m_Backdrop;
 
 		Font OpenSans = Font("OpenSans", "Resources/fonts/OpenSans/Regular.ttf", 64);
 	};

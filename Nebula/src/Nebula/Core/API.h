@@ -49,9 +49,15 @@
 #ifdef NB_ENABLE_ASSERTS
 	#define NB_ASSERT(x, ...) { if(!(x)) { NB_ERROR("Assertion Failed: {0}", __VA_ARGS__); NB_DEBUGBREAK(); } }
 	#define CL_ASSERT(x, ...) { if(!(x)) { CL_ERROR("Assertion Failed: {0}", __VA_ARGS__); NB_DEBUGBREAK(); } }
+
+	#define NB_ASSERT(x) { if(!(x)) { NB_ERROR("Assertion Failed"); NB_DEBUGBREAK(); } }
+	#define CL_ASSERT(x) { if(!(x)) { CL_ERROR("Assertion Failed"); NB_DEBUGBREAK(); } }
 #else
 	#define NB_ASSERT(x, ...)
 	#define CL_ASSERT(x, ...)
+
+	#define NB_ASSERT(x)
+	#define CL_ASSERT(x)
 #endif //NB_ENABLE_ASSERTS
 
 #define BIT(x) (1 << x)
