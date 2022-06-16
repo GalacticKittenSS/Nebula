@@ -295,8 +295,10 @@ namespace Nebula {
 		for (auto e : view) {
 			Entity entity = { e, this };
 			auto& rb2d = entity.GetComponent<Rigidbody2DComponent>();
-			if (rb2d.RuntimeBody)
+			if (rb2d.RuntimeBody) {
 				delete (Entity*)((b2Body*)rb2d.RuntimeBody)->GetUserData().pointer;
+				rb2d.RuntimeBody = nullptr;
+			}
 		}
 
 		delete m_PhysicsWorld; m_PhysicsWorld = nullptr;
