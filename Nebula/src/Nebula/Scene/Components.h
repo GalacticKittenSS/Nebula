@@ -181,6 +181,13 @@ namespace Nebula {
 		BodyType Type = BodyType::Dynamic;
 		bool FixedRotation = false;
 
+		enum Filters {
+			A = 0x0001, B = 0x0002, C = 0x0004, D = 0x0008,
+			E = 0x0010, F = 0x0020, G = 0x0040, H = 0x0080,
+			I = 0x0100, J = 0x0200, K = 0x0400, L = 0x0800,
+			M = 0x1000, N = 0x2000, O = 0x4000, P = 0x8000
+		};
+
 		float Density = 1.0f;
 		float Friction = 0.5f;
 		float Restitution = 0.0f;
@@ -205,20 +212,30 @@ namespace Nebula {
 		vec2 Size = { 0.5f, 0.5f };
 		vec2 Offset = { 0.0f, 0.0f };
 
+		uint16_t Category = Rigidbody2DComponent::Filters::A;
+		uint16_t Mask = 0xFFFF;
+
 		void* RuntimeFixture = nullptr;
 
 		Box2DComponent() = default;
 		Box2DComponent(const Box2DComponent&) = default;
+
+		void UpdateFilters(uint16_t Category, uint16_t Mask);
 	};
 
 	struct CircleColliderComponent {
 		vec2 Offset = { 0.0f, 0.0f };
 		float Radius = 0.5f;
 
+		uint16_t Category = Rigidbody2DComponent::Filters::A;
+		uint16_t Mask = 0xFFFF;
+
 		void* RuntimeFixture = nullptr;
 
 		CircleColliderComponent() = default;
 		CircleColliderComponent(const CircleColliderComponent&) = default;
+
+		void UpdateFilters(uint16_t Category, uint16_t Mask);
 	};
 
 	template<typename... Component>

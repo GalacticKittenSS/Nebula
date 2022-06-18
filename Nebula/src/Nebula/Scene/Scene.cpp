@@ -219,7 +219,11 @@ namespace Nebula {
 			fixtureDef.friction = rb2d.Friction;
 			fixtureDef.restitution = rb2d.Restitution;
 			fixtureDef.restitutionThreshold = rb2d.RestitutionThreshold;
-			body->CreateFixture(&fixtureDef);
+
+			fixtureDef.filter.categoryBits = bc2d.Category;
+			fixtureDef.filter.maskBits = bc2d.Mask;
+			
+			bc2d.RuntimeFixture = body->CreateFixture(&fixtureDef);
 		}
 
 		if (entity.HasComponent<CircleColliderComponent>()) {
@@ -239,7 +243,11 @@ namespace Nebula {
 			fixtureDef.friction = rb2d.Friction;
 			fixtureDef.restitution = rb2d.Restitution;
 			fixtureDef.restitutionThreshold = rb2d.RestitutionThreshold;
-			body->CreateFixture(&fixtureDef);
+
+			fixtureDef.filter.categoryBits = cc.Category;
+			fixtureDef.filter.maskBits = cc.Mask;
+
+			cc.RuntimeFixture = body->CreateFixture(&fixtureDef);
 		}
 
 		body->SetFixedRotation(rb2d.FixedRotation);

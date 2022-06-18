@@ -2,6 +2,7 @@
 #include "Entity.h"
 
 #include "box2d/b2_body.h"
+#include "box2d/b2_fixture.h"
 
 namespace Nebula {
 	void CalculateGlobalTransform(Entity& entity) {
@@ -61,5 +62,27 @@ namespace Nebula {
 
 	void Rigidbody2DComponent::ApplyLinearImpulseToCenter(vec2 impulse) {
 		((b2Body*)RuntimeBody)->ApplyLinearImpulseToCenter({ impulse.x, impulse.y }, true);
+	}
+
+	static void UpdateFixtureFilters(b2Fixture* fixture, uint16_t category, uint16_t mask) {
+		b2Filter filter;
+		filter.categoryBits = category;
+		filter.maskBits = mask;
+
+		fixture->SetFilterData(filter);
+	}
+
+	void Box2DComponent::UpdateFilters(uint16_t category, uint16_t mask) {
+		Category = category;
+		Mask = mask;
+
+		UpdateFixtureFilters((b2Fixture*)RuntimeFixture, category, mask);
+	}
+
+	void CircleColliderComponent::UpdateFilters(uint16_t category, uint16_t mask) {
+		Category = category;
+		Mask = mask;
+
+		UpdateFixtureFilters((b2Fixture*)RuntimeFixture, category, mask);
 	}
 }
