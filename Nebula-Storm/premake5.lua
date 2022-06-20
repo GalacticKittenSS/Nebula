@@ -29,13 +29,12 @@ project "Nebula Storm"
 		systemversion "latest"
 
 	filter "configurations:Debug"
-		defines "NB_DEBUG"
+		defines  {
+			"NB_DEBUG",
+			"NB_ENABLE_ASSERT"
+		}
 		runtime "Debug"
 		symbols "on"
-
-		postbuildcommands {
-			"{COPYDIR} \"%{LibraryDir.VulkanSDK_DebugDLL}\" \"%{cfg.targetdir}\""
-		}
 
 	filter "configurations:Release"
 		defines "NB_DEBUG"

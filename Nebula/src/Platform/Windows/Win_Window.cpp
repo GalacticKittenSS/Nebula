@@ -77,7 +77,7 @@ namespace Nebula {
 			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
 			switch (action) {
 				case GLFW_PRESS: {
-					KeyPressedEvent event(static_cast<KeyCode>(key), 0);
+					KeyPressedEvent event(static_cast<KeyCode>(key));
 					data.EventCallback(event);
 					break;
 				}
@@ -87,7 +87,7 @@ namespace Nebula {
 					break;
 				}
 				case GLFW_REPEAT: {
-					KeyPressedEvent event(static_cast<KeyCode>(key), 1);
+					KeyPressedEvent event(static_cast<KeyCode>(key), true);
 					data.EventCallback(event);
 					break;
 				}
@@ -162,5 +162,13 @@ namespace Nebula {
 
 	bool Win_Window::IsVSync() const {
 		return m_Data.Vsync;
+	}
+
+	void Win_Window::LockAspectRatio(uint8_t width, uint8_t height) {
+		glfwSetWindowAspectRatio(m_Window, width, height);
+	}
+
+	void Win_Window::UnlockAspectRatio() {
+		glfwSetWindowAspectRatio(m_Window, GLFW_DONT_CARE, GLFW_DONT_CARE);
 	}
 }

@@ -90,6 +90,8 @@ Entities:
     Box2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
+      Category: 1
+      Mask: 65535
   - Entity: 1734186555264958028
     TagComponent:
       Tag: Sprite
@@ -103,11 +105,11 @@ Entities:
       Scale: [2.56315613, 1.00000072, 1]
     SpriteRendererComponent:
       Colour: [1, 1, 1, 1]
-      Texture: None
+      Texture: assets\textures\Checkerboard.png
       Tiling: 1
       Offset: [0, 0]
-      CellSize: [128, 128]
-      CellNum: [1, 1]
+      CellSize: [10, 10]
+      CellNum: [2, 2]
     Rigidbody2DComponent:
       BodyType: Dynamic
       FixedRotation: false
@@ -118,6 +120,8 @@ Entities:
     Box2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
+      Category: 1
+      Mask: 65535
   - Entity: 16434448802742922228
     TagComponent:
       Tag: Circle
@@ -143,6 +147,8 @@ Entities:
     CircleColliderComponent:
       Offset: [0, 0]
       Radius: 0.5
+      Category: 1
+      Mask: 65535
   - Entity: 11691747497498017467
     TagComponent:
       Tag: Sprite
@@ -171,6 +177,8 @@ Entities:
     Box2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
+      Category: 1
+      Mask: 65535
   - Entity: 2555061558569917065
     TagComponent:
       Tag: Sprite
@@ -199,6 +207,8 @@ Entities:
     Box2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
+      Category: 1
+      Mask: 65535
   - Entity: 8525815086722917192
     TagComponent:
       Tag: Dynamic
@@ -227,6 +237,8 @@ Entities:
     Box2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
+      Category: 1
+      Mask: 65535
   - Entity: 6961276783589167595
     TagComponent:
       Tag: Static
@@ -255,6 +267,8 @@ Entities:
     Box2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
+      Category: 1
+      Mask: 65535
   - Entity: 4238392629824766104
     TagComponent:
       Tag: Sprite
@@ -283,6 +297,8 @@ Entities:
     Box2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
+      Category: 1
+      Mask: 1
   - Entity: 17924338926232536196
     TagComponent:
       Tag: Sprite
@@ -311,6 +327,8 @@ Entities:
     Box2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
+      Category: 1
+      Mask: 65535
   - Entity: 17945224244753102173
     TagComponent:
       Tag: Sprite
@@ -339,6 +357,8 @@ Entities:
     Box2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
+      Category: 1
+      Mask: 65535
   - Entity: 12392182606285594567
     TagComponent:
       Tag: Sprite
@@ -367,3 +387,5 @@ Entities:
     Box2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
+      Category: 1
+      Mask: 65535

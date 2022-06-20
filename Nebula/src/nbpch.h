@@ -20,6 +20,7 @@
 #include "Nebula/Core/Log.h"
 #include "Nebula/Debug/Instrumentor.h"
 #include "Nebula/Maths/Maths.h"
+#include "Nebula/Utils/Arrays.h"
 
 #ifdef NB_WINDOWS
 	#include <Windows.h>

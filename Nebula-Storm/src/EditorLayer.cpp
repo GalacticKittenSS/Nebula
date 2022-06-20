@@ -81,9 +81,10 @@ namespace Nebula {
 	void EditorLayer::Attach() {
 		NB_PROFILE_FUNCTION();
 
-		m_PlayIcon = Texture2D::Create("Resources/Icons/PlayButton.png");
-		m_StopIcon = Texture2D::Create("Resources/Icons/StopButton.png");
-		m_Backdrop = Texture2D::Create("Resources/Textures/bg.png");
+		m_PlayIcon		= Texture2D::Create("Resources/Icons/PlayButton.png");
+		m_SimulateIcon	= Texture2D::Create("Resources/Icons/SimulateButton.png");
+		m_StopIcon		= Texture2D::Create("Resources/Icons/StopButton.png");
+		m_Backdrop		= Texture2D::Create("Resources/Textures/bg.png");
 
 		//Initialize Frame Buffer
 		FrameBufferSpecification fbSpec;
@@ -114,12 +115,13 @@ namespace Nebula {
 		FontManager::Clean();
 	}
 
-	void EditorLayer::Update(Timestep ts) {
-		NB_PROFILE_FUNCTION();
+	void EditorLayer::Detach() {
+		FontManager::Clean();
+	}
 
-		//Resize
+	void EditorLayer::Resize() {
 		FrameBufferSpecification spec = frameBuffer->GetFrameBufferSpecifications();
-		if (m_GameViewSize.x > 0.0f && m_GameViewSize.y > 0.0f 
+		if (m_GameViewSize.x > 0.0f && m_GameViewSize.y > 0.0f
 			&& (spec.Width != m_GameViewSize.x || spec.Height != m_GameViewSize.y))
 		{
 			frameBuffer->Resize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
@@ -127,14 +129,39 @@ namespace Nebula {
 			m_EditorCam.SetViewPortSize(m_GameViewSize.x, m_GameViewSize.y);
 			OpenSans.SetScale({ m_GameViewSize.x / 32.0f, m_GameViewSize.y / 18.0f });
 		}
+	}
 
-		if (!m_UsingGizmo && m_GameViewHovered && m_SceneState == SceneState::Edit)
-			m_EditorCam.Update();
+	void EditorLayer::GetPixelData() {
+		auto [mx, my] = ImGui::GetMousePos();
+		mx -= m_ViewPortBounds[0].x;
+		my -= m_ViewPortBounds[0].y;
+		vec2 viewportSize = m_ViewPortBounds[1] - m_ViewPortBounds[0];
+		my = viewportSize.y - my;
+
+		if (mx >= 0 && my >= 0 && mx < viewportSize.x && my < viewportSize.y) {
+			int pixelData = frameBuffer->ReadPixel(1, (int)mx, (int)my);
+			m_HoveredEntity = pixelData == -1 ? Entity() : Entity((entt::entity)pixelData, m_ActiveScene.get());
+		}
+	}
+	
+	void EditorLayer::Update(Timestep ts) {
+		NB_PROFILE_FUNCTION();
+
+		Resize();
 
 		switch (m_SceneState)
 		{
 			case SceneState::Edit:
+				if (!m_UsingGizmo && m_GameViewHovered)
+					m_EditorCam.Update();
+				
 				m_ActiveScene->UpdateEditor();
+				break;
+			case SceneState::Simulate:
+				if (!m_UsingGizmo && m_GameViewHovered)
+					m_EditorCam.Update();
+
+				m_ActiveScene->UpdateSimulation();
 				break;
 			case SceneState::Play:
 				m_ActiveScene->UpdateRuntime();
@@ -151,32 +178,27 @@ namespace Nebula {
 		frameBuffer->ClearAttachment(1, -1);
 
 		switch (m_SceneState) {
-			case SceneState::Edit: {
-				m_ActiveScene->RenderEditor(m_EditorCam);
+			case SceneState::Edit:
+				m_ActiveScene->Render(m_EditorCam);
 				OnOverlayRender();
-				m_ActiveScene->RenderEditorOverlay(m_EditorCam);
+				m_ActiveScene->RenderOverlay(m_EditorCam);
 
-				//Get Pixel Data
-				auto [mx, my] = ImGui::GetMousePos();
-				mx -= m_ViewPortBounds[0].x;
-				my -= m_ViewPortBounds[0].y;
-				vec2 viewportSize = m_ViewPortBounds[1] - m_ViewPortBounds[0];
-				my = viewportSize.y - my;
-
-				if (mx >= 0 && my >= 0 && mx < viewportSize.x && my < viewportSize.y) {
-					int pixelData = frameBuffer->ReadPixel(1, (int)mx, (int)my);
-					m_HoveredEntity = pixelData == -1 ? Entity() : Entity((entt::entity)pixelData, m_ActiveScene.get());
-				}
-
+				GetPixelData();
 				break;
-			}
+
+			case SceneState::Simulate:
+				m_ActiveScene->Render(m_EditorCam);
+				OnOverlayRender();
+				m_ActiveScene->RenderOverlay(m_EditorCam);
+
+				GetPixelData();
+				break;
 			
-			case SceneState::Play: {
+			case SceneState::Play:
 				m_ActiveScene->RenderRuntime();
 				OnOverlayRender();
 				m_ActiveScene->RenderRuntimeOverlay();
 				break;
-			}
 		}
 
 		frameBuffer->Unbind();
@@ -342,9 +364,9 @@ namespace Nebula {
 				Renderer2D::DrawCircle(transform, vec4(0.0f, 1.0f, 0.0f, 1.0f), 0.05f);
 			}
 
-			auto BoxView = m_ActiveScene->GetAllEntitiesWith<TransformComponent, Box2DComponent>();
+			auto BoxView = m_ActiveScene->GetAllEntitiesWith<TransformComponent, BoxCollider2DComponent>();
 			for (auto entity : BoxView) {
-				auto [tc, bc2d] = BoxView.get<TransformComponent, Box2DComponent>(entity);
+				auto [tc, bc2d] = BoxView.get<TransformComponent, BoxCollider2DComponent>(entity);
 			
 				vec3 translation = tc.GlobalTranslation + vec3(bc2d.Offset, 0.001f);
 				vec3 Scale = tc.GlobalScale * vec3(bc2d.Size) * 2.0f;
@@ -388,7 +410,7 @@ namespace Nebula {
 		m_UsingGizmo = ImGuizmo::IsUsing();
 
 		//Gizmos
-		if (m_SceneState == SceneState::Edit) {
+		if (m_SceneState != SceneState::Play) {
 			Entity selectedEntity = m_SceneHierarchy.GetSelectedEntity();
 			ImGuizmo::SetOrthographic(false);
 			ImGuizmo::SetDrawlist();
@@ -425,7 +447,7 @@ namespace Nebula {
 					vec3 deltaScale = scale - tc.GlobalScale;
 
 					tc.SetDeltaTransform(deltaTranslation, deltaRotation, deltaScale);
-					UpdateChildTransform(selectedEntity);
+					UpdateChildrenAndTransform(selectedEntity);
 				}
 			}
 		}
@@ -447,21 +469,38 @@ namespace Nebula {
 		ImGui::Begin("##toolbar", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
 		float size = ImGui::GetWindowHeight() - 4.0f;
-		Ref<Texture2D> icon = m_SceneState == SceneState::Edit ? m_PlayIcon : m_StopIcon;
-		ImGui::SetCursorPosX((ImGui::GetWindowContentRegionMax().x * 0.5f) - (size * 0.5f));
-		if (ImGui::ImageButton((ImTextureID)icon->GetRendererID(), ImVec2(size, size), ImVec2(0, 0), ImVec2(1, 1), 0)) {
-			if (m_SceneState == SceneState::Edit)
-				OnScenePlay();
-			else if (m_SceneState == SceneState::Play)
-				OnSceneStop();
+
+		{
+			bool editorsimulate = m_SceneState == SceneState::Edit || m_SceneState == SceneState::Simulate;
+			Ref<Texture2D> icon = editorsimulate ? m_PlayIcon : m_StopIcon;
+			ImGui::SetCursorPosX((ImGui::GetWindowContentRegionMax().x * 0.5f) - (size * 0.5f));
+			if (ImGui::ImageButton((ImTextureID)icon->GetRendererID(), ImVec2(size, size), ImVec2(0, 0), ImVec2(1, 1), 0)) {
+				if (editorsimulate)
+					OnScenePlay();
+				else
+					OnSceneStop();
+			}
 		}
+		ImGui::SameLine();
+		{
+			bool editorplay = m_SceneState == SceneState::Edit || m_SceneState == SceneState::Play;
+			Ref<Texture2D> icon = editorplay ? m_SimulateIcon : m_StopIcon;
+			//ImGui::SetCursorPosX((ImGui::GetWindowContentRegionMax().x * 0.5f) - (size * 0.5f));
+			if (ImGui::ImageButton((ImTextureID)icon->GetRendererID(), ImVec2(size, size), ImVec2(0, 0), ImVec2(1, 1), 0)) {
+				if (editorplay)
+					OnSceneSimulate();
+				else
+					OnSceneStop();
+			}
+		}
+
 		ImGui::PopStyleVar(2);
 		ImGui::PopStyleColor(3);
 		ImGui::End();
 	}
 
 	void EditorLayer::OnEvent(Event& e) {
-		if (m_SceneState == SceneState::Edit)
+		if (m_SceneState != SceneState::Play)
 			m_EditorCam.OnEvent(e);
 
 		Dispatcher d(e);
@@ -470,7 +509,7 @@ namespace Nebula {
 	}
 
 	bool EditorLayer::OnKeyPressed(KeyPressedEvent& e) {
-		if (e.GetRepeatCount() > 0 || m_SceneState != SceneState::Edit || !m_GameViewFocus)
+		if (e.IsRepeat() > 0 || m_SceneState == SceneState::Play || !m_GameViewFocus)
 			return false;
 
 		bool control = Input::IsKeyPressed(KeyCode::LeftControl) || Input::IsKeyPressed(KeyCode::RightControl);
@@ -500,8 +539,7 @@ namespace Nebula {
 
 		case KeyCode::Backspace:
 			if (m_SceneHierarchy.GetSelectedEntity() && (m_GameViewFocus || m_SceneHierarchy.IsFocused())) {
-				if (m_SceneState == SceneState::Edit)
-					m_EditorScene->DestroyEntity(m_SceneHierarchy.GetSelectedEntity());
+				m_EditorScene->DestroyEntity(m_SceneHierarchy.GetSelectedEntity());
 
 				m_SceneHierarchy.SetSelectedEntity({});
 			}
@@ -529,7 +567,7 @@ namespace Nebula {
 	}
 
 	bool EditorLayer::OnMousePressed(MouseButtonPressedEvent& e) {
-		if (e.GetMouseButton() == Mouse::Button0 && !ImGuizmo::IsOver() && m_GameViewHovered && m_SceneState == SceneState::Edit)
+		if (e.GetMouseButton() == Mouse::Button0 && !ImGuizmo::IsOver() && m_GameViewHovered && m_SceneState != SceneState::Play)
 			m_SceneHierarchy.SetSelectedEntity(m_HoveredEntity);
 
 		return false;
@@ -597,6 +635,9 @@ namespace Nebula {
 		if (!m_EditorScene)
 			return;
 
+		if (m_SceneState == SceneState::Simulate)
+			OnSceneStop();
+
 		m_ActiveScene = Scene::Copy(m_EditorScene);
 		m_ActiveScene->OnRuntimeStart();
 
@@ -607,9 +648,20 @@ namespace Nebula {
 	}
 
 	void EditorLayer::OnSceneStop() {
-		m_ActiveScene->OnRuntimeStop();
+		NB_ASSERT(m_SceneState == SceneState::Play || m_SceneState == SceneState::Simulate);
+
+		if (m_SceneState == SceneState::Play)
+			m_ActiveScene->OnRuntimeStop();
+		else if (m_SceneState == SceneState::Simulate)
+			m_ActiveScene->OnSimulationStop();
+
+		auto& entities = m_ActiveScene->GetAllEntitiesWith<StringRendererComponent>();
+		for (auto& ent : entities) {
+			auto& src = Entity{ ent, m_ActiveScene.get() }.GetComponent<StringRendererComponent>();
+			src.InitiateFont();
+		}
+
 		m_ActiveScene = m_EditorScene;
-		m_SceneState = SceneState::Edit;
 
 		auto& entities = m_ActiveScene->GetAllEntitiesWith<StringRendererComponent>();
 		for (auto& ent : entities) {
@@ -618,6 +670,23 @@ namespace Nebula {
 		}
 
 		m_SceneHierarchy.SetContext(m_EditorScene);
+		m_SceneState = SceneState::Edit;
+	}
+
+	void EditorLayer::OnSceneSimulate() {
+		if (!m_EditorScene)
+			return;
+
+		if (m_SceneState == SceneState::Play)
+			OnSceneStop();
+
+		m_ActiveScene = Scene::Copy(m_EditorScene);
+		m_ActiveScene->OnSimulationStart();
+
+		m_ActiveScene->OnViewportResize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
+
+		m_SceneHierarchy.SetContext(m_ActiveScene);
+		m_SceneState = SceneState::Simulate;
 	}
 
 	void EditorLayer::DuplicateEntity() {

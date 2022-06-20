@@ -25,6 +25,9 @@ namespace Nebula {
 		void SetVSync(bool enabled) override;
 		bool IsVSync() const override;
 
+		void LockAspectRatio(uint8_t width, uint8_t height) override;
+		void UnlockAspectRatio() override;
+
 		inline virtual void* GetNativeWindow() const override { return m_Window; }
 	private:
 		virtual void Init(const WindowProps& props);

@@ -258,13 +258,15 @@ namespace Nebula {
 			out << YAML::EndMap; // Rigidbody2DComponent
 		}
 
-		if (entity.HasComponent<Box2DComponent>()) {
+		if (entity.HasComponent<BoxCollider2DComponent>()) {
 			out << YAML::Key << "Box2DComponent";
 			out << YAML::BeginMap; // BoxCollider2DComponent
 
-			auto& bc2dComponent = entity.GetComponent<Box2DComponent>();
+			auto& bc2dComponent = entity.GetComponent<BoxCollider2DComponent>();
 			out << YAML::Key << "Offset" << YAML::Value << bc2dComponent.Offset;
 			out << YAML::Key << "Size" << YAML::Value << bc2dComponent.Size;
+			out << YAML::Key << "Category" << YAML::Value << (int)bc2dComponent.Category;
+			out << YAML::Key << "Mask" << YAML::Value << bc2dComponent.Mask;
 
 			out << YAML::EndMap; // BoxCollider2DComponent
 		}
@@ -276,6 +278,8 @@ namespace Nebula {
 			auto& ccComponent = entity.GetComponent<CircleColliderComponent>();
 			out << YAML::Key << "Offset" << YAML::Value << ccComponent.Offset;
 			out << YAML::Key << "Radius" << YAML::Value << ccComponent.Radius;
+			out << YAML::Key << "Category" << YAML::Value << (int)ccComponent.Category;
+			out << YAML::Key << "Mask" << YAML::Value << ccComponent.Mask;
 
 			out << YAML::EndMap; // CircleColliderComponent
 		}
@@ -429,9 +433,11 @@ namespace Nebula {
 				auto box2DComponent = entity["Box2DComponent"];
 				if (box2DComponent)
 				{
-					auto& bc2d = deserializedEntity.AddComponent<Box2DComponent>();
+					auto& bc2d = deserializedEntity.AddComponent<BoxCollider2DComponent>();
 					bc2d.Offset = box2DComponent["Offset"].as<vec2>();
 					bc2d.Size = box2DComponent["Size"].as<vec2>();
+					bc2d.Category = (Rigidbody2DComponent::Filters)box2DComponent["Category"].as<int>();
+					bc2d.Mask = box2DComponent["Mask"].as<int>();
 				}
 
 				auto circleColliderComponent = entity["CircleColliderComponent"];
@@ -439,6 +445,8 @@ namespace Nebula {
 					auto& cc = deserializedEntity.AddComponent<CircleColliderComponent>();
 					cc.Offset = circleColliderComponent["Offset"].as<vec2>();
 					cc.Radius = circleColliderComponent["Radius"].as<float>();
+					cc.Category = (Rigidbody2DComponent::Filters)circleColliderComponent["Category"].as<int>();
+					cc.Mask = circleColliderComponent["Mask"].as<int>();
 				}
 			}
 

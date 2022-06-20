@@ -35,6 +35,7 @@ namespace Nebula {
 	class SubTexture2D {
 	public:
 		SubTexture2D(const Ref<Texture2D>& texture, vec2& min, vec2& max);
+		~SubTexture2D();
 
 		const Ref<Texture2D> GetTexture() const { return m_Texture; }
 		const vec2* GetTextureCoords() const  { return m_TexCoords; }
@@ -47,6 +48,6 @@ namespace Nebula {
 	private:
 		Ref<Texture2D> m_Texture;
 
-		vec2 m_TexCoords[4];
+		vec2* m_TexCoords;
 	};
 }

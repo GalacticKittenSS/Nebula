@@ -1,14 +1,14 @@
 #pragma once
 
 #include "entt.hpp"
+
 #include "Nebula/Renderer/Camera.h"
-#include "Nebula/Utils/Arrays.h"
+#include "Nebula/Core/UUID.h"
 
 class b2World;
 
 namespace Nebula {
 	class Entity;
-	class UUID;
 	
 	class Scene {
 	public:
@@ -21,30 +21,42 @@ namespace Nebula {
 		Entity CreateEntity(UUID uuid, const std::string& name);
 		void DestroyEntity(Entity entity);
 
-		void DuplicateEntity(Entity entity);
+		Entity DuplicateEntity(Entity entity);
 		
 		void OnRuntimeStart();
 		void OnRuntimeStop();
 
-		void UpdateRuntime();
-		void RenderEditor(EditorCamera& camera);
-		void RenderEditorOverlay(EditorCamera& camera);
-		
+		void OnSimulationStart();
+		void OnSimulationStop();
+
+		void UpdateSimulation();
 		void UpdateEditor();
+		void UpdateRuntime();
+
 		void RenderRuntime();
 		void RenderRuntimeOverlay();
+
+		void Render(EditorCamera& camera);
+		void RenderOverlay(EditorCamera& camera);
 		
 		void OnViewportResize(uint32_t width, uint32_t height);
 
 		Entity GetPrimaryCamera();
+		Entity GetEntityWithTag(std::string tag);
 
 		template <typename... Components>
 		auto GetAllEntitiesWith() {
 			return m_Registry.view<Components...>();
 		}
-
+		
 		Array<UUID> m_SceneOrder;
 	private:
+		void CreateBox2DBody(Entity entity);
+
+		void InitPhysics();
+		void UpdatePhysics();
+		void DestroyPhysics();
+
 		template<typename T>
 		void OnComponentAdded(Entity entity, T& component);
 	private:

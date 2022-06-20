@@ -24,7 +24,7 @@ namespace Nebula {
 		bool IsFocused() { return m_HierarchyFocused; }
 		bool IsHovered() { return m_HierarchyHovered; }
 	private:
-		void DrawEntityNode(Entity entity, uint32_t index);
+		void DrawEntityNode(Entity entity, uint32_t index, bool& entityDeleted);
 		void DrawArray(Array<UUID>& entities, bool showIfParent = false);
 		void DrawComponents(Entity entity);
 	private:
