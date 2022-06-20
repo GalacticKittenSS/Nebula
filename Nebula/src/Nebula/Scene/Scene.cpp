@@ -203,8 +203,8 @@ namespace Nebula {
 		bodyDef.userData = data;
 
 		b2Body* body;
-		if (entity.HasComponent<Box2DComponent>()) {
-			auto& bc2d = entity.GetComponent<Box2DComponent>();
+		if (entity.HasComponent<BoxCollider2DComponent>()) {
+			auto& bc2d = entity.GetComponent<BoxCollider2DComponent>();
 
 			bodyDef.position.x += bc2d.Offset.x;
 			bodyDef.position.y += bc2d.Offset.y;
@@ -276,8 +276,8 @@ namespace Nebula {
 			b2Body* body = (b2Body*)rb2d.RuntimeBody;
 			auto position = body->GetPosition();
 
-			if (entity.HasComponent<Box2DComponent>()) {
-				auto& bc2d = entity.GetComponent<Box2DComponent>();
+			if (entity.HasComponent<BoxCollider2DComponent>()) {
+				auto& bc2d = entity.GetComponent<BoxCollider2DComponent>();
 
 				position.x -= bc2d.Offset.x;
 				position.y -= bc2d.Offset.y;
@@ -479,7 +479,7 @@ namespace Nebula {
 	void Scene::OnComponentAdded<Rigidbody2DComponent>(Entity entity, Rigidbody2DComponent& component) { }
 
 	template<>
-	void Scene::OnComponentAdded<Box2DComponent>(Entity entity, Box2DComponent& component) { }
+	void Scene::OnComponentAdded<BoxCollider2DComponent>(Entity entity, BoxCollider2DComponent& component) { }
 
 	template<>
 	void Scene::OnComponentAdded<CircleColliderComponent>(Entity entity, CircleColliderComponent& component) { }

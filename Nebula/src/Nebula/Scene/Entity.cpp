@@ -72,9 +72,12 @@ namespace Nebula {
 		fixture->SetFilterData(filter);
 	}
 
-	void Box2DComponent::UpdateFilters(uint16_t category, uint16_t mask) {
-		Category = category;
+	void BoxCollider2DComponent::UpdateFilters(uint16_t category, uint16_t mask) {
+		Category = (Rigidbody2DComponent::Filters)category;
 		Mask = mask;
+
+		if (!(b2Fixture*)RuntimeFixture)
+			return;
 
 		UpdateFixtureFilters((b2Fixture*)RuntimeFixture, category, mask);
 	}
@@ -82,6 +85,9 @@ namespace Nebula {
 	void CircleColliderComponent::UpdateFilters(uint16_t category, uint16_t mask) {
 		Category = category;
 		Mask = mask;
+
+		if (!(b2Fixture*)RuntimeFixture)
+			return;
 
 		UpdateFixtureFilters((b2Fixture*)RuntimeFixture, category, mask);
 	}

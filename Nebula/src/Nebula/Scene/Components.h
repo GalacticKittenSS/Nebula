@@ -208,17 +208,17 @@ namespace Nebula {
 		void ApplyLinearImpulseToCenter(vec2 impulse);
 	};
 
-	struct Box2DComponent {
+	struct BoxCollider2DComponent {
 		vec2 Size = { 0.5f, 0.5f };
 		vec2 Offset = { 0.0f, 0.0f };
 
-		uint16_t Category = Rigidbody2DComponent::Filters::A;
+		Rigidbody2DComponent::Filters Category = Rigidbody2DComponent::Filters::A;
 		uint16_t Mask = 0xFFFF;
 
 		void* RuntimeFixture = nullptr;
 
-		Box2DComponent() = default;
-		Box2DComponent(const Box2DComponent&) = default;
+		BoxCollider2DComponent() = default;
+		BoxCollider2DComponent(const BoxCollider2DComponent&) = default;
 
 		void UpdateFilters(uint16_t Category, uint16_t Mask);
 	};
@@ -247,5 +247,5 @@ namespace Nebula {
 		ComponentGroup < ParentChildComponent, TransformComponent,
 		SpriteRendererComponent, CircleRendererComponent, StringRendererComponent,
 		CameraComponent, NativeScriptComponent,
-		Rigidbody2DComponent, Box2DComponent, CircleColliderComponent>; 
+		Rigidbody2DComponent, BoxCollider2DComponent, CircleColliderComponent>;
 }

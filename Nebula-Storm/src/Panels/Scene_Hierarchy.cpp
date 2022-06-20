@@ -162,13 +162,8 @@ namespace Nebula {
 				if (ImGui::MenuItem("Sprite")) {
 					auto& sprite = m_Context->CreateEntity("Sprite");
 					sprite.AddComponent<SpriteRendererComponent>();
-				}
-
-				if (ImGui::MenuItem("Cube")) {
-					auto& sprite = m_Context->CreateEntity("Cube");
-					sprite.AddComponent<SpriteRendererComponent>();
 					sprite.AddComponent<Rigidbody2DComponent>();
-					sprite.AddComponent<Box2DComponent>();
+					sprite.AddComponent<BoxCollider2DComponent>();
 				}
 
 				if (ImGui::MenuItem("Circle")) {
@@ -669,6 +664,18 @@ namespace Nebula {
 		}
 	}
 
+	int RigidbodyFilterToIndex(int16_t filter) {
+		switch (filter)
+		{
+			case 1: return 0;     case 2: return 1;     case 4: return 2;      case 8: return 3;
+			case 16: return 4;    case 32: return 5;    case 64: return 6;     case 128: return 7;
+			case 256: return 8;   case 512: return 9;   case 1024: return 10;  case 2048: return 11;
+			case 4096: return 12; case 8192: return 13; case 16384: return 14; case 32768: return 15;
+		}
+
+		return 0;
+	}
+
 	void SceneHierarchyPanel::DrawComponents(Entity entity) {
 		if (entity.HasComponent<TagComponent>()) {
 			auto& tag = entity.GetComponent<TagComponent>().Tag;
@@ -724,9 +731,9 @@ namespace Nebula {
 				}
 			}
 
-			if (!m_SelectionContext.HasComponent<Box2DComponent>()) {
+			if (!m_SelectionContext.HasComponent<BoxCollider2DComponent>()) {
 				if (ImGui::MenuItem("Box Collider 2D")) {
-					m_SelectionContext.AddComponent<Box2DComponent>();
+					m_SelectionContext.AddComponent<BoxCollider2DComponent>();
 					ImGui::CloseCurrentPopup();
 				}
 			}
@@ -967,14 +974,44 @@ namespace Nebula {
 			DrawVec1Control("Restitution Threshold", component.RestitutionThreshold, 0.01f, 0.0f);
 		}, true);
 
-		DrawComponent<Box2DComponent>("Box Collider 2D", entity, [](auto& component, Entity entity) {
+		DrawComponent<BoxCollider2DComponent>("Box Collider 2D", entity, [](auto& component, Entity entity) {
 			DrawVec2Control("Offset", component.Offset);
 			DrawVec2Control("Size",   component.Size);
+
+			static const char* filterTypeStrings[] = {
+				"A", "B", "C", "D",
+				"E", "F", "G", "H",
+				"I", "J", "K", "L",
+				"M", "N", "O", "P"
+			};
+			
+			int categoryIndex = RigidbodyFilterToIndex((int)component.Category);
+			const char* CurrentCategoryString = filterTypeStrings[categoryIndex];
+
+			if (DrawCombo("Category", filterTypeStrings, 16, CurrentCategoryString, categoryIndex)) {
+				int newCategory = pow(2, categoryIndex);
+				component.UpdateFilters(newCategory, newCategory);
+			}
 		}, true);
 
 		DrawComponent<CircleColliderComponent>("Circle Collider", entity, [](auto& component, Entity entity) {
 			DrawVec2Control("Offset", component.Offset);
 			DrawVec1Control("Radius", component.Radius, 0.01f);
+
+			static const char* filterTypeStrings[] = {
+				"A", "B", "C", "D",
+				"E", "F", "G", "H",
+				"I", "J", "K", "L",
+				"M", "N", "O", "P"
+			};
+
+			int categoryIndex = RigidbodyFilterToIndex((int)component.Category);
+			const char* CurrentCategoryString = filterTypeStrings[categoryIndex];
+
+			if (DrawCombo("Layer", filterTypeStrings, 16, CurrentCategoryString, categoryIndex)) {
+				int newCategory = pow(2, categoryIndex);
+				component.UpdateFilters(newCategory, newCategory);
+			}
 		}, true);
 	}
 }

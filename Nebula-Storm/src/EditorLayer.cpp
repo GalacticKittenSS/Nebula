@@ -360,9 +360,9 @@ namespace Nebula {
 				Renderer2D::DrawCircle(transform, vec4(0.0f, 1.0f, 0.0f, 1.0f), 0.05f);
 			}
 
-			auto BoxView = m_ActiveScene->GetAllEntitiesWith<TransformComponent, Box2DComponent>();
+			auto BoxView = m_ActiveScene->GetAllEntitiesWith<TransformComponent, BoxCollider2DComponent>();
 			for (auto entity : BoxView) {
-				auto [tc, bc2d] = BoxView.get<TransformComponent, Box2DComponent>(entity);
+				auto [tc, bc2d] = BoxView.get<TransformComponent, BoxCollider2DComponent>(entity);
 			
 				vec3 translation = tc.GlobalTranslation + vec3(bc2d.Offset, 0.001f);
 				vec3 Scale = tc.GlobalScale * vec3(bc2d.Size) * 2.0f;
