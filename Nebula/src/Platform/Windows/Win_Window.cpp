@@ -77,7 +77,7 @@ namespace Nebula {
 			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
 			switch (action) {
 				case GLFW_PRESS: {
-					KeyPressedEvent event(static_cast<KeyCode>(key), 0);
+					KeyPressedEvent event(static_cast<KeyCode>(key));
 					data.EventCallback(event);
 					break;
 				}
@@ -87,7 +87,7 @@ namespace Nebula {
 					break;
 				}
 				case GLFW_REPEAT: {
-					KeyPressedEvent event(static_cast<KeyCode>(key), 1);
+					KeyPressedEvent event(static_cast<KeyCode>(key), true);
 					data.EventCallback(event);
 					break;
 				}

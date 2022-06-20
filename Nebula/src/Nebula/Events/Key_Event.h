@@ -17,19 +17,19 @@ namespace Nebula {
 
 	class NB_API KeyPressedEvent : public KeyEvent {
 	public:
-		KeyPressedEvent(KeyCode keycode, int32_t repeatCount): KeyEvent(keycode), m_RepeatCount(repeatCount) { }
+		KeyPressedEvent(KeyCode keycode, bool isRepeat = false): KeyEvent(keycode), m_IsRepeat(isRepeat) { }
 
-		inline int GetRepeatCount() const { return m_RepeatCount; }
+		inline bool IsRepeat() const { return m_IsRepeat; }
 
 		std::string ToString() const override {
 			std::stringstream ss;
-			ss << "KeyPressedEvent: " << m_KeyCode;
+			ss << "KeyPressedEvent: " << m_KeyCode << " (Repeat= " << m_IsRepeat << ")";
 			return ss.str();
 		}
 
 		EVENT_TYPE(KeyPressed)
 	private:
-		int32_t m_RepeatCount;
+		bool m_IsRepeat;
 	};
 
 	class NB_API KeyReleasedEvent : public KeyEvent {
