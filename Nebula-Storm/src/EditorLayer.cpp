@@ -115,6 +115,10 @@ namespace Nebula {
 		FontManager::Clean();
 	}
 
+	void EditorLayer::Detach() {
+		FontManager::Clean();
+	}
+
 	void EditorLayer::Resize() {
 		FrameBufferSpecification spec = frameBuffer->GetFrameBufferSpecifications();
 		if (m_GameViewSize.x > 0.0f && m_GameViewSize.y > 0.0f
@@ -658,6 +662,12 @@ namespace Nebula {
 		}
 
 		m_ActiveScene = m_EditorScene;
+
+		auto& entities = m_ActiveScene->GetAllEntitiesWith<StringRendererComponent>();
+		for (auto& ent : entities) {
+			auto& src = Entity{ ent, m_ActiveScene.get() }.GetComponent<StringRendererComponent>();
+			src.InitiateFont();
+		}
 
 		m_SceneHierarchy.SetContext(m_EditorScene);
 		m_SceneState = SceneState::Edit;

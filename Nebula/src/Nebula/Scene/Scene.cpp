@@ -427,8 +427,8 @@ namespace Nebula {
 		for (auto entity : StringGroup) {
 			Renderer2D::Draw(NB_STRING, Entity{ entity, this });
 		}
-		
-		Renderer2D::EndScene();
+
+    Renderer2D::EndScene();
 	}
 
 	void Scene::OnViewportResize(uint32_t width, uint32_t height) {
