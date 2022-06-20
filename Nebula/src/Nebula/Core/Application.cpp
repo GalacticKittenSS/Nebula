@@ -87,6 +87,7 @@ namespace Nebula {
 		Dispatcher dispatcher(e);
 		dispatcher.Dispatch<WindowCloseEvent>(BIND_EVENT(Application::OnWindowClose));
 		dispatcher.Dispatch<WindowResizeEvent>(BIND_EVENT(Application::OnWindowResize));
+		dispatcher.Dispatch<KeyPressedEvent>(BIND_EVENT(Application::OnKeyPressed));
 
 		for (auto it = m_LayerStack.rbegin(); it != m_LayerStack.rend(); ++it) {
 			if (e.Handled)
@@ -111,6 +112,15 @@ namespace Nebula {
 
 		m_Minimized = false;
 		Renderer::OnWindowResize(e.GetWidth(), e.GetHeight());
+
+		return false;
+	}
+
+	bool Application::OnKeyPressed(KeyPressedEvent& e) {
+		if (e.GetKeyCode() == NB_F11) {
+			m_Window->SetFullscreen(!m_Window->IsFullscreen());
+			return true;
+		}
 
 		return false;
 	}

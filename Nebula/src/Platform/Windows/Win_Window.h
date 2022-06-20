@@ -28,22 +28,31 @@ namespace Nebula {
 		void LockAspectRatio(uint8_t width, uint8_t height) override;
 		void UnlockAspectRatio() override;
 
+		void SetFullscreen(bool fullscreen) override;
+		bool IsFullscreen() override { return m_Data.Fullscreen; }
+
 		inline virtual void* GetNativeWindow() const override { return m_Window; }
 	private:
 		virtual void Init(const WindowProps& props);
 		virtual void ShutDown();
+		GLFWmonitor* FindBestMonitor();
 	private:
 		GLFWwindow* m_Window;
 		Scope<GraphicsContext> m_Context;
 
 		struct WindowData {
 			std::string Title;
+			
 			uint32_t Width, Height;
+			uint32_t PosX, PosY;
+
 			bool Vsync;
+			bool Fullscreen = false;
 
 			EventCallbackFn EventCallback;
 		};
 
 		WindowData m_Data;
+		WindowData m_PreviousData;
 	};
 }

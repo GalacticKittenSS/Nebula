@@ -7,6 +7,7 @@
 
 #include "Nebula/Events/Event.h"
 #include "Nebula/Events/Window_Event.h"
+#include "Nebula/Events/Key_Event.h"
 
 #include "Time.h"
 
@@ -49,6 +50,7 @@ namespace Nebula {
 		void run();
 		bool OnWindowClose(WindowCloseEvent& e);
 		bool OnWindowResize(WindowResizeEvent& e);
+		bool OnKeyPressed(KeyPressedEvent& e);
 	private:
 		ApplicationCommandLineArgs m_CommandLineArgs;
 		Scope<Window> m_Window;

@@ -2,6 +2,7 @@
 #include "Win_Window.h"
 
 #include "Nebula/Core/Input.h"
+#include "Nebula/Maths/MinMax.h"
 
 #include "Nebula/events/Window_Event.h"
 #include "Nebula/events/Mouse_Event.h"
@@ -170,5 +171,48 @@ namespace Nebula {
 
 	void Win_Window::UnlockAspectRatio() {
 		glfwSetWindowAspectRatio(m_Window, GLFW_DONT_CARE, GLFW_DONT_CARE);
+	}
+
+	GLFWmonitor* Win_Window::FindBestMonitor() {
+		int monitorNumber, bestoverlap = 0;
+		int mx, my;
+
+		GLFWmonitor* bestmonitor = glfwGetPrimaryMonitor();
+		GLFWmonitor** monitors = glfwGetMonitors(&monitorNumber);
+
+		glfwGetWindowPos(m_Window, (int*)&m_Data.PosX, (int*)&m_Data.PosY);
+		glfwGetWindowSize(m_Window, (int*)&m_Data.Width, (int*)&m_Data.Height);
+		
+		for (int i = 0; i < monitorNumber; i++) {
+			const GLFWvidmode* mode = glfwGetVideoMode(monitors[i]);
+			glfwGetMonitorPos(monitors[i], &mx, &my);
+			
+			int overlap =
+				Max(0, Min(int(m_Data.PosX + m_Data.Width ), mx + mode->width ) - Max(int(m_Data.PosX), mx)) *
+				Max(0, Min(int(m_Data.PosY + m_Data.Height), my + mode->height) - Max(int(m_Data.PosY), my));
+
+			if (bestoverlap < overlap) {
+				bestoverlap = overlap;
+				bestmonitor = monitors[i];
+			}
+		}
+
+		return bestmonitor;
+	}
+
+	void Win_Window::SetFullscreen(bool fullscreen) {
+		if (fullscreen && !m_Data.Fullscreen) {
+			glfwGetWindowPos(m_Window, (int*)&m_PreviousData.PosX, (int*)&m_PreviousData.PosY);
+			glfwGetWindowSize(m_Window, (int*)&m_PreviousData.Width, (int*)&m_PreviousData.Height);
+
+			GLFWmonitor* monitor = FindBestMonitor();
+			const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+			glfwSetWindowMonitor(m_Window, monitor, 0, 0, mode->width, mode->height, GLFW_DONT_CARE);
+		}
+		else if (m_Data.Fullscreen) {
+			glfwSetWindowMonitor(m_Window, nullptr, m_PreviousData.PosX, m_PreviousData.PosY, m_PreviousData.Width, m_PreviousData.Height, GLFW_DONT_CARE);
+		}
+
+		m_Data.Fullscreen = fullscreen;
 	}
 }

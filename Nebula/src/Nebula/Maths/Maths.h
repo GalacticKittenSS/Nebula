@@ -34,6 +34,7 @@
 #include "Exponential.h"
 #include "Geometric.h"
 #include "Trigonometric.h"
+#include "MinMax.h"
 
 #include "value_ptr.h"
 #include "ToString.h"
