@@ -749,6 +749,28 @@ namespace Nebula {
 		}
 
 		ImGui::PopItemWidth();
+		
+		if (entity.HasComponent<IDComponent>()) {
+			ImGui::Text("Is Template: ");
+			ImGui::SameLine();
+
+			if (ImGui::Checkbox("##Template", &entity.GetComponent<IDComponent>().isTemplate)) {
+				std::function func = [&](Entity& ent) { };
+				func = [&](Entity& ent) {
+					for (auto childID : ent.GetParentChild().ChildrenIDs) {
+						Entity child = { childID, m_Context.get() };
+						child.GetComponent<IDComponent>().isTemplate = ent.GetComponent<IDComponent>().isTemplate;
+						func(child);
+					}
+				};
+				func(entity);
+			}
+
+			ImGui::SameLine();
+			ImGui::SetCursorPosX(ImGui::GetWindowContentRegionMax().x - 120.0f);
+			ImGui::Text("UUID: %i", entity.GetComponent<IDComponent>().ID);
+		}
+
 		if (m_ShowGlobal) {
 			DrawComponent<TransformComponent>("Transform", entity, [](auto& component, Entity entity) {
 				vec3 rotation = degrees(component.GlobalRotation);

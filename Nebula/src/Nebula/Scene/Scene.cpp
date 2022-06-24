@@ -120,24 +120,24 @@ namespace Nebula {
 
 		CopyComponent(AllComponents{}, newEnt, entity);
 
-		ParentChildComponent& pcc = newEnt.GetParentChild();
-		pcc.ChildrenIDs.clear();
-		pcc.Parent = NULL;
+		newEnt.GetComponent<IDComponent>().isTemplate = false;
 
+		ParentChildComponent& pcc = newEnt.GetParentChild();
+		Entity{ entity.GetParentChild().Parent, this }.GetParentChild().AddChild(newEnt.GetUUID());
+		pcc.ChildrenIDs.clear();
+		
 		for (UUID& childID : entity.GetParentChild().ChildrenIDs) {
 			Entity child = { childID, this };
-
 			Entity newChild = DuplicateEntity(child);
-
+			
+			entity.GetParentChild().RemoveChild(newChild.GetUUID());
 			newEnt.GetParentChild().AddChild(newChild.GetUUID());
 			newChild.GetParentChild().Parent = newEnt.GetUUID();
 		}
 
-		if (entity.HasComponent<Rigidbody2DComponent>() && entity.GetComponent<Rigidbody2DComponent>().RuntimeBody) {
-			entity.GetComponent<Rigidbody2DComponent>().RuntimeBody = nullptr;
-			CreateBox2DBody(entity);
-		}
-
+		if (entity.HasComponent<Rigidbody2DComponent>() && entity.GetComponent<Rigidbody2DComponent>().hasRuntimeBody)
+			CreateBox2DBody(newEnt);
+		
 		return newEnt;
 	}
 
@@ -190,6 +190,10 @@ namespace Nebula {
 	}
 
 	void Scene::CreateBox2DBody(Entity entity) {
+		entity.GetComponent<Rigidbody2DComponent>().hasRuntimeBody = true;
+		if (entity.GetComponent<IDComponent>().isTemplate)
+			return;
+
 		auto& transform = entity.GetComponent<TransformComponent>();
 		auto& rb2d = entity.GetComponent<Rigidbody2DComponent>();
 
@@ -270,6 +274,9 @@ namespace Nebula {
 		auto view = m_Registry.view<Rigidbody2DComponent>();
 		for (auto e : view) {
 			Entity entity = { e, this };
+			if (entity.GetComponent<IDComponent>().isTemplate)
+				continue;
+
 			auto& transform = entity.GetComponent<TransformComponent>();
 			auto& rb2d = entity.GetComponent<Rigidbody2DComponent>();
 

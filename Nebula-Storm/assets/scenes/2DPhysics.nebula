@@ -1,6 +1,7 @@
 Scene: Untitled
 Entities:
   - Entity: 2037538169663784225
+    Template: false
     TagComponent:
       Tag: Enviroment
     ParentChildComponent:
@@ -12,6 +13,7 @@ Entities:
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
   - Entity: 9286249198329823575
+    Template: false
     TagComponent:
       Tag: In World - UI
     ParentChildComponent:
@@ -23,6 +25,7 @@ Entities:
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
   - Entity: 14961826949240870393
+    Template: false
     TagComponent:
       Tag: Camera
     ParentChildComponent:
@@ -45,6 +48,7 @@ Entities:
       Primary: true
       FixedAspectRatio: false
   - Entity: 5685040638041467009
+    Template: false
     TagComponent:
       Tag: String
     ParentChildComponent:
@@ -63,6 +67,7 @@ Entities:
       Italic: false
       Resolution: 198
   - Entity: 11531482172220784666
+    Template: false
     TagComponent:
       Tag: Sprite
     ParentChildComponent:
@@ -87,12 +92,13 @@ Entities:
       Friction: 0.5
       Restitution: 0
       RestitutionThreshold: 0.5
-    Box2DComponent:
+    BoxCollider2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
       Category: 1
       Mask: 65535
   - Entity: 1734186555264958028
+    Template: false
     TagComponent:
       Tag: Sprite
     ParentChildComponent:
@@ -117,12 +123,13 @@ Entities:
       Friction: 0.5
       Restitution: 0
       RestitutionThreshold: 0.5
-    Box2DComponent:
+    BoxCollider2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
       Category: 1
       Mask: 65535
   - Entity: 16434448802742922228
+    Template: false
     TagComponent:
       Tag: Circle
     ParentChildComponent:
@@ -150,6 +157,7 @@ Entities:
       Category: 1
       Mask: 65535
   - Entity: 11691747497498017467
+    Template: false
     TagComponent:
       Tag: Sprite
     ParentChildComponent:
@@ -174,12 +182,13 @@ Entities:
       Friction: 0.5
       Restitution: 0
       RestitutionThreshold: 0.5
-    Box2DComponent:
+    BoxCollider2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
       Category: 1
       Mask: 65535
   - Entity: 2555061558569917065
+    Template: false
     TagComponent:
       Tag: Sprite
     ParentChildComponent:
@@ -204,12 +213,13 @@ Entities:
       Friction: 1
       Restitution: 0.0900000036
       RestitutionThreshold: 1.14999998
-    Box2DComponent:
+    BoxCollider2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
       Category: 1
       Mask: 65535
   - Entity: 8525815086722917192
+    Template: false
     TagComponent:
       Tag: Dynamic
     ParentChildComponent:
@@ -234,12 +244,13 @@ Entities:
       Friction: 0.5
       Restitution: 0.150000006
       RestitutionThreshold: 0.5
-    Box2DComponent:
+    BoxCollider2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
       Category: 1
       Mask: 65535
   - Entity: 6961276783589167595
+    Template: false
     TagComponent:
       Tag: Static
     ParentChildComponent:
@@ -264,12 +275,13 @@ Entities:
       Friction: 0
       Restitution: 0.810000002
       RestitutionThreshold: 0.720000029
-    Box2DComponent:
+    BoxCollider2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
       Category: 1
       Mask: 65535
   - Entity: 4238392629824766104
+    Template: false
     TagComponent:
       Tag: Sprite
     ParentChildComponent:
@@ -294,12 +306,13 @@ Entities:
       Friction: 0.5
       Restitution: 0.219999999
       RestitutionThreshold: 0.800000012
-    Box2DComponent:
+    BoxCollider2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
       Category: 1
       Mask: 1
   - Entity: 17924338926232536196
+    Template: false
     TagComponent:
       Tag: Sprite
     ParentChildComponent:
@@ -324,12 +337,13 @@ Entities:
       Friction: 1
       Restitution: 0.0900000036
       RestitutionThreshold: 0.860000014
-    Box2DComponent:
+    BoxCollider2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
       Category: 1
       Mask: 65535
   - Entity: 17945224244753102173
+    Template: false
     TagComponent:
       Tag: Sprite
     ParentChildComponent:
@@ -354,12 +368,13 @@ Entities:
       Friction: 0.5
       Restitution: 0
       RestitutionThreshold: 0.5
-    Box2DComponent:
+    BoxCollider2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
       Category: 1
       Mask: 65535
   - Entity: 12392182606285594567
+    Template: false
     TagComponent:
       Tag: Sprite
     ParentChildComponent:
@@ -384,7 +399,7 @@ Entities:
       Friction: 0.5
       Restitution: 0
       RestitutionThreshold: 0.5
-    Box2DComponent:
+    BoxCollider2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
       Category: 1

@@ -1,6 +1,7 @@
 Scene: Untitled
 Entities:
   - Entity: 14839156043936488729
+    Template: false
     TagComponent:
       Tag: Camera
     ParentChildComponent:
@@ -23,6 +24,7 @@ Entities:
       Primary: true
       FixedAspectRatio: false
   - Entity: 16851421158753440600
+    Template: false
     TagComponent:
       Tag: Cube
     ParentChildComponent:
@@ -34,6 +36,7 @@ Entities:
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
   - Entity: 12439973311556186660
+    Template: false
     TagComponent:
       Tag: Top
     ParentChildComponent:
@@ -52,6 +55,7 @@ Entities:
       CellSize: [128, 128]
       CellNum: [1, 1]
   - Entity: 2605563009129528535
+    Template: false
     TagComponent:
       Tag: Left
     ParentChildComponent:
@@ -70,6 +74,7 @@ Entities:
       CellSize: [128, 128]
       CellNum: [1, 1]
   - Entity: 3569121158399529359
+    Template: false
     TagComponent:
       Tag: Right
     ParentChildComponent:

@@ -133,13 +133,14 @@ namespace Nebula {
 		out << YAML::BeginMap;
 		out << YAML::Key << "Entity";
 		out << YAML::Value << entity.GetUUID();
+		out << YAML::Key << "Template" << YAML::Value << entity.GetComponent<IDComponent>().isTemplate;
 
 		if (entity.HasComponent<TagComponent>()) {
 			out << YAML::Key << "TagComponent";
 			out << YAML::BeginMap;
 
-			auto& tag = entity.GetComponent<TagComponent>().Tag;
-			out << YAML::Key << "Tag" << YAML::Value << tag;
+			auto& tag = entity.GetComponent<TagComponent>();
+			out << YAML::Key << "Tag" << YAML::Value << tag.Tag;
 
 			out << YAML::EndMap;
 		}
@@ -259,7 +260,7 @@ namespace Nebula {
 		}
 
 		if (entity.HasComponent<BoxCollider2DComponent>()) {
-			out << YAML::Key << "Box2DComponent";
+			out << YAML::Key << "BoxCollider2DComponent";
 			out << YAML::BeginMap; // BoxCollider2DComponent
 
 			auto& bc2dComponent = entity.GetComponent<BoxCollider2DComponent>();
@@ -340,6 +341,7 @@ namespace Nebula {
 				NB_TRACE("Deserialized Entity with ID = {0}, name = {1}", uuid, name);
 
 				Entity deserializedEntity = m_Scene->CreateEntity(uuid, name);
+				deserializedEntity.GetComponent<IDComponent>().isTemplate = entity["Template"].as<bool>();
 
 				auto transformComponent = entity["TransformComponent"];
 				if (transformComponent) {
@@ -430,7 +432,7 @@ namespace Nebula {
 					rb2d.RestitutionThreshold = rigidbody2DComponent["RestitutionThreshold"].as<float>();
 				}
 
-				auto box2DComponent = entity["Box2DComponent"];
+				auto box2DComponent = entity["BoxCollider2DComponent"];
 				if (box2DComponent)
 				{
 					auto& bc2d = deserializedEntity.AddComponent<BoxCollider2DComponent>();
