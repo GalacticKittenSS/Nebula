@@ -421,7 +421,8 @@ namespace Nebula {
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.8f, 0.2f, 0.1f, 1.0f });
 		ImGui::PushFont(boldFont);
 
-		if (ImGui::Button("X", buttonSize))
+		bool xb = ImGui::Button("X", buttonSize);
+		if (xb)
 			values.x = resetvalue;
 		
 		ImGui::PopFont();
@@ -438,7 +439,8 @@ namespace Nebula {
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
 		ImGui::PushFont(boldFont);
 
-		if (ImGui::Button("Y", buttonSize))
+		bool yb = ImGui::Button("Y", buttonSize);
+		if (yb)
 			values.y = resetvalue;
 		
 		ImGui::PopFont();
@@ -455,7 +457,8 @@ namespace Nebula {
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.1f, 0.25f, 0.8f, 1.0f });
 		ImGui::PushFont(boldFont);
 
-		if (ImGui::Button("Z", buttonSize))
+		bool zb = ImGui::Button("Z", buttonSize);
+		if (zb)
 			values.z = resetvalue;
 		
 		ImGui::PopFont();
@@ -471,7 +474,7 @@ namespace Nebula {
 		ImGui::Columns(1);
 
 		ImGui::PopID();
-		return x || y || z;
+		return x || xb || y || yb || z || zb;
 	}
 
 	static void DrawVec2Control(const std::string& label, vec2& values, const vec2& min = vec2(0.0f), const vec2& max = vec2(0.0f), const vec2& resetvalue = vec2(0.0f), float columnWidth = 100.0f) {
@@ -664,7 +667,7 @@ namespace Nebula {
 		}
 	}
 
-	int RigidbodyFilterToIndex(int16_t filter) {
+	static int RigidbodyFilterToIndex(int16_t filter) {
 		switch (filter)
 		{
 			case 1: return 0;     case 2: return 1;     case 4: return 2;      case 8: return 3;
@@ -674,6 +677,18 @@ namespace Nebula {
 		}
 
 		return 0;
+	}
+
+	template<typename T>
+	void SceneHierarchyPanel::DisplayAddComponentEntry(const std::string& entryName) {
+		if (!m_SelectionContext.HasComponent<T>())
+		{
+			if (ImGui::MenuItem(entryName.c_str()))
+			{
+				m_SelectionContext.AddComponent<T>();
+				ImGui::CloseCurrentPopup();
+			}
+		}
 	}
 
 	void SceneHierarchyPanel::DrawComponents(Entity entity) {
@@ -696,55 +711,12 @@ namespace Nebula {
 			ImGui::OpenPopup("Add Component");
 
 		if (ImGui::BeginPopup("Add Component")) {
-			if (!m_SelectionContext.HasComponent<CameraComponent>()) {
-				if (ImGui::MenuItem("Camera")) {
-					m_SelectionContext.AddComponent<CameraComponent>();
-					ImGui::CloseCurrentPopup();
-				}
-			}
-			
-			if (!m_SelectionContext.HasComponent<SpriteRendererComponent>()) {
-				if (ImGui::MenuItem("Sprite Renderer")) {
-					m_SelectionContext.AddComponent<SpriteRendererComponent>();
-					ImGui::CloseCurrentPopup();
-				}
-			}
-
-			if (!m_SelectionContext.HasComponent<CircleRendererComponent>()) {
-				if (ImGui::MenuItem("Circle Renderer")) {
-					m_SelectionContext.AddComponent<CircleRendererComponent>();
-					ImGui::CloseCurrentPopup();
-				}
-			}
-
-			if (!m_SelectionContext.HasComponent<StringRendererComponent>()) {
-				if (ImGui::MenuItem("String Renderer")) {
-					m_SelectionContext.AddComponent<StringRendererComponent>();
-					ImGui::CloseCurrentPopup();
-				}
-			}
-
-			if (!m_SelectionContext.HasComponent<Rigidbody2DComponent>()) {
-				if (ImGui::MenuItem("Rigidbody 2D")) {
-					m_SelectionContext.AddComponent<Rigidbody2DComponent>();
-					ImGui::CloseCurrentPopup();
-				}
-			}
-
-			if (!m_SelectionContext.HasComponent<BoxCollider2DComponent>()) {
-				if (ImGui::MenuItem("Box Collider 2D")) {
-					m_SelectionContext.AddComponent<BoxCollider2DComponent>();
-					ImGui::CloseCurrentPopup();
-				}
-			}
-
-			if (!m_SelectionContext.HasComponent<CircleColliderComponent>()) {
-				if (ImGui::MenuItem("Circle Collider")) {
-					m_SelectionContext.AddComponent<CircleColliderComponent>();
-					ImGui::CloseCurrentPopup();
-				}
-			}
-
+			DisplayAddComponentEntry<CameraComponent>("Camera");
+			DisplayAddComponentEntry<SpriteRendererComponent>("Sprite Renderer");
+			DisplayAddComponentEntry<CircleRendererComponent>("Circle Renderer");
+			DisplayAddComponentEntry<Rigidbody2DComponent>("Rigidbody 2D");
+			DisplayAddComponentEntry<BoxCollider2DComponent>("Box Collider 2D");
+			DisplayAddComponentEntry<CircleColliderComponent>("Circle Collider 2D");
 			ImGui::EndPopup();
 		}
 
@@ -771,41 +743,23 @@ namespace Nebula {
 			ImGui::Text("UUID: %i", entity.GetComponent<IDComponent>().ID);
 		}
 
-		if (m_ShowGlobal) {
-			DrawComponent<TransformComponent>("Transform", entity, [](auto& component, Entity entity) {
-				vec3 rotation = degrees(component.GlobalRotation);
-				vec3 translation = component.GlobalTranslation;
-				vec3 scale = component.GlobalScale;
+		DrawComponent<TransformComponent>("Transform", entity, [](auto& component, Entity entity) {
+			vec3 rotation = degrees(component.Rotation);
+			vec3 translation = component.Translation;
+			vec3 scale = component.Scale;
+			bool p = DrawVec3Transform("Position", translation);
+			bool r = DrawVec3Transform("Rotation", rotation);
+			bool s = DrawVec3Transform("Scale", scale, 1.0f);
+			ImGui::Spacing();
 
-				bool p = DrawVec3Transform("Position", translation);
-				bool r = DrawVec3Transform("Rotation", rotation);
-				bool s = DrawVec3Transform("Scale", scale, 1.0f);
-				ImGui::Spacing();
+			component.Rotation = radians(rotation);
+			component.Translation = translation;
+			component.Scale = scale;
 
-				component.SetDeltaTransform(translation - component.GlobalTranslation, radians(rotation) - component.GlobalRotation, scale - component.GlobalScale);
-
-				if (p || r || s)
-					UpdateChildrenAndTransform(entity);
-			});
-		}
-		else {
-			DrawComponent<TransformComponent>("Transform", entity, [](auto& component, Entity entity) {
-				vec3 rotation = degrees(component.LocalRotation);
-				vec3 translation = component.LocalTranslation;
-				vec3 scale = component.LocalScale;
-
-				bool p = DrawVec3Transform("Position", translation);
-				bool r = DrawVec3Transform("Rotation", rotation);
-				bool s = DrawVec3Transform("Scale", scale, 1.0f);
-				ImGui::Spacing();
-
-				component.SetDeltaTransform(translation - component.LocalTranslation, radians(rotation) - component.LocalRotation, scale - component.LocalScale);
-
-				if (p || r || s)
-					UpdateChildrenAndTransform(entity);
-			});
-		}
-
+			if (p || r || s)
+				UpdateChildrenAndTransform(entity);
+		});
+	
 		DrawComponent<CameraComponent>("Camera", entity, [](auto& component, Entity entity) {
 			auto& camera = component.Camera;
 

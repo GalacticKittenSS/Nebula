@@ -47,48 +47,21 @@ namespace Nebula {
 	};
 
 	struct TransformComponent {
-		vec3 LocalTranslation =	{ 0.0f, 0.0f, 0.0f };
-		vec3 LocalRotation =	{ 0.0f, 0.0f, 0.0f };
-		vec3 LocalScale =		{ 1.0f, 1.0f, 1.0f };
-
-		vec3 GlobalTranslation = { 0.0f, 0.0f, 0.0f };
-		vec3 GlobalRotation =	 { 0.0f, 0.0f, 0.0f };
-		vec3 GlobalScale =		 { 1.0f, 1.0f, 1.0f };
-
-		mat4 global = mat4(1.0f);
-		mat4 local = mat4(1.0f);
+		vec3 Translation = { 0.0f, 0.0f, 0.0f };
+		vec3 Rotation =	{ 0.0f, 0.0f, 0.0f };
+		vec3 Scale = { 1.0f, 1.0f, 1.0f };
 
 		TransformComponent() = default;
 		TransformComponent(const TransformComponent&) = default;
 
-		inline operator mat4() { return CalculateMatrix(); }
-
-		void UpdateMatrix() {
-			CalculateMatrix();
-			CalculateLocalMatrix();
+		inline operator mat4&() { return CalculateMatrix(); }
+		inline mat4& CalculateMatrix() {
+			return translate(Translation) * toMat4(quat(Rotation)) * scale(Scale);
 		}
+	};
 
-		inline mat4 CalculateMatrix() {
-			global = translate(GlobalTranslation) * toMat4(quat(GlobalRotation)) * scale(GlobalScale);
-			return global;
-		}
-
-		inline mat4 CalculateLocalMatrix() {
-			local = translate(LocalTranslation) * toMat4(quat(LocalRotation)) * scale(LocalScale);
-			return local;
-		}
-
-		void SetDeltaTransform(const vec3& translation, const vec3& rotation = vec3(0.0f), const vec3& size = vec3(0.0f)) {
-			LocalTranslation += translation;
-			LocalRotation += rotation;
-			LocalScale += size;
-
-			GlobalTranslation += translation;
-			GlobalRotation += rotation;
-			GlobalScale += size;
-
-			UpdateMatrix();
-		}
+	struct WorldTransformComponent {
+		mat4 Transform = mat4(1.0f);
 	};
 
 	struct SpriteRendererComponent {
@@ -245,9 +218,10 @@ namespace Nebula {
 	{
 
 	};
-	using AllComponents =
-		ComponentGroup < ParentChildComponent, TransformComponent,
+	using AllComponents = ComponentGroup <
+		ParentChildComponent, TransformComponent, WorldTransformComponent,
 		SpriteRendererComponent, CircleRendererComponent, StringRendererComponent,
-		CameraComponent, NativeScriptComponent,
-		Rigidbody2DComponent, BoxCollider2DComponent, CircleColliderComponent>;
+		Rigidbody2DComponent, BoxCollider2DComponent, CircleColliderComponent,
+		CameraComponent, NativeScriptComponent
+	>;
 }

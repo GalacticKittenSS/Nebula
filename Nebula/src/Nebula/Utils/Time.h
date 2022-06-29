@@ -15,26 +15,17 @@ namespace Nebula {
 
 	class Time {
 	public:
-		static void Start() {
-			mStart = highResClock::now();
-		}
-		
-		inline static float Elapsed() {
-			return std::chrono::duration_cast<milliseconds_type>(highResClock::now() - mStart).count() / 1000.0f;
-		}
-		
-		inline static float DeltaTime() { return m_Timestep; }
-		
-		static void Update() { 
+		static void Init() { m_Start = Now(); }
+		static void Update() {
 			m_Timestep = Elapsed() - m_LastFrameTime;
 			m_LastFrameTime = Elapsed();
 		}
+
+		static float Now();
+		static inline float Elapsed() { return Now() - m_Start; }
+		static inline Timestep DeltaTime() { return m_Timestep; }
 	private:
-		typedef std::chrono::high_resolution_clock highResClock;
-		typedef std::chrono::duration<float, std::milli> milliseconds_type;
-		
-		static std::chrono::time_point<highResClock> mStart;
-		static float m_Time;
+		static float m_Start;
 		static Timestep m_Timestep;
 		static float m_LastFrameTime;
 	};
@@ -42,19 +33,17 @@ namespace Nebula {
 	class Timer {
 	public:
 		Timer() {
-			reset();
+			Reset();
 		}
 
-		void reset() {
-			mStart = highResClock::now();
+		void Reset() {
+			m_Start = Time::Now();
 		}
 
-		float elapsed() {
-			return std::chrono::duration_cast<milliseconds_type>(highResClock::now() - mStart).count() / 1000.0f;
+		float Elapsed() {
+			return (Time::Now() - m_Start) / 1000.0f;
 		}
 	private:
-		typedef std::chrono::high_resolution_clock highResClock;
-		typedef std::chrono::duration<float, std::milli> milliseconds_type;
-		std::chrono::time_point<highResClock> mStart;
+		float m_Start;
 	};
 }

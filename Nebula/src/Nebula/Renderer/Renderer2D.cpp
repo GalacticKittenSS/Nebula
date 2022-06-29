@@ -408,7 +408,7 @@ namespace Nebula {
 	void Renderer2D::Draw(const uint32_t type, Entity& entity) {
 		NB_PROFILE_FUNCTION();
 
-		mat4 transform = entity.GetTransform().global;
+		mat4 transform = entity.GetComponent<WorldTransformComponent>().Transform;
 		switch (type)
 		{
 		case NB_RECT: {

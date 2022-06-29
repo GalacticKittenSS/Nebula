@@ -18,12 +18,12 @@ namespace Nebula {
 		Entity GetSelectedEntity() { return m_SelectionContext; }
 		void SetSelectedEntity(Entity entity) { m_SelectionContext = entity; }
 
-		bool GetShowGlobalTransform() { return m_ShowGlobal; }
-		void SetShowGlobalTransform(bool show) { m_ShowGlobal = show; }
-
 		bool IsFocused() { return m_HierarchyFocused; }
 		bool IsHovered() { return m_HierarchyHovered; }
 	private:
+		template<typename T>
+		void DisplayAddComponentEntry(const std::string& entryName);
+
 		void DrawEntityNode(Entity entity, uint32_t index, bool& entityDeleted);
 		void DrawArray(Array<UUID>& entities, bool showIfParent = false);
 		void DrawComponents(Entity entity);
@@ -33,7 +33,6 @@ namespace Nebula {
 
 		Array<RectData> Rects;
 
-		bool m_ShowGlobal = false;
 		bool m_HierarchyFocused = false;
 		bool m_HierarchyHovered = false;
 

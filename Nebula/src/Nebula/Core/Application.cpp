@@ -12,7 +12,7 @@ namespace Nebula {
 		NB_ASSERT(!s_Instance, "Application already exists!");
 		s_Instance = this;
 
-		Time::Start();
+		Time::Init();
 
 		m_Window = Window::Create(WindowProps(name));
 		m_Window->SetEventCallback(BIND_EVENT(Application::OnEvent));
@@ -35,8 +35,7 @@ namespace Nebula {
 		while (m_Running) 
 		{
 			NB_PROFILE_SCOPE("Frame - Application::run()");
-			Time::Update();
-
+			
 			if (!m_Minimized) {
 				for (Layer* layer : m_LayerStack) {
 					layer->Update(Time::DeltaTime());
@@ -50,6 +49,7 @@ namespace Nebula {
 			m_ImGui->End();
 
 			m_Window->Update();
+			Time::Update();
 		}
 	}
 

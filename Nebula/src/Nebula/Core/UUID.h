@@ -1,6 +1,5 @@
 #pragma once
 
-#include <xhash>
 #include "Nebula/Utils/Random.h"
 
 namespace Nebula {
@@ -20,7 +19,7 @@ namespace std {
 	template<>
 	struct hash<Nebula::UUID> {
 		std::size_t operator()(const Nebula::UUID& uuid) const {
-			return hash<uint64_t>()((uint64_t)uuid);
+			return (uint64_t)uuid;
 		}
 	};
 }
