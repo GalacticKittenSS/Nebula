@@ -427,7 +427,34 @@ namespace Nebula {
 		Renderer2D::EndScene();
 	}
 
+	void Scene::Render(Camera& camera, const mat4& transform) {
+		Renderer2D::BeginScene(camera, transform);
+
+		auto group = m_Registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
+		for (auto entity : group) {
+			Renderer2D::Draw(NB_QUAD, Entity{ entity, this });
+		}
+
+		auto CircleGroup = m_Registry.view<TransformComponent, CircleRendererComponent>();
+		for (auto entity : CircleGroup) {
+			Renderer2D::Draw(NB_CIRCLE, Entity{ entity, this });
+		}
+
+		Renderer2D::EndScene();
+	}
+
 	void Scene::RenderOverlay(EditorCamera& camera) {
+		Renderer2D::BeginScene(camera);
+
+		auto StringGroup = m_Registry.view<StringRendererComponent>();
+		for (auto entity : StringGroup) {
+			Renderer2D::Draw(NB_STRING, Entity{ entity, this });
+		}
+
+		Renderer2D::EndScene();
+	}
+
+	void Scene::RenderOverlay(Camera& camera, const mat4& transform) {
 		Renderer2D::BeginScene(camera);
 
 		auto StringGroup = m_Registry.view<StringRendererComponent>();
