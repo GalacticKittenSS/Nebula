@@ -110,7 +110,7 @@ namespace Nebula {
 				CompileOrGetOpenGLBinaries();
 				CreateProgram();
 			}
-			NB_WARN("Shader creation took {0} ms", timer.elapsed() * 1000);
+			NB_WARN("Shader creation took {0} ms", timer.Elapsed() * 1000);
 		}
 
 		// Extract name from filepath

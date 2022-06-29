@@ -108,6 +108,7 @@ namespace Nebula {
 		auto& idc = entity.AddComponent<IDComponent>();
 		idc.ID = uuid;
 		entity.AddComponent<TransformComponent>();
+		entity.AddComponent<WorldTransformComponent>();
 		entity.AddComponent<ParentChildComponent>();
 		auto& tag = entity.AddComponent<TagComponent>();
 		tag.Tag = name.empty() ? "Entity" : name;
@@ -190,13 +191,18 @@ namespace Nebula {
 	}
 
 	void Scene::CreateBox2DBody(Entity entity) {
+		//UpdateChildrenAndTransform(entity);
+		auto& world = entity.GetComponent<WorldTransformComponent>();
 		auto& transform = entity.GetComponent<TransformComponent>();
 		auto& rb2d = entity.GetComponent<Rigidbody2DComponent>();
 
+		vec3 translation, rotation, scale;
+		DecomposeTransform(world.Transform, translation, rotation, scale);
+
 		b2BodyDef bodyDef;
 		bodyDef.type = Rigibody2DToBox2D(rb2d.Type);
-		bodyDef.position.Set(transform.GlobalTranslation.x, transform.GlobalTranslation.y);
-		bodyDef.angle = transform.GlobalRotation.z;
+		bodyDef.position.Set(translation.x, translation.y);
+		bodyDef.angle = rotation.z;
 
 		b2BodyUserData data;
 		data.pointer = reinterpret_cast<uintptr_t>(new Entity(entity, this));
@@ -211,7 +217,7 @@ namespace Nebula {
 			body = m_PhysicsWorld->CreateBody(&bodyDef);
 
 			b2PolygonShape polygonShape;
-			polygonShape.SetAsBox(transform.GlobalScale.x * bc2d.Size.x, transform.GlobalScale.y * bc2d.Size.y);
+			polygonShape.SetAsBox(scale.x * bc2d.Size.x, scale.y * bc2d.Size.y);
 
 			b2FixtureDef fixtureDef;
 			fixtureDef.shape = &polygonShape;
@@ -235,7 +241,7 @@ namespace Nebula {
 
 			b2CircleShape circle;
 			circle.m_p.Set(cc.Offset.x, cc.Offset.y);
-			circle.m_radius = cc.Radius * entity.GetComponent<TransformComponent>().GlobalScale.x;
+			circle.m_radius = cc.Radius * scale.x;
 
 			b2FixtureDef fixtureDef;
 			fixtureDef.shape = &circle;
@@ -270,6 +276,8 @@ namespace Nebula {
 		auto view = m_Registry.view<Rigidbody2DComponent>();
 		for (auto e : view) {
 			Entity entity = { e, this };
+			
+			auto& world = entity.GetComponent<WorldTransformComponent>();
 			auto& transform = entity.GetComponent<TransformComponent>();
 			auto& rb2d = entity.GetComponent<Rigidbody2DComponent>();
 
@@ -289,12 +297,15 @@ namespace Nebula {
 				position.x -= cc.Offset.x;
 				position.y -= cc.Offset.y;
 			}
+			
+			vec3 wTranslation, wRotation, wScale;
+			DecomposeTransform(world.Transform, wTranslation, wRotation, wScale);
+			
+			transform.Translation.x += position.x - wTranslation.x;
+			transform.Translation.y += position.y - wTranslation.y;
+			transform.Rotation.z += body->GetAngle() - wRotation.z;
 
-			vec3 deltaTranslation = { position.x - transform.GlobalTranslation.x ,
-				position.y - transform.GlobalTranslation.y, 0.0f };
-			vec3 deltaRotation = { 0.0f, 0.0f, body->GetAngle() - transform.GlobalRotation.z };
-
-			transform.SetDeltaTransform(deltaTranslation, deltaRotation, vec3(0.0f));
+			CalculateGlobalTransform(entity);
 		}
 	}
 
@@ -448,11 +459,14 @@ namespace Nebula {
 
 	template<typename T>
 	void Scene::OnComponentAdded(Entity entity, T& component) {
-		static_assert(false);
+		static_assert(sizeof(T) == 0);
 	}
 
 	template<>
 	void Scene::OnComponentAdded<TransformComponent>(Entity entity, TransformComponent& component) { }
+	
+	template<>
+	void Scene::OnComponentAdded<WorldTransformComponent>(Entity entity, WorldTransformComponent& component) { }
 
 	template<>
 	void Scene::OnComponentAdded<SpriteRendererComponent>(Entity entity, SpriteRendererComponent& component) { }

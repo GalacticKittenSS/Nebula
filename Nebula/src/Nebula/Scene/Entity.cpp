@@ -6,30 +6,21 @@
 
 namespace Nebula {
 	void CalculateGlobalTransform(Entity& entity) {
-		auto& transform = entity.GetTransform();
+		auto& world = entity.GetComponent<WorldTransformComponent>();
+		mat4& transform = entity.GetTransform().CalculateMatrix();
+		world.Transform = transform;
+		
 		UUID parentID = entity.GetParentChild().Parent;
-
-		transform.global = transform.CalculateLocalMatrix();
 		if (parentID) {
 			Entity parent = { parentID, entity };
 			CalculateGlobalTransform(parent);
-			auto& p = parent.GetTransform();
-			transform.global = p.global * transform.CalculateLocalMatrix();
+			auto& pWorld = parent.GetComponent<WorldTransformComponent>();
+			world.Transform = pWorld.Transform * transform;
 		}
-
-		DecomposeTransform(transform.global, transform.GlobalTranslation, transform.GlobalRotation, transform.GlobalScale);
 	}
 
 	void UpdateChildrenAndTransform(Entity& entity) {
-		if (entity.HasComponent<Rigidbody2DComponent>()) {
-			Rigidbody2DComponent& rb2d = entity.GetComponent<Rigidbody2DComponent>();
-			if (rb2d.RuntimeBody) {
-				TransformComponent& transform = entity.GetComponent<TransformComponent>();
-
-				b2Body* body = (b2Body*)rb2d.RuntimeBody;
-				body->SetTransform({ transform.GlobalTranslation.x, transform.GlobalTranslation.y }, transform.GlobalRotation.z);
-			}
-		}
+		CalculateGlobalTransform(entity);
 
 		for (UUID child : entity.GetParentChild().ChildrenIDs) {
 			Entity c = { child, entity };
@@ -37,6 +28,19 @@ namespace Nebula {
 				CalculateGlobalTransform(c);
 			else
 				UpdateChildrenAndTransform(c);
+		}
+
+		if (entity.HasComponent<Rigidbody2DComponent>()) {
+			Rigidbody2DComponent& rb2d = entity.GetComponent<Rigidbody2DComponent>();
+			if (rb2d.RuntimeBody) {
+				WorldTransformComponent& transform = entity.GetComponent<WorldTransformComponent>();
+
+				b2Body* body = (b2Body*)rb2d.RuntimeBody;
+
+				vec3 translation, rotation, scale;
+				DecomposeTransform(transform.Transform, translation, rotation, scale);
+				body->SetTransform({ translation.x, translation.y }, rotation.z);
+			}
 		}
 	}
 

@@ -1,5 +1,6 @@
 #include "nbpch.h"
 #include "Nebula/Utils/Platform_Utils.h"
+#include "Nebula/Utils/Time.h"
 
 #include "Nebula/Core/Application.h"
 
@@ -55,5 +56,13 @@ namespace Nebula {
 		}
 
 		return std::string();
+	}
+
+	float Time::m_Start;
+	Timestep Time::m_Timestep;
+	float Time::m_LastFrameTime;
+
+	float Time::Now() {
+		return glfwGetTime();
 	}
 }

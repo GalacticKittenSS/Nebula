@@ -24,8 +24,8 @@ namespace Nebula {
 
 		bool IsLoaded() const override { return m_IsLoaded; }
 
-		bool operator==(const Texture& other) const override { 
-			return m_RendererID == ((OpenGL_Texture2D&)other).m_RendererID;
+		bool operator==(const Texture& other) const override {
+			return m_RendererID == other.GetRendererID();
 		}
 	private:
 		std::string m_Path;
