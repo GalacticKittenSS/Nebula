@@ -26,10 +26,17 @@ namespace Nebula {
 		}
 	};
 
+	struct ApplicationSpecification
+	{
+		std::string Name = "Nebula App";
+		ApplicationCommandLineArgs CommandLineArgs;
+		std::string WorkingDirectory;
+	};
+
 	class Application
 	{
 	public:
-		Application(const std::string& name = "Nebula App", ApplicationCommandLineArgs args = ApplicationCommandLineArgs());
+		Application(const ApplicationSpecification& specification);
 		virtual ~Application();
 
 		void OnEvent(Event& e);
@@ -44,7 +51,7 @@ namespace Nebula {
 		ImGuiLayer* GetImGuiLayer() { return m_ImGui; }
 
 		inline static Application& Get() { return *s_Instance; }
-		ApplicationCommandLineArgs GetCommandLineArgs() const { return m_CommandLineArgs; }
+		ApplicationSpecification GetSpecification() const { return m_Specification; }
 		inline Window& GetWindow() { return *m_Window; }
 	private:
 		void run();
@@ -52,7 +59,7 @@ namespace Nebula {
 		bool OnWindowResize(WindowResizeEvent& e);
 		bool OnKeyPressed(KeyPressedEvent& e);
 	private:
-		ApplicationCommandLineArgs m_CommandLineArgs;
+		ApplicationSpecification m_Specification;
 		Scope<Window> m_Window;
 		ImGuiLayer* m_ImGui;
 		bool m_Running = true, m_Minimized = false;

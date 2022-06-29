@@ -53,8 +53,8 @@ namespace Nebula {
 		TransformComponent() = default;
 		TransformComponent(const TransformComponent&) = default;
 
-		inline operator mat4&() { return CalculateMatrix(); }
-		inline mat4& CalculateMatrix() {
+		inline operator mat4() const { return CalculateMatrix(); }
+		inline mat4 CalculateMatrix() const {
 			return translate(Translation) * toMat4(quat(Rotation)) * scale(Scale);
 		}
 	};

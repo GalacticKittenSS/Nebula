@@ -204,10 +204,10 @@ namespace Nebula {
 
 			auto& component = entity.GetComponent<SpriteRendererComponent>();
 			out << YAML::Key << "Colour" << YAML::Value << component.Colour;
-			if (component.Texture != nullptr)
+
+			if (component.Texture)
 				out << YAML::Key << "Texture" << YAML::Value << component.Texture->GetPath();
-			else
-				out << YAML::Key << "Texture" << YAML::Value << "None";
+			
 			out << YAML::Key << "Tiling" << YAML::Value << component.Tiling;
 			out << YAML::Key << "Offset" << YAML::Value << component.SubTextureOffset;
 			out << YAML::Key << "CellSize" << YAML::Value << component.SubTextureCellSize;
@@ -391,9 +391,8 @@ namespace Nebula {
 					src.SubTextureCellSize = spriteRendererComponent["CellSize"].as<vec2>();
 					src.SubTextureCellNum = spriteRendererComponent["CellNum"].as<vec2>();
 
-					std::string texture = spriteRendererComponent["Texture"].as<std::string>();
-					if (texture != "None")
-						src.Texture = Texture2D::Create(texture);
+					if (spriteRendererComponent["Texture"])
+						src.Texture = Texture2D::Create(spriteRendererComponent["Texture"].as<std::string>());
 				}
 
 				auto circleRendererComponent = entity["CircleRendererComponent"];

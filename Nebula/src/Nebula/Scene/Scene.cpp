@@ -281,6 +281,9 @@ namespace Nebula {
 			auto& transform = entity.GetComponent<TransformComponent>();
 			auto& rb2d = entity.GetComponent<Rigidbody2DComponent>();
 
+			if (!rb2d.RuntimeBody)
+				CreateBox2DBody(entity);
+
 			b2Body* body = (b2Body*)rb2d.RuntimeBody;
 			auto position = body->GetPosition();
 

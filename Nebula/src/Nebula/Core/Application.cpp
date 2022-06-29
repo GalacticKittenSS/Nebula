@@ -1,22 +1,26 @@
 #include "nbpch.h"
 #include "Application.h"
 
+#include <filesystem>
+
 #include "Nebula/Renderer/Renderer.h"
 
 namespace Nebula {
 	Application* Application::s_Instance = nullptr;
 
-	Application::Application(const std::string& name, ApplicationCommandLineArgs args) {
+	Application::Application(const ApplicationSpecification& specification) : m_Specification(specification) {
 		NB_PROFILE_FUNCTION();
 
 		NB_ASSERT(!s_Instance, "Application already exists!");
 		s_Instance = this;
 
-		Time::Init();
+		if (!m_Specification.WorkingDirectory.empty())
+			std::filesystem::current_path(m_Specification.WorkingDirectory);
 
-		m_Window = Window::Create(WindowProps(name));
+		m_Window = Window::Create(WindowProps(m_Specification.Name));
 		m_Window->SetEventCallback(BIND_EVENT(Application::OnEvent));
 
+		Time::Init();
 		Renderer::Init();
 
 		m_ImGui = new ImGuiLayer();

@@ -7,7 +7,7 @@
 namespace Nebula {
 	void CalculateGlobalTransform(Entity& entity) {
 		auto& world = entity.GetComponent<WorldTransformComponent>();
-		mat4& transform = entity.GetTransform().CalculateMatrix();
+		mat4 transform = entity.GetTransform().CalculateMatrix();
 		world.Transform = transform;
 		
 		UUID parentID = entity.GetParentChild().Parent;

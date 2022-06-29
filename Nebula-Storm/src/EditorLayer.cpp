@@ -97,7 +97,7 @@ namespace Nebula {
 		NewScene();
 
 		//Open Scene on Startup
-		auto commandLineArgs = Application::Get().GetCommandLineArgs();
+		auto commandLineArgs = Application::Get().GetSpecification().CommandLineArgs;
 		if (commandLineArgs.Count > 1)
 			LoadScene(commandLineArgs[1]);
 		
@@ -109,6 +109,8 @@ namespace Nebula {
 		FontManager::Add(new Font("Default",	  "Resources/fonts/OpenSans/Regular.ttf", 86));
 		FontManager::Add(new Font("OpenSans",	  "Resources/fonts/OpenSans/Regular.ttf", 86));
 		FontManager::Add(new Font("OpenSans - BOLD", "Resources/fonts/OpenSans/Bold.ttf", 86));
+		
+		RenderCommand::SetLineWidth(4.0f);
 	}
 
 	void EditorLayer::Detach() {
@@ -339,8 +341,6 @@ namespace Nebula {
 		}
 
 		if (m_ShowColliders) {
-			RenderCommand::SetLineWidth(3.0f);
-
 			// Calculate z index for translation
 			float zIndex = 0.001f;
 			vec3 cameraForwardDirection = m_EditorCam.GetForwardDirection();
@@ -377,6 +377,18 @@ namespace Nebula {
 		
 		Renderer2D::EndScene();
 		Renderer2D::SetBackCulling(true);
+
+		if (m_SceneState != SceneState::Play)
+		{
+			if (Entity selectedEntity = m_SceneHierarchy.GetSelectedEntity())
+			{
+				const WorldTransformComponent& transform = selectedEntity.GetComponent<WorldTransformComponent>();
+				
+				Renderer2D::BeginScene(m_EditorCam);
+				Renderer2D::Draw(NB_RECT, transform.Transform * translate(vec3(0.0f, 0.0f, 0.01f)), vec4(1.0f, 0.5f, 0.0f, 1.0f));
+				Renderer2D::EndScene();
+			}
+		}
 	}
 
 	void EditorLayer::UI_GameView() {
