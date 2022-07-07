@@ -14,6 +14,7 @@
 namespace Nebula {
 	struct IDComponent {
 		UUID ID;
+		bool isTemplate = false;
 
 		IDComponent() = default;
 		IDComponent(const IDComponent&) = default;
@@ -167,6 +168,7 @@ namespace Nebula {
 		float RestitutionThreshold = 0.5f;
 
 		void* RuntimeBody = nullptr;
+		bool hasRuntimeBody = false;
 
 		Rigidbody2DComponent() = default;
 		Rigidbody2DComponent(const Rigidbody2DComponent&) = default;

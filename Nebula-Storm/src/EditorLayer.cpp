@@ -370,7 +370,7 @@ namespace Nebula {
 				vec3 translation = wTranslation + vec3(bc2d.Offset, 0.001f);
 				vec3 Scale = wScale * vec3(bc2d.Size) * 2.0f;
 
-				mat4 transform = translate(translation) * toMat4(quat(wRotation)) * scale(Scale);
+        mat4 transform = translate(translation) * toMat4(quat(wRotation)) * scale(Scale);
 				Renderer2D::Draw(NB_RECT, transform, vec4(0.0f, 1.0f, 0.0f, 1.0f));
 			}
 		}
