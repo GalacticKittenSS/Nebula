@@ -97,7 +97,7 @@ namespace Nebula {
 		NewScene();
 
 		//Open Scene on Startup
-		auto commandLineArgs = Application::Get().GetCommandLineArgs();
+		auto commandLineArgs = Application::Get().GetSpecification().CommandLineArgs;
 		if (commandLineArgs.Count > 1)
 			LoadScene(commandLineArgs[1]);
 		
@@ -109,10 +109,8 @@ namespace Nebula {
 		FontManager::Add(new Font("Default",	  "Resources/fonts/OpenSans/Regular.ttf", 86));
 		FontManager::Add(new Font("OpenSans",	  "Resources/fonts/OpenSans/Regular.ttf", 86));
 		FontManager::Add(new Font("OpenSans - BOLD", "Resources/fonts/OpenSans/Bold.ttf", 86));
-	}
-
-	void EditorLayer::Detach() {
-		FontManager::Clean();
+		
+		RenderCommand::SetLineWidth(4.0f);
 	}
 
 	void EditorLayer::Detach() {
@@ -292,9 +290,6 @@ namespace Nebula {
 				if (ImGui::MenuItem("Show Physics Colliders", NULL, m_ShowColliders))
 					m_ShowColliders = !m_ShowColliders;
 
-				if (ImGui::MenuItem("Show Global Transforms", NULL, m_SceneHierarchy.GetShowGlobalTransform()))
-					m_SceneHierarchy.SetShowGlobalTransform(!m_SceneHierarchy.GetShowGlobalTransform());
-
 				if (ImGui::MenuItem("Show Grid", NULL, m_ShowGrid))
 					m_ShowGrid = !m_ShowGrid;
 
@@ -346,38 +341,54 @@ namespace Nebula {
 		}
 
 		if (m_ShowColliders) {
-			RenderCommand::SetLineWidth(3.0f);
-
 			// Calculate z index for translation
 			float zIndex = 0.001f;
 			vec3 cameraForwardDirection = m_EditorCam.GetForwardDirection();
 			vec3 projectionCollider = cameraForwardDirection * vec3(zIndex);
 
-			auto CircleView = m_ActiveScene->GetAllEntitiesWith<TransformComponent, CircleColliderComponent>();
+			auto CircleView = m_ActiveScene->GetAllEntitiesWith<WorldTransformComponent, CircleColliderComponent>();
 			for (auto entity : CircleView) {
-				auto [tc, cc] = CircleView.get<TransformComponent, CircleColliderComponent>(entity);
-			
-				vec3 translation = tc.GlobalTranslation + vec3(cc.Offset, -projectionCollider.z);
-				vec3 Scale = tc.GlobalScale * vec3(cc.Radius * 2.0f);
+				auto [wtc, cc] = CircleView.get<WorldTransformComponent, CircleColliderComponent>(entity);
+
+				vec3 wTranslation, wRotation, wScale;
+				DecomposeTransform(wtc.Transform, wTranslation, wRotation, wScale);
+
+				vec3 translation = wTranslation + vec3(cc.Offset, -projectionCollider.z);
+				vec3 Scale = wScale * vec3(cc.Radius * 2.0f);
 
 				mat4 transform = translate(vec3(translation)) * scale(Scale);
 				Renderer2D::DrawCircle(transform, vec4(0.0f, 1.0f, 0.0f, 1.0f), 0.05f);
 			}
 
-			auto BoxView = m_ActiveScene->GetAllEntitiesWith<TransformComponent, BoxCollider2DComponent>();
+			auto BoxView = m_ActiveScene->GetAllEntitiesWith<WorldTransformComponent, BoxCollider2DComponent>();
 			for (auto entity : BoxView) {
-				auto [tc, bc2d] = BoxView.get<TransformComponent, BoxCollider2DComponent>(entity);
-			
-				vec3 translation = tc.GlobalTranslation + vec3(bc2d.Offset, 0.001f);
-				vec3 Scale = tc.GlobalScale * vec3(bc2d.Size) * 2.0f;
+				auto [wtc, bc2d] = BoxView.get<WorldTransformComponent, BoxCollider2DComponent>(entity);
 
-				mat4 transform = translate(translation) * toMat4(quat(tc.GlobalRotation)) * scale(Scale);
+				vec3 wTranslation, wRotation, wScale;
+				DecomposeTransform(wtc.Transform, wTranslation, wRotation, wScale);
+
+				vec3 translation = wTranslation + vec3(bc2d.Offset, 0.001f);
+				vec3 Scale = wScale * vec3(bc2d.Size) * 2.0f;
+
+				mat4 transform = translate(translation) * toMat4(quat(wRotation)) * scale(Scale);
 				Renderer2D::Draw(NB_RECT, transform, vec4(0.0f, 1.0f, 0.0f, 1.0f));
 			}
 		}
 		
 		Renderer2D::EndScene();
 		Renderer2D::SetBackCulling(true);
+
+		if (m_SceneState != SceneState::Play)
+		{
+			if (Entity selectedEntity = m_SceneHierarchy.GetSelectedEntity())
+			{
+				const WorldTransformComponent& transform = selectedEntity.GetComponent<WorldTransformComponent>();
+				
+				Renderer2D::BeginScene(m_EditorCam);
+				Renderer2D::Draw(NB_RECT, transform.Transform * translate(vec3(0.0f, 0.0f, 0.01f)), vec4(1.0f, 0.5f, 0.0f, 1.0f));
+				Renderer2D::EndScene();
+			}
+		}
 	}
 
 	void EditorLayer::UI_GameView() {
@@ -426,7 +437,8 @@ namespace Nebula {
 
 			if (selectedEntity && m_GizmoType != -1) {
 				auto& tc = selectedEntity.GetComponent<TransformComponent>();
-				mat4 transform = tc.CalculateMatrix();
+				auto& wc = selectedEntity.GetComponent<WorldTransformComponent>();
+				mat4 transform = wc.Transform;
 				
 				bool snap = Input::IsKeyPressed(Key::LeftControl);
 				float snapValue = 0.25f;
@@ -441,12 +453,14 @@ namespace Nebula {
 				if (ImGuizmo::IsUsing()) {
 					vec3 translation, rotation, scale;
 					DecomposeTransform(transform, translation, rotation, scale);
+					
+					vec3 wTranslation, wRotation, wScale;
+					DecomposeTransform(wc.Transform, wTranslation, wRotation, wScale);
 
-					vec3 deltaRotation = rotation - tc.GlobalRotation;
-					vec3 deltaTranslation = translation - tc.GlobalTranslation;
-					vec3 deltaScale = scale - tc.GlobalScale;
+					tc.Translation += translation - wTranslation;
+					tc.Rotation += rotation - wRotation;
+					tc.Scale += scale - wScale;
 
-					tc.SetDeltaTransform(deltaTranslation, deltaRotation, deltaScale);
 					UpdateChildrenAndTransform(selectedEntity);
 				}
 			}
@@ -654,12 +668,6 @@ namespace Nebula {
 			m_ActiveScene->OnRuntimeStop();
 		else if (m_SceneState == SceneState::Simulate)
 			m_ActiveScene->OnSimulationStop();
-
-		auto& entities = m_ActiveScene->GetAllEntitiesWith<StringRendererComponent>();
-		for (auto& ent : entities) {
-			auto& src = Entity{ ent, m_ActiveScene.get() }.GetComponent<StringRendererComponent>();
-			src.InitiateFont();
-		}
 
 		m_ActiveScene = m_EditorScene;
 

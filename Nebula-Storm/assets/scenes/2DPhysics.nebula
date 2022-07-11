@@ -75,7 +75,6 @@ Entities:
       Scale: [8.94352627, 2.62153292, 2.62153554]
     SpriteRendererComponent:
       Colour: [1, 1, 1, 1]
-      Texture: None
       Tiling: 1
       Offset: [0, 0]
       CellSize: [128, 128]
@@ -162,7 +161,6 @@ Entities:
       Scale: [5.29204559, 3.22500587, 1.72999978]
     SpriteRendererComponent:
       Colour: [1, 1, 1, 1]
-      Texture: None
       Tiling: 1
       Offset: [0, 0]
       CellSize: [128, 128]
@@ -192,7 +190,6 @@ Entities:
       Scale: [16.5230312, 0.999948263, 1]
     SpriteRendererComponent:
       Colour: [0.895752907, 0.26976344, 0.26976344, 1]
-      Texture: None
       Tiling: 1
       Offset: [0, 0]
       CellSize: [128, 128]
@@ -222,7 +219,6 @@ Entities:
       Scale: [0.999989986, 0.999989986, 1]
     SpriteRendererComponent:
       Colour: [0.366497248, 0.514839828, 0.637065649, 1]
-      Texture: None
       Tiling: 1
       Offset: [0, 0]
       CellSize: [128, 128]
@@ -252,7 +248,6 @@ Entities:
       Scale: [6.1571002, 0.999999762, 1]
     SpriteRendererComponent:
       Colour: [0.398428768, 0.683397651, 0.41603297, 1]
-      Texture: None
       Tiling: 1
       Offset: [0, 0]
       CellSize: [128, 128]
@@ -282,7 +277,6 @@ Entities:
       Scale: [20.0815239, 1, 1]
     SpriteRendererComponent:
       Colour: [0.895752907, 0.26976344, 0.26976344, 1]
-      Texture: None
       Tiling: 1
       Offset: [0, 0]
       CellSize: [128, 128]
@@ -312,7 +306,6 @@ Entities:
       Scale: [16.5205021, 0.999869227, 1]
     SpriteRendererComponent:
       Colour: [0.895752907, 0.26976344, 0.26976344, 1]
-      Texture: None
       Tiling: 1
       Offset: [0, 0]
       CellSize: [128, 128]
@@ -342,7 +335,6 @@ Entities:
       Scale: [1.00000012, 0.99999994, 0.99999994]
     SpriteRendererComponent:
       Colour: [1, 1, 1, 1]
-      Texture: None
       Tiling: 1
       Offset: [0, 0]
       CellSize: [128, 128]
@@ -372,7 +364,6 @@ Entities:
       Scale: [1.00000012, 0.999999762, 0.99999994]
     SpriteRendererComponent:
       Colour: [1, 1, 1, 1]
-      Texture: None
       Tiling: 1
       Offset: [0, 0]
       CellSize: [128, 128]

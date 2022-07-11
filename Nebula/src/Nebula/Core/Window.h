@@ -36,6 +36,9 @@ namespace Nebula {
 		virtual void LockAspectRatio(uint8_t width = 16, uint8_t height = 9) = 0;
 		virtual void UnlockAspectRatio() = 0;
 
+		virtual void SetFullscreen(bool fullscreen) = 0;
+		virtual bool IsFullscreen() = 0;
+
 		virtual void* GetNativeWindow() const = 0;
 
 		static Scope<Window> Create(const WindowProps& props = WindowProps());

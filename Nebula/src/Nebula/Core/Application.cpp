@@ -1,22 +1,26 @@
 #include "nbpch.h"
 #include "Application.h"
 
+#include <filesystem>
+
 #include "Nebula/Renderer/Renderer.h"
 
 namespace Nebula {
 	Application* Application::s_Instance = nullptr;
 
-	Application::Application(const std::string& name, ApplicationCommandLineArgs args) {
+	Application::Application(const ApplicationSpecification& specification) : m_Specification(specification) {
 		NB_PROFILE_FUNCTION();
 
 		NB_ASSERT(!s_Instance, "Application already exists!");
 		s_Instance = this;
 
-		Time::Start();
+		if (!m_Specification.WorkingDirectory.empty())
+			std::filesystem::current_path(m_Specification.WorkingDirectory);
 
-		m_Window = Window::Create(WindowProps(name));
+		m_Window = Window::Create(WindowProps(m_Specification.Name));
 		m_Window->SetEventCallback(BIND_EVENT(Application::OnEvent));
 
+		Time::Init();
 		Renderer::Init();
 
 		m_ImGui = new ImGuiLayer();
@@ -35,8 +39,7 @@ namespace Nebula {
 		while (m_Running) 
 		{
 			NB_PROFILE_SCOPE("Frame - Application::run()");
-			Time::Update();
-
+			
 			if (!m_Minimized) {
 				for (Layer* layer : m_LayerStack) {
 					layer->Update(Time::DeltaTime());
@@ -50,6 +53,7 @@ namespace Nebula {
 			m_ImGui->End();
 
 			m_Window->Update();
+			Time::Update();
 		}
 	}
 
@@ -87,6 +91,7 @@ namespace Nebula {
 		Dispatcher dispatcher(e);
 		dispatcher.Dispatch<WindowCloseEvent>(BIND_EVENT(Application::OnWindowClose));
 		dispatcher.Dispatch<WindowResizeEvent>(BIND_EVENT(Application::OnWindowResize));
+		dispatcher.Dispatch<KeyPressedEvent>(BIND_EVENT(Application::OnKeyPressed));
 
 		for (auto it = m_LayerStack.rbegin(); it != m_LayerStack.rend(); ++it) {
 			if (e.Handled)
@@ -111,6 +116,15 @@ namespace Nebula {
 
 		m_Minimized = false;
 		Renderer::OnWindowResize(e.GetWidth(), e.GetHeight());
+
+		return false;
+	}
+
+	bool Application::OnKeyPressed(KeyPressedEvent& e) {
+		if (e.GetKeyCode() == NB_F11) {
+			m_Window->SetFullscreen(!m_Window->IsFullscreen());
+			return true;
+		}
 
 		return false;
 	}

@@ -46,7 +46,6 @@ Entities:
       Scale: [0.999999881, 0.999998808, 0.999985218]
     SpriteRendererComponent:
       Colour: [1, 0, 1, 1]
-      Texture: None
       Tiling: 1
       Offset: [0, 0]
       CellSize: [128, 128]
@@ -64,7 +63,6 @@ Entities:
       Scale: [1, 1, 1]
     SpriteRendererComponent:
       Colour: [0.494208276, 0, 0.494208515, 1]
-      Texture: None
       Tiling: 1
       Offset: [0, 0]
       CellSize: [128, 128]
@@ -82,7 +80,6 @@ Entities:
       Scale: [1, 1, 1]
     SpriteRendererComponent:
       Colour: [0.370656192, 0, 0.370656371, 1]
-      Texture: None
       Tiling: 1
       Offset: [0, 0]
       CellSize: [128, 128]

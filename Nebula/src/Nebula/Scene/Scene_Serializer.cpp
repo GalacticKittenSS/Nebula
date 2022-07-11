@@ -167,9 +167,9 @@ namespace Nebula {
 			out << YAML::BeginMap;
 
 			auto& component = entity.GetComponent<TransformComponent>();
-			out << YAML::Key << "Translation" << YAML::Value << component.LocalTranslation;
-			out << YAML::Key << "Rotation" << YAML::Value << component.LocalRotation;
-			out << YAML::Key << "Scale" << YAML::Value << component.LocalScale;
+			out << YAML::Key << "Translation" << YAML::Value << component.Translation;
+			out << YAML::Key << "Rotation" << YAML::Value << component.Rotation;
+			out << YAML::Key << "Scale" << YAML::Value << component.Scale;
 
 			out << YAML::EndMap;
 		}
@@ -204,10 +204,10 @@ namespace Nebula {
 
 			auto& component = entity.GetComponent<SpriteRendererComponent>();
 			out << YAML::Key << "Colour" << YAML::Value << component.Colour;
-			if (component.Texture != nullptr)
+
+			if (component.Texture)
 				out << YAML::Key << "Texture" << YAML::Value << component.Texture->GetPath();
-			else
-				out << YAML::Key << "Texture" << YAML::Value << "None";
+			
 			out << YAML::Key << "Tiling" << YAML::Value << component.Tiling;
 			out << YAML::Key << "Offset" << YAML::Value << component.SubTextureOffset;
 			out << YAML::Key << "CellSize" << YAML::Value << component.SubTextureCellSize;
@@ -318,6 +318,7 @@ namespace Nebula {
 			data = YAML::LoadFile(filepath);
 		}
 		catch (YAML::ParserException e) {
+			NB_ERROR("Failed to load .nebula file '{0}'\n     {1}", filepath, e.what());
 			return false;
 		}
 
@@ -344,9 +345,9 @@ namespace Nebula {
 				auto transformComponent = entity["TransformComponent"];
 				if (transformComponent) {
 					auto& tc = deserializedEntity.GetComponent<TransformComponent>();
-					tc.LocalTranslation = transformComponent["Translation"].as<vec3>();
-					tc.LocalRotation = transformComponent["Rotation"].as<vec3>();
-					tc.LocalScale = transformComponent["Scale"].as<vec3>();
+					tc.Translation = transformComponent["Translation"].as<vec3>();
+					tc.Rotation = transformComponent["Rotation"].as<vec3>();
+					tc.Scale = transformComponent["Scale"].as<vec3>();
 				}
 
 				auto parentComponent = entity["ParentChildComponent"];
@@ -390,9 +391,8 @@ namespace Nebula {
 					src.SubTextureCellSize = spriteRendererComponent["CellSize"].as<vec2>();
 					src.SubTextureCellNum = spriteRendererComponent["CellNum"].as<vec2>();
 
-					std::string texture = spriteRendererComponent["Texture"].as<std::string>();
-					if (texture != "None")
-						src.Texture = Texture2D::Create(texture);
+					if (spriteRendererComponent["Texture"])
+						src.Texture = Texture2D::Create(spriteRendererComponent["Texture"].as<std::string>());
 				}
 
 				auto circleRendererComponent = entity["CircleRendererComponent"];
