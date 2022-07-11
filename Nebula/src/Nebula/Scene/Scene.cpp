@@ -191,7 +191,6 @@ namespace Nebula {
 	}
 
 	void Scene::CreateBox2DBody(Entity entity) {
-		//UpdateChildrenAndTransform(entity);
 		auto& world = entity.GetComponent<WorldTransformComponent>();
 		auto& transform = entity.GetComponent<TransformComponent>();
 		auto& rb2d = entity.GetComponent<Rigidbody2DComponent>();
@@ -426,7 +425,7 @@ namespace Nebula {
 			Renderer2D::Draw(NB_QUAD, Entity{ entity, this });
 		}
 
-		auto CircleGroup = m_Registry.view<TransformComponent, CircleRendererComponent>();
+		auto CircleGroup = m_Registry.view<CircleRendererComponent>();
 		for (auto entity : CircleGroup) {
 			Renderer2D::Draw(NB_CIRCLE, Entity{ entity, this });
 		}

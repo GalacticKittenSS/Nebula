@@ -717,6 +717,7 @@ namespace Nebula {
 			DisplayAddComponentEntry<Rigidbody2DComponent>("Rigidbody 2D");
 			DisplayAddComponentEntry<BoxCollider2DComponent>("Box Collider 2D");
 			DisplayAddComponentEntry<CircleColliderComponent>("Circle Collider 2D");
+
 			ImGui::EndPopup();
 		}
 
