@@ -923,11 +923,6 @@ namespace Nebula {
 				component.Type = (Rigidbody2DComponent::BodyType)componentType;
 
 			DrawBool("Fixed Rotation", component.FixedRotation);
-
-			DrawVec1Control("Density", component.Density, 0.01f, 0.0f, 1.0f);
-			DrawVec1Control("Friction", component.Friction, 0.01f, 0.0f, 1.0f);
-			DrawVec1Control("Restitution", component.Restitution, 0.01f, 0.0f, 1.0f);
-			DrawVec1Control("Restitution Threshold", component.RestitutionThreshold, 0.01f, 0.0f);
 		}, true);
 
 		DrawComponent<BoxCollider2DComponent>("Box Collider 2D", entity, [](auto& component, Entity entity) {
@@ -948,6 +943,11 @@ namespace Nebula {
 				int newCategory = pow(2, categoryIndex);
 				component.UpdateFilters(newCategory, newCategory);
 			}
+
+			DrawVec1Control("Density", component.Density, 0.01f, 0.0f, 1.0f);
+			DrawVec1Control("Friction", component.Friction, 0.01f, 0.0f, 1.0f);
+			DrawVec1Control("Restitution", component.Restitution, 0.01f, 0.0f, 1.0f);
+			DrawVec1Control("Restitution Threshold", component.RestitutionThreshold, 0.01f, 0.0f);
 		}, true);
 
 		DrawComponent<CircleColliderComponent>("Circle Collider", entity, [](auto& component, Entity entity) {
@@ -968,6 +968,11 @@ namespace Nebula {
 				int newCategory = pow(2, categoryIndex);
 				component.UpdateFilters(newCategory, newCategory);
 			}
+
+			DrawVec1Control("Density", component.Density, 0.01f, 0.0f, 1.0f);
+			DrawVec1Control("Friction", component.Friction, 0.01f, 0.0f, 1.0f);
+			DrawVec1Control("Restitution", component.Restitution, 0.01f, 0.0f, 1.0f);
+			DrawVec1Control("Restitution Threshold", component.RestitutionThreshold, 0.01f, 0.0f);
 		}, true);
 	}
 }

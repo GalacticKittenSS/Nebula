@@ -161,11 +161,6 @@ namespace Nebula {
 			M = 0x1000, N = 0x2000, O = 0x4000, P = 0x8000
 		};
 
-		float Density = 1.0f;
-		float Friction = 0.5f;
-		float Restitution = 0.0f;
-		float RestitutionThreshold = 0.5f;
-
 		void* RuntimeBody = nullptr;
 
 		Rigidbody2DComponent() = default;
@@ -188,6 +183,11 @@ namespace Nebula {
 		Rigidbody2DComponent::Filters Category = Rigidbody2DComponent::Filters::A;
 		uint16_t Mask = 0xFFFF;
 
+		float Density = 1.0f;
+		float Friction = 0.5f;
+		float Restitution = 0.0f;
+		float RestitutionThreshold = 0.5f;
+
 		void* RuntimeFixture = nullptr;
 
 		BoxCollider2DComponent() = default;
@@ -202,6 +202,11 @@ namespace Nebula {
 
 		uint16_t Category = Rigidbody2DComponent::Filters::A;
 		uint16_t Mask = 0xFFFF;
+
+		float Density = 1.0f;
+		float Friction = 0.5f;
+		float Restitution = 0.0f;
+		float RestitutionThreshold = 0.5f;
 
 		void* RuntimeFixture = nullptr;
 

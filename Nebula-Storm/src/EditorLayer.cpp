@@ -340,40 +340,8 @@ namespace Nebula {
 			Renderer2D::DrawQuad(sizeof(s_CubeVertexPos) / sizeof(vec4), s_CubeVertexPos, s_CubeTexturePos, translate(m_EditorCam.GetPosition()) * scale(vec3(1000.0f)), vec4(1.0f), m_Backdrop, 1.0f);
 		}
 
-		if (m_ShowColliders) {
-			// Calculate z index for translation
-			float zIndex = 0.001f;
-			vec3 cameraForwardDirection = m_EditorCam.GetForwardDirection();
-			vec3 projectionCollider = cameraForwardDirection * vec3(zIndex);
-
-			auto CircleView = m_ActiveScene->GetAllEntitiesWith<WorldTransformComponent, CircleColliderComponent>();
-			for (auto entity : CircleView) {
-				auto [wtc, cc] = CircleView.get<WorldTransformComponent, CircleColliderComponent>(entity);
-
-				vec3 wTranslation, wRotation, wScale;
-				DecomposeTransform(wtc.Transform, wTranslation, wRotation, wScale);
-
-				vec3 translation = wTranslation + vec3(cc.Offset, -projectionCollider.z);
-				vec3 Scale = wScale * vec3(cc.Radius * 2.0f);
-
-				mat4 transform = translate(vec3(translation)) * scale(Scale);
-				Renderer2D::DrawCircle(transform, vec4(0.0f, 1.0f, 0.0f, 1.0f), 0.05f);
-			}
-
-			auto BoxView = m_ActiveScene->GetAllEntitiesWith<WorldTransformComponent, BoxCollider2DComponent>();
-			for (auto entity : BoxView) {
-				auto [wtc, bc2d] = BoxView.get<WorldTransformComponent, BoxCollider2DComponent>(entity);
-
-				vec3 wTranslation, wRotation, wScale;
-				DecomposeTransform(wtc.Transform, wTranslation, wRotation, wScale);
-
-				vec3 translation = wTranslation + vec3(bc2d.Offset, 0.001f);
-				vec3 Scale = wScale * vec3(bc2d.Size) * 2.0f;
-
-				mat4 transform = translate(translation) * toMat4(quat(wRotation)) * scale(Scale);
-				Renderer2D::Draw(NB_RECT, transform, vec4(0.0f, 1.0f, 0.0f, 1.0f));
-			}
-		}
+		if (m_ShowColliders)
+			RenderColliders();
 		
 		Renderer2D::EndScene();
 		Renderer2D::SetBackCulling(true);
@@ -382,13 +350,56 @@ namespace Nebula {
 		{
 			if (Entity selectedEntity = m_SceneHierarchy.GetSelectedEntity())
 			{
-				const WorldTransformComponent& transform = selectedEntity.GetComponent<WorldTransformComponent>();
-				
 				Renderer2D::BeginScene(m_EditorCam);
-				Renderer2D::Draw(NB_RECT, transform.Transform * translate(vec3(0.0f, 0.0f, 0.01f)), vec4(1.0f, 0.5f, 0.0f, 1.0f));
+				RenderSelectionUI(selectedEntity);
 				Renderer2D::EndScene();
 			}
 		}
+	}
+
+	void EditorLayer::RenderColliders() {
+		// Calculate z index for translation
+		float zIndex = 0.001f;
+		vec3 cameraForwardDirection = m_EditorCam.GetForwardDirection();
+		vec3 projectionCollider = cameraForwardDirection * vec3(zIndex);
+
+		auto CircleView = m_ActiveScene->GetAllEntitiesWith<WorldTransformComponent, CircleColliderComponent>();
+		for (auto entity : CircleView) {
+			auto [wtc, cc] = CircleView.get<WorldTransformComponent, CircleColliderComponent>(entity);
+
+			vec3 wTranslation, wRotation, wScale;
+			DecomposeTransform(wtc.Transform, wTranslation, wRotation, wScale);
+
+			vec3 Scale = wScale.x * vec3(cc.Radius * 2.0f);
+
+			mat4 transform = translate(wTranslation) * toMat4(quat(wRotation))
+				* translate(vec3(cc.Offset, -projectionCollider.z)) * scale(Scale);
+			Renderer2D::DrawCircle(transform, vec4(0.0f, 1.0f, 0.0f, 1.0f), 0.05f);
+		}
+
+		auto BoxView = m_ActiveScene->GetAllEntitiesWith<WorldTransformComponent, BoxCollider2DComponent>();
+		for (auto entity : BoxView) {
+			auto [wtc, bc2d] = BoxView.get<WorldTransformComponent, BoxCollider2DComponent>(entity);
+
+			vec3 wTranslation, wRotation, wScale;
+			DecomposeTransform(wtc.Transform, wTranslation, wRotation, wScale);
+
+			vec3 Scale = wScale * vec3(bc2d.Size) * 2.0f;
+
+			mat4 transform = translate(wTranslation) * toMat4(quat(wRotation)) *
+				translate(vec3(bc2d.Offset, zIndex)) * scale(Scale);
+			Renderer2D::Draw(NB_RECT, transform, vec4(0.0f, 1.0f, 0.0f, 1.0f));
+		}
+	}
+
+	void EditorLayer::RenderSelectionUI(Entity selectedEntity) {
+		const WorldTransformComponent& transform = selectedEntity.GetComponent<WorldTransformComponent>();
+
+		if (selectedEntity.HasComponent<SpriteRendererComponent>() || selectedEntity.HasComponent<CircleRendererComponent>())
+			Renderer2D::Draw(NB_RECT, transform.Transform * translate(vec3(0.0f, 0.0f, 0.01f)), vec4(1.0f, 0.5f, 0.0f, 1.0f));
+
+		for (auto& child : selectedEntity.GetParentChild().ChildrenIDs)
+			RenderSelectionUI({ child, selectedEntity });
 	}
 
 	void EditorLayer::UI_GameView() {

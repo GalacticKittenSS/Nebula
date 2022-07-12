@@ -25,6 +25,9 @@ namespace Nebula {
 		bool OnKeyPressed(KeyPressedEvent& e);
 		bool OnMousePressed(MouseButtonPressedEvent& e);
 
+		void RenderSelectionUI(Entity selectedEntity);
+		void RenderColliders();
+
 		void Resize();
 		void GetPixelData();
 

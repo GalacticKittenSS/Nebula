@@ -82,15 +82,15 @@ Entities:
     Rigidbody2DComponent:
       BodyType: Dynamic
       FixedRotation: false
-      Density: 1
-      Friction: 0.5
-      Restitution: 0
-      RestitutionThreshold: 0.5
     Box2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
       Category: 1
       Mask: 65535
+      Density: 1
+      Friction: 0.5
+      Restitution: 0
+      RestitutionThreshold: 0.5
   - Entity: 1734186555264958028
     TagComponent:
       Tag: Sprite
@@ -112,15 +112,15 @@ Entities:
     Rigidbody2DComponent:
       BodyType: Dynamic
       FixedRotation: false
-      Density: 1
-      Friction: 0.5
-      Restitution: 0
-      RestitutionThreshold: 0.5
     Box2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
       Category: 1
       Mask: 65535
+      Density: 1
+      Friction: 0.5
+      Restitution: 0
+      RestitutionThreshold: 0.5
   - Entity: 16434448802742922228
     TagComponent:
       Tag: Circle
@@ -139,15 +139,15 @@ Entities:
     Rigidbody2DComponent:
       BodyType: Static
       FixedRotation: false
-      Density: 1
-      Friction: 0.5
-      Restitution: 0.75999999
-      RestitutionThreshold: 0.689999998
     CircleColliderComponent:
       Offset: [0, 0]
       Radius: 0.5
       Category: 1
       Mask: 65535
+      Density: 1
+      Friction: 0.5
+      Restitution: 0.75999999
+      RestitutionThreshold: 0.689999998
   - Entity: 11691747497498017467
     TagComponent:
       Tag: Sprite
@@ -168,15 +168,15 @@ Entities:
     Rigidbody2DComponent:
       BodyType: Dynamic
       FixedRotation: false
-      Density: 1
-      Friction: 0.5
-      Restitution: 0
-      RestitutionThreshold: 0.5
     Box2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
       Category: 1
       Mask: 65535
+      Density: 1
+      Friction: 0.5
+      Restitution: 0
+      RestitutionThreshold: 0.5
   - Entity: 2555061558569917065
     TagComponent:
       Tag: Sprite
@@ -197,15 +197,15 @@ Entities:
     Rigidbody2DComponent:
       BodyType: Static
       FixedRotation: false
-      Density: 1
-      Friction: 1
-      Restitution: 0.0900000036
-      RestitutionThreshold: 1.14999998
     Box2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
       Category: 1
       Mask: 65535
+      Density: 1
+      Friction: 1
+      Restitution: 0.0900000036
+      RestitutionThreshold: 1.14999998
   - Entity: 8525815086722917192
     TagComponent:
       Tag: Dynamic
@@ -226,15 +226,15 @@ Entities:
     Rigidbody2DComponent:
       BodyType: Dynamic
       FixedRotation: false
-      Density: 1
-      Friction: 0.5
-      Restitution: 0.150000006
-      RestitutionThreshold: 0.5
     Box2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
       Category: 1
       Mask: 65535
+      Density: 1
+      Friction: 0.5
+      Restitution: 0.150000006
+      RestitutionThreshold: 0.5
   - Entity: 6961276783589167595
     TagComponent:
       Tag: Static
@@ -255,15 +255,15 @@ Entities:
     Rigidbody2DComponent:
       BodyType: Static
       FixedRotation: false
-      Density: 1
-      Friction: 0
-      Restitution: 0.810000002
-      RestitutionThreshold: 0.720000029
     Box2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
       Category: 1
       Mask: 65535
+      Density: 1
+      Friction: 0
+      Restitution: 0.810000002
+      RestitutionThreshold: 0.720000029
   - Entity: 4238392629824766104
     TagComponent:
       Tag: Sprite
@@ -284,15 +284,15 @@ Entities:
     Rigidbody2DComponent:
       BodyType: Static
       FixedRotation: false
-      Density: 1
-      Friction: 0.5
-      Restitution: 0.219999999
-      RestitutionThreshold: 0.800000012
     Box2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
       Category: 1
       Mask: 1
+      Density: 1
+      Friction: 0.5
+      Restitution: 0.219999999
+      RestitutionThreshold: 0.800000012
   - Entity: 17924338926232536196
     TagComponent:
       Tag: Sprite
@@ -313,15 +313,15 @@ Entities:
     Rigidbody2DComponent:
       BodyType: Static
       FixedRotation: false
-      Density: 1
-      Friction: 1
-      Restitution: 0.0900000036
-      RestitutionThreshold: 0.860000014
     Box2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
       Category: 1
       Mask: 65535
+      Density: 1
+      Friction: 1
+      Restitution: 0.0900000036
+      RestitutionThreshold: 0.860000014
   - Entity: 17945224244753102173
     TagComponent:
       Tag: Sprite
@@ -342,15 +342,15 @@ Entities:
     Rigidbody2DComponent:
       BodyType: Dynamic
       FixedRotation: false
-      Density: 1
-      Friction: 0.5
-      Restitution: 0
-      RestitutionThreshold: 0.5
     Box2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
       Category: 1
       Mask: 65535
+      Density: 1
+      Friction: 0.5
+      Restitution: 0
+      RestitutionThreshold: 0.5
   - Entity: 12392182606285594567
     TagComponent:
       Tag: Sprite
@@ -371,12 +371,12 @@ Entities:
     Rigidbody2DComponent:
       BodyType: Dynamic
       FixedRotation: false
-      Density: 1
-      Friction: 0.5
-      Restitution: 0
-      RestitutionThreshold: 0.5
     Box2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
       Category: 1
       Mask: 65535
+      Density: 1
+      Friction: 0.5
+      Restitution: 0
+      RestitutionThreshold: 0.5
