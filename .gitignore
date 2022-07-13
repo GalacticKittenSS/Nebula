@@ -1,11 +1,12 @@
 //DIRECTORIES
 .vs/
+
 **/bin/
 bin-obj/
 bin-int/
-[Bb]ackups/
+Intermediates/
+
 [Pp]remake/
-Nebula/Modules/VulkanSDK/
 __pycache__/
 **/cache/
 
@@ -14,6 +15,8 @@ __pycache__/
 *.user
 *.vcxproj
 *.vcxproj.filters
+*.csproj
+
 *.log
-imgui.ini
 *.json
+imgui.ini

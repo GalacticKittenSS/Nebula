@@ -1,9 +1,8 @@
 #include "nbpch.h"
 #include "Application.h"
 
-#include <filesystem>
-
 #include "Nebula/Renderer/Renderer.h"
+#include "Nebula/Scripting/ScriptEngine.h"
 
 namespace Nebula {
 	Application* Application::s_Instance = nullptr;
@@ -22,6 +21,7 @@ namespace Nebula {
 
 		Time::Init();
 		Renderer::Init();
+		ScriptEngine::Init();
 
 		m_ImGui = new ImGuiLayer();
 		PushOverlay(m_ImGui);
@@ -30,6 +30,7 @@ namespace Nebula {
 	Application::~Application() {
 		NB_PROFILE_FUNCTION();
 
+		ScriptEngine::Shutdown();
 		Renderer::Shutdown();
 	}
 

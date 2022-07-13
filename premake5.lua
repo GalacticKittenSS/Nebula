@@ -24,7 +24,10 @@ group "Dependencies"
 group ""
 
 --The Nebula Engine
-include "Nebula"
+group "Core"
+	include "Nebula"
+	include "Nebula-ScriptCore"
+group ""
 
 --The Nebula Editor
 include "Nebula-Storm"

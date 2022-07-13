@@ -14,6 +14,7 @@ includedir["Spdlog"] =		"%{wks.location}/Nebula/Modules/spdlog/include"
 includedir["Stb"] =			"%{wks.location}/Nebula/Modules/stb_image"
 includedir["Yaml"] =		"%{wks.location}/Nebula/Modules/yaml-cpp/include"
 includedir["FreetypeGL"] =	"%{wks.location}/Nebula/Modules/FreetypeGL/include"
+includedir["mono"] =	    "%{wks.location}/Nebula/Modules/Mono/include"
 
 includedir["shaderc"] =		"%{wks.location}/Nebula/Modules/shaderc/include"
 includedir["SPIRV_Cross"] = "%{wks.location}/Nebula/Modules/SPIRV-Cross"
@@ -21,8 +22,11 @@ includedir["VulkanSDK"] = "	 %{VULKAN_SDK}/Include"
 
 LibraryDir = {}
 LibraryDir["VulkanSDK"] = "%{VULKAN_SDK}/Lib"
+LibraryDir["mono"] = "%{wks.location}/Nebula/Modules/Mono/lib/%{cfg.buildcfg}"
 
 Library = {}
+Library["mono"] = "%{LibraryDir.mono}/libmono-static-sgen.lib"
+
 Library["Vulkan"] = "%{LibraryDir.VulkanSDK}/vulkan-1.lib"
 Library["VulkanUtils"] = "%{LibraryDir.VulkanSDK}/VkLayer_utils.lib"
 
@@ -40,3 +44,9 @@ Library["SPIRV_Cross_GLSL_Release"] = "%{LibraryDir.VulkanSDK}/spirv-cross-glsl.
 
 Library["Freetype_Debug"] = "%{wks.location}/Nebula/Modules/FreetypeGL/Freetype/Freetype_Debug.lib"
 Library["Freetype"] = "%{wks.location}/Nebula/Modules/FreetypeGL/Freetype/Freetype.lib"
+
+-- Windows
+Library["WinSock"] = "Ws2_32.lib"
+Library["WinMM"] = "Winmm.lib"
+Library["WinVersion"] = "Version.lib"
+Library["BCrypt"] = "BCrypt.lib"

@@ -42,7 +42,8 @@ project "Nebula"
 		"%{includedir.Stb}",
 		"%{includedir.Yaml}",
 		"%{includedir.VulkanSDK}",
-		"%{includedir.FreetypeGL}"
+		"%{includedir.FreetypeGL}",
+		"%{includedir.mono}"
 	}
 
 	links { 
@@ -52,7 +53,9 @@ project "Nebula"
 		"ImGui",
 		"yaml-cpp",
 		"FreetypeGL",
-		"opengl32.lib"
+		"opengl32.lib",
+
+		"%{Library.mono}"
 	}
 	
 	filter "files:Modules/imguizmo/**.cpp"
@@ -69,6 +72,13 @@ project "Nebula"
 
 	filter "system:windows"
 		systemversion "latest"
+
+		links {
+			"%{Library.WinSock}",
+			"%{Library.WinMM}",
+			"%{Library.WinVersion}",
+			"%{Library.BCrypt}"
+		}
 
 	filter "configurations:Debug"
 		defines "NB_DEBUG"

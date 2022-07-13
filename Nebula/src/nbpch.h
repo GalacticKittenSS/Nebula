@@ -17,6 +17,8 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include <filesystem>
+
 #include "Nebula/Core/Log.h"
 #include "Nebula/Debug/Instrumentor.h"
 #include "Nebula/Maths/Maths.h"
