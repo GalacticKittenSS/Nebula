@@ -255,7 +255,7 @@ namespace Nebula {
 		}
 
 		if (entity.HasComponent<BoxCollider2DComponent>()) {
-			out << YAML::Key << "Box2DComponent";
+			out << YAML::Key << "BoxCollider2DComponent";
 			out << YAML::BeginMap; // BoxCollider2DComponent
 
 			auto& bc2dComponent = entity.GetComponent<BoxCollider2DComponent>();
@@ -432,7 +432,7 @@ namespace Nebula {
 					rb2d.FixedRotation = rigidbody2DComponent["FixedRotation"].as<bool>();
 				}
 
-				auto box2DComponent = entity["Box2DComponent"];
+				auto box2DComponent = entity["BoxCollider2DComponent"];
 				if (box2DComponent)
 				{
 					auto& bc2d = deserializedEntity.AddComponent<BoxCollider2DComponent>();

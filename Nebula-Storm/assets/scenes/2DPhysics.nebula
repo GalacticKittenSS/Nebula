@@ -82,7 +82,7 @@ Entities:
     Rigidbody2DComponent:
       BodyType: Dynamic
       FixedRotation: false
-    Box2DComponent:
+    BoxCollider2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
       Category: 1
@@ -112,7 +112,7 @@ Entities:
     Rigidbody2DComponent:
       BodyType: Dynamic
       FixedRotation: false
-    Box2DComponent:
+    BoxCollider2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
       Category: 1
@@ -168,7 +168,7 @@ Entities:
     Rigidbody2DComponent:
       BodyType: Dynamic
       FixedRotation: false
-    Box2DComponent:
+    BoxCollider2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
       Category: 1
@@ -197,7 +197,7 @@ Entities:
     Rigidbody2DComponent:
       BodyType: Static
       FixedRotation: false
-    Box2DComponent:
+    BoxCollider2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
       Category: 1
@@ -226,7 +226,7 @@ Entities:
     Rigidbody2DComponent:
       BodyType: Dynamic
       FixedRotation: false
-    Box2DComponent:
+    BoxCollider2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
       Category: 1
@@ -255,7 +255,7 @@ Entities:
     Rigidbody2DComponent:
       BodyType: Static
       FixedRotation: false
-    Box2DComponent:
+    BoxCollider2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
       Category: 1
@@ -284,7 +284,7 @@ Entities:
     Rigidbody2DComponent:
       BodyType: Static
       FixedRotation: false
-    Box2DComponent:
+    BoxCollider2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
       Category: 1
@@ -313,7 +313,7 @@ Entities:
     Rigidbody2DComponent:
       BodyType: Static
       FixedRotation: false
-    Box2DComponent:
+    BoxCollider2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
       Category: 1
@@ -342,7 +342,7 @@ Entities:
     Rigidbody2DComponent:
       BodyType: Dynamic
       FixedRotation: false
-    Box2DComponent:
+    BoxCollider2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
       Category: 1
@@ -371,7 +371,7 @@ Entities:
     Rigidbody2DComponent:
       BodyType: Dynamic
       FixedRotation: false
-    Box2DComponent:
+    BoxCollider2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
       Category: 1

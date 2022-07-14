@@ -13,11 +13,6 @@
 	url = https://github.com/GalacticKittenSS/imgui
 	branch = docking
 	ignore = untracked
-[submodule "Nebula/Modules/glm"]
-	path = Nebula/Modules/glm
-	url = https://github.com/g-truc/glm
-	branch = master
-	ignore = all
 [submodule "Nebula/Modules/yaml-cpp"]
 	path = Nebula/Modules/yaml-cpp
 	url = https://github.com/TheCherno/yaml-cpp

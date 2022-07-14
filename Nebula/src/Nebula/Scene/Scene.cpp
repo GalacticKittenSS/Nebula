@@ -278,20 +278,6 @@ namespace Nebula {
 			b2Body* body = (b2Body*)rb2d.RuntimeBody;
 			auto position = body->GetPosition();
 
-			/*if (entity.HasComponent<BoxCollider2DComponent>()) {
-				auto& bc2d = entity.GetComponent<BoxCollider2DComponent>();
-
-				position.x -= bc2d.Offset.x;
-				position.y -= bc2d.Offset.y;
-			}
-
-			if (entity.HasComponent<CircleColliderComponent>()) {
-				auto& cc = entity.GetComponent<CircleColliderComponent>();
-
-				position.x -= cc.Offset.x;
-				position.y -= cc.Offset.y;
-			}*/
-			
 			vec3 wTranslation, wRotation, wScale;
 			DecomposeTransform(world.Transform, wTranslation, wRotation, wScale);
 			
@@ -299,7 +285,7 @@ namespace Nebula {
 			transform.Translation.y += position.y - wTranslation.y;
 			transform.Rotation.z += body->GetAngle() - wRotation.z;
 
-			CalculateGlobalTransform(entity);
+			UpdateChildrenAndTransform(entity);
 		}
 	}
 
