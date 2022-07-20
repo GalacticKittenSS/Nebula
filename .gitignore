@@ -19,4 +19,7 @@ __pycache__/
 
 *.log
 *.json
+
 imgui.ini
+Nebula-ScriptCore.pdb
+Nebula-ScriptCore.dll
