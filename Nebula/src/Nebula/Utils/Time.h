@@ -41,7 +41,7 @@ namespace Nebula {
 		}
 
 		float Elapsed() {
-			return (Time::Now() - m_Start) / 1000.0f;
+			return Time::Now() - m_Start;
 		}
 	private:
 		float m_Start;
