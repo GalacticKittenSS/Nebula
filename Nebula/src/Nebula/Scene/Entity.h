@@ -61,6 +61,9 @@ namespace Nebula {
 		TransformComponent& GetTransform() { return GetComponent<TransformComponent>(); }
 		ParentChildComponent& GetParentChild() { return GetComponent<ParentChildComponent>(); }
 
+		void CalculateTransform();
+		void UpdateChildren();
+
 		operator bool() const { return m_EntityHandle != entt::null; }
 		operator uint32_t() const { return (uint32_t)m_EntityHandle; }
 		operator int() const { return (int)m_EntityHandle; }
@@ -73,9 +76,6 @@ namespace Nebula {
 		entt::entity m_EntityHandle{ entt::null };
 		Scene* m_Scene = nullptr;
 	};
-
-	void CalculateGlobalTransform(Entity& entity);
-	void UpdateChildrenAndTransform(Entity& entity);
 
 	class ScriptableEntity {
 	public:

@@ -462,8 +462,12 @@ namespace Nebula {
 				}
 			}
 
-			for (auto entity : m_Scene->GetAllEntitiesWith<TransformComponent>())
-				CalculateGlobalTransform(Entity{ entity, m_Scene.get() });
+			auto view = m_Scene->GetAllEntitiesWith<TransformComponent>();
+			for (auto id : view)
+			{
+				Entity entity = { id, m_Scene.get() };
+				entity.CalculateTransform();
+			}
 		}
 
 		return true;

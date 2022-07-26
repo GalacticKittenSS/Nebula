@@ -5,35 +5,30 @@
 #include "box2d/b2_fixture.h"
 
 namespace Nebula {
-	void CalculateGlobalTransform(Entity& entity) {
-		auto& world = entity.GetComponent<WorldTransformComponent>();
-		mat4 transform = entity.GetTransform().CalculateMatrix();
+	void Entity::CalculateTransform() {
+		auto& world = GetComponent<WorldTransformComponent>();
+		mat4 transform = GetTransform().CalculateMatrix();
 		world.Transform = transform;
 		
-		UUID parentID = entity.GetParentChild().Parent;
+		UUID parentID = GetParentChild().Parent;
 		if (parentID) {
-			Entity parent = { parentID, entity };
-			CalculateGlobalTransform(parent);
+			Entity parent = { parentID, m_Scene };
+			parent.CalculateTransform();
 			auto& pWorld = parent.GetComponent<WorldTransformComponent>();
 			world.Transform = pWorld.Transform * transform;
 		}
 	}
 
-	void UpdateChildrenAndTransform(Entity& entity) {
-		CalculateGlobalTransform(entity);
+	void Entity::UpdateChildren() {
+		CalculateTransform();
 
-		for (UUID child : entity.GetParentChild().ChildrenIDs) {
-			Entity c = { child, entity };
-			if (!c.GetParentChild().ChildrenIDs.size())
-				CalculateGlobalTransform(c);
-			else
-				UpdateChildrenAndTransform(c);
-		}
-
-		if (entity.HasComponent<Rigidbody2DComponent>()) {
-			Rigidbody2DComponent& rb2d = entity.GetComponent<Rigidbody2DComponent>();
+		for (UUID child : GetParentChild().ChildrenIDs)
+			Entity{ child, m_Scene }.UpdateChildren();
+		
+		if (HasComponent<Rigidbody2DComponent>()) {
+			Rigidbody2DComponent& rb2d = GetComponent<Rigidbody2DComponent>();
 			if (rb2d.RuntimeBody) {
-				WorldTransformComponent& transform = entity.GetComponent<WorldTransformComponent>();
+				WorldTransformComponent& transform = GetComponent<WorldTransformComponent>();
 
 				b2Body* body = (b2Body*)rb2d.RuntimeBody;
 

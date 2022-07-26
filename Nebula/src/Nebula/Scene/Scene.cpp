@@ -285,7 +285,7 @@ namespace Nebula {
 			transform.Translation.y += position.y - wTranslation.y;
 			transform.Rotation.z += body->GetAngle() - wRotation.z;
 
-			UpdateChildrenAndTransform(entity);
+			entity.CalculateTransform();
 		}
 	}
 

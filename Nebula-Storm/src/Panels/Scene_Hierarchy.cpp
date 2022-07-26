@@ -51,7 +51,7 @@ namespace Nebula {
 		parent.AddChild(childID);
 		
 		child.Parent = parentEntity.GetUUID();
-		UpdateChildrenAndTransform(parentEntity);
+		parentEntity.UpdateChildren();
 	}
 	
 	static void EntityPayload(Scene* currentScene) {
@@ -135,7 +135,7 @@ namespace Nebula {
 						if (childE.GetParentChild().Parent)
 							Entity{ childE.GetParentChild().Parent, m_Context.get() }.GetParentChild().RemoveChild(child);
 						childE.GetParentChild().Parent = NULL;
-						CalculateGlobalTransform(childE);
+						childE.CalculateTransform();
 
 						uint32_t childIndex = m_Context->m_SceneOrder.FindIndex(child);
 
