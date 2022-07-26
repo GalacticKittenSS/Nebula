@@ -46,6 +46,7 @@ namespace Nebula {
 
 		Entity GetPrimaryCamera();
 		Entity GetEntityWithTag(std::string tag);
+		Entity GetEntityWithUUID(UUID id);
 
 		template <typename... Components>
 		auto GetAllEntitiesWith() {
@@ -60,10 +61,16 @@ namespace Nebula {
 		void UpdatePhysics();
 		void DestroyPhysics();
 
+		void InitScripts();
+		void UpdateScripts();
+		void DestroyScripts();
+
 		template<typename T>
 		void OnComponentAdded(Entity entity, T& component);
 	private:
 		entt::registry m_Registry;
+		std::unordered_map<UUID, entt::entity> m_EntityMap;
+
 		uint32_t m_ViewportWidth = 0, m_ViewportHeight = 0;
 
 		b2World* m_PhysicsWorld = nullptr;

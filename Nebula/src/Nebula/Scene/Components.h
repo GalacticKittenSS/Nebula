@@ -61,6 +61,40 @@ namespace Nebula {
 
 	struct WorldTransformComponent {
 		mat4 Transform = mat4(1.0f);
+
+		WorldTransformComponent() = default;
+		WorldTransformComponent(const WorldTransformComponent&) = default;
+	};
+
+	struct CameraComponent {
+		SceneCamera Camera;
+		bool Primary = true;
+		bool FixedAspectRatio = false;
+
+		CameraComponent() = default;
+		CameraComponent(const CameraComponent&) = default;
+	};
+
+	struct ScriptComponent
+	{
+		std::string ClassName;
+
+		ScriptComponent() = default;
+		ScriptComponent(const ScriptComponent&) = default;
+	};
+
+	class ScriptableEntity;
+	struct NativeScriptComponent {
+		ScriptableEntity* Instance = nullptr;
+
+		ScriptableEntity*(*InstantiateScript)();
+		void (*DestroyScript)(NativeScriptComponent*);
+
+		template<typename T>
+		void Bind() {
+			InstantiateScript = []() { return static_cast<ScriptableEntity*>(new T()); };
+			DestroyScript = [](NativeScriptComponent* nsc) { delete nsc->Instance; nsc->Instance = nullptr; };
+		}
 	};
 
 	struct SpriteRendererComponent {
@@ -122,29 +156,6 @@ namespace Nebula {
 				filepath += "Regular";
 
 			Ft = new Font(name, filepath + ".ttf", Resolution);
-		}
-	};
-
-	struct CameraComponent {
-		SceneCamera Camera;
-		bool Primary = true;
-		bool FixedAspectRatio = false;
-
-		CameraComponent() = default;
-		CameraComponent(const CameraComponent&) = default;
-	};
-
-	class ScriptableEntity;
-	struct NativeScriptComponent {
-		ScriptableEntity* Instance = nullptr;
-
-		ScriptableEntity*(*InstantiateScript)();
-		void (*DestroyScript)(NativeScriptComponent*);
-
-		template<typename T>
-		void Bind() {
-			InstantiateScript = []() { return static_cast<ScriptableEntity*>(new T()); };
-			DestroyScript = [](NativeScriptComponent* nsc) { delete nsc->Instance; nsc->Instance = nullptr; };
 		}
 	};
 
@@ -223,8 +234,8 @@ namespace Nebula {
 	};
 	using AllComponents = ComponentGroup <
 		ParentChildComponent, TransformComponent, WorldTransformComponent,
+		CameraComponent, ScriptComponent, NativeScriptComponent,
 		SpriteRendererComponent, CircleRendererComponent, StringRendererComponent,
-		Rigidbody2DComponent, BoxCollider2DComponent, CircleColliderComponent,
-		CameraComponent, NativeScriptComponent
+		Rigidbody2DComponent, BoxCollider2DComponent, CircleColliderComponent
 	>;
 }

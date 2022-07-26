@@ -3,6 +3,7 @@
 
 #include "Nebula/Renderer/Renderer2D.h"
 #include "Nebula/Utils/Time.h"
+#include "Nebula/Scripting/ScriptEngine.h"
 
 #include "Components.h"
 #include "Entity.h"
@@ -103,7 +104,8 @@ namespace Nebula {
 
 	Entity Scene::CreateEntity(UUID uuid, const std::string& name) {
 		Entity entity = { m_Registry.create(), this };
-		m_SceneOrder.push_back(uuid);
+		m_SceneOrder.push_back(uuid); 
+		m_EntityMap[uuid] = entity;
 
 		auto& idc = entity.AddComponent<IDComponent>();
 		idc.ID = uuid;
@@ -162,6 +164,7 @@ namespace Nebula {
 		}
 
 		m_SceneOrder.remove(entity.GetUUID());
+		m_EntityMap.erase(entity.GetUUID());
 		m_Registry.destroy(entity);
 	}
 
@@ -188,6 +191,13 @@ namespace Nebula {
 
 		NB_ERROR("Could Not Find Entity with name {0}", tag);
 		return Entity{};
+	}
+
+	Entity Scene::GetEntityWithUUID(UUID id) {
+		bool found = m_EntityMap.find(id) != m_EntityMap.end();
+		NB_ASSERT(found, "Could Not Find Entity UUID");
+
+		return { m_EntityMap[id], this };
 	}
 
 	void Scene::CreateBox2DBody(Entity entity) {
@@ -317,26 +327,66 @@ namespace Nebula {
 		delete m_PhysicsWorld; m_PhysicsWorld = nullptr;
 	}
 
-	void Scene::OnRuntimeStart() {
-		InitPhysics();
-
+	void Scene::InitScripts() {
 		m_Registry.view<NativeScriptComponent>().each([=](auto entity, NativeScriptComponent& nsc) {
 			nsc.Instance = nsc.InstantiateScript();
 			nsc.Instance->m_Entity = Entity{ entity, this };
 			nsc.Instance->m_Scene = this;
 			nsc.Instance->Start();
 		});
+
+		ScriptEngine::OnRuntimeStart(this);
+
+		auto view = m_Registry.view<ScriptComponent>();
+		for (auto e : view) {
+			ScriptEngine::OnCreateEntity({ e, this });
+		}
 	}
 
-	void Scene::OnRuntimeStop() {
-		m_Registry.view<NativeScriptComponent>().each([=](auto entity, NativeScriptComponent& nsc) {
+	void Scene::UpdateScripts() {
+		auto scriptView = m_Registry.view<ScriptComponent>();
+		for (auto e : scriptView)
+			ScriptEngine::OnUpdateEntity({ e, this }, Time::DeltaTime());
+		
+		auto nativeScriptView = m_Registry.view<NativeScriptComponent>();
+		for (auto e : nativeScriptView)
+		{
+			auto& nsc = nativeScriptView.get<NativeScriptComponent>(e);
+
+			if (!nsc.Instance) 
+			{
+				nsc.Instance = nsc.InstantiateScript();
+				nsc.Instance->m_Entity = Entity{ e, this };
+				nsc.Instance->m_Scene = this;
+				nsc.Instance->Start();
+			}
+
+			nsc.Instance->Update();
+		}
+	}
+
+	void Scene::DestroyScripts() {
+		ScriptEngine::OnRuntimeStop();
+
+		auto view = m_Registry.view<NativeScriptComponent>();
+		for (auto e : view) 
+		{
+			auto& nsc = view.get<NativeScriptComponent>(e);
 			if (!nsc.Instance)
 				return;
 
 			nsc.Instance->Destroy();
 			nsc.DestroyScript(&nsc);
-		});
+		}
+	}
 
+	void Scene::OnRuntimeStart() {
+		InitPhysics();
+		InitScripts();
+	}
+
+	void Scene::OnRuntimeStop() {
+		DestroyScripts();
 		DestroyPhysics();
 	}
 
@@ -352,17 +402,7 @@ namespace Nebula {
 			}
 		}
 
-		m_Registry.view<NativeScriptComponent>().each([=](auto entity, NativeScriptComponent& nsc) {
-			if (!nsc.Instance) {
-				nsc.Instance = nsc.InstantiateScript();
-				nsc.Instance->m_Entity = Entity{ entity, this };
-				nsc.Instance->m_Scene = this;
-				nsc.Instance->Start();
-			}
-
-			nsc.Instance->Update();
-		});
-
+		UpdateScripts();
 		UpdatePhysics();
 	}
 
@@ -482,12 +522,33 @@ namespace Nebula {
 	void Scene::OnComponentAdded(Entity entity, T& component) {
 		static_assert(sizeof(T) == 0);
 	}
+	
+	template<>
+	void Scene::OnComponentAdded<IDComponent>(Entity entity, IDComponent& component) { }
 
+	template<>
+	void Scene::OnComponentAdded<TagComponent>(Entity entity, TagComponent& component) { }
+
+	template<>
+	void Scene::OnComponentAdded<ParentChildComponent>(Entity entity, ParentChildComponent& component) { }
+	
 	template<>
 	void Scene::OnComponentAdded<TransformComponent>(Entity entity, TransformComponent& component) { }
 	
 	template<>
 	void Scene::OnComponentAdded<WorldTransformComponent>(Entity entity, WorldTransformComponent& component) { }
+
+	template<>
+	void Scene::OnComponentAdded<CameraComponent>(Entity entity, CameraComponent& component) {
+		if (m_ViewportWidth > 0 && m_ViewportHeight > 0)
+			component.Camera.SetViewPortSize(m_ViewportWidth, m_ViewportHeight);
+	}
+
+	template<>
+	void Scene::OnComponentAdded<NativeScriptComponent>(Entity entity, NativeScriptComponent& component) { }
+
+	template<>
+	void Scene::OnComponentAdded<ScriptComponent>(Entity entity, ScriptComponent& component) { }
 
 	template<>
 	void Scene::OnComponentAdded<SpriteRendererComponent>(Entity entity, SpriteRendererComponent& component) { }
@@ -497,18 +558,6 @@ namespace Nebula {
 
 	template<>
 	void Scene::OnComponentAdded<StringRendererComponent>(Entity entity, StringRendererComponent& component) { }
-
-	template<>
-	void Scene::OnComponentAdded<TagComponent>(Entity entity, TagComponent& component) { }
-
-	template<>
-	void Scene::OnComponentAdded<NativeScriptComponent>(Entity entity, NativeScriptComponent& component) { }
-
-	template<>
-	void Scene::OnComponentAdded<CameraComponent>(Entity entity, CameraComponent& component) {
-		if (m_ViewportWidth > 0 && m_ViewportHeight > 0)
-			component.Camera.SetViewPortSize(m_ViewportWidth, m_ViewportHeight);
-	}
 
 	template<>
 	void Scene::OnComponentAdded<Rigidbody2DComponent>(Entity entity, Rigidbody2DComponent& component) { }
@@ -536,10 +585,4 @@ namespace Nebula {
 			CreateBox2DBody(entity);
 		}
 	}
-
-	template<>
-	void Scene::OnComponentAdded<IDComponent>(Entity entity, IDComponent& component) { }
-
-	template<>
-	void Scene::OnComponentAdded<ParentChildComponent>(Entity entity, ParentChildComponent& component) { }
 }

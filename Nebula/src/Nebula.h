@@ -9,13 +9,6 @@
 #include "Nebula/imgui/ImGui_Layer.h"
 //--------------------
 
-//----SCENES----------
-#include "Nebula/Scene/Scene.h"
-#include "Nebula/Scene/Entity.h"
-#include "Nebula/Scene/Components.h"
-#include "Nebula/Scene/Scene_Serializer.h"
-//--------------------
-
 //-----MATHS----------
 #include "Nebula/Maths/Maths.h"
 //--------------------
@@ -49,6 +42,17 @@
 #include "Nebula/Utils/Arrays.h"
 #include "Nebula/Utils/Random.h"
 #include "Nebula/Utils/Time.h"
+//--------------------
+
+//----SCRIPTS---------
+#include "Nebula/Scripting/ScriptEngine.h"
+//--------------------
+
+//----SCENES----------
+#include "Nebula/Scene/Scene.h"
+#include "Nebula/Scene/Entity.h"
+#include "Nebula/Scene/Components.h"
+#include "Nebula/Scene/Scene_Serializer.h"
 //--------------------
 
 //----Application-----

@@ -696,7 +696,6 @@ namespace Nebula {
 			auto& tag = entity.GetComponent<TagComponent>().Tag;
 
 			char buffer[256];
-			memset(buffer, 0, sizeof(buffer));
 			strncpy(buffer, tag.c_str(), sizeof(buffer));
 
 			if (ImGui::InputText("##Tag", buffer, sizeof(buffer))) {
@@ -712,12 +711,16 @@ namespace Nebula {
 
 		if (ImGui::BeginPopup("Add Component")) {
 			DisplayAddComponentEntry<CameraComponent>("Camera");
+			DisplayAddComponentEntry<ScriptComponent>("Script");
+
 			DisplayAddComponentEntry<SpriteRendererComponent>("Sprite Renderer");
 			DisplayAddComponentEntry<CircleRendererComponent>("Circle Renderer");
+			DisplayAddComponentEntry<StringRendererComponent>("String Renderer");
+			
 			DisplayAddComponentEntry<Rigidbody2DComponent>("Rigidbody 2D");
 			DisplayAddComponentEntry<BoxCollider2DComponent>("Box Collider 2D");
 			DisplayAddComponentEntry<CircleColliderComponent>("Circle Collider 2D");
-
+			
 			ImGui::EndPopup();
 		}
 
@@ -739,7 +742,7 @@ namespace Nebula {
 			if (p || r || s)
 				UpdateChildrenAndTransform(entity);
 		});
-	
+
 		DrawComponent<CameraComponent>("Camera", entity, [](auto& component, Entity entity) {
 			auto& camera = component.Camera;
 
@@ -798,6 +801,21 @@ namespace Nebula {
 					camera.SetPerspectiveFarClip(Far);
 				}
 			}
+		}, true);
+
+		DrawComponent<ScriptComponent>("Script", entity, [](auto& component, Entity entity) {
+			bool classExists = ScriptEngine::EntityClassExists(component.ClassName);
+			if (!classExists)
+				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.9f, 0.2f, 0.3f, 1.0f));
+
+			char buffer[64];
+			strncpy(buffer, component.ClassName.c_str(), sizeof(buffer));
+
+			if (ImGui::InputText("Class", buffer, sizeof(buffer)))
+				component.ClassName = std::string(buffer);
+
+			if (!classExists)
+				ImGui::PopStyleColor();
 		}, true);
 
 		DrawComponent<SpriteRendererComponent>("Sprite Renderer", entity, [](auto& component, Entity entity) {

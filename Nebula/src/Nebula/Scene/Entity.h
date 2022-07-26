@@ -11,14 +11,10 @@ namespace Nebula {
 
 		Entity(entt::entity handle, Scene* scene) : m_EntityHandle(handle), m_Scene(scene) { }
 		Entity(UUID uuid, Scene* scene) : m_Scene(scene) {
-			auto& view = m_Scene->m_Registry.view<IDComponent>();
-			for (auto& ent : view) {
-				Entity entity{ ent, m_Scene };
-				if (entity.GetUUID() == uuid) {
-					m_EntityHandle = entity;
-					break;
-				}
-			}
+			bool found = m_Scene->m_EntityMap.find(uuid) != m_Scene->m_EntityMap.end();
+			NB_ASSERT(found, "Could Not Find Entity UUID");
+
+			m_EntityHandle = m_Scene->m_EntityMap[uuid];
 		}
 
 		template<typename T, typename... Args>
