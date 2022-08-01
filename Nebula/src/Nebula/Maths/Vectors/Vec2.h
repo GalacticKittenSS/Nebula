@@ -277,7 +277,7 @@ namespace Nebula {
 
 	template<typename T>
 	inline constexpr vec<2, T> operator+(vec<2, T> const& v1, vec<2, T> const& v2) {
-		return vec<2, T>(v1.x + v2.x, v1.x + v2.x);
+		return vec<2, T>(v1.x + v2.x, v1.y + v2.y);
 	}
 
 	//Operator -
