@@ -8,6 +8,7 @@ extern "C" {
 	typedef struct _MonoObject MonoObject;
 	typedef struct _MonoMethod MonoMethod;
 	typedef struct _MonoAssembly MonoAssembly;
+	typedef struct _MonoImage MonoImage;
 }
 
 namespace Nebula {
@@ -44,6 +45,8 @@ namespace Nebula {
 		static bool EntityClassExists(const std::string& signature);
 		static Scene* GetSceneContext();
 		static const std::unordered_map<std::string, Ref<ScriptClass>> GetEntityClasses();
+		
+		static MonoImage* GetCoreAssemblyImage();
 	private:
 		static void InitMono();
 		static void ShutdownMono();
@@ -53,6 +56,7 @@ namespace Nebula {
 		static MonoObject* InstanciateClass(MonoClass* monoClass);
 
 		friend class ScriptClass;
+		friend class ScriptGlue;
 	};
 
 	class ScriptInstance

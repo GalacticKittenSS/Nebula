@@ -4,16 +4,17 @@ namespace Sandbox
 {
     public class Player : Entity
     {
+        private Rigidbody2DComponent Rigidbody;
+
         void OnCreate()
         {
             Debug.Log($"Player.OnCreate - {ID}");
+            Rigidbody = GetComponent<Rigidbody2DComponent>();
         }
 
         void OnUpdate(float ts)
         {
-            Debug.Log($"Player.OnUpdate: {ts}");
-
-            float speed = 5.0f;
+            float speed = 25.0f;
             Vector3 Velocity = Vector3.Zero;
 
             if (Input.IsKeyDown(KeyCode.W))
@@ -27,10 +28,7 @@ namespace Sandbox
                 Velocity.x = -1.0f;
 
             Velocity *= speed * ts;
-
-            Vector3 translation = Translation;
-            translation += Velocity;
-            Translation = translation;
+            Rigidbody.ApplyLinearImpulse(Velocity.xy);
         }
     }
 }

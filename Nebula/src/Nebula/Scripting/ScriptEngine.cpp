@@ -93,6 +93,7 @@ namespace Nebula {
 		LoadAssemblyClasses(s_Data->CoreAssembly);
 
 		ScriptGlue::RegisterFunctions();
+		ScriptGlue::RegisterComponents();
 		
 #if 0
 		// Retrieve and Instanciate Class (With Constructor)
@@ -173,6 +174,10 @@ namespace Nebula {
 		return s_Data->EntityClasses;
 	}
 
+	MonoImage* ScriptEngine::GetCoreAssemblyImage() {
+		return s_Data->CoreAssemblyImage;
+	}
+
 	void ScriptEngine::InitMono()
 	{
 		mono_set_assemblies_path("mono/lib");
@@ -202,8 +207,6 @@ namespace Nebula {
 		const MonoTableInfo* typeDefinitionsTable = mono_image_get_table_info(image, MONO_TABLE_TYPEDEF);
 		int32_t numTypes = mono_table_info_get_rows(typeDefinitionsTable);
 
-		MonoClass* monoClassC = mono_class_from_name(image, "Nebula", "Entity");
-
 		for (int32_t i = 0; i < numTypes; i++)
 		{
 			uint32_t cols[MONO_TYPEDEF_SIZE];
@@ -213,6 +216,9 @@ namespace Nebula {
 			const char* className = mono_metadata_string_heap(image, cols[MONO_TYPEDEF_NAME]);
 			
 			MonoClass* monoClass = mono_class_from_name(image, classNamespace, className);
+			if (!monoClass)
+				continue;
+
 			bool isEntity = mono_class_is_subclass_of(monoClass, s_Data->EntityClass.GetMonoClass(), false);
 
 			if (!isEntity || monoClass == s_Data->EntityClass.GetMonoClass())
@@ -278,12 +284,16 @@ namespace Nebula {
 	}
 
 	void ScriptInstance::InvokeOnCreate() {
-		m_ScriptClass->InvokeMethod(m_Instance, m_OnCreateMethod);
+		if (m_OnCreateMethod)
+			m_ScriptClass->InvokeMethod(m_Instance, m_OnCreateMethod);
 	}
 
 	void ScriptInstance::InvokeOnUpdate(float ts) 
 	{
-		void* param = &ts;
-		m_ScriptClass->InvokeMethod(m_Instance, m_OnUpdateMethod, &param);
+		if (m_OnUpdateMethod)
+		{
+			void* param = &ts;
+			m_ScriptClass->InvokeMethod(m_Instance, m_OnUpdateMethod, &param);
+		}
 	}
 }
