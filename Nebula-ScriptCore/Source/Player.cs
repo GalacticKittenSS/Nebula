@@ -10,6 +10,9 @@ namespace Sandbox
         {
             Debug.Log($"Player.OnCreate - {ID}");
             Rigidbody = GetComponent<Rigidbody2DComponent>();
+        
+            SpriteRendererComponent SpriteRenderer = GetComponent<SpriteRendererComponent>();
+            SpriteRenderer.Colour = new Vector4(0.0f, 1.0f, 1.0f, 1.0f);
         }
 
         void OnUpdate(float ts)

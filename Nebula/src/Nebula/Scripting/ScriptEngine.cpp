@@ -178,6 +178,10 @@ namespace Nebula {
 		return s_Data->CoreAssemblyImage;
 	}
 
+	MonoDomain* ScriptEngine::GetAppDomain() {
+		return s_Data->AppDomain;
+	}
+
 	void ScriptEngine::InitMono()
 	{
 		mono_set_assemblies_path("mono/lib");

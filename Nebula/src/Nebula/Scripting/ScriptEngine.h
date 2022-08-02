@@ -9,6 +9,7 @@ extern "C" {
 	typedef struct _MonoMethod MonoMethod;
 	typedef struct _MonoAssembly MonoAssembly;
 	typedef struct _MonoImage MonoImage;
+	typedef struct _MonoDomain MonoDomain;
 }
 
 namespace Nebula {
@@ -47,6 +48,7 @@ namespace Nebula {
 		static const std::unordered_map<std::string, Ref<ScriptClass>> GetEntityClasses();
 		
 		static MonoImage* GetCoreAssemblyImage();
+		static MonoDomain* GetAppDomain();
 	private:
 		static void InitMono();
 		static void ShutdownMono();
