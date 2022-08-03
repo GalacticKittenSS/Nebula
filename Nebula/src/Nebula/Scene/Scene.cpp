@@ -557,7 +557,7 @@ namespace Nebula {
 	void Scene::OnComponentAdded<CircleRendererComponent>(Entity entity, CircleRendererComponent& component) { }
 
 	template<>
-	void Scene::OnComponentAdded<StringRendererComponent>(Entity entity, StringRendererComponent& component) { }
+	void Scene::OnComponentAdded<StringRendererComponent>(Entity entity, StringRendererComponent& component) { component.InitiateFont(); }
 
 	template<>
 	void Scene::OnComponentAdded<Rigidbody2DComponent>(Entity entity, Rigidbody2DComponent& component) { }

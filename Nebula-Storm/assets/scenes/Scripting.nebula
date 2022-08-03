@@ -63,7 +63,36 @@ Entities:
       Children: ~
       ChildCount: 0
     TransformComponent:
-      Translation: [0, -3.40357924, 0]
+      Translation: [0, 4.64733791, 0]
+      Rotation: [0, 0, 0]
+      Scale: [12.2438126, 1, 1]
+    SpriteRendererComponent:
+      Colour: [1, 1, 1, 1]
+      Tiling: 1
+      Offset: [0, 0]
+      CellSize: [128, 128]
+      CellNum: [1, 1]
+    Rigidbody2DComponent:
+      BodyType: Static
+      FixedRotation: false
+    Box2DComponent:
+      Offset: [0, 0]
+      Size: [0.5, 0.5]
+      Category: 1
+      Mask: 65535
+      Density: 1
+      Friction: 0.5
+      Restitution: 0
+      RestitutionThreshold: 0.5
+  - Entity: 10596639639892002622
+    TagComponent:
+      Tag: Sprite
+    ParentChildComponent:
+      PrimaryParent: 0
+      Children: ~
+      ChildCount: 0
+    TransformComponent:
+      Translation: [0, -4.77309418, 0]
       Rotation: [0, 0, 0]
       Scale: [12.2438126, 1, 1]
     SpriteRendererComponent:

@@ -13,6 +13,20 @@ namespace Nebula
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static bool Entity_HasComponent(ulong entityID, Type component);
 
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static bool Entity_AddComponent(ulong entityID, Type component);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static string Entity_GetName(ulong entityID);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void Entity_SetName(ulong entityID, string name);
+        
+        // INPUT CLASS
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static bool Input_IsKeyDown(KeyCode keyCode);
+
         // TRANSFORM COMPONENT
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
@@ -32,6 +46,28 @@ namespace Nebula
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void TransformComponent_SetScale(ulong entityID, ref Vector3 scale);
+        
+        // CAMERA COMPONENT
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static bool CameraComponent_GetPrimary(ulong entityID);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void CameraComponent_SetPrimary(ulong entityID, bool primary);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static bool CameraComponent_GetFixedRatio(ulong entityID);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void CameraComponent_SetFixedRatio(ulong entityID, bool fixedRatio);
+
+        // SCRIPT COMPONENT
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static string ScriptComponent_GetClass(ulong entityID);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void ScriptComponent_SetClass(ulong entityID, string name);
 
         // SPRITE RENDERER COMPONENT
 
@@ -60,7 +96,7 @@ namespace Nebula
         internal extern static void SpriteRendererComponent_SetCellNumber(ulong entityID, ref Vector2 number);
         
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static void SpriteRendererComponent_GetTiling(ulong entityID, out float tiling);
+        internal extern static float SpriteRendererComponent_GetTiling(ulong entityID);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void SpriteRendererComponent_SetTiling(ulong entityID, float tiling);
@@ -74,30 +110,30 @@ namespace Nebula
         internal extern static void CircleRendererComponent_SetColour(ulong entityID, ref Vector4 colour);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static void CircleRendererComponent_GetRadius(ulong entityID, out float radius);
+        internal extern static float CircleRendererComponent_GetRadius(ulong entityID);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void CircleRendererComponent_SetRadius(ulong entityID, float radius);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static void CircleRendererComponent_GetThickness(ulong entityID, out float thickness);
+        internal extern static float CircleRendererComponent_GetThickness(ulong entityID);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void CircleRendererComponent_SetThickness(ulong entityID, float thickness);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static void CircleRendererComponent_GetFade(ulong entityID, out float fade);
+        internal extern static float CircleRendererComponent_GetFade(ulong entityID);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void CircleRendererComponent_SetFade(ulong entityID, float fade);
 
-        // CIRCLE RENDERER COMPONENT
+        // STRING RENDERER COMPONENT
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static void StringRendererComponent_GetText(ulong entityID, out string index);
+        internal extern static string StringRendererComponent_GetText(ulong entityID);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static void StringRendererComponent_SetText(ulong entityID, ref string index);
+        internal extern static void StringRendererComponent_SetText(ulong entityID, string index);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void StringRendererComponent_GetColour(ulong entityID, out Vector4 colour);
@@ -106,30 +142,42 @@ namespace Nebula
         internal extern static void StringRendererComponent_SetColour(ulong entityID, ref Vector4 colour);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static void StringRendererComponent_GetResolution(ulong entityID, out float resolution);
+        internal extern static float StringRendererComponent_GetResolution(ulong entityID);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void StringRendererComponent_SetResolution(ulong entityID, float resolution);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static void StringRendererComponent_GetBold(ulong entityID, out bool bold);
+        internal extern static bool StringRendererComponent_GetBold(ulong entityID);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void StringRendererComponent_SetBold(ulong entityID, bool bold);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static void StringRendererComponent_GetItalic(ulong entityID, out bool italic);
+        internal extern static bool StringRendererComponent_GetItalic(ulong entityID);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void StringRendererComponent_SetItalic(ulong entityID, bool italic);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static void StringRendererComponent_GetIndex(ulong entityID, out int index);
+        internal extern static int StringRendererComponent_GetIndex(ulong entityID);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void StringRendererComponent_SetIndex(ulong entityID, int index);
 
         // RIGIDBODY 2D COMPONENT
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static int Rigidbody2DComponent_GetBodyType(ulong entityID);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void Rigidbody2DComponent_SetBodyType(ulong entityID, int type);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static bool Rigidbody2DComponent_GetFixedRotation(ulong entityID);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void Rigidbody2DComponent_SetFixedRotation(ulong entityID, bool fixedRotation);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void Rigidbody2DComponent_ApplyLinearImpulse(ulong entityID, ref Vector2 impulse, ref Vector2 point);
@@ -142,10 +190,105 @@ namespace Nebula
         
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void Rigidbody2DComponent_ApplyForceToCenter(ulong entityID, ref Vector2 force);
-
-        // INPUT CLASS
         
+        // BOX COLLIDER 2D COMPONENT
+
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static bool Input_IsKeyDown(KeyCode keyCode);
+        internal extern static void BoxCollider2DComponent_GetSize(ulong entityID, out Vector2 size);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void BoxCollider2DComponent_SetSize(ulong entityID, ref Vector2 size);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void BoxCollider2DComponent_GetOffset(ulong entityID, out Vector2 offset);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void BoxCollider2DComponent_SetOffset(ulong entityID, ref Vector2 offset);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static int BoxCollider2DComponent_GetCategory(ulong entityID);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void BoxCollider2DComponent_SetCategory(ulong entityID, int category);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static int BoxCollider2DComponent_GetMask(ulong entityID);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void BoxCollider2DComponent_SetMask(ulong entityID, int mask);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static float BoxCollider2DComponent_GetDensity(ulong entityID);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void BoxCollider2DComponent_SetDensity(ulong entityID, float density);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static float BoxCollider2DComponent_GetFriction(ulong entityID);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void BoxCollider2DComponent_SetFriction(ulong entityID, float friction);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static float BoxCollider2DComponent_GetRestitution(ulong entityID);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void BoxCollider2DComponent_SetRestitution(ulong entityID, float restitution);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static float BoxCollider2DComponent_GetThreshold(ulong entityID);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void BoxCollider2DComponent_SetThreshold(ulong entityID, float threshold);
+        
+        // CIRCLE COLLIDER COMPONENT
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static float CircleCollider2DComponent_GetRadius(ulong entityID);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void CircleCollider2DComponent_SetRadius(ulong entityID, float radius);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void CircleCollider2DComponent_GetOffset(ulong entityID, out Vector2 offset);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void CircleCollider2DComponent_SetOffset(ulong entityID, ref Vector2 offset);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static int CircleCollider2DComponent_GetCategory(ulong entityID);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void CircleCollider2DComponent_SetCategory(ulong entityID, int category);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static int CircleCollider2DComponent_GetMask(ulong entityID);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void CircleCollider2DComponent_SetMask(ulong entityID, int mask);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static float CircleCollider2DComponent_GetDensity(ulong entityID);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void CircleCollider2DComponent_SetDensity(ulong entityID, float density);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static float CircleCollider2DComponent_GetFriction(ulong entityID);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void CircleCollider2DComponent_SetFriction(ulong entityID, float friction);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static float CircleCollider2DComponent_GetRestitution(ulong entityID);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void CircleCollider2DComponent_SetRestitution(ulong entityID, float restitution);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static float CircleCollider2DComponent_GetThreshold(ulong entityID);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void CircleCollider2DComponent_SetThreshold(ulong entityID, float threshold);
     }
 }

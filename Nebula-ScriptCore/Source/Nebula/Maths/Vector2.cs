@@ -22,10 +22,20 @@
         {
             return new Vector2(vector.x * scalar, vector.y * scalar);
         }
+        
+        public static Vector2 operator *(Vector2 v1, Vector2 v2)
+        {
+            return new Vector2(v1.x * v2.x, v1.y * v2.y);
+        }
 
         public static Vector2 operator +(Vector2 a, Vector2 b)
         {
             return new Vector2(a.x + b.x, a.y + b.y);
+        }
+
+        public static Vector2 operator -(Vector2 vector)
+        {
+            return new Vector2(-vector.x, -vector.y);
         }
     }
 }

@@ -5,16 +5,6 @@
         public Entity Entity { get; internal set; }
     }
 
-    public class TagComponent : Component
-    {
-
-    }
-
-    public class ParentChildComponent : Component
-    {
-
-    }
-
     public class TransformComponent : Component
     {
         public Vector3 Translation
@@ -57,28 +47,54 @@
         }
     }
 
-    public class WorldTransformComponent : Component
-    {
-
-    }
-
     public class CameraComponent : Component
     {
+        //public SceneCamera Camera;
+        
+        public bool Primary
+        {
+            get
+            {
+                return InternalCalls.CameraComponent_GetPrimary(Entity.ID);
+            }
+            set
+            {
+                InternalCalls.CameraComponent_SetPrimary(Entity.ID, value);
+            }
+        }
 
+        bool FixedAspectRatio
+        {
+            get
+            {
+                return InternalCalls.CameraComponent_GetFixedRatio(Entity.ID);
+            }
+            set
+            {
+                InternalCalls.CameraComponent_SetFixedRatio(Entity.ID, value);
+            }
+        }
     }
 
     public class ScriptComponent : Component
     {
-
-    }
-
-    public class NativeScriptComponent : Component
-    {
-
+        string Class
+        {
+            get
+            {
+                return InternalCalls.ScriptComponent_GetClass(Entity.ID);
+            }
+            set
+            {
+                InternalCalls.ScriptComponent_SetClass(Entity.ID, value);
+            }
+        }
     }
 
     public class SpriteRendererComponent : Component
     {
+        // public Texture2D Texture
+        
         public Vector4 Colour
         {
             get 
@@ -135,8 +151,7 @@
         {
             get
             {
-                InternalCalls.SpriteRendererComponent_GetTiling(Entity.ID, out float tiling);
-                return tiling;
+                return InternalCalls.SpriteRendererComponent_GetTiling(Entity.ID);
             }
             set
             {
@@ -164,8 +179,7 @@
         {
             get
             {
-                InternalCalls.CircleRendererComponent_GetRadius(Entity.ID, out float radius);
-                return radius;
+                return InternalCalls.CircleRendererComponent_GetRadius(Entity.ID);
             }
             set
             {
@@ -177,8 +191,7 @@
         {
             get
             {
-                InternalCalls.CircleRendererComponent_GetThickness(Entity.ID, out float thickness);
-                return thickness;
+                return InternalCalls.CircleRendererComponent_GetThickness(Entity.ID);
             }
             set
             {
@@ -190,8 +203,7 @@
         {
             get
             {
-                InternalCalls.CircleRendererComponent_GetFade(Entity.ID, out float fade);
-                return fade;
+                return InternalCalls.CircleRendererComponent_GetFade(Entity.ID);
             }
             set
             {
@@ -206,12 +218,11 @@
         {
             get
             {
-                InternalCalls.StringRendererComponent_GetText(Entity.ID, out string text);
-                return text;
+                return InternalCalls.StringRendererComponent_GetText(Entity.ID);
             }
             set
             {
-                InternalCalls.StringRendererComponent_SetText(Entity.ID, ref value);
+                InternalCalls.StringRendererComponent_SetText(Entity.ID, value);
             }
         }
 
@@ -232,8 +243,7 @@
         {
             get
             {
-                InternalCalls.StringRendererComponent_GetResolution(Entity.ID, out float resolution);
-                return resolution;
+                return InternalCalls.StringRendererComponent_GetResolution(Entity.ID);
             }
             set
             {
@@ -245,8 +255,7 @@
         {
             get
             {
-                InternalCalls.StringRendererComponent_GetBold(Entity.ID, out bool bold);
-                return bold;
+                return InternalCalls.StringRendererComponent_GetBold(Entity.ID);
             }
             set
             {
@@ -258,8 +267,7 @@
         {
             get
             {
-                InternalCalls.StringRendererComponent_GetItalic(Entity.ID, out bool italic);
-                return italic;
+                return InternalCalls.StringRendererComponent_GetItalic(Entity.ID);
             }
             set
             {
@@ -276,8 +284,7 @@
         {
             get
             {
-                InternalCalls.StringRendererComponent_GetIndex(Entity.ID, out int index);
-                return (Fonts)index;
+                return (Fonts)InternalCalls.StringRendererComponent_GetIndex(Entity.ID);
             }
             set
             {
@@ -288,19 +295,261 @@
 
     public class Rigidbody2DComponent : Component
     {
-        public void ApplyLinearImpulse(Vector2 force)
+        public enum BodyType { Static = 0, Dynamic, Kinematic };
+        
+        public BodyType Type
         {
-            InternalCalls.Rigidbody2DComponent_ApplyLinearImpulseToCenter(Entity.ID, ref force);
+            get
+            {
+                return (BodyType)InternalCalls.Rigidbody2DComponent_GetBodyType(Entity.ID);
+            }
+            set
+            {
+                InternalCalls.Rigidbody2DComponent_SetBodyType(Entity.ID, (int)value);
+            }
+        }
+
+        public bool FixedRotation
+        {
+            get
+            {
+                return InternalCalls.Rigidbody2DComponent_GetFixedRotation(Entity.ID);
+            }
+            set
+            {
+                InternalCalls.Rigidbody2DComponent_SetFixedRotation(Entity.ID, value);
+            }
+        }
+
+        public enum Filters
+        {
+            A = 0x0001, B = 0x0002, C = 0x0004, D = 0x0008,
+            E = 0x0010, F = 0x0020, G = 0x0040, H = 0x0080,
+            I = 0x0100, J = 0x0200, K = 0x0400, L = 0x0800,
+            M = 0x1000, N = 0x2000, O = 0x4000, P = 0x8000
+        };
+
+        public void ApplyLinearImpulse(Vector2 impulse)
+        {
+            InternalCalls.Rigidbody2DComponent_ApplyLinearImpulseToCenter(Entity.ID, ref impulse);
+        }
+        
+        public void ApplyLinearImpulse(Vector2 impulse, Vector2 worldPoint)
+        {
+            InternalCalls.Rigidbody2DComponent_ApplyLinearImpulse(Entity.ID, ref impulse, ref worldPoint);
+        }
+        
+        public void ApplyForce(Vector2 force)
+        {
+            InternalCalls.Rigidbody2DComponent_ApplyForceToCenter(Entity.ID, ref force);
+        }
+        
+        public void ApplyForce(Vector2 force, Vector2 worldPoint)
+        {
+            InternalCalls.Rigidbody2DComponent_ApplyForce(Entity.ID, ref force, ref worldPoint);
         }
     }
 
     public class BoxCollider2DComponent : Component
     {
+        public Vector2 Size
+        {
+            get
+            {
+                InternalCalls.BoxCollider2DComponent_GetSize(Entity.ID, out Vector2 size);
+                return size;
+            }
+            set
+            {
+                InternalCalls.BoxCollider2DComponent_SetSize(Entity.ID, ref value);
+            }
+        }
 
+        public Vector2 Offset
+        {
+            get
+            {
+                InternalCalls.BoxCollider2DComponent_GetOffset(Entity.ID, out Vector2 offset);
+                return offset;
+            }
+            set
+            {
+                InternalCalls.BoxCollider2DComponent_SetOffset(Entity.ID, ref value);
+            }
+        }
+
+        public Rigidbody2DComponent.Filters Category
+        {
+            get
+            {
+                return (Rigidbody2DComponent.Filters)InternalCalls.BoxCollider2DComponent_GetCategory(Entity.ID);
+                
+            }
+            set
+            {
+                InternalCalls.BoxCollider2DComponent_SetCategory(Entity.ID, (int)value);
+            }
+        }
+
+        public int Mask
+        {
+            get
+            {
+                return InternalCalls.BoxCollider2DComponent_GetMask(Entity.ID);
+            }
+            set
+            {
+                InternalCalls.BoxCollider2DComponent_SetMask(Entity.ID, value);
+            }
+        }
+
+        public float Density
+        {
+            get
+            {
+                return InternalCalls.BoxCollider2DComponent_GetDensity(Entity.ID);
+            }
+            set
+            {
+                InternalCalls.BoxCollider2DComponent_SetDensity(Entity.ID, value);
+            }
+        }
+
+        public float Friction
+        {
+            get
+            {
+                return InternalCalls.BoxCollider2DComponent_GetFriction(Entity.ID);
+            }
+            set
+            {
+                InternalCalls.BoxCollider2DComponent_SetFriction(Entity.ID, value);
+            }
+        }
+
+        public float Restitution
+        {
+            get
+            {
+                return InternalCalls.BoxCollider2DComponent_GetRestitution(Entity.ID);
+            }
+            set
+            {
+                InternalCalls.BoxCollider2DComponent_SetRestitution(Entity.ID, value);
+            }
+        }
+
+        public float RestitutionThreshold
+        {
+            get
+            {
+                return InternalCalls.BoxCollider2DComponent_GetThreshold(Entity.ID);
+            }
+            set
+            {
+                InternalCalls.BoxCollider2DComponent_SetThreshold(Entity.ID, value);
+            }
+        }
     }
 
     public class CircleColliderComponent : Component
     {
+        public float Radius
+        {
+            get
+            {
+                return InternalCalls.CircleCollider2DComponent_GetRadius(Entity.ID);
+            }
+            set
+            {
+                InternalCalls.CircleCollider2DComponent_SetRadius(Entity.ID, value);
+            }
+        }
 
+        public Vector2 Offset
+        {
+            get
+            {
+                InternalCalls.CircleCollider2DComponent_GetOffset(Entity.ID, out Vector2 offset);
+                return offset;
+            }
+            set
+            {
+                InternalCalls.CircleCollider2DComponent_SetOffset(Entity.ID, ref value);
+            }
+        }
+
+        public Rigidbody2DComponent.Filters Category
+        {
+            get
+            {
+                return (Rigidbody2DComponent.Filters)InternalCalls.CircleCollider2DComponent_GetCategory(Entity.ID);
+
+            }
+            set
+            {
+                InternalCalls.CircleCollider2DComponent_SetCategory(Entity.ID, (int)value);
+            }
+        }
+
+        public int Mask
+        {
+            get
+            {
+                return InternalCalls.CircleCollider2DComponent_GetMask(Entity.ID);
+            }
+            set
+            {
+                InternalCalls.CircleCollider2DComponent_SetMask(Entity.ID, value);
+            }
+        }
+
+        public float Density
+        {
+            get
+            {
+                return InternalCalls.CircleCollider2DComponent_GetDensity(Entity.ID);
+            }
+            set
+            {
+                InternalCalls.CircleCollider2DComponent_SetDensity(Entity.ID, value);
+            }
+        }
+
+        public float Friction
+        {
+            get
+            {
+                return InternalCalls.CircleCollider2DComponent_GetFriction(Entity.ID);
+            }
+            set
+            {
+                InternalCalls.CircleCollider2DComponent_SetFriction(Entity.ID, value);
+            }
+        }
+
+        public float Restitution
+        {
+            get
+            {
+                return InternalCalls.CircleCollider2DComponent_GetRestitution(Entity.ID);
+            }
+            set
+            {
+                InternalCalls.CircleCollider2DComponent_SetRestitution(Entity.ID, value);
+            }
+        }
+
+        public float RestitutionThreshold
+        {
+            get
+            {
+                return InternalCalls.CircleCollider2DComponent_GetThreshold(Entity.ID);
+            }
+            set
+            {
+                InternalCalls.CircleCollider2DComponent_SetThreshold(Entity.ID, value);
+            }
+        }
     }
 }

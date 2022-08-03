@@ -26,6 +26,44 @@ namespace Nebula
             }
         }
 
+        public Vector3 Rotation
+        {
+            get
+            {
+                InternalCalls.TransformComponent_GetRotation(ID, out Vector3 rotation);
+                return rotation;
+            }
+            set
+            {
+                InternalCalls.TransformComponent_SetRotation(ID, ref value);
+            }
+        }
+
+        public Vector3 Scale
+        {
+            get
+            {
+                InternalCalls.TransformComponent_GetScale(ID, out Vector3 scale);
+                return scale;
+            }
+            set
+            {
+                InternalCalls.TransformComponent_SetScale(ID, ref value);
+            }
+        }
+
+        public string Name
+        {
+            get
+            {
+                return InternalCalls.Entity_GetName(ID);
+            }
+            set
+            {
+                InternalCalls.Entity_SetName(ID, value);
+            }
+        }
+
         public bool HasComponent<T>() where T : Component, new()
         {
             Type componentType = typeof(T);
@@ -40,23 +78,14 @@ namespace Nebula
             T component = new T() { Entity = this };
             return component;
         }
-    }
-    
-    public class Debug
-    {
-        public static void Log(string text)
-        {
-            InternalCalls.Native_Log(0, text);
-        }
 
-        public static void Warn(string text)
+        public T AddComponent<T>() where T : Component, new()
         {
-            InternalCalls.Native_Log(1, text);
-        }
+            Type componentType = typeof(T);
+            InternalCalls.Entity_AddComponent(ID, componentType);
 
-        public static void Error(string text)
-        {
-            InternalCalls.Native_Log(2, text);
+            T component = new T() { Entity = this };
+            return component;
         }
     }
 }

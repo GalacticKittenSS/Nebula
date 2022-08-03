@@ -5,33 +5,88 @@ namespace Sandbox
     public class Player : Entity
     {
         private Rigidbody2DComponent Rigidbody;
+        private TransformComponent Transform;
 
-        void OnCreate()
+        private KeyCode LastPressed;
+        private bool AHeldLast = false, DHeldLast = false;
+
+        private Vector2 JumpImpulse, MoveSpeed;
+        private Vector2 Force, ForceMult;
+
+        public void OnCreate()
         {
-            Debug.Log($"Player.OnCreate - {ID}");
+            Debug.Log($"Player.OnCreate - {ID}, {Name}");
             Rigidbody = GetComponent<Rigidbody2DComponent>();
+            Transform = GetComponent<TransformComponent>();
         
             SpriteRendererComponent SpriteRenderer = GetComponent<SpriteRendererComponent>();
-            SpriteRenderer.Colour = new Vector4(0.0f, 1.0f, 1.0f, 1.0f);
+            SpriteRenderer.Colour = new Vector4(0.0f, 0.5f, 1.0f, 1.0f);
+
+            ScriptComponent script = GetComponent<ScriptComponent>();
+            script.Entity = this;
+
+            MoveSpeed = new Vector2(9.0f, 0.0f);
+            JumpImpulse = new Vector2(0.0f, 50.0f);
         }
 
-        void OnUpdate(float ts)
+        public void OnUpdate(float ts)
         {
-            float speed = 25.0f;
-            Vector3 Velocity = Vector3.Zero;
+            if (Input.IsKeyDown(KeyCode.Space))
+                Jump(JumpImpulse * ts);
 
-            if (Input.IsKeyDown(KeyCode.W))
-                Velocity.y =  1.0f;
-            if (Input.IsKeyDown(KeyCode.S))
-                Velocity.y = -1.0f;
+            bool isAPressed = Input.IsKeyDown(KeyCode.A);
+            bool isDPressed = Input.IsKeyDown(KeyCode.D);
 
-            if (Input.IsKeyDown(KeyCode.D))
-                Velocity.x =  1.0f;
-            if (Input.IsKeyDown(KeyCode.A))
-                Velocity.x = -1.0f;
+            if (!(isAPressed && isDPressed))
+            {
+                if (isAPressed)
+                    LastPressed = KeyCode.A;
 
-            Velocity *= speed * ts;
-            Rigidbody.ApplyLinearImpulse(Velocity.xy);
+                if (isDPressed)
+                    LastPressed = KeyCode.D;
+            }
+            else if (!(AHeldLast && DHeldLast))
+            {
+                if (LastPressed == KeyCode.A)
+                    LastPressed = KeyCode.D;
+
+                else if (LastPressed == KeyCode.D)
+                    LastPressed = KeyCode.A;
+            }
+
+            if (!isAPressed && !isDPressed)
+                LastPressed = (KeyCode)0;
+
+            if (LastPressed == KeyCode.A)
+                Move(-MoveSpeed * ts);
+
+            if (LastPressed == KeyCode.D)
+                Move(MoveSpeed * ts);
+
+            AHeldLast = isAPressed;
+            DHeldLast = isDPressed;
+        }
+        
+        private void Move(Vector2 speed)
+        {
+            Transform.Translation += new Vector3(speed.x, speed.y, 0.0f);
+
+            if (speed.x < 0.0f)
+                ForceMult.x = -1.0f;
+            else
+                ForceMult.x = 1.0f;
+
+            if (speed.y < 0.0f)
+                ForceMult.y = -1.0f;
+            else
+                ForceMult.y = 1.0f;
+
+            Force = speed * ForceMult;
+        }
+
+        void Jump(Vector2 impulse)
+        {
+            Rigidbody.ApplyLinearImpulse(impulse);
         }
     }
 }
