@@ -72,6 +72,9 @@ namespace Nebula {
 		MonoAssembly* CoreAssembly = nullptr;
 		MonoImage* CoreAssemblyImage = nullptr;
 
+		MonoAssembly* AppAssembly = nullptr;
+		MonoImage* AppAssemblyImage = nullptr;
+
 		ScriptClass EntityClass;
 		std::unordered_map<std::string, Ref<ScriptClass>> EntityClasses;
 		std::unordered_map<UUID, Ref<ScriptInstance>> EntityInstances;
@@ -88,9 +91,10 @@ namespace Nebula {
 
 		InitMono();
 		LoadAssembly("Resources/Scripts/Nebula-ScriptCore.dll");
+		LoadAppAssembly("SandboxProj/Binaries/Sandbox.dll");
 
-		s_Data->EntityClass = ScriptClass("Nebula", "Entity");
-		LoadAssemblyClasses(s_Data->CoreAssembly);
+		s_Data->EntityClass = ScriptClass("Nebula", "Entity", true);
+		LoadAssemblyClasses();
 
 		ScriptGlue::RegisterFunctions();
 		ScriptGlue::RegisterComponents();
@@ -202,13 +206,20 @@ namespace Nebula {
 
 		Utils::PrintAssemblyTypes(s_Data->CoreAssembly);
 	}
+	
+	void ScriptEngine::LoadAppAssembly(const std::filesystem::path& filepath)
+	{
+		s_Data->AppAssembly = Utils::LoadMonoAssembly(filepath);
+		s_Data->AppAssemblyImage = mono_assembly_get_image(s_Data->AppAssembly);
 
-	void ScriptEngine::LoadAssemblyClasses(MonoAssembly* assembly)
+		Utils::PrintAssemblyTypes(s_Data->AppAssembly);
+	}
+
+	void ScriptEngine::LoadAssemblyClasses()
 	{
 		s_Data->EntityClasses.clear();
 
-		MonoImage* image = mono_assembly_get_image(assembly);
-		const MonoTableInfo* typeDefinitionsTable = mono_image_get_table_info(image, MONO_TABLE_TYPEDEF);
+		const MonoTableInfo* typeDefinitionsTable = mono_image_get_table_info(s_Data->AppAssemblyImage, MONO_TABLE_TYPEDEF);
 		int32_t numTypes = mono_table_info_get_rows(typeDefinitionsTable);
 
 		for (int32_t i = 0; i < numTypes; i++)
@@ -216,16 +227,16 @@ namespace Nebula {
 			uint32_t cols[MONO_TYPEDEF_SIZE];
 			mono_metadata_decode_row(typeDefinitionsTable, i, cols, MONO_TYPEDEF_SIZE);
 
-			const char* classNamespace = mono_metadata_string_heap(image, cols[MONO_TYPEDEF_NAMESPACE]);
-			const char* className = mono_metadata_string_heap(image, cols[MONO_TYPEDEF_NAME]);
+			const char* classNamespace = mono_metadata_string_heap(s_Data->AppAssemblyImage, cols[MONO_TYPEDEF_NAMESPACE]);
+			const char* className = mono_metadata_string_heap(s_Data->AppAssemblyImage, cols[MONO_TYPEDEF_NAME]);
 			
-			MonoClass* monoClass = mono_class_from_name(image, classNamespace, className);
+			MonoClass* monoClass = mono_class_from_name(s_Data->AppAssemblyImage, classNamespace, className);
 			if (!monoClass)
 				continue;
 
 			bool isEntity = mono_class_is_subclass_of(monoClass, s_Data->EntityClass.GetMonoClass(), false);
 
-			if (!isEntity || monoClass == s_Data->EntityClass.GetMonoClass())
+			if (!isEntity)// || monoClass == s_Data->EntityClass.GetMonoClass())
 				continue;
 
 			std::string classSig = className;
@@ -255,11 +266,11 @@ namespace Nebula {
 		return instance;
 	}
 
-	ScriptClass::ScriptClass(const std::string& classNamespace, const std::string& className)
+	ScriptClass::ScriptClass(const std::string& classNamespace, const std::string& className, bool isCore)
 		: m_ClassNamespace(classNamespace), m_ClassName(className)
 	{
 		m_MonoClass = mono_class_from_name(
-			s_Data->CoreAssemblyImage, m_ClassNamespace.c_str(), m_ClassName.c_str());
+			isCore ? s_Data->CoreAssemblyImage : s_Data->AppAssemblyImage, m_ClassNamespace.c_str(), m_ClassName.c_str());
 	}
 
 	MonoObject* ScriptClass::Instanciate() {

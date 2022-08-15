@@ -7,7 +7,6 @@ extern "C" {
 	typedef struct _MonoClass MonoClass;
 	typedef struct _MonoObject MonoObject;
 	typedef struct _MonoMethod MonoMethod;
-	typedef struct _MonoAssembly MonoAssembly;
 	typedef struct _MonoImage MonoImage;
 	typedef struct _MonoDomain MonoDomain;
 }
@@ -16,7 +15,7 @@ namespace Nebula {
 	class ScriptClass {
 	public:
 		ScriptClass() = default;
-		ScriptClass(const std::string& classNamespace, const std::string& className);
+		ScriptClass(const std::string& classNamespace, const std::string& className, bool isCore = false);
 
 		MonoClass* GetMonoClass() { return m_MonoClass; }
 
@@ -36,6 +35,7 @@ namespace Nebula {
 		static void Shutdown();
 
 		static void LoadAssembly(const std::filesystem::path& filepath);
+		static void LoadAppAssembly(const std::filesystem::path& filepath);
 
 		static void OnRuntimeStart(Scene* scene);
 		static void OnRuntimeStop();
@@ -53,7 +53,7 @@ namespace Nebula {
 		static void InitMono();
 		static void ShutdownMono();
 
-		static void LoadAssemblyClasses(MonoAssembly* assembly);
+		static void LoadAssemblyClasses();
 
 		static MonoObject* InstanciateClass(MonoClass* monoClass);
 

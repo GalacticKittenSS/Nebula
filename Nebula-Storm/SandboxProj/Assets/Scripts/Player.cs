@@ -22,9 +22,6 @@ namespace Sandbox
             SpriteRendererComponent SpriteRenderer = GetComponent<SpriteRendererComponent>();
             SpriteRenderer.Colour = new Vector4(0.0f, 0.5f, 1.0f, 1.0f);
 
-            ScriptComponent script = GetComponent<ScriptComponent>();
-            script.Entity = this;
-
             MoveSpeed = new Vector2(9.0f, 0.0f);
             JumpImpulse = new Vector2(0.0f, 50.0f);
         }

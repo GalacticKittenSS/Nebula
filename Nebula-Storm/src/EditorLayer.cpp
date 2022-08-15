@@ -1,7 +1,7 @@
 #include "EditorLayer.h"
 
 namespace Nebula {
-	extern const std::filesystem::path s_AssetPath = "assets";
+	extern const std::filesystem::path s_AssetPath = "SandboxProj/Assets";
 
 	static vec4 s_CubeVertexPos[] = {
 		//Front

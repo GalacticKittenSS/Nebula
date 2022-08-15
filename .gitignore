@@ -4,9 +4,12 @@
 **/bin/
 bin-obj/
 bin-int/
+
+Binaries/
 Intermediates/
 
-[Pp]remake/
+[Pp]remake/*.exe
+[Pp]remake/*.txt
 __pycache__/
 **/cache/
 

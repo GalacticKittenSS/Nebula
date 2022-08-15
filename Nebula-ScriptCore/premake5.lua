@@ -4,8 +4,8 @@ project "Nebula-ScriptCore"
 	dotnetframework "4.7.2"
 	staticruntime "off"
 
-	targetdir ("%{wks.location}/Nebula-Storm/Resources/Scripts")
-	objdir ("%{wks.location}/Nebula-Storm/Resources/Scripts/Intermediates")
+	targetdir ("../Nebula-Storm/Resources/Scripts")
+	objdir ("../Nebula-Storm/Resources/Scripts/Intermediates")
 
 	files {
 		"Source/**.cs",
