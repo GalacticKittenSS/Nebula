@@ -10,8 +10,10 @@ namespace Sandbox
         private KeyCode LastPressed;
         private bool AHeldLast = false, DHeldLast = false;
 
-        private Vector2 JumpImpulse, MoveSpeed;
-        private Vector2 Force, ForceMult;
+        public Vector2 JumpImpulse, MoveSpeed;
+        public Vector2 Force, ForceMult;
+
+        public float Time = 0.0f;
 
         public void OnCreate()
         {
@@ -28,6 +30,8 @@ namespace Sandbox
 
         public void OnUpdate(float ts)
         {
+            Time += ts;
+
             if (Input.IsKeyDown(KeyCode.Space))
                 Jump(JumpImpulse * ts);
 

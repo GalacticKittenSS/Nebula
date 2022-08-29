@@ -816,6 +816,74 @@ namespace Nebula {
 
 			if (!classExists)
 				ImGui::PopStyleColor();
+
+			// FIELDS
+			Ref<ScriptInstance> scriptInstance = ScriptEngine::GetEntityScriptInstance(entity.GetUUID());
+			if (scriptInstance)
+			{
+				const auto& fields = scriptInstance->GetScriptClass()->GetFields();
+				for (const auto& [name, field] : fields)
+				{
+					switch (field.Type)
+					{
+					case Nebula::ScriptFieldType::Float:
+					{
+						auto data = scriptInstance->GetFieldValue<float>(name);
+						if (ImGui::DragFloat(name.c_str(), &data))
+						{
+							scriptInstance->SetFieldValue(name, data);
+						}
+						break;
+					}
+					case Nebula::ScriptFieldType::Bool:
+					{
+						auto data = scriptInstance->GetFieldValue<bool>(name);
+						if (DrawBool(name.c_str(), data))
+						{
+							scriptInstance->SetFieldValue(name, data);
+						}
+						break;
+					}
+					case Nebula::ScriptFieldType::Int:
+					{
+						auto data = scriptInstance->GetFieldValue<int>(name);
+						if (ImGui::DragInt(name.c_str(), &data))
+						{
+							scriptInstance->SetFieldValue(name, data);
+						}
+						break;
+					}
+					case Nebula::ScriptFieldType::Vector2:
+					{
+						auto data = scriptInstance->GetFieldValue<vec2>(name);
+						if (ImGui::DragFloat2(name.c_str(), value_ptr(data)))
+						{
+							scriptInstance->SetFieldValue(name, data);
+						}
+						break;
+					}
+					case Nebula::ScriptFieldType::Vector3:
+					{
+						auto data = scriptInstance->GetFieldValue<vec3>(name);
+						if (ImGui::DragFloat3(name.c_str(), value_ptr(data)))
+						{
+							scriptInstance->SetFieldValue(name, data);
+						}
+						break;
+					}
+					case Nebula::ScriptFieldType::Vector4:
+					{
+						auto data = scriptInstance->GetFieldValue<vec4>(name);
+						if (ImGui::DragFloat4(name.c_str(), value_ptr(data)))
+						{
+							scriptInstance->SetFieldValue(name, data);
+						}
+						break;
+
+					}
+					}
+				}
+			}
 		}, true);
 
 		DrawComponent<SpriteRendererComponent>("Sprite Renderer", entity, [](auto& component, Entity entity) {

@@ -5,8 +5,28 @@
 #include <mono/jit/jit.h>
 #include <mono/metadata/assembly.h>
 #include <mono/metadata/object.h>
+#include <mono/metadata/tabledefs.h>
 
 namespace Nebula {
+	static std::unordered_map<std::string, ScriptFieldType> s_ScriptFieldTypeMap = {
+		{ "System.Single", ScriptFieldType::Float },
+		{ "System.Double", ScriptFieldType::Double },
+		{ "System.Boolean", ScriptFieldType::Bool },
+		{ "System.Char", ScriptFieldType::Char },
+		{ "System.Int16", ScriptFieldType::Short },
+		{ "System.Int32", ScriptFieldType::Int },
+		{ "System.Int64", ScriptFieldType::Long },
+		{ "System.Byte", ScriptFieldType::Byte },
+		{ "System.SByte", ScriptFieldType::SByte },
+		{ "System.UInt16", ScriptFieldType::UShort },
+		{ "System.UInt32", ScriptFieldType::UInt },
+		{ "System.UInt64", ScriptFieldType::ULong },
+		{ "Nebula.Vector2", ScriptFieldType::Vector2 },
+		{ "Nebula.Vector3", ScriptFieldType::Vector3 },
+		{ "Nebula.Vector4", ScriptFieldType::Vector4 },
+		{ "Nebula.Entity", ScriptFieldType::Entity }
+	};
+
 	namespace Utils {
 		static char* ReadBytes(const std::filesystem::path& filepath, uint32_t* outSize)
 		{
@@ -45,6 +65,54 @@ namespace Nebula {
 			return assembly;
 		}
 
+		ScriptFieldType MonoTypeToScriptFieldType(MonoType* type)
+		{
+			std::string name = mono_type_get_name(type);
+
+			auto it = s_ScriptFieldTypeMap.find(name);
+			if (it == s_ScriptFieldTypeMap.end())
+				return ScriptFieldType::None;
+
+			return it->second;
+		}
+
+		std::string ScriptFieldTypeToString(ScriptFieldType type)
+		{
+			switch (type)
+			{
+			case Nebula::ScriptFieldType::None: return "None";
+			case Nebula::ScriptFieldType::Float: return "float";
+			case Nebula::ScriptFieldType::Double: return "double";
+			case Nebula::ScriptFieldType::Bool: return "bool";
+			case Nebula::ScriptFieldType::Char: return "char";
+			case Nebula::ScriptFieldType::Byte: return "byte";
+			case Nebula::ScriptFieldType::Short: return "short";
+			case Nebula::ScriptFieldType::Int: return "int";
+			case Nebula::ScriptFieldType::Long: return "long";
+			case Nebula::ScriptFieldType::SByte: return "sbyte";
+			case Nebula::ScriptFieldType::UShort: return "ushort";
+			case Nebula::ScriptFieldType::UInt: return "uint";
+			case Nebula::ScriptFieldType::ULong: return "ulong";
+			case Nebula::ScriptFieldType::Vector2: return "Vector2";
+			case Nebula::ScriptFieldType::Vector3: return "Vector3";
+			case Nebula::ScriptFieldType::Vector4: return "Vector4";
+			case Nebula::ScriptFieldType::Entity: return "Entity";
+			}
+
+			NB_ASSERT(false);
+			return "None";
+		}
+
+		std::string MonoTypeToString(MonoType* type)
+		{
+			ScriptFieldType field_type = MonoTypeToScriptFieldType(type);
+
+			if (field_type == ScriptFieldType::None)
+				return mono_type_get_name(type);
+
+			return ScriptFieldTypeToString(field_type);
+		}
+		
 		static void PrintAssemblyTypes(MonoAssembly* assembly)
 		{
 			MonoImage* image = mono_assembly_get_image(assembly);
@@ -56,10 +124,31 @@ namespace Nebula {
 				uint32_t cols[MONO_TYPEDEF_SIZE];
 				mono_metadata_decode_row(typeDefinitionsTable, i, cols, MONO_TYPEDEF_SIZE);
 
-				const char* nameSpace = mono_metadata_string_heap(image, cols[MONO_TYPEDEF_NAMESPACE]);
-				const char* name = mono_metadata_string_heap(image, cols[MONO_TYPEDEF_NAME]);
+				const char* class_namespace = mono_metadata_string_heap(image, cols[MONO_TYPEDEF_NAMESPACE]);
+				const char* class_name = mono_metadata_string_heap(image, cols[MONO_TYPEDEF_NAME]);
 
-				NB_TRACE("{0}.{1}", nameSpace, name);
+				NB_TRACE("{0}.{1}", class_namespace, class_name); 
+
+				MonoClass* monoClass = mono_class_from_name(image, class_namespace, class_name);
+				if (!monoClass)
+					continue;
+
+				int fieldcount = mono_class_num_fields(monoClass);
+				NB_TRACE("{} has {} fields{}", class_name, fieldcount, fieldcount ? ":" : "");
+
+				void* iterator = nullptr;
+				while (MonoClassField* field = mono_class_get_fields(monoClass, &iterator))
+				{
+					const char* field_name = mono_field_get_name(field);
+
+					uint32_t flags = mono_field_get_flags(field);
+					bool field_public = flags & FIELD_ATTRIBUTE_PUBLIC;
+						
+					MonoType* field_type = mono_field_get_type(field);
+					std::string field_typename = MonoTypeToString(field_type);
+
+					NB_TRACE("	{} {} {}", field_public ? "public" : "private", field_typename, field_name);
+				}
 			}
 		}
 	}
@@ -178,6 +267,15 @@ namespace Nebula {
 		return s_Data->EntityClasses;
 	}
 
+	Ref<ScriptInstance> ScriptEngine::GetEntityScriptInstance(UUID id)
+	{
+		auto it = s_Data->EntityInstances.find(id);
+		if (it == s_Data->EntityInstances.end())
+			return nullptr;
+
+		return it->second;
+	}
+
 	MonoImage* ScriptEngine::GetCoreAssemblyImage() {
 		return s_Data->CoreAssemblyImage;
 	}
@@ -227,23 +325,39 @@ namespace Nebula {
 			uint32_t cols[MONO_TYPEDEF_SIZE];
 			mono_metadata_decode_row(typeDefinitionsTable, i, cols, MONO_TYPEDEF_SIZE);
 
-			const char* classNamespace = mono_metadata_string_heap(s_Data->AppAssemblyImage, cols[MONO_TYPEDEF_NAMESPACE]);
-			const char* className = mono_metadata_string_heap(s_Data->AppAssemblyImage, cols[MONO_TYPEDEF_NAME]);
+			const char* class_namespace = mono_metadata_string_heap(s_Data->AppAssemblyImage, cols[MONO_TYPEDEF_NAMESPACE]);
+			const char* class_name = mono_metadata_string_heap(s_Data->AppAssemblyImage, cols[MONO_TYPEDEF_NAME]);
 			
-			MonoClass* monoClass = mono_class_from_name(s_Data->AppAssemblyImage, classNamespace, className);
+			MonoClass* monoClass = mono_class_from_name(s_Data->AppAssemblyImage, class_namespace, class_name);
 			if (!monoClass)
 				continue;
 
 			bool isEntity = mono_class_is_subclass_of(monoClass, s_Data->EntityClass.GetMonoClass(), false);
 
-			if (!isEntity)// || monoClass == s_Data->EntityClass.GetMonoClass())
+			if (!isEntity)
 				continue;
 
-			std::string classSig = className;
-			if (strlen(classNamespace) != 0)
-				classSig = fmt::format("{}.{}", classNamespace, className);
+			std::string classSig = class_name;
+			if (strlen(class_namespace) != 0)
+				classSig = fmt::format("{}.{}", class_namespace, class_name);
 
-			s_Data->EntityClasses[classSig] = CreateRef<ScriptClass>(classNamespace, className);
+			Ref<ScriptClass> scriptClass = CreateRef<ScriptClass>(class_namespace, class_name);
+			s_Data->EntityClasses[classSig] = scriptClass;
+
+			void* iterator = nullptr;
+			while (MonoClassField* field = mono_class_get_fields(monoClass, &iterator))
+			{
+				const char* field_name = mono_field_get_name(field);
+				
+				uint32_t flags = mono_field_get_flags(field);
+				if (!flags & FIELD_ATTRIBUTE_PUBLIC)
+					continue;
+
+				MonoType* mono_type = mono_field_get_type(field);
+				ScriptFieldType field_type = Utils::MonoTypeToScriptFieldType(mono_type);
+
+				scriptClass->m_Fields[field_name] = { field_type, field_name, field };
+			}
 		}
 	}
 
@@ -298,7 +412,8 @@ namespace Nebula {
 		m_ScriptClass->InvokeMethod(m_Instance, m_Constructor, &param);
 	}
 
-	void ScriptInstance::InvokeOnCreate() {
+	void ScriptInstance::InvokeOnCreate() 
+	{
 		if (m_OnCreateMethod)
 			m_ScriptClass->InvokeMethod(m_Instance, m_OnCreateMethod);
 	}
@@ -310,5 +425,31 @@ namespace Nebula {
 			void* param = &ts;
 			m_ScriptClass->InvokeMethod(m_Instance, m_OnUpdateMethod, &param);
 		}
+	}
+
+	 bool ScriptInstance::GetFieldValueInternal(const std::string& name, void* buffer)
+	{
+		const auto& fields = m_ScriptClass->GetFields();
+		auto it = fields.find(name);
+		if (it == fields.end())
+			return false;
+
+		const ScriptField& field = it->second;
+
+		mono_field_get_value(m_Instance, field.ClassField, buffer);
+		return true;
+	}
+	 
+	 bool ScriptInstance::SetFieldValueInternal(const std::string& name, const void* value)
+	{
+		const auto& fields = m_ScriptClass->GetFields();
+		auto it = fields.find(name);
+		if (it == fields.end())
+			return false;
+
+		const ScriptField& field = it->second;
+
+		mono_field_set_value(m_Instance, field.ClassField, (void*)value);
+		return true;
 	}
 }
