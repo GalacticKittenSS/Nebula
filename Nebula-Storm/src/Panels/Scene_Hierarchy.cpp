@@ -656,7 +656,7 @@ namespace Nebula {
 			}
 
 			if (open) {
-				function(component, entity);
+				function(component);
 				ImGui::TreePop();
 			}
 
@@ -696,7 +696,7 @@ namespace Nebula {
 			auto& tag = entity.GetComponent<TagComponent>().Tag;
 
 			char buffer[256];
-			strncpy(buffer, tag.c_str(), sizeof(buffer));
+			strncpy_s(buffer, sizeof(buffer), tag.c_str(), sizeof(buffer));
 
 			if (ImGui::InputText("##Tag", buffer, sizeof(buffer))) {
 				tag = std::string(buffer);
@@ -726,7 +726,7 @@ namespace Nebula {
 
 		ImGui::PopItemWidth();
 		
-		DrawComponent<TransformComponent>("Transform", entity, [](auto& component, Entity entity) {
+		DrawComponent<TransformComponent>("Transform", entity, [entity](auto& component) {
 			vec3 rotation = degrees(component.Rotation);
 			vec3 translation = component.Translation;
 			vec3 scale = component.Scale;
@@ -743,7 +743,7 @@ namespace Nebula {
 				UpdateChildrenAndTransform(entity);
 		});
 
-		DrawComponent<CameraComponent>("Camera", entity, [](auto& component, Entity entity) {
+		DrawComponent<CameraComponent>("Camera", entity, [](auto& component) mutable {
 			auto& camera = component.Camera;
 
 			DrawBool("Primary", component.Primary);
@@ -803,90 +803,153 @@ namespace Nebula {
 			}
 		}, true);
 
-		DrawComponent<ScriptComponent>("Script", entity, [](auto& component, Entity entity) {
+		DrawComponent<ScriptComponent>("Script", entity, [entity, scene = m_Context](auto& component) mutable {
 			bool classExists = ScriptEngine::EntityClassExists(component.ClassName);
 			if (!classExists)
 				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.9f, 0.2f, 0.3f, 1.0f));
 
 			char buffer[64];
-			strncpy(buffer, component.ClassName.c_str(), sizeof(buffer));
+			strncpy_s(buffer, sizeof(buffer), component.ClassName.c_str(), sizeof(buffer));
 
 			if (ImGui::InputText("Class", buffer, sizeof(buffer)))
+			{
 				component.ClassName = std::string(buffer);
+			}
 
 			if (!classExists)
 				ImGui::PopStyleColor();
 
 			// FIELDS
-			Ref<ScriptInstance> scriptInstance = ScriptEngine::GetEntityScriptInstance(entity.GetUUID());
-			if (scriptInstance)
+
+			bool sceneRunning = scene->IsRunning();
+			if (sceneRunning)
 			{
-				const auto& fields = scriptInstance->GetScriptClass()->GetFields();
+				Ref<ScriptInstance> scriptInstance = ScriptEngine::GetEntityScriptInstance(entity.GetUUID());
+				if (scriptInstance)
+				{
+					const auto& fields = scriptInstance->GetScriptClass()->GetFields();
+					for (const auto& [name, field] : fields)
+					{
+						switch (field.Type)
+						{
+						case Nebula::ScriptFieldType::Float:
+						{
+							auto data = scriptInstance->GetFieldValue<float>(name);
+							if (ImGui::DragFloat(name.c_str(), &data))
+							{
+								scriptInstance->SetFieldValue(name, data);
+							}
+							break;
+						}
+						case Nebula::ScriptFieldType::Bool:
+						{
+							auto data = scriptInstance->GetFieldValue<bool>(name);
+							if (DrawBool(name.c_str(), data))
+							{
+								scriptInstance->SetFieldValue(name, data);
+							}
+							break;
+						}
+						case Nebula::ScriptFieldType::Int:
+						{
+							auto data = scriptInstance->GetFieldValue<int>(name);
+							if (ImGui::DragInt(name.c_str(), &data))
+							{
+								scriptInstance->SetFieldValue(name, data);
+							}
+							break;
+						}
+						}
+					}
+				}
+			}
+			else if (classExists)
+			{
+				Ref<ScriptClass> entityClass = ScriptEngine::GetEntityClass(component.ClassName);
+				const auto& fields = entityClass->GetFields();
+
+				auto& entityFields = ScriptEngine::GetScriptFieldMap(entity.GetUUID());
 				for (const auto& [name, field] : fields)
 				{
-					switch (field.Type)
+					if (entityFields.find(name) != entityFields.end())
 					{
-					case Nebula::ScriptFieldType::Float:
-					{
-						auto data = scriptInstance->GetFieldValue<float>(name);
-						if (ImGui::DragFloat(name.c_str(), &data))
-						{
-							scriptInstance->SetFieldValue(name, data);
-						}
-						break;
-					}
-					case Nebula::ScriptFieldType::Bool:
-					{
-						auto data = scriptInstance->GetFieldValue<bool>(name);
-						if (DrawBool(name.c_str(), data))
-						{
-							scriptInstance->SetFieldValue(name, data);
-						}
-						break;
-					}
-					case Nebula::ScriptFieldType::Int:
-					{
-						auto data = scriptInstance->GetFieldValue<int>(name);
-						if (ImGui::DragInt(name.c_str(), &data))
-						{
-							scriptInstance->SetFieldValue(name, data);
-						}
-						break;
-					}
-					case Nebula::ScriptFieldType::Vector2:
-					{
-						auto data = scriptInstance->GetFieldValue<vec2>(name);
-						if (ImGui::DragFloat2(name.c_str(), value_ptr(data)))
-						{
-							scriptInstance->SetFieldValue(name, data);
-						}
-						break;
-					}
-					case Nebula::ScriptFieldType::Vector3:
-					{
-						auto data = scriptInstance->GetFieldValue<vec3>(name);
-						if (ImGui::DragFloat3(name.c_str(), value_ptr(data)))
-						{
-							scriptInstance->SetFieldValue(name, data);
-						}
-						break;
-					}
-					case Nebula::ScriptFieldType::Vector4:
-					{
-						auto data = scriptInstance->GetFieldValue<vec4>(name);
-						if (ImGui::DragFloat4(name.c_str(), value_ptr(data)))
-						{
-							scriptInstance->SetFieldValue(name, data);
-						}
-						break;
+						ScriptFieldInstance& scriptField = entityFields.at(name);
 
+						switch (field.Type)
+						{
+						case Nebula::ScriptFieldType::Float:
+						{
+							auto data = scriptField.GetValue<float>();
+							if (ImGui::DragFloat(name.c_str(), &data))
+							{
+								scriptField.SetValue(data);
+							}
+							break;
+						}
+						case Nebula::ScriptFieldType::Bool:
+						{
+							auto data = scriptField.GetValue<bool>();
+							if (DrawBool(name.c_str(), data))
+							{
+								scriptField.SetValue(data);
+							}
+							break;
+						}
+						case Nebula::ScriptFieldType::Int:
+						{
+							auto data = scriptField.GetValue<int>();
+							if (ImGui::DragInt(name.c_str(), &data))
+							{
+								scriptField.SetValue(data);
+							}
+							break;
+						}
+						}
 					}
+					else
+					{
+						switch (field.Type)
+						{
+						case Nebula::ScriptFieldType::Float:
+						{
+							float data = 0.0f;
+							if (ImGui::DragFloat(name.c_str(), &data))
+							{
+								ScriptFieldInstance& fieldInstance = entityFields[name];
+								fieldInstance.Field = field;
+								fieldInstance.SetValue(data);
+							}
+							break;
+						}
+						case Nebula::ScriptFieldType::Bool:
+						{
+							bool data = false;
+							if (DrawBool(name.c_str(), data))
+							{
+								ScriptFieldInstance& fieldInstance = entityFields[name];
+								fieldInstance.Field = field;
+								fieldInstance.SetValue(data);
+							}
+							break;
+						}
+						case Nebula::ScriptFieldType::Int:
+						{
+							int data = 0;
+							if (ImGui::DragInt(name.c_str(), &data))
+							{
+								ScriptFieldInstance& fieldInstance = entityFields[name];
+								fieldInstance.Field = field;
+								fieldInstance.SetValue(data);
+							}
+							break;
+						}
+						}
 					}
 				}
 			}
 		}, true);
 
-		DrawComponent<SpriteRendererComponent>("Sprite Renderer", entity, [](auto& component, Entity entity) {
+		DrawComponent<SpriteRendererComponent>("Sprite Renderer", entity, [](auto& component) {
 			ImGui::ColorEdit4("Colour", value_ptr(component.Colour));
 
 			std::string text;
@@ -955,13 +1018,13 @@ namespace Nebula {
 			}
 		}, true);
 
-		DrawComponent<CircleRendererComponent>("Circle Renderer", entity, [](auto& component, Entity entity) {
+		DrawComponent<CircleRendererComponent>("Circle Renderer", entity, [](auto& component) {
 			ImGui::ColorEdit4("Colour", value_ptr(component.Colour));
 			DrawVec1Control("Thickness", component.Thickness, 0.01f, 0.01f, 1.0f);
 			DrawVec1Control("Fade", component.Fade, 0.0025f, 0.01f, 1.0f);
 		}, true);
 
-		DrawComponent<StringRendererComponent>("String Renderer", entity, [](auto& component, Entity entity) {
+		DrawComponent<StringRendererComponent>("String Renderer", entity, [](auto& component) {
 			char buffer[256];
 			memset(buffer, 0, sizeof(buffer));
 			strncpy(buffer, component.Text.c_str(), sizeof(buffer));
@@ -1000,7 +1063,7 @@ namespace Nebula {
 			}
 		}, true);
 
-		DrawComponent<Rigidbody2DComponent>("Rigidbody 2D", entity, [](auto& component, Entity entity) {
+		DrawComponent<Rigidbody2DComponent>("Rigidbody 2D", entity, [](auto& component) {
 			int componentType = (int)component.Type;
 			const char* BodyTypeStrings[] = { "Static", "Dynamic", "Kinenmatic"};
 			const char* CurrentBodyTypeString = BodyTypeStrings[componentType];
@@ -1011,7 +1074,7 @@ namespace Nebula {
 			DrawBool("Fixed Rotation", component.FixedRotation);
 		}, true);
 
-		DrawComponent<BoxCollider2DComponent>("Box Collider 2D", entity, [](auto& component, Entity entity) {
+		DrawComponent<BoxCollider2DComponent>("Box Collider 2D", entity, [](auto& component) {
 			DrawVec2Control("Offset", component.Offset);
 			DrawVec2Control("Size",   component.Size);
 
@@ -1036,7 +1099,7 @@ namespace Nebula {
 			DrawVec1Control("Restitution Threshold", component.RestitutionThreshold, 0.01f, 0.0f);
 		}, true);
 
-		DrawComponent<CircleColliderComponent>("Circle Collider", entity, [](auto& component, Entity entity) {
+		DrawComponent<CircleColliderComponent>("Circle Collider", entity, [](auto& component) {
 			DrawVec2Control("Offset", component.Offset);
 			DrawVec1Control("Radius", component.Radius, 0.01f);
 

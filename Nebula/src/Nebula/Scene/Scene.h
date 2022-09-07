@@ -53,6 +53,8 @@ namespace Nebula {
 			return m_Registry.view<Components...>();
 		}
 		
+		bool IsRunning() const { return m_IsRunning; }
+
 		Array<UUID> m_SceneOrder;
 	private:
 		void CreateBox2DBody(Entity entity);
@@ -77,6 +79,8 @@ namespace Nebula {
 
 		Camera* mainCam = nullptr;
 		mat4 mainCamTransform;
+
+		bool m_IsRunning = false;
 
 		friend class Entity;
 		friend class SceneHierarchyPanel;

@@ -14,6 +14,8 @@ namespace Sandbox
         public Vector2 Force, ForceMult;
 
         public float Time = 0.0f;
+        public float PositionX;
+        public float PositionY;
 
         public void OnCreate()
         {
@@ -30,6 +32,9 @@ namespace Sandbox
 
         public void OnUpdate(float ts)
         {
+            PositionX = Transform.Translation.x;
+            PositionY = Transform.Translation.y;
+
             Time += ts;
 
             if (Input.IsKeyDown(KeyCode.Space))
@@ -66,11 +71,14 @@ namespace Sandbox
 
             AHeldLast = isAPressed;
             DHeldLast = isDPressed;
-        }
         
+            Transform.Translation = new Vector3(PositionX, PositionY, Transform.Translation.z);
+        }
+
         private void Move(Vector2 speed)
         {
-            Transform.Translation += new Vector3(speed.x, speed.y, 0.0f);
+            PositionX += speed.x;
+            PositionY += speed.y;
 
             if (speed.x < 0.0f)
                 ForceMult.x = -1.0f;

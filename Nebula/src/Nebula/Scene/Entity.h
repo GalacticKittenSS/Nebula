@@ -70,8 +70,8 @@ namespace Nebula {
 		Scene* m_Scene = nullptr;
 	};
 
-	void CalculateGlobalTransform(Entity& entity);
-	void UpdateChildrenAndTransform(Entity& entity);
+	void CalculateGlobalTransform(Entity entity);
+	void UpdateChildrenAndTransform(Entity entity);
 
 	class ScriptableEntity {
 	public:

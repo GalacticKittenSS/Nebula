@@ -5,7 +5,7 @@
 #include "box2d/b2_fixture.h"
 
 namespace Nebula {
-	void CalculateGlobalTransform(Entity& entity) {
+	void CalculateGlobalTransform(Entity entity) {
 		auto& world = entity.GetComponent<WorldTransformComponent>();
 		mat4 transform = entity.GetTransform().CalculateMatrix();
 		world.Transform = transform;
@@ -19,7 +19,7 @@ namespace Nebula {
 		}
 	}
 
-	void UpdateChildrenAndTransform(Entity& entity) {
+	void UpdateChildrenAndTransform(Entity entity) {
 		CalculateGlobalTransform(entity);
 
 		for (UUID child : entity.GetParentChild().ChildrenIDs) {

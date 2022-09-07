@@ -167,6 +167,7 @@ namespace Nebula {
 		ScriptClass EntityClass;
 		std::unordered_map<std::string, Ref<ScriptClass>> EntityClasses;
 		std::unordered_map<UUID, Ref<ScriptInstance>> EntityInstances;
+		std::unordered_map<UUID, ScriptFieldMap> EntityScriptFields;
 
 		// Runtime
 		Scene* SceneContext = nullptr;
@@ -234,10 +235,19 @@ namespace Nebula {
 		if (!EntityClassExists(sc.ClassName))
 			return;
 
-		Ref<ScriptInstance> instance = 
+		Ref<ScriptInstance> instance =
 			CreateRef<ScriptInstance>(s_Data->EntityClasses[sc.ClassName], entity);
 
-		s_Data->EntityInstances[entity.GetUUID()] = instance;
+		UUID entityID = entity.GetUUID();
+		s_Data->EntityInstances[entityID] = instance;
+
+		if (s_Data->EntityScriptFields.find(entityID) != s_Data->EntityScriptFields.end())
+		{
+			const ScriptFieldMap& fieldMap = s_Data->EntityScriptFields.at(entityID);
+			for (const auto& [name, fieldInstance] : fieldMap)
+				instance->SetFieldValueInternal(name, fieldInstance.m_Buffer);
+		}
+				
 		instance->InvokeOnCreate();
 	}
 
@@ -265,6 +275,20 @@ namespace Nebula {
 	const std::unordered_map<std::string, Ref<ScriptClass>> ScriptEngine::GetEntityClasses()
 	{
 		return s_Data->EntityClasses;
+	}
+
+	Ref<ScriptClass> ScriptEngine::GetEntityClass(std::string name)
+	{
+		auto it = s_Data->EntityClasses.find(name);
+		if (it == s_Data->EntityClasses.end())
+			return nullptr;
+
+		return it->second;
+	}
+	
+	ScriptFieldMap& ScriptEngine::GetScriptFieldMap(UUID id)
+	{
+		return s_Data->EntityScriptFields[id];
 	}
 
 	Ref<ScriptInstance> ScriptEngine::GetEntityScriptInstance(UUID id)
@@ -427,7 +451,7 @@ namespace Nebula {
 		}
 	}
 
-	 bool ScriptInstance::GetFieldValueInternal(const std::string& name, void* buffer)
+	bool ScriptInstance::GetFieldValueInternal(const std::string& name, void* buffer)
 	{
 		const auto& fields = m_ScriptClass->GetFields();
 		auto it = fields.find(name);

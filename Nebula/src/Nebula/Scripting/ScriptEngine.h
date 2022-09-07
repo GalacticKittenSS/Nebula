@@ -35,6 +35,37 @@ namespace Nebula {
 		MonoClassField* ClassField;
 	};
 
+	// Script Field + data storage
+	class ScriptFieldInstance
+	{
+	public:
+		ScriptField Field;
+		
+		ScriptFieldInstance()
+		{
+			memset(m_Buffer, 0, sizeof(m_Buffer));
+		}
+
+		template<typename T>
+		T GetValue() const
+		{
+			static_assert(sizeof(T) <= 8, "Type too large");
+			return *(T*)m_Buffer;
+		}
+
+		template<typename T>
+		void SetValue(const T& value)
+		{
+			static_assert(sizeof(T) <= 8, "Type too large");
+			memcpy(m_Buffer, &value, sizeof(T));
+		}
+	private:
+		uint8_t m_Buffer[8];
+		friend class ScriptEngine;
+	};
+
+	using ScriptFieldMap = std::unordered_map<std::string, ScriptFieldInstance>;
+
 	class ScriptClass {
 	public:
 		ScriptClass() = default;
@@ -71,6 +102,8 @@ namespace Nebula {
 		template<typename T>
 		T GetFieldValue(const std::string& name)
 		{
+			static_assert(sizeof(T) <= 8, "Type too large");
+			
 			bool success = GetFieldValueInternal(name, s_FieldValueBuffer);
 			if (!success)
 				return T();
@@ -81,6 +114,7 @@ namespace Nebula {
 		template<typename T>
 		void SetFieldValue(const std::string& name, const T& value)
 		{
+			static_assert(sizeof(T) <= 8, "Type too large");
 			SetFieldValueInternal(name, &value);
 		}
 	private:
@@ -95,6 +129,8 @@ namespace Nebula {
 		MonoMethod* m_OnUpdateMethod = nullptr;
 
 		inline static char s_FieldValueBuffer[8];
+
+		friend class ScriptEngine;
 	};
 
 	class ScriptEngine {
@@ -113,8 +149,11 @@ namespace Nebula {
 
 		static bool EntityClassExists(const std::string& signature);
 		static Scene* GetSceneContext();
+
 		static const std::unordered_map<std::string, Ref<ScriptClass>> GetEntityClasses();
+		static Ref<ScriptClass> GetEntityClass(std::string name);
 		
+		static ScriptFieldMap& GetScriptFieldMap(UUID id);
 		static Ref<ScriptInstance> GetEntityScriptInstance(UUID id);
 
 		static MonoImage* GetCoreAssemblyImage();
