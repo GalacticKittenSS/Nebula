@@ -37,6 +37,13 @@ Entities:
       Scale: [1, 1, 1]
     ScriptComponent:
       Class: Sandbox.Player
+      ScriptFields:
+        - Name: JumpImpulse
+          Type: Vector2
+          Data: [0, 45]
+        - Name: MoveSpeed
+          Type: Vector2
+          Data: [10, 0]
     SpriteRendererComponent:
       Colour: [1, 1, 1, 1]
       Tiling: 1

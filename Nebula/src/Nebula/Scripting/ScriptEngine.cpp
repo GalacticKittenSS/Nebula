@@ -76,33 +76,6 @@ namespace Nebula {
 			return it->second;
 		}
 
-		std::string ScriptFieldTypeToString(ScriptFieldType type)
-		{
-			switch (type)
-			{
-			case Nebula::ScriptFieldType::None: return "None";
-			case Nebula::ScriptFieldType::Float: return "float";
-			case Nebula::ScriptFieldType::Double: return "double";
-			case Nebula::ScriptFieldType::Bool: return "bool";
-			case Nebula::ScriptFieldType::Char: return "char";
-			case Nebula::ScriptFieldType::Byte: return "byte";
-			case Nebula::ScriptFieldType::Short: return "short";
-			case Nebula::ScriptFieldType::Int: return "int";
-			case Nebula::ScriptFieldType::Long: return "long";
-			case Nebula::ScriptFieldType::SByte: return "sbyte";
-			case Nebula::ScriptFieldType::UShort: return "ushort";
-			case Nebula::ScriptFieldType::UInt: return "uint";
-			case Nebula::ScriptFieldType::ULong: return "ulong";
-			case Nebula::ScriptFieldType::Vector2: return "Vector2";
-			case Nebula::ScriptFieldType::Vector3: return "Vector3";
-			case Nebula::ScriptFieldType::Vector4: return "Vector4";
-			case Nebula::ScriptFieldType::Entity: return "Entity";
-			}
-
-			NB_ASSERT(false);
-			return "None";
-		}
-
 		std::string MonoTypeToString(MonoType* type)
 		{
 			ScriptFieldType field_type = MonoTypeToScriptFieldType(type);
@@ -374,7 +347,7 @@ namespace Nebula {
 				const char* field_name = mono_field_get_name(field);
 				
 				uint32_t flags = mono_field_get_flags(field);
-				if (!flags & FIELD_ATTRIBUTE_PUBLIC)
+				if (!(flags & FIELD_ATTRIBUTE_PUBLIC))
 					continue;
 
 				MonoType* mono_type = mono_field_get_type(field);

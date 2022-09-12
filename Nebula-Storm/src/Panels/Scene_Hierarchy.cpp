@@ -859,6 +859,33 @@ namespace Nebula {
 							}
 							break;
 						}
+						case Nebula::ScriptFieldType::Vector2:
+						{
+							auto data = scriptInstance->GetFieldValue<vec2>(name);
+							if (ImGui::DragFloat2(name.c_str(), value_ptr(data)))
+							{
+								scriptInstance->SetFieldValue(name, data);
+							}
+							break;
+						}
+						case Nebula::ScriptFieldType::Vector3:
+						{
+							auto data = scriptInstance->GetFieldValue<vec3>(name);
+							if (ImGui::DragFloat3(name.c_str(), value_ptr(data)))
+							{
+								scriptInstance->SetFieldValue(name, data);
+							}
+							break;
+						}
+						case Nebula::ScriptFieldType::Vector4:
+						{
+							auto data = scriptInstance->GetFieldValue<vec4>(name);
+							if (ImGui::DragFloat4(name.c_str(), value_ptr(data)))
+							{
+								scriptInstance->SetFieldValue(name, data);
+							}
+							break;
+						}
 						}
 					}
 				}
@@ -904,6 +931,33 @@ namespace Nebula {
 							}
 							break;
 						}
+						case Nebula::ScriptFieldType::Vector2:
+						{
+							auto data = scriptField.GetValue<vec2>();
+							if (ImGui::DragFloat2(name.c_str(), value_ptr(data)))
+							{
+								scriptField.SetValue(data);
+							}
+							break;
+						}
+						case Nebula::ScriptFieldType::Vector3:
+						{
+							auto data = scriptField.GetValue<vec3>();
+							if (ImGui::DragFloat3(name.c_str(), value_ptr(data)))
+							{
+								scriptField.SetValue(data);
+							}
+							break;
+						}
+						case Nebula::ScriptFieldType::Vector4:
+						{
+							auto data = scriptField.GetValue<vec4>();
+							if (ImGui::DragFloat4(name.c_str(), value_ptr(data)))
+							{
+								scriptField.SetValue(data);
+							}
+							break;
+						}
 						}
 					}
 					else
@@ -936,6 +990,39 @@ namespace Nebula {
 						{
 							int data = 0;
 							if (ImGui::DragInt(name.c_str(), &data))
+							{
+								ScriptFieldInstance& fieldInstance = entityFields[name];
+								fieldInstance.Field = field;
+								fieldInstance.SetValue(data);
+							}
+							break;
+						}
+						case Nebula::ScriptFieldType::Vector2:
+						{
+							vec2 data = vec2(0.0f);
+							if (ImGui::DragFloat2(name.c_str(), value_ptr(data)))
+							{
+								ScriptFieldInstance& fieldInstance = entityFields[name];
+								fieldInstance.Field = field;
+								fieldInstance.SetValue(data);
+							}
+							break;
+						}
+						case Nebula::ScriptFieldType::Vector3:
+						{
+							vec3 data = vec3(0.0f);
+							if (ImGui::DragFloat3(name.c_str(), value_ptr(data)))
+							{
+								ScriptFieldInstance& fieldInstance = entityFields[name];
+								fieldInstance.Field = field;
+								fieldInstance.SetValue(data);
+							}
+							break;
+						}
+						case Nebula::ScriptFieldType::Vector4:
+						{
+							vec4 data = vec4(0.0f);
+							if (ImGui::DragFloat4(name.c_str(), value_ptr(data)))
 							{
 								ScriptFieldInstance& fieldInstance = entityFields[name];
 								fieldInstance.Field = field;

@@ -49,18 +49,18 @@ namespace Nebula {
 		template<typename T>
 		T GetValue() const
 		{
-			static_assert(sizeof(T) <= 8, "Type too large");
+			static_assert(sizeof(T) <= 16, "Type too large");
 			return *(T*)m_Buffer;
 		}
 
 		template<typename T>
 		void SetValue(const T& value)
 		{
-			static_assert(sizeof(T) <= 8, "Type too large");
+			static_assert(sizeof(T) <= 16, "Type too large");
 			memcpy(m_Buffer, &value, sizeof(T));
 		}
 	private:
-		uint8_t m_Buffer[8];
+		uint8_t m_Buffer[16];
 		friend class ScriptEngine;
 	};
 
@@ -102,7 +102,7 @@ namespace Nebula {
 		template<typename T>
 		T GetFieldValue(const std::string& name)
 		{
-			static_assert(sizeof(T) <= 8, "Type too large");
+			static_assert(sizeof(T) <= 16, "Type too large");
 			
 			bool success = GetFieldValueInternal(name, s_FieldValueBuffer);
 			if (!success)
@@ -114,7 +114,7 @@ namespace Nebula {
 		template<typename T>
 		void SetFieldValue(const std::string& name, const T& value)
 		{
-			static_assert(sizeof(T) <= 8, "Type too large");
+			static_assert(sizeof(T) <= 16, "Type too large");
 			SetFieldValueInternal(name, &value);
 		}
 	private:
@@ -128,7 +128,7 @@ namespace Nebula {
 		MonoMethod* m_OnCreateMethod = nullptr;
 		MonoMethod* m_OnUpdateMethod = nullptr;
 
-		inline static char s_FieldValueBuffer[8];
+		inline static char s_FieldValueBuffer[16];
 
 		friend class ScriptEngine;
 	};
@@ -169,4 +169,57 @@ namespace Nebula {
 		friend class ScriptClass;
 		friend class ScriptGlue;
 	};
+
+	namespace Utils {
+		inline const char* ScriptFieldTypeToString(ScriptFieldType fieldType)
+		{
+			switch (fieldType)
+			{
+			case Nebula::ScriptFieldType::None:		return "None";
+			case Nebula::ScriptFieldType::Float:	return "float";
+			case Nebula::ScriptFieldType::Double:	return "double";
+			case Nebula::ScriptFieldType::Bool:		return "bool";
+			case Nebula::ScriptFieldType::Char:		return "char";
+			case Nebula::ScriptFieldType::Byte:		return "byte";
+			case Nebula::ScriptFieldType::Short:	return "short";
+			case Nebula::ScriptFieldType::Int:		return "int";
+			case Nebula::ScriptFieldType::Long:		return "long";
+			case Nebula::ScriptFieldType::SByte:	return "sbyte";
+			case Nebula::ScriptFieldType::UShort:	return "ushort";
+			case Nebula::ScriptFieldType::UInt:		return "uint";
+			case Nebula::ScriptFieldType::ULong:	return "ulong";
+			case Nebula::ScriptFieldType::Vector2:	return "Vector2";
+			case Nebula::ScriptFieldType::Vector3:	return "Vector3";
+			case Nebula::ScriptFieldType::Vector4:	return "Vector4";
+			case Nebula::ScriptFieldType::Entity:	return "Entity";
+			}
+
+			NB_ASSERT(false);
+			return "None";
+		}
+		
+		inline ScriptFieldType ScriptFieldTypeFromString(std::string_view fieldType)
+		{
+			if (fieldType == "none")	return ScriptFieldType::None;
+			if (fieldType == "float")	return ScriptFieldType::Float;
+			if (fieldType == "double")	return ScriptFieldType::Double;
+			if (fieldType == "bool")	return ScriptFieldType::Bool;
+			if (fieldType == "char")	return ScriptFieldType::Char;
+			if (fieldType == "byte")	return ScriptFieldType::Byte;
+			if (fieldType == "short")	return ScriptFieldType::Short;
+			if (fieldType == "int")		return ScriptFieldType::Int;
+			if (fieldType == "long")	return ScriptFieldType::Long;
+			if (fieldType == "sbyte")	return ScriptFieldType::SByte;
+			if (fieldType == "ushort")	return ScriptFieldType::UShort;
+			if (fieldType == "uint")	return ScriptFieldType::UInt;
+			if (fieldType == "ulong")	return ScriptFieldType::ULong;
+			if (fieldType == "Vector2") return ScriptFieldType::Vector2;
+			if (fieldType == "Vector3") return ScriptFieldType::Vector3;
+			if (fieldType == "Vector4") return ScriptFieldType::Vector4;
+			if (fieldType == "Entity")	return ScriptFieldType::Entity;
+
+			NB_ASSERT(false);
+			return ScriptFieldType::None;
+		}
+	}
 }

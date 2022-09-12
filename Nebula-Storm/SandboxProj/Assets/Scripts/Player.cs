@@ -10,13 +10,12 @@ namespace Sandbox
         private KeyCode LastPressed;
         private bool AHeldLast = false, DHeldLast = false;
 
-        public Vector2 JumpImpulse, MoveSpeed;
-        public Vector2 Force, ForceMult;
-
+        public Vector2 JumpImpulse = new Vector2(0.0f, 50.0f);
+        public Vector2 MoveSpeed = new Vector2(9.0f, 0.0f);
+        
+        private Vector2 Force, ForceMult;
         public float Time = 0.0f;
-        public float PositionX;
-        public float PositionY;
-
+        
         public void OnCreate()
         {
             Debug.Log($"Player.OnCreate - {ID}, {Name}");
@@ -25,16 +24,10 @@ namespace Sandbox
         
             SpriteRendererComponent SpriteRenderer = GetComponent<SpriteRendererComponent>();
             SpriteRenderer.Colour = new Vector4(0.0f, 0.5f, 1.0f, 1.0f);
-
-            MoveSpeed = new Vector2(9.0f, 0.0f);
-            JumpImpulse = new Vector2(0.0f, 50.0f);
         }
 
         public void OnUpdate(float ts)
         {
-            PositionX = Transform.Translation.x;
-            PositionY = Transform.Translation.y;
-
             Time += ts;
 
             if (Input.IsKeyDown(KeyCode.Space))
@@ -71,14 +64,11 @@ namespace Sandbox
 
             AHeldLast = isAPressed;
             DHeldLast = isDPressed;
-        
-            Transform.Translation = new Vector3(PositionX, PositionY, Transform.Translation.z);
         }
 
         private void Move(Vector2 speed)
         {
-            PositionX += speed.x;
-            PositionY += speed.y;
+            Transform.Translation += new Vector3(speed.x, speed.y, 0.0f);
 
             if (speed.x < 0.0f)
                 ForceMult.x = -1.0f;
