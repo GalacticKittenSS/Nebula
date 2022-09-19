@@ -45,7 +45,7 @@ namespace Nebula {
 		void OnViewportResize(uint32_t width, uint32_t height);
 
 		Entity GetPrimaryCamera();
-		Entity GetEntityWithTag(std::string tag);
+		Entity GetEntityWithTag(std::string_view tag);
 		Entity GetEntityWithUUID(UUID id);
 
 		template <typename... Components>

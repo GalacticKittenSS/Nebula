@@ -821,6 +821,7 @@ namespace Nebula {
 
 			// FIELDS
 
+			classExists = ScriptEngine::EntityClassExists(component.ClassName);
 			bool sceneRunning = scene->IsRunning();
 			if (sceneRunning)
 			{

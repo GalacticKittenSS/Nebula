@@ -181,16 +181,18 @@ namespace Nebula {
 		return {};
 	}
 
-	Entity Scene::GetEntityWithTag(std::string tag) {
-		for (auto& entityID : GetAllEntitiesWith<TagComponent>()) {
-			Entity entity{ entityID, this };
+	Entity Scene::GetEntityWithTag(std::string_view tag) {
+		auto view = m_Registry.view<TagComponent>();
 
-			if (entity.GetName() == tag)
-				return entity;
+		for (auto& entity : view) {
+			const TagComponent& tc = view.get<TagComponent>(entity);
+
+			if (tc.Tag == tag)
+				return Entity(entity, this);
 		}
 
 		NB_ERROR("Could Not Find Entity with name {0}", tag);
-		return Entity{};
+		return {};
 	}
 
 	Entity Scene::GetEntityWithUUID(UUID id) {

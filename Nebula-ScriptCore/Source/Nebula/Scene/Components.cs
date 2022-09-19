@@ -76,21 +76,6 @@
         }
     }
 
-    public class ScriptComponent : Component
-    {
-        string Class
-        {
-            get
-            {
-                return InternalCalls.ScriptComponent_GetClass(Entity.ID);
-            }
-            set
-            {
-                InternalCalls.ScriptComponent_SetClass(Entity.ID, value);
-            }
-        }
-    }
-
     public class SpriteRendererComponent : Component
     {
         // public Texture2D Texture

@@ -13,7 +13,7 @@ Entities:
       Scale: [1, 1, 1]
     CameraComponent:
       Camera:
-        ProjectionType: 1
+        ProjectionType: 0
         PerspectiveFOV: 0.785398185
         PerspectiveNear: 0.00999999978
         PerspectiveFar: 1000
@@ -24,9 +24,13 @@ Entities:
       FixedAspectRatio: false
     ScriptComponent:
       Class: Sandbox.Camera
+      ScriptFields:
+        - Name: DistanceFromCamera
+          Type: float
+          Data: 10
   - Entity: 14893174671831111502
     TagComponent:
-      Tag: Sprite
+      Tag: Player
     ParentChildComponent:
       PrimaryParent: 0
       Children: ~

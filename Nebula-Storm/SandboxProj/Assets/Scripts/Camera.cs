@@ -4,30 +4,21 @@ namespace Sandbox
 {
     public class Camera : Entity
     {
-        private TransformComponent Transform;
-        
+        private Entity Player;
+        public Vector2 Offset = new Vector2(0.0f);
+        public float DistanceFromCamera = 5.0f;
+
         void OnCreate()
         {
-            Transform = GetComponent<TransformComponent>();
+            Player = Scene.FindEntityByName("Player");
         }
 
         void OnUpdate(float ts)
         {
-            float speed = 25.0f;
-            Vector3 Velocity = Vector3.Zero;
-
-            if (Input.IsKeyDown(KeyCode.Up))
-                Velocity.y = 1.0f;
-            if (Input.IsKeyDown(KeyCode.Down))
-                Velocity.y = -1.0f;
-
-            if (Input.IsKeyDown(KeyCode.Left))
-                Velocity.x = 1.0f;
-            if (Input.IsKeyDown(KeyCode.Right))
-                Velocity.x = -1.0f;
-
-            Velocity *= speed * ts;
-            Transform.Translation += Velocity;
+            if (Player == null)
+                return;
+        
+            Translation = new Vector3(Player.Translation.xy + Offset, DistanceFromCamera);
         }
     }
 }

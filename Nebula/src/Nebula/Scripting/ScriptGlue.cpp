@@ -27,14 +27,16 @@ namespace Nebula {
 
 	static void Native_Log(int level, MonoString* text)
 	{
-		std::string str = GetStringFromMono(text);
+		char* cStr = mono_string_to_utf8(text);
 		
 		switch (level)
 		{
-			case 0: NB_TRACE("[C# Script] {}", str); break;
-			case 1: NB_WARN ("[C# Script] {}", str); break;
-			case 2: NB_ERROR("[C# Script] {}", str); break;
+			case 0: NB_TRACE("[C# Script] {}", cStr); break;
+			case 1: NB_WARN ("[C# Script] {}", cStr); break;
+			case 2: NB_ERROR("[C# Script] {}", cStr); break;
 		}
+		
+		mono_free(cStr);
 	}
 
 	// ENTITY CLASS
@@ -85,6 +87,11 @@ namespace Nebula {
 
 		auto& component = entity.GetComponent<TagComponent>();
 		component.Tag = GetStringFromMono(name);
+	}
+	
+	static MonoObject* Entity_GetScriptInstance(UUID entityID)
+	{
+		return ScriptEngine::GetManagedInstance(entityID);
 	}
 
 	// INPUT CLASS
@@ -998,15 +1005,30 @@ namespace Nebula {
 		auto& component = entity.GetComponent<CircleColliderComponent>();
 		component.RestitutionThreshold = threshold;
 	}
+	
+	static uint64_t Scene_FindEntityByName(MonoString* name)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+		
+		char* cName = mono_string_to_utf8(name);
+		Entity entity = scene->GetEntityWithTag(cName);
+		mono_free(cName);
+
+		if (!entity)
+			return 0;
+		
+		return entity.GetUUID();
+	}
 
 	void ScriptGlue::RegisterFunctions() {
 		NB_ADD_INTERNAL_CALL(Native_Log);
 
 		NB_ADD_INTERNAL_CALL(Entity_HasComponent);
 		NB_ADD_INTERNAL_CALL(Entity_AddComponent);
-		
 		NB_ADD_INTERNAL_CALL(Entity_GetName);
 		NB_ADD_INTERNAL_CALL(Entity_SetName);
+		NB_ADD_INTERNAL_CALL(Entity_GetScriptInstance);
 
 		NB_ADD_INTERNAL_CALL(TransformComponent_GetTranslation);
 		NB_ADD_INTERNAL_CALL(TransformComponent_GetRotation);
@@ -1108,6 +1130,7 @@ namespace Nebula {
 		NB_ADD_INTERNAL_CALL(CircleCollider2DComponent_SetThreshold);
 
 		NB_ADD_INTERNAL_CALL(Input_IsKeyDown);
+		NB_ADD_INTERNAL_CALL(Scene_FindEntityByName);
 	}
 
 	template<typename ... Component>

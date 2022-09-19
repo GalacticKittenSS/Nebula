@@ -27,6 +27,13 @@
             y = _y;
             z = _z;
         }
+        
+        public Vector3(Vector2 xy, float _z)
+        {
+            x = xy.x;
+            y = xy.y;
+            z = _z;
+        }
 
         public static Vector3 operator *(Vector3 vector, float scalar)
         {

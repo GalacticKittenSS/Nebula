@@ -98,6 +98,7 @@ namespace Nebula {
 		void InvokeOnUpdate(float ts);
 
 		Ref<ScriptClass> GetScriptClass() { return m_ScriptClass; }
+		MonoObject* GetManagedObject() { return m_Instance; }
 	
 		template<typename T>
 		T GetFieldValue(const std::string& name)
@@ -158,6 +159,8 @@ namespace Nebula {
 
 		static MonoImage* GetCoreAssemblyImage();
 		static MonoDomain* GetAppDomain();
+
+		static MonoObject* GetManagedInstance(UUID uuid);
 	private:
 		static void InitMono();
 		static void ShutdownMono();

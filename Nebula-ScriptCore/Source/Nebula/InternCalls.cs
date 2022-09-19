@@ -21,6 +21,9 @@ namespace Nebula
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void Entity_SetName(ulong entityID, string name);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static object Entity_GetScriptInstance(ulong entityID);
         
         // INPUT CLASS
 
@@ -60,14 +63,6 @@ namespace Nebula
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void CameraComponent_SetFixedRatio(ulong entityID, bool fixedRatio);
-
-        // SCRIPT COMPONENT
-
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static string ScriptComponent_GetClass(ulong entityID);
-
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static void ScriptComponent_SetClass(ulong entityID, string name);
 
         // SPRITE RENDERER COMPONENT
 
@@ -290,5 +285,10 @@ namespace Nebula
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void CircleCollider2DComponent_SetThreshold(ulong entityID, float threshold);
+
+        // SCENE
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static ulong Scene_FindEntityByName(string name);
     }
 }

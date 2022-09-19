@@ -15,7 +15,9 @@ namespace Sandbox
         
         private Vector2 Force, ForceMult;
         public float Time = 0.0f;
-        
+
+        private Entity Camera;
+
         public void OnCreate()
         {
             Debug.Log($"Player.OnCreate - {ID}, {Name}");
@@ -24,12 +26,46 @@ namespace Sandbox
         
             SpriteRendererComponent SpriteRenderer = GetComponent<SpriteRendererComponent>();
             SpriteRenderer.Colour = new Vector4(0.0f, 0.5f, 1.0f, 1.0f);
+            
+            Camera = Scene.FindEntityByName("Camera");
         }
 
         public void OnUpdate(float ts)
         {
             Time += ts;
 
+            MovePlayer(ts);
+            MoveCamera(ts);
+        }
+
+        private void MoveCamera(float ts)
+        {
+            if (Camera == null)
+                return;
+            
+            Camera script = Camera.As<Camera>();
+
+            float offset_speed = 25.0f * ts;
+            float distance_speed = 3.0f * ts;
+
+            if (Input.IsKeyDown(KeyCode.Up))
+                script.Offset.y += offset_speed;
+            if (Input.IsKeyDown(KeyCode.Down))
+                script.Offset.y -= offset_speed;
+
+            if (Input.IsKeyDown(KeyCode.Left))
+                script.Offset.x += offset_speed;
+            if (Input.IsKeyDown(KeyCode.Right))
+                script.Offset.x -= offset_speed;
+
+            if (Input.IsKeyDown(KeyCode.Q))
+                script.DistanceFromCamera += distance_speed;
+            if (Input.IsKeyDown(KeyCode.E))
+                script.DistanceFromCamera -= distance_speed;
+        }
+
+        private void MovePlayer(float ts)
+        {
             if (Input.IsKeyDown(KeyCode.Space))
                 Jump(JumpImpulse * ts);
 

@@ -87,5 +87,11 @@ namespace Nebula
             T component = new T() { Entity = this };
             return component;
         }
+
+        public T As<T>() where T : Entity, new()
+        {
+            object instance = InternalCalls.Entity_GetScriptInstance(ID);
+            return instance as T;
+        }
     }
 }

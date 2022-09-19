@@ -281,6 +281,13 @@ namespace Nebula {
 		return s_Data->AppDomain;
 	}
 
+
+	MonoObject* ScriptEngine::GetManagedInstance(UUID uuid)
+	{
+		NB_ASSERT(s_Data->EntityInstances.find(uuid) != s_Data->EntityInstances.end());
+		return s_Data->EntityInstances.at(uuid)->GetManagedObject();
+	}
+
 	void ScriptEngine::InitMono()
 	{
 		mono_set_assemblies_path("mono/lib");
@@ -438,15 +445,15 @@ namespace Nebula {
 	}
 	 
 	 bool ScriptInstance::SetFieldValueInternal(const std::string& name, const void* value)
-	{
-		const auto& fields = m_ScriptClass->GetFields();
-		auto it = fields.find(name);
-		if (it == fields.end())
-			return false;
-
-		const ScriptField& field = it->second;
-
-		mono_field_set_value(m_Instance, field.ClassField, (void*)value);
-		return true;
-	}
+	 {
+		 const auto& fields = m_ScriptClass->GetFields();
+		 auto it = fields.find(name);
+		 if (it == fields.end())
+			 return false;
+		 
+		 const ScriptField& field = it->second;
+		 
+		 mono_field_set_value(m_Instance, field.ClassField, (void*)value);
+		 return true;
+	 }
 }
