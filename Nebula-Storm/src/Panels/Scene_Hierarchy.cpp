@@ -814,224 +814,75 @@ namespace Nebula {
 			if (ImGui::InputText("Class", buffer, sizeof(buffer)))
 			{
 				component.ClassName = std::string(buffer);
+				ScriptEngine::CreateScriptInstance(entity);
 			}
 
 			if (!classExists)
 				ImGui::PopStyleColor();
 
 			// FIELDS
-
-			classExists = ScriptEngine::EntityClassExists(component.ClassName);
-			bool sceneRunning = scene->IsRunning();
-			if (sceneRunning)
+			Ref<ScriptInstance> scriptInstance = ScriptEngine::GetEntityScriptInstance(entity.GetUUID());
+			if (scriptInstance)
 			{
-				Ref<ScriptInstance> scriptInstance = ScriptEngine::GetEntityScriptInstance(entity.GetUUID());
-				if (scriptInstance)
-				{
-					const auto& fields = scriptInstance->GetScriptClass()->GetFields();
-					for (const auto& [name, field] : fields)
-					{
-						switch (field.Type)
-						{
-						case Nebula::ScriptFieldType::Float:
-						{
-							auto data = scriptInstance->GetFieldValue<float>(name);
-							if (ImGui::DragFloat(name.c_str(), &data))
-							{
-								scriptInstance->SetFieldValue(name, data);
-							}
-							break;
-						}
-						case Nebula::ScriptFieldType::Bool:
-						{
-							auto data = scriptInstance->GetFieldValue<bool>(name);
-							if (DrawBool(name.c_str(), data))
-							{
-								scriptInstance->SetFieldValue(name, data);
-							}
-							break;
-						}
-						case Nebula::ScriptFieldType::Int:
-						{
-							auto data = scriptInstance->GetFieldValue<int>(name);
-							if (ImGui::DragInt(name.c_str(), &data))
-							{
-								scriptInstance->SetFieldValue(name, data);
-							}
-							break;
-						}
-						case Nebula::ScriptFieldType::Vector2:
-						{
-							auto data = scriptInstance->GetFieldValue<vec2>(name);
-							if (ImGui::DragFloat2(name.c_str(), value_ptr(data)))
-							{
-								scriptInstance->SetFieldValue(name, data);
-							}
-							break;
-						}
-						case Nebula::ScriptFieldType::Vector3:
-						{
-							auto data = scriptInstance->GetFieldValue<vec3>(name);
-							if (ImGui::DragFloat3(name.c_str(), value_ptr(data)))
-							{
-								scriptInstance->SetFieldValue(name, data);
-							}
-							break;
-						}
-						case Nebula::ScriptFieldType::Vector4:
-						{
-							auto data = scriptInstance->GetFieldValue<vec4>(name);
-							if (ImGui::DragFloat4(name.c_str(), value_ptr(data)))
-							{
-								scriptInstance->SetFieldValue(name, data);
-							}
-							break;
-						}
-						}
-					}
-				}
-			}
-			else if (classExists)
-			{
-				Ref<ScriptClass> entityClass = ScriptEngine::GetEntityClass(component.ClassName);
-				const auto& fields = entityClass->GetFields();
-
-				auto& entityFields = ScriptEngine::GetScriptFieldMap(entity.GetUUID());
+				const auto& fields = scriptInstance->GetScriptClass()->GetFields();
 				for (const auto& [name, field] : fields)
 				{
-					if (entityFields.find(name) != entityFields.end())
+					switch (field.Type)
 					{
-						ScriptFieldInstance& scriptField = entityFields.at(name);
-
-						switch (field.Type)
+					case Nebula::ScriptFieldType::Float:
+					{
+						auto data = scriptInstance->GetFieldValue<float>(name);
+						if (ImGui::DragFloat(name.c_str(), &data))
 						{
-						case Nebula::ScriptFieldType::Float:
-						{
-							auto data = scriptField.GetValue<float>();
-							if (ImGui::DragFloat(name.c_str(), &data))
-							{
-								scriptField.SetValue(data);
-							}
-							break;
+							scriptInstance->SetFieldValue(name, data);
 						}
-						case Nebula::ScriptFieldType::Bool:
-						{
-							auto data = scriptField.GetValue<bool>();
-							if (DrawBool(name.c_str(), data))
-							{
-								scriptField.SetValue(data);
-							}
-							break;
-						}
-						case Nebula::ScriptFieldType::Int:
-						{
-							auto data = scriptField.GetValue<int>();
-							if (ImGui::DragInt(name.c_str(), &data))
-							{
-								scriptField.SetValue(data);
-							}
-							break;
-						}
-						case Nebula::ScriptFieldType::Vector2:
-						{
-							auto data = scriptField.GetValue<vec2>();
-							if (ImGui::DragFloat2(name.c_str(), value_ptr(data)))
-							{
-								scriptField.SetValue(data);
-							}
-							break;
-						}
-						case Nebula::ScriptFieldType::Vector3:
-						{
-							auto data = scriptField.GetValue<vec3>();
-							if (ImGui::DragFloat3(name.c_str(), value_ptr(data)))
-							{
-								scriptField.SetValue(data);
-							}
-							break;
-						}
-						case Nebula::ScriptFieldType::Vector4:
-						{
-							auto data = scriptField.GetValue<vec4>();
-							if (ImGui::DragFloat4(name.c_str(), value_ptr(data)))
-							{
-								scriptField.SetValue(data);
-							}
-							break;
-						}
-						}
+						break;
 					}
-					else
+					case Nebula::ScriptFieldType::Bool:
 					{
-						switch (field.Type)
+						auto data = scriptInstance->GetFieldValue<bool>(name);
+						if (DrawBool(name.c_str(), data))
 						{
-						case Nebula::ScriptFieldType::Float:
+							scriptInstance->SetFieldValue(name, data);
+						}
+						break;
+					}
+					case Nebula::ScriptFieldType::Int:
+					{
+						auto data = scriptInstance->GetFieldValue<int>(name);
+						if (ImGui::DragInt(name.c_str(), &data))
 						{
-							float data = 0.0f;
-							if (ImGui::DragFloat(name.c_str(), &data))
-							{
-								ScriptFieldInstance& fieldInstance = entityFields[name];
-								fieldInstance.Field = field;
-								fieldInstance.SetValue(data);
-							}
-							break;
+							scriptInstance->SetFieldValue(name, data);
 						}
-						case Nebula::ScriptFieldType::Bool:
+						break;
+					}
+					case Nebula::ScriptFieldType::Vector2:
+					{
+						auto data = scriptInstance->GetFieldValue<vec2>(name);
+						if (ImGui::DragFloat2(name.c_str(), value_ptr(data)))
 						{
-							bool data = false;
-							if (DrawBool(name.c_str(), data))
-							{
-								ScriptFieldInstance& fieldInstance = entityFields[name];
-								fieldInstance.Field = field;
-								fieldInstance.SetValue(data);
-							}
-							break;
+							scriptInstance->SetFieldValue(name, data);
 						}
-						case Nebula::ScriptFieldType::Int:
+						break;
+					}
+					case Nebula::ScriptFieldType::Vector3:
+					{
+						auto data = scriptInstance->GetFieldValue<vec3>(name);
+						if (ImGui::DragFloat3(name.c_str(), value_ptr(data)))
 						{
-							int data = 0;
-							if (ImGui::DragInt(name.c_str(), &data))
-							{
-								ScriptFieldInstance& fieldInstance = entityFields[name];
-								fieldInstance.Field = field;
-								fieldInstance.SetValue(data);
-							}
-							break;
+							scriptInstance->SetFieldValue(name, data);
 						}
-						case Nebula::ScriptFieldType::Vector2:
+						break;
+					}
+					case Nebula::ScriptFieldType::Vector4:
+					{
+						auto data = scriptInstance->GetFieldValue<vec4>(name);
+						if (ImGui::DragFloat4(name.c_str(), value_ptr(data)))
 						{
-							vec2 data = vec2(0.0f);
-							if (ImGui::DragFloat2(name.c_str(), value_ptr(data)))
-							{
-								ScriptFieldInstance& fieldInstance = entityFields[name];
-								fieldInstance.Field = field;
-								fieldInstance.SetValue(data);
-							}
-							break;
+							scriptInstance->SetFieldValue(name, data);
 						}
-						case Nebula::ScriptFieldType::Vector3:
-						{
-							vec3 data = vec3(0.0f);
-							if (ImGui::DragFloat3(name.c_str(), value_ptr(data)))
-							{
-								ScriptFieldInstance& fieldInstance = entityFields[name];
-								fieldInstance.Field = field;
-								fieldInstance.SetValue(data);
-							}
-							break;
-						}
-						case Nebula::ScriptFieldType::Vector4:
-						{
-							vec4 data = vec4(0.0f);
-							if (ImGui::DragFloat4(name.c_str(), value_ptr(data)))
-							{
-								ScriptFieldInstance& fieldInstance = entityFields[name];
-								fieldInstance.Field = field;
-								fieldInstance.SetValue(data);
-							}
-							break;
-						}
-						}
+						break;
+					}
 					}
 				}
 			}

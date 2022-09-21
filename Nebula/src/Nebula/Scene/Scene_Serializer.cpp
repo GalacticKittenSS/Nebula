@@ -104,15 +104,15 @@ namespace YAML {
 
 namespace Nebula {
 #define WRITE_SCRIPT_FIELD(FieldType, Type)			\
-	case ScriptFieldType::FieldType:		\
-		out << scriptField.GetValue<Type>();\
+	case ScriptFieldType::FieldType: \
+		out << scriptInstance->GetFieldValue<Type>(name); \
 		break
 
 #define READ_SCRIPT_FIELD(FieldType, Type)			\
 	case ScriptFieldType::FieldType: {				\
-		Type data = scriptField["Data"].as<Type>();\
-		fieldInstance.SetValue(data);\
-		break;\
+		Type data = scriptField["Data"].as<Type>(); \
+		scriptInstance->SetFieldValue(name, data); \
+		break; \
 	}
 
 	YAML::Emitter& operator<<(YAML::Emitter& out, const vec2& v)
@@ -242,20 +242,16 @@ namespace Nebula {
 			if (fields.size() > 0)
 			{
 				out << YAML::Key << "ScriptFields" << YAML::Value;
-				auto& entityFields = ScriptEngine::GetScriptFieldMap(entity.GetUUID());
-				
 				out << YAML::BeginSeq;
+				
+				Ref<ScriptInstance> scriptInstance = ScriptEngine::GetEntityScriptInstance(entity.GetUUID());
 				for (const auto& [name, field] : fields)
 				{
-					if (entityFields.find(name) == entityFields.end())
-						continue;
-
 					out << YAML::BeginMap;
 					out << YAML::Key << "Name" << YAML::Value << name;
 					out << YAML::Key << "Type" << YAML::Value << Utils::ScriptFieldTypeToString(field.Type);
 					out << YAML::Key << "Data" << YAML::Value;
 					
-					ScriptFieldInstance& scriptField = entityFields.at(name);
 					switch (field.Type)
 					{
 						WRITE_SCRIPT_FIELD(Float,	float);
@@ -488,8 +484,10 @@ namespace Nebula {
 					Ref<ScriptClass> entityClass = ScriptEngine::GetEntityClass(sc.ClassName);
 					NB_ASSERT(entityClass);
 
+					;
+					
 					const auto& fields = entityClass->GetFields();
-					auto& entityFields = ScriptEngine::GetScriptFieldMap(deserializedEntity.GetUUID());
+					Ref<ScriptInstance> scriptInstance = ScriptEngine::CreateScriptInstance(deserializedEntity);
 
 					for (auto scriptField : scriptFields)
 					{
@@ -501,9 +499,6 @@ namespace Nebula {
 						if (it == fields.end())
 							continue; 
 						
-						ScriptFieldInstance& fieldInstance = entityFields[name];
-						fieldInstance.Field = it->second;
-
 						switch (type)
 						{
 							READ_SCRIPT_FIELD(Float,	float);

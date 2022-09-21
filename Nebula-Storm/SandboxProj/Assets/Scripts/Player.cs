@@ -49,19 +49,34 @@ namespace Sandbox
             float distance_speed = 3.0f * ts;
 
             if (Input.IsKeyDown(KeyCode.Up))
+            {
                 script.Offset.y += offset_speed;
+            }
+
             if (Input.IsKeyDown(KeyCode.Down))
+            {
                 script.Offset.y -= offset_speed;
+            }
+
+            if (Input.IsKeyDown(KeyCode.Right))
+            {
+                script.Offset.x += offset_speed;
+            }
 
             if (Input.IsKeyDown(KeyCode.Left))
-                script.Offset.x += offset_speed;
-            if (Input.IsKeyDown(KeyCode.Right))
+            {
                 script.Offset.x -= offset_speed;
+            }
 
             if (Input.IsKeyDown(KeyCode.Q))
+            {
                 script.DistanceFromCamera += distance_speed;
+            }
+
             if (Input.IsKeyDown(KeyCode.E))
+            {
                 script.DistanceFromCamera -= distance_speed;
+            }
         }
 
         private void MovePlayer(float ts)

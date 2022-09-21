@@ -601,6 +601,8 @@ namespace Nebula {
 	void EditorLayer::NewScene() {
 		if (m_SceneState != SceneState::Edit)
 			OnSceneStop();
+
+		ScriptEngine::ClearScriptInstances();
 	
 		m_EditorScene = CreateRef<Scene>();
 		m_EditorScene->OnViewportResize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
@@ -643,6 +645,8 @@ namespace Nebula {
 
 		if (m_SceneState != SceneState::Edit)
 			OnSceneStop();
+
+		ScriptEngine::ClearScriptInstances();
 
 		Ref<Scene> empty = CreateRef<Scene>();
 		if (SceneSerializer(empty).Deserialize(path.string())) {
