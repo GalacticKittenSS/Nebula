@@ -10,5 +10,11 @@
 
             return new Entity(entityID);
         }
+
+        public static Entity CreateNewEntity(string name)
+        {
+            ulong entityID = InternalCalls.Scene_CreateNewEntity(name);
+            return new Entity(entityID);
+        }
     }
 }

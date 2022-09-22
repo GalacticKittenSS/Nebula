@@ -6,6 +6,8 @@
 #include "Nebula/Scene/Scene.h"
 #include "Nebula/Core/Input.h"
 
+#include "Nebula/Utils/Time.h"
+
 #include <mono/metadata/object.h>
 #include <mono/metadata/reflection.h>
 
@@ -94,11 +96,49 @@ namespace Nebula {
 		return ScriptEngine::GetManagedInstance(entityID);
 	}
 
+	static uint64_t Entity_FindChildByName(UUID entityID, MonoString* name)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+		Entity entity = { entityID, scene };
+		NB_ASSERT(entity);
+
+		UUID childID = 0;
+		char* cName = mono_string_to_utf8(name);
+		
+		const auto& children = entity.GetParentChild().ChildrenIDs;
+		for (const auto& id : children) {
+			Entity ent = { id, scene };
+			
+			if (ent.GetName() == cName)
+			{
+				childID = ent.GetUUID();
+				break;
+			}
+		}
+
+		if (childID == 0)
+			NB_ERROR("Could not find child with name {0}", cName);
+
+		mono_free(cName);
+		return childID;
+	}
+
 	// INPUT CLASS
 
 	static bool Input_IsKeyDown(KeyCode keycode)
 	{
 		return Input::IsKeyPressed(keycode);
+	}
+
+	static bool Input_IsMouseButtonDown(MouseCode mouseCode)
+	{
+		return Input::IsMouseButtonPressed(mouseCode);
+	}
+
+	static void Input_GetMousePos(vec2* out)
+	{
+		*out = { Input::GetMouseX(), Input::GetMouseY() };
 	}
 
 	// TRANSFORM COMPONENT
@@ -1021,6 +1061,50 @@ namespace Nebula {
 		return entity.GetUUID();
 	}
 
+	static uint64_t Scene_CreateNewEntity(MonoString* name)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+
+		char* cName = mono_string_to_utf8(name);
+		Entity entity = scene->CreateEntity(cName);
+		mono_free(cName);
+		
+		if (!entity)
+			return 0;
+
+		return entity.GetUUID();
+	}
+
+	// MATHF
+
+	static float Mathf_ToDegrees(float radians)
+	{
+		return degrees(radians);
+	}
+
+	static float Mathf_ToRadians(float degrees)
+	{
+		return radians(degrees);
+	}
+
+	static float Mathf_Atan(float value)
+	{
+		return atan(value);
+	}
+
+	static float Mathf_Sqrt(float value)
+	{
+		return sqrt(value);
+	}
+
+	// TIME
+
+	static float Time_DeltaTime()
+	{
+		return Time::DeltaTime();
+	}
+
 	void ScriptGlue::RegisterFunctions() {
 		NB_ADD_INTERNAL_CALL(Native_Log);
 
@@ -1029,6 +1113,7 @@ namespace Nebula {
 		NB_ADD_INTERNAL_CALL(Entity_GetName);
 		NB_ADD_INTERNAL_CALL(Entity_SetName);
 		NB_ADD_INTERNAL_CALL(Entity_GetScriptInstance);
+		NB_ADD_INTERNAL_CALL(Entity_FindChildByName);
 
 		NB_ADD_INTERNAL_CALL(TransformComponent_GetTranslation);
 		NB_ADD_INTERNAL_CALL(TransformComponent_GetRotation);
@@ -1130,7 +1215,18 @@ namespace Nebula {
 		NB_ADD_INTERNAL_CALL(CircleCollider2DComponent_SetThreshold);
 
 		NB_ADD_INTERNAL_CALL(Input_IsKeyDown);
+		NB_ADD_INTERNAL_CALL(Input_IsMouseButtonDown);
+		NB_ADD_INTERNAL_CALL(Input_GetMousePos);
+
 		NB_ADD_INTERNAL_CALL(Scene_FindEntityByName);
+		NB_ADD_INTERNAL_CALL(Scene_CreateNewEntity);
+
+		NB_ADD_INTERNAL_CALL(Mathf_Atan);
+		NB_ADD_INTERNAL_CALL(Mathf_Sqrt);
+		NB_ADD_INTERNAL_CALL(Mathf_ToDegrees);
+		NB_ADD_INTERNAL_CALL(Mathf_ToRadians);
+
+		NB_ADD_INTERNAL_CALL(Time_DeltaTime);
 	}
 
 	template<typename ... Component>

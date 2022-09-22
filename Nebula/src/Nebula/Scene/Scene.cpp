@@ -98,11 +98,11 @@ namespace Nebula {
 		return newScene;
 	}
 
-	Entity Scene::CreateEntity(const std::string& name) {
+	Entity Scene::CreateEntity(std::string_view name) {
 		return CreateEntity(UUID(), name);
 	}
 
-	Entity Scene::CreateEntity(UUID uuid, const std::string& name) {
+	Entity Scene::CreateEntity(UUID uuid, std::string_view name) {
 		Entity entity = { m_Registry.create(), this };
 		m_SceneOrder.push_back(uuid); 
 		m_EntityMap[uuid] = entity;
@@ -290,20 +290,6 @@ namespace Nebula {
 			b2Body* body = (b2Body*)rb2d.RuntimeBody;
 			auto position = body->GetPosition();
 
-			/*if (entity.HasComponent<BoxCollider2DComponent>()) {
-				auto& bc2d = entity.GetComponent<BoxCollider2DComponent>();
-
-				position.x -= bc2d.Offset.x;
-				position.y -= bc2d.Offset.y;
-			}
-
-			if (entity.HasComponent<CircleColliderComponent>()) {
-				auto& cc = entity.GetComponent<CircleColliderComponent>();
-
-				position.x -= cc.Offset.x;
-				position.y -= cc.Offset.y;
-			}*/
-			
 			vec3 wTranslation, wRotation, wScale;
 			DecomposeTransform(world.Transform, wTranslation, wRotation, wScale);
 			
@@ -566,29 +552,38 @@ namespace Nebula {
 	void Scene::OnComponentAdded<StringRendererComponent>(Entity entity, StringRendererComponent& component) { component.InitiateFont(); }
 
 	template<>
-	void Scene::OnComponentAdded<Rigidbody2DComponent>(Entity entity, Rigidbody2DComponent& component) { }
+	void Scene::OnComponentAdded<Rigidbody2DComponent>(Entity entity, Rigidbody2DComponent& component) {
+		if (!m_IsRunning)
+			return;
+		
+		//Future: Update Body
+		if (b2Body* body = (b2Body*)entity.GetComponent<Rigidbody2DComponent>().RuntimeBody)
+			m_PhysicsWorld->DestroyBody(body);
+
+		CreateBox2DBody(entity);
+	}
 
 	template<>
 	void Scene::OnComponentAdded<BoxCollider2DComponent>(Entity entity, BoxCollider2DComponent& component) {
-		if (!entity.HasComponent<Rigidbody2DComponent>())
+		if (!m_IsRunning || !entity.HasComponent<Rigidbody2DComponent>())
 			return;
 	
+		//Future: Update Body
 		if (b2Body* body = (b2Body*)entity.GetComponent<Rigidbody2DComponent>().RuntimeBody)
-		{
 			m_PhysicsWorld->DestroyBody(body);
-			CreateBox2DBody(entity);
-		}
+		
+		CreateBox2DBody(entity);
 	}
 
 	template<>
 	void Scene::OnComponentAdded<CircleColliderComponent>(Entity entity, CircleColliderComponent& component) {
-		if (!entity.HasComponent<Rigidbody2DComponent>())
+		if (!m_IsRunning || !entity.HasComponent<Rigidbody2DComponent>())
 			return;
 
+		//Future: Update Body
 		if (b2Body* body = (b2Body*)entity.GetComponent<Rigidbody2DComponent>().RuntimeBody)
-		{
 			m_PhysicsWorld->DestroyBody(body);
-			CreateBox2DBody(entity);
-		}
+
+		CreateBox2DBody(entity);
 	}
 }

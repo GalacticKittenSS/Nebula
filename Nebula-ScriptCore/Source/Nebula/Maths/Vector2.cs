@@ -36,6 +36,16 @@
         public static Vector2 operator -(Vector2 vector)
         {
             return new Vector2(-vector.x, -vector.y);
+        } 
+        
+        public static Vector2 operator -(Vector2 vector, Vector2 other)
+        {
+            return new Vector2(vector.x - other.x, vector.y - other.y);
+        }
+
+        public static Vector2 operator /(Vector2 vector, float scalar)
+        {
+            return new Vector2(vector.x / scalar, vector.y / scalar);
         }
     }
 }

@@ -24,11 +24,20 @@ namespace Nebula
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static object Entity_GetScriptInstance(ulong entityID);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static ulong Entity_FindChildByName(ulong entityID, string name);
         
         // INPUT CLASS
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static bool Input_IsKeyDown(KeyCode keyCode);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static bool Input_IsMouseButtonDown(MouseCode mouseCode);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void Input_GetMousePos(out Vector2 pos);
 
         // TRANSFORM COMPONENT
 
@@ -290,5 +299,27 @@ namespace Nebula
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static ulong Scene_FindEntityByName(string name);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static ulong Scene_CreateNewEntity(string name);
+
+        // MATHF
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static float Mathf_ToDegrees(float radians);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static float Mathf_ToRadians(float degrees);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static float Mathf_Atan(float value);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static float Mathf_Sqrt(float value);
+
+        // TIME
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static float Time_DeltaTime();
     }
 }

@@ -17,8 +17,8 @@ namespace Nebula {
 
 		static Ref<Scene> Copy(Ref<Scene> other);
 
-		Entity CreateEntity(const std::string& name);
-		Entity CreateEntity(UUID uuid, const std::string& name);
+		Entity CreateEntity(std::string_view name);
+		Entity CreateEntity(UUID uuid, std::string_view name);
 		void DestroyEntity(Entity entity);
 
 		Entity DuplicateEntity(Entity entity);

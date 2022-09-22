@@ -93,5 +93,14 @@ namespace Nebula
             object instance = InternalCalls.Entity_GetScriptInstance(ID);
             return instance as T;
         }
+
+        public Entity FindChildByName(string name)
+        {
+            ulong id = InternalCalls.Entity_FindChildByName(ID, name);
+            if (id == 0)
+                return null;
+
+            return new Entity(id);
+        }
     }
 }
