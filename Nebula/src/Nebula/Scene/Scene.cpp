@@ -93,7 +93,7 @@ namespace Nebula {
 		}
 
 		CopyComponent(AllComponents{}, dstSceneReg, srcSceneReg, enttMap);
-		newScene->m_SceneOrder = other->m_SceneOrder;
+		newScene->m_SceneOrder = other->m_SceneOrder.Copy();
 
 		return newScene;
 	}
@@ -297,7 +297,7 @@ namespace Nebula {
 			transform.Translation.y += position.y - wTranslation.y;
 			transform.Rotation.z += body->GetAngle() - wRotation.z;
 
-			CalculateGlobalTransform(entity);
+			UpdateChildrenAndTransform(entity);
 		}
 	}
 

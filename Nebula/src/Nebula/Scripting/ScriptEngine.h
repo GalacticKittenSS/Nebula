@@ -65,6 +65,8 @@ namespace Nebula {
 
 		void InvokeOnCreate();
 		void InvokeOnUpdate(float ts);
+		void InvokeOnCollisionEnter(Entity other);
+		void InvokeOnCollisionExit(Entity other);
 
 		Ref<ScriptClass> GetScriptClass() { return m_ScriptClass; }
 		MonoObject* GetManagedObject() { return m_Instance; }
@@ -97,6 +99,8 @@ namespace Nebula {
 		MonoMethod* m_Constructor = nullptr;
 		MonoMethod* m_OnCreateMethod = nullptr;
 		MonoMethod* m_OnUpdateMethod = nullptr;
+		MonoMethod* m_OnCollisionEnterMethod = nullptr;
+		MonoMethod* m_OnCollisionExitMethod = nullptr;
 
 		inline static char s_FieldValueBuffer[16];
 
@@ -116,6 +120,8 @@ namespace Nebula {
 
 		static bool OnCreateEntity(Entity entity);
 		static void OnUpdateEntity(Entity entity, float ts);
+		static void OnCollisionEnter(Entity entity, Entity other);
+		static void OnCollisionExit(Entity entity, Entity other);
 
 		static bool EntityClassExists(const std::string& signature);
 		static Scene* GetSceneContext();

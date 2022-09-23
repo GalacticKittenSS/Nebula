@@ -303,6 +303,12 @@ namespace Nebula
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static ulong Scene_CreateNewEntity(string name);
 
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static ulong Scene_DuplicateEntity(ulong entityID);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void Scene_DestroyEntity(ulong entityID);
+
         // MATHF
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
@@ -312,7 +318,22 @@ namespace Nebula
         internal extern static float Mathf_ToRadians(float degrees);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static float Mathf_Tan(float value);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static float Mathf_Atan(float value);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static float Mathf_Cos(float value);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static float Mathf_Acos(float value);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static float Mathf_Sin(float value);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static float Mathf_Asin(float value);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static float Mathf_Sqrt(float value);

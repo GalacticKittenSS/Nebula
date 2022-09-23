@@ -144,6 +144,17 @@ namespace Nebula {
 			return head[index];
 		}
 
+		Array<T> Copy() {
+			Array<T> arr;
+			
+			arr.elems = elems;
+			arr.head = new T[elems];
+				
+			for (uint32_t i = 0; i < elems; i++)
+				arr.head[i] = head[i];
+			return arr;
+		}
+
 		T& operator[](count_t index) { return getIndex(index); }
 		const T& operator[](count_t index) const { return getIndex(index); }
 		

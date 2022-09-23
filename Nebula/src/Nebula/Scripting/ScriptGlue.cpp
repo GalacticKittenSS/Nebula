@@ -1076,6 +1076,29 @@ namespace Nebula {
 		return entity.GetUUID();
 	}
 
+	static uint64_t Scene_DuplicateEntity(UUID entityID)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+		Entity entity = { entityID, scene };
+		NB_ASSERT(entity);
+
+		Entity duplicate = scene->DuplicateEntity(entity);
+		return duplicate.GetUUID();
+	}
+
+	static void Scene_DestroyEntity(UUID entityID)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+		Entity entity = { entityID, scene };
+		
+		if (entity)
+		{
+			scene->DestroyEntity(entity);
+		}
+	}
+
 	// MATHF
 
 	static float Mathf_ToDegrees(float radians)
@@ -1088,9 +1111,34 @@ namespace Nebula {
 		return radians(degrees);
 	}
 
+	static float Mathf_Tan(float value)
+	{
+		return tan(value);
+	}
+
 	static float Mathf_Atan(float value)
 	{
 		return atan(value);
+	}
+
+	static float Mathf_Cos(float value)
+	{
+		return cos(value);
+	}
+
+	static float Mathf_Acos(float value)
+	{
+		return acos(value);
+	}
+
+	static float Mathf_Sin(float value)
+	{
+		return sin(value);
+	}
+
+	static float Mathf_Asin(float value)
+	{
+		return asin(value);
 	}
 
 	static float Mathf_Sqrt(float value)
@@ -1220,12 +1268,19 @@ namespace Nebula {
 
 		NB_ADD_INTERNAL_CALL(Scene_FindEntityByName);
 		NB_ADD_INTERNAL_CALL(Scene_CreateNewEntity);
+		NB_ADD_INTERNAL_CALL(Scene_DuplicateEntity);
+		NB_ADD_INTERNAL_CALL(Scene_DestroyEntity);
 
-		NB_ADD_INTERNAL_CALL(Mathf_Atan);
-		NB_ADD_INTERNAL_CALL(Mathf_Sqrt);
 		NB_ADD_INTERNAL_CALL(Mathf_ToDegrees);
 		NB_ADD_INTERNAL_CALL(Mathf_ToRadians);
-
+		NB_ADD_INTERNAL_CALL(Mathf_Tan);
+		NB_ADD_INTERNAL_CALL(Mathf_Atan);
+		NB_ADD_INTERNAL_CALL(Mathf_Cos);
+		NB_ADD_INTERNAL_CALL(Mathf_Acos);
+		NB_ADD_INTERNAL_CALL(Mathf_Sin);
+		NB_ADD_INTERNAL_CALL(Mathf_Asin);
+		NB_ADD_INTERNAL_CALL(Mathf_Sqrt);
+		
 		NB_ADD_INTERNAL_CALL(Time_DeltaTime);
 	}
 

@@ -16,5 +16,16 @@
             ulong entityID = InternalCalls.Scene_CreateNewEntity(name);
             return new Entity(entityID);
         }
+
+        public static Entity DuplicateEntity(Entity entity)
+        {
+            ulong entityID = InternalCalls.Scene_DuplicateEntity(entity.ID);
+            return new Entity(entityID);
+        }
+
+        public static void DestroyEntity(Entity entity)
+        {
+            InternalCalls.Scene_DestroyEntity(entity.ID);
+        }
     }
 }

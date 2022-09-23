@@ -24,10 +24,7 @@ namespace Nebula {
 
 		for (UUID child : entity.GetParentChild().ChildrenIDs) {
 			Entity c = { child, entity };
-			if (!c.GetParentChild().ChildrenIDs.size())
-				CalculateGlobalTransform(c);
-			else
-				UpdateChildrenAndTransform(c);
+			UpdateChildrenAndTransform(c);
 		}
 
 		if (entity.HasComponent<Rigidbody2DComponent>()) {

@@ -36,8 +36,8 @@ Entities:
       Tag: Player
     ParentChildComponent:
       PrimaryParent: 0
-      Children: ~
-      ChildCount: 0
+      Children: [7772064114241021311]
+      ChildCount: 1
     TransformComponent:
       Translation: [0, 0, 0]
       Rotation: [0, 0, 0]
@@ -45,14 +45,20 @@ Entities:
     ScriptComponent:
       Class: Sandbox.Player
       ScriptFields:
+        - Name: Camera
+          Type: Entity
+          Data: 0
+        - Name: Floor_Collider
+          Type: Entity
+          Data: 0
         - Name: JumpImpulse
           Type: Vector2
-          Data: [0, 45]
+          Data: [0, 8]
         - Name: MoveSpeed
           Type: Vector2
-          Data: [10, 0]
-        - Name: Time
-          Type: float
+          Data: [4.25, 0]
+        - Name: Spawn_Location
+          Type: Entity
           Data: 0
     SpriteRendererComponent:
       Colour: [1, 1, 1, 1]
@@ -124,6 +130,38 @@ Entities:
     Box2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
+      Category: 1
+      Mask: 65535
+      Density: 1
+      Friction: 0.5
+      Restitution: 0
+      RestitutionThreshold: 0.5
+  - Entity: 7772064114241021311
+    TagComponent:
+      Tag: Floor Collider
+    ParentChildComponent:
+      PrimaryParent: 14893174671831111502
+      Children: ~
+      ChildCount: 0
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    ScriptComponent:
+      Class: Sandbox.Collision
+      ScriptFields:
+        - Name: CollisionCount
+          Type: float
+          Data: 0
+        - Name: Handled
+          Type: bool
+          Data: true
+    Rigidbody2DComponent:
+      BodyType: Dynamic
+      FixedRotation: false
+    Box2DComponent:
+      Offset: [0, -0.5]
+      Size: [0.349999994, 0.00999999978]
       Category: 1
       Mask: 65535
       Density: 1

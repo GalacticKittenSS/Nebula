@@ -27,25 +27,25 @@ namespace Sandbox
     {
         private Rigidbody2DComponent Rigidbody;
         private TransformComponent Transform;
-        
+
         public Entity Camera, Floor_Collider, Spawn_Location;
         public TransformComponent GunTransform = null;
         
-        public float BombCooldown;
-        public string[] BulletTemplates = { "", "" };
-
         private KeyCode LastPressed;
         private bool[] KeyCodesHeld = new bool[70];
         private bool[] MouseCodesHeld = new bool[2];
 
-        public bool IsOnFloor = false, JumpForceApplied = false;
+        private bool IsOnFloor = false, JumpForceApplied = false;
         public Vector2 JumpImpulse = new Vector2(0.0f, 50.0f);
         public Vector2 MoveSpeed = new Vector2(9.0f, 0.0f);
 
         private Vector2 Direction = new Vector2(0.0f); 
         private Vector2 DirectionMult = new Vector2(0.25f);
         private Vector2 Force, ForceMult;
-        
+
+        private float BombCooldown;
+
+        public string[] BulletTemplates = { "", "" };
         
         enum ExplosiveType { 
             Bomb = 0, Tnt = 1, 
@@ -56,7 +56,8 @@ namespace Sandbox
             Explosive = 0x0002, Implosive = 0x0004,
             Sticky = 0x0008, None = 0x0000
         };
-        
+
+        private Entity LastBullet = null;
         static ExplosiveType NextExplosiveType;
         static short NextExplosiveEffect;
 
@@ -66,6 +67,7 @@ namespace Sandbox
             
             Floor_Collider = FindChildByName("Floor Collider");
             Entity Gun = FindChildByName("Gun");
+            GunTransform = null;
 
             if (Gun != null)
             {
@@ -95,28 +97,25 @@ namespace Sandbox
             HandleMovementInput(ts);
             HandleForce();
 
-            if (BombCooldown > 0.0f)
+            /*if (BombCooldown > 0.0f)
                 BombCooldown -= ts;
 
             if (BombCooldown <= 0.0f)
-                HandleBombInput();
+                HandleBombInput();*/
         }
 
         void UpdateCollision()
         {
-            /*
-            PlayerCollider collider = Floor_Collider.As<PlayerCollider>();
-
-            if (!collider)
+            if (Floor_Collider == null)
                 return;
 
-            IsOnFloor = collider->CollisionCount;
+            Collision collider = Floor_Collider.As<Collision>();
+            IsOnFloor = collider.CollisionCount > 0;
 
-            if (IsOnFloor && !collider->Handled)
+            if (IsOnFloor && !collider.Handled)
                 JumpForceApplied = false;
 
-            collider->Handled = true;
-            */
+            collider.Handled = true;
         }
 
         private void UpdateMousePos()
@@ -130,7 +129,7 @@ namespace Sandbox
             float magnitude = Mathf.Sqrt((Direction.x * Direction.x) + (Direction.y * Direction.y));
             Direction /= magnitude;
 
-            //GunTransform.Rotation = new Vector3(GunTransform.Rotation.xy, RotateTowards(Direction));
+            GunTransform.Rotation = new Vector3(GunTransform.Rotation.xy, RotateTowards(Direction));
         }
 
         float RotateTowards(Vector2 point)
@@ -328,7 +327,14 @@ namespace Sandbox
             NextExplosiveEffect = effect;
             NextExplosiveType = type;
 
-            BombCooldown = 1.5f; //World::Active->Player.BombCooldown;
+            BombCooldown = 1.5f;
+
+            if (LastBullet != null)
+            {
+                Scene.DestroyEntity(LastBullet);
+            }
+
+            LastBullet = Projectile;
         }
     }
 }

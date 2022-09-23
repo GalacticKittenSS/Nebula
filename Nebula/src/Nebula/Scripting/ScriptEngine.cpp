@@ -242,6 +242,34 @@ namespace Nebula {
 		
 		s_Data->EntityRuntimeInstances[entity.GetUUID()]->InvokeOnUpdate(ts);
 	}
+	
+	void ScriptEngine::OnCollisionEnter(Entity entity, Entity other)
+	{
+		bool instanceFound = s_Data->EntityRuntimeInstances.find(entity.GetUUID()) != 
+			s_Data->EntityRuntimeInstances.end();
+
+		if (!instanceFound)
+		{
+			if (!OnCreateEntity(entity))
+				return;
+		}
+		
+		s_Data->EntityRuntimeInstances[entity.GetUUID()]->InvokeOnCollisionEnter(other);
+	}
+	
+	void ScriptEngine::OnCollisionExit(Entity entity, Entity other)
+	{
+		bool instanceFound = s_Data->EntityRuntimeInstances.find(entity.GetUUID()) != 
+			s_Data->EntityRuntimeInstances.end();
+
+		if (!instanceFound)
+		{
+			if (!OnCreateEntity(entity))
+				return;
+		}
+		
+		s_Data->EntityRuntimeInstances[entity.GetUUID()]->InvokeOnCollisionExit(other);
+	}
 
 	bool ScriptEngine::EntityClassExists(const std::string& signature)
 	{
@@ -439,6 +467,8 @@ namespace Nebula {
 		m_Constructor = s_Data->EntityClass.GetMethod(".ctor", 1);
 		m_OnCreateMethod = scriptClass->GetMethod("OnCreate", 0);
 		m_OnUpdateMethod = scriptClass->GetMethod("OnUpdate", 1);
+		m_OnCollisionEnterMethod = scriptClass->GetMethod("OnCollisionEnter", 1);
+		m_OnCollisionExitMethod = scriptClass->GetMethod("OnCollisionExit", 1);
 
 		UUID id = entity.GetUUID(); void* param = &id;
 		m_ScriptClass->InvokeMethod(m_Instance, m_Constructor, &param);
@@ -456,6 +486,34 @@ namespace Nebula {
 		{
 			void* param = &ts;
 			m_ScriptClass->InvokeMethod(m_Instance, m_OnUpdateMethod, &param);
+		}
+	}
+	
+	void ScriptInstance::InvokeOnCollisionEnter(Entity other)
+	{
+		if (m_OnCollisionEnterMethod)
+		{
+			MonoObject* object = s_Data->EntityClass.Instanciate();
+			
+			void* param = &other.GetUUID();
+			s_Data->EntityClass.InvokeMethod(object, m_Constructor, &param);
+
+			param = object;
+			m_ScriptClass->InvokeMethod(m_Instance, m_OnCollisionEnterMethod, &param);
+		}
+	}
+	
+	void ScriptInstance::InvokeOnCollisionExit(Entity other)
+	{
+		if (m_OnCollisionExitMethod)
+		{
+			MonoObject* object = s_Data->EntityClass.Instanciate();
+
+			void* param = &other.GetUUID();
+			s_Data->EntityClass.InvokeMethod(object, m_Constructor, &param);
+
+			param = object;
+			m_ScriptClass->InvokeMethod(m_Instance, m_OnCollisionExitMethod, &param);
 		}
 	}
 
