@@ -137,6 +137,9 @@ namespace Nebula {
 		MonoAssembly* AppAssembly = nullptr;
 		MonoImage* AppAssemblyImage = nullptr;
 
+		std::filesystem::path CoreAssemblyFilePath;
+		std::filesystem::path AppAssemblyFilePath; 
+
 		ScriptClass EntityClass;
 		std::unordered_map<std::string, Ref<ScriptClass>> EntityClasses;
 		std::unordered_map<UUID, Ref<ScriptInstance>> EntityEditorInstances;
@@ -191,6 +194,91 @@ namespace Nebula {
 #endif
 	}
 
+	void ScriptEngine::ReloadAssembly()
+	{
+		fieldMap editor_field_values, runtime_field_values;
+		signatureMap editor_class_sig, runtime_class_sig;
+		
+		GetScriptFields(s_Data->EntityEditorInstances, editor_field_values, editor_class_sig);
+		GetScriptFields(s_Data->EntityRuntimeInstances, runtime_field_values, runtime_class_sig);
+		
+		mono_domain_set(mono_get_root_domain(), false);
+		mono_domain_unload(s_Data->AppDomain);
+
+		LoadAssembly(s_Data->CoreAssemblyFilePath);
+		LoadAppAssembly(s_Data->AppAssemblyFilePath);
+		
+		s_Data->EntityClass = ScriptClass("Nebula", "Entity", true);
+		LoadAssemblyClasses();
+
+		ScriptGlue::RegisterComponents();
+
+		SetScriptFields(s_Data->EntityEditorInstances, editor_field_values, editor_class_sig);
+		SetScriptFields(s_Data->EntityRuntimeInstances, runtime_field_values, runtime_class_sig);
+	}
+
+	void ScriptEngine::SetScriptFields(std::unordered_map<UUID, Ref<ScriptInstance>>& instances, 
+		fieldMap& field_values, signatureMap& classSig)
+	{
+		bool isRuntimeInstance = instances == s_Data->EntityRuntimeInstances;
+		if (!s_Data->SceneContext && isRuntimeInstance)
+			return;
+
+		for (const auto& [entityID, instance] : instances)
+		{
+			std::string sig = classSig.at(entityID);
+			if (s_Data->EntityClasses.find(sig) == s_Data->EntityClasses.end())
+				continue;
+
+			Ref<ScriptInstance> scriptInstance = CreateRef<ScriptInstance>(
+				s_Data->EntityClasses.at(sig), instance->m_Entity);
+			instances[entityID] = scriptInstance;
+
+			const auto& editor_fields = instance->GetScriptClass()->GetFields();
+
+			for (const auto& [name, field] : editor_fields)
+			{
+				if (field.Type == ScriptFieldType::Entity)
+					continue;
+
+				instance->SetFieldValueInternal(field.Name, field_values[entityID][field.Name]);
+			}
+
+			if (s_Data->SceneContext && isRuntimeInstance)
+				instance->InvokeOnCreate();
+		}
+	}
+
+	void ScriptEngine::GetScriptFields(std::unordered_map<UUID, Ref<ScriptInstance>>& instances,
+		fieldMap& field_values, signatureMap& classSig)
+	{
+		bool isRuntimeInstance = instances == s_Data->EntityRuntimeInstances;
+		if (!s_Data->SceneContext && isRuntimeInstance)
+			return;
+
+		for (const auto& [entityID, instance] : instances)
+		{
+			const auto& monoClass = instance->GetScriptClass()->GetMonoClass();
+
+			std::string_view name = mono_class_get_name(monoClass);
+			std::string_view nameSpace = mono_class_get_namespace(monoClass);
+
+			std::string sig = fmt::format("{}.{}", nameSpace, name);
+			classSig[entityID] = sig;
+
+			const auto& fields = instance->GetScriptClass()->GetFields();
+
+			for (const auto& [name, field] : fields)
+			{
+				if (field.Type == ScriptFieldType::Entity)
+					continue;
+
+				field_values[entityID][field.Name] = new char[16];
+				instance->GetFieldValueInternal(field.Name, field_values[entityID][field.Name]);
+			}
+		}
+	}
+
 	void ScriptEngine::OnRuntimeStart(Scene* scene)
 	{
 		s_Data->SceneContext = scene;
@@ -209,8 +297,12 @@ namespace Nebula {
 			return false;
 
 		UUID entityID = entity.GetUUID();
-		Ref<ScriptInstance> editorInstance = s_Data->EntityEditorInstances.at(entityID);
+		Ref<ScriptInstance> editorInstance = nullptr;
 		
+		auto it = s_Data->EntityEditorInstances.find(entityID);
+		if (it != s_Data->EntityEditorInstances.end())
+			editorInstance = it->second;
+
 		Ref<ScriptInstance> runtimeInstance = CreateRef<ScriptInstance>(s_Data->EntityClasses[sc.ClassName], entity);
 		s_Data->EntityRuntimeInstances[entityID] = runtimeInstance;
 
@@ -288,14 +380,16 @@ namespace Nebula {
 		if (!EntityClassExists(sc.ClassName))
 			return nullptr;
 
+		UUID entityID = entity.GetUUID();
+		
 		if (s_Data->SceneContext)
 		{
 			OnCreateEntity(entity);
-			return s_Data->EntityRuntimeInstances.at(entity.GetUUID());
+			return s_Data->EntityRuntimeInstances.at(entityID);
 		}
 		
 		Ref<ScriptInstance> instance = CreateRef<ScriptInstance>(s_Data->EntityClasses[sc.ClassName], entity);
-		s_Data->EntityEditorInstances[entity.GetUUID()] = instance;
+		s_Data->EntityEditorInstances[entityID] = instance;
 		
 		return instance;
 	}
@@ -359,6 +453,7 @@ namespace Nebula {
 		s_Data->AppDomain = mono_domain_create_appdomain("NebulaScriptRuntime", nullptr);
 		mono_domain_set(s_Data->AppDomain, true);
 
+		s_Data->CoreAssemblyFilePath = filepath;
 		s_Data->CoreAssembly = Utils::LoadMonoAssembly(filepath);
 		s_Data->CoreAssemblyImage = mono_assembly_get_image(s_Data->CoreAssembly);
 
@@ -367,6 +462,7 @@ namespace Nebula {
 	
 	void ScriptEngine::LoadAppAssembly(const std::filesystem::path& filepath)
 	{
+		s_Data->AppAssemblyFilePath = filepath;
 		s_Data->AppAssembly = Utils::LoadMonoAssembly(filepath);
 		s_Data->AppAssemblyImage = mono_assembly_get_image(s_Data->AppAssembly);
 
@@ -429,7 +525,12 @@ namespace Nebula {
 
 	void ScriptEngine::ShutdownMono()
 	{
+		mono_domain_set(mono_get_root_domain(), false);
+		
+		mono_domain_unload(s_Data->AppDomain);
 		s_Data->AppDomain = nullptr;
+		
+		mono_jit_cleanup(s_Data->RootDomain);
 		s_Data->RootDomain = nullptr;
 	}
 
@@ -460,7 +561,7 @@ namespace Nebula {
 	}
 
 	ScriptInstance::ScriptInstance(Ref<ScriptClass> scriptClass, Entity entity) 
-		: m_ScriptClass(scriptClass) 
+		: m_ScriptClass(scriptClass), m_Entity(entity)
 	{
 		m_Instance = m_ScriptClass->Instanciate();
 

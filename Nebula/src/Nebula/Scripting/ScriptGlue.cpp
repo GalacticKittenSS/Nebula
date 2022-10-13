@@ -1315,6 +1315,9 @@ namespace Nebula {
 
 	void ScriptGlue::RegisterComponents()
 	{
+		s_EntityAddComponentFuncs.clear();
+		s_EntityHasComponentFuncs.clear();
+
 		RegisterComponent(AllComponents{});
 	}
 }

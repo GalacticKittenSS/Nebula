@@ -25,7 +25,7 @@ Entities:
     ScriptComponent:
       Class: Sandbox.Camera
       ScriptFields:
-        - Name: DistanceFromCamera
+        - Name: DistanceFromPlayer
           Type: float
           Data: 10
         - Name: Offset

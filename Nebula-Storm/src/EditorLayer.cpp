@@ -1,5 +1,7 @@
 #include "EditorLayer.h"
 
+#include "../../Nebula/src/Nebula/Scripting/ScriptEngine.h"
+
 namespace Nebula {
 	extern const std::filesystem::path s_AssetPath = "SandboxProj/Assets";
 
@@ -313,6 +315,13 @@ namespace Nebula {
 
 					ImGui::EndMenu();
 				}
+
+				ImGui::EndMenu();
+			}
+
+			if (ImGui::BeginMenu("Scripting")) {
+				if (ImGui::MenuItem("Reload Assembly"))
+					ScriptEngine::ReloadAssembly();
 
 				ImGui::EndMenu();
 			}

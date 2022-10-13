@@ -6,7 +6,7 @@ namespace Sandbox
     {
         private Entity Player;
         public Vector2 Offset = new Vector2(0.0f);
-        public float DistanceFromCamera = 5.0f;
+        public float DistanceFromPlayer = 5.0f;
 
         void OnCreate()
         {
@@ -17,8 +17,9 @@ namespace Sandbox
         {
             if (Player == null)
                 return;
-        
-            Translation = new Vector3(Player.Translation.xy + Offset, DistanceFromCamera);
+
+            DistanceFromPlayer -= ts;
+            Translation = new Vector3(Player.Translation.xy + Offset, DistanceFromPlayer);
         }
     }
 }

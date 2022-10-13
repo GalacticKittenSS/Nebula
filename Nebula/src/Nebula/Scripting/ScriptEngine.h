@@ -95,6 +95,8 @@ namespace Nebula {
 	private:
 		Ref<ScriptClass> m_ScriptClass;
 
+		Entity m_Entity = {};
+
 		MonoObject* m_Instance = nullptr;
 		MonoMethod* m_Constructor = nullptr;
 		MonoMethod* m_OnCreateMethod = nullptr;
@@ -114,6 +116,8 @@ namespace Nebula {
 
 		static void LoadAssembly(const std::filesystem::path& filepath);
 		static void LoadAppAssembly(const std::filesystem::path& filepath);
+
+		static void ReloadAssembly();
 
 		static void OnRuntimeStart(Scene* scene);
 		static void OnRuntimeStop();
@@ -147,6 +151,14 @@ namespace Nebula {
 
 		friend class ScriptClass;
 		friend class ScriptGlue;
+	
+		using fieldMap = std::unordered_map<UUID, std::unordered_map<std::string, char*>>;
+		using signatureMap = std::unordered_map<UUID, std::string>;
+
+		static void GetScriptFields(std::unordered_map<UUID, Ref<ScriptInstance>>& instances,
+			fieldMap& field_values, signatureMap& classSig);
+		static void SetScriptFields(std::unordered_map<UUID, Ref<ScriptInstance>>& instances,
+			fieldMap& field_values, signatureMap& classSig);
 	};
 
 	namespace Utils {

@@ -188,12 +188,12 @@ namespace Sandbox
 
             if (Input.IsKeyDown(KeyCode.Q))
             {
-                script.DistanceFromCamera += distance_speed;
+                script.DistanceFromPlayer += distance_speed;
             }
 
             if (Input.IsKeyDown(KeyCode.E))
             {
-                script.DistanceFromCamera -= distance_speed;
+                script.DistanceFromPlayer -= distance_speed;
             }
         }
 
