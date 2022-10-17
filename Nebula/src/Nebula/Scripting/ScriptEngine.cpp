@@ -164,7 +164,7 @@ namespace Nebula {
 
 	static void OnAppAssemblyFileEvent(const std::string& path, const filewatch::Event change_type)
 	{
-		if (s_Data->AssemblyReloadPending || change_type == filewatch::Event::modified)
+		if (s_Data->AssemblyReloadPending || change_type != filewatch::Event::modified)
 			return;
 
 		s_Data->AssemblyReloadPending = true;
