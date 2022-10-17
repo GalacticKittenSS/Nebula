@@ -2,10 +2,16 @@
 #include "ScriptEngine.h"
 #include "ScriptGlue.h"
 
+#include "Nebula/Core/Application.h"
+
 #include <mono/jit/jit.h>
 #include <mono/metadata/assembly.h>
 #include <mono/metadata/object.h>
 #include <mono/metadata/tabledefs.h>
+
+#include <FileWatch.hpp>
+
+#include "Nebula/Utils/Time.h"
 
 namespace Nebula {
 	static std::unordered_map<std::string, ScriptFieldType> s_ScriptFieldTypeMap = {
@@ -144,14 +150,33 @@ namespace Nebula {
 		std::unordered_map<std::string, Ref<ScriptClass>> EntityClasses;
 		std::unordered_map<UUID, Ref<ScriptInstance>> EntityEditorInstances;
 		
+		Scope<filewatch::FileWatch<std::string>> AppAssemblyWatcher;
+		bool AssemblyReloadPending = false;
+
 		// Runtime
 		Scene* SceneContext = nullptr;
 		std::unordered_map<UUID, Ref<ScriptInstance>> EntityRuntimeInstances;
+
+		Timer ReloadTimer;
 	};
 
 	static ScriptEngineData* s_Data = nullptr;
 
-	void ScriptEngine::Init() 
+	static void OnAppAssemblyFileEvent(const std::string& path, const filewatch::Event change_type)
+	{
+		if (s_Data->AssemblyReloadPending || change_type == filewatch::Event::modified)
+			return;
+
+		s_Data->AssemblyReloadPending = true;
+		s_Data->ReloadTimer = Timer();
+
+		Application::Get().SubmitToMainThread([]() {
+			s_Data->AppAssemblyWatcher.reset();
+			ScriptEngine::ReloadAssembly();
+		});
+	}
+
+	void ScriptEngine::Init()
 	{
 		s_Data = new ScriptEngineData();
 
@@ -164,7 +189,7 @@ namespace Nebula {
 
 		ScriptGlue::RegisterFunctions();
 		ScriptGlue::RegisterComponents();
-		
+
 #if 0
 		// Retrieve and Instanciate Class (With Constructor)
 		MonoObject* instance = s_Data->EntityClass.Instanciate();
@@ -194,6 +219,36 @@ namespace Nebula {
 #endif
 	}
 
+	void ScriptEngine::Shutdown()
+	{
+		ShutdownMono();
+		delete s_Data;
+	}
+
+	void ScriptEngine::LoadAssembly(const std::filesystem::path& filepath)
+	{
+		s_Data->AppDomain = mono_domain_create_appdomain("NebulaScriptRuntime", nullptr);
+		mono_domain_set(s_Data->AppDomain, true);
+
+		s_Data->CoreAssemblyFilePath = filepath;
+		s_Data->CoreAssembly = Utils::LoadMonoAssembly(filepath);
+		s_Data->CoreAssemblyImage = mono_assembly_get_image(s_Data->CoreAssembly);
+
+		Utils::PrintAssemblyTypes(s_Data->CoreAssembly);
+	}
+
+	void ScriptEngine::LoadAppAssembly(const std::filesystem::path& filepath)
+	{
+		s_Data->AppAssemblyFilePath = filepath;
+		s_Data->AppAssembly = Utils::LoadMonoAssembly(filepath);
+		s_Data->AppAssemblyImage = mono_assembly_get_image(s_Data->AppAssembly);
+
+		Utils::PrintAssemblyTypes(s_Data->AppAssembly);
+
+		s_Data->AppAssemblyWatcher = CreateScope<filewatch::FileWatch<std::string>>(filepath.string(), OnAppAssemblyFileEvent);
+		s_Data->AssemblyReloadPending = false;
+	}
+
 	void ScriptEngine::ReloadAssembly()
 	{
 		fieldMap editor_field_values, runtime_field_values;
@@ -215,68 +270,6 @@ namespace Nebula {
 
 		SetScriptFields(s_Data->EntityEditorInstances, editor_field_values, editor_class_sig);
 		SetScriptFields(s_Data->EntityRuntimeInstances, runtime_field_values, runtime_class_sig);
-	}
-
-	void ScriptEngine::SetScriptFields(std::unordered_map<UUID, Ref<ScriptInstance>>& instances, 
-		fieldMap& field_values, signatureMap& classSig)
-	{
-		bool isRuntimeInstance = instances == s_Data->EntityRuntimeInstances;
-		if (!s_Data->SceneContext && isRuntimeInstance)
-			return;
-
-		for (const auto& [entityID, instance] : instances)
-		{
-			std::string sig = classSig.at(entityID);
-			if (s_Data->EntityClasses.find(sig) == s_Data->EntityClasses.end())
-				continue;
-
-			Ref<ScriptInstance> scriptInstance = CreateRef<ScriptInstance>(
-				s_Data->EntityClasses.at(sig), instance->m_Entity);
-			instances[entityID] = scriptInstance;
-
-			const auto& editor_fields = instance->GetScriptClass()->GetFields();
-
-			for (const auto& [name, field] : editor_fields)
-			{
-				if (field.Type == ScriptFieldType::Entity)
-					continue;
-
-				instance->SetFieldValueInternal(field.Name, field_values[entityID][field.Name]);
-			}
-
-			if (s_Data->SceneContext && isRuntimeInstance)
-				instance->InvokeOnCreate();
-		}
-	}
-
-	void ScriptEngine::GetScriptFields(std::unordered_map<UUID, Ref<ScriptInstance>>& instances,
-		fieldMap& field_values, signatureMap& classSig)
-	{
-		bool isRuntimeInstance = instances == s_Data->EntityRuntimeInstances;
-		if (!s_Data->SceneContext && isRuntimeInstance)
-			return;
-
-		for (const auto& [entityID, instance] : instances)
-		{
-			const auto& monoClass = instance->GetScriptClass()->GetMonoClass();
-
-			std::string_view name = mono_class_get_name(monoClass);
-			std::string_view nameSpace = mono_class_get_namespace(monoClass);
-
-			std::string sig = fmt::format("{}.{}", nameSpace, name);
-			classSig[entityID] = sig;
-
-			const auto& fields = instance->GetScriptClass()->GetFields();
-
-			for (const auto& [name, field] : fields)
-			{
-				if (field.Type == ScriptFieldType::Entity)
-					continue;
-
-				field_values[entityID][field.Name] = new char[16];
-				instance->GetFieldValueInternal(field.Name, field_values[entityID][field.Name]);
-			}
-		}
 	}
 
 	void ScriptEngine::OnRuntimeStart(Scene* scene)
@@ -448,27 +441,6 @@ namespace Nebula {
 		s_Data->RootDomain = rootDomain;
 	}
 
-	void ScriptEngine::LoadAssembly(const std::filesystem::path& filepath)
-	{
-		s_Data->AppDomain = mono_domain_create_appdomain("NebulaScriptRuntime", nullptr);
-		mono_domain_set(s_Data->AppDomain, true);
-
-		s_Data->CoreAssemblyFilePath = filepath;
-		s_Data->CoreAssembly = Utils::LoadMonoAssembly(filepath);
-		s_Data->CoreAssemblyImage = mono_assembly_get_image(s_Data->CoreAssembly);
-
-		Utils::PrintAssemblyTypes(s_Data->CoreAssembly);
-	}
-	
-	void ScriptEngine::LoadAppAssembly(const std::filesystem::path& filepath)
-	{
-		s_Data->AppAssemblyFilePath = filepath;
-		s_Data->AppAssembly = Utils::LoadMonoAssembly(filepath);
-		s_Data->AppAssemblyImage = mono_assembly_get_image(s_Data->AppAssembly);
-
-		Utils::PrintAssemblyTypes(s_Data->AppAssembly);
-	}
-
 	void ScriptEngine::LoadAssemblyClasses()
 	{
 		s_Data->EntityClasses.clear();
@@ -517,10 +489,66 @@ namespace Nebula {
 		}
 	}
 
-	void ScriptEngine::Shutdown() 
+	void ScriptEngine::SetScriptFields(std::unordered_map<UUID, Ref<ScriptInstance>>& instances,
+		fieldMap& field_values, signatureMap& classSig)
 	{
-		ShutdownMono();
-		delete s_Data;
+		bool isRuntimeInstance = instances == s_Data->EntityRuntimeInstances;
+		if (!s_Data->SceneContext && isRuntimeInstance)
+			return;
+
+		for (const auto& [entityID, instance] : instances)
+		{
+			std::string sig = classSig.at(entityID);
+			if (s_Data->EntityClasses.find(sig) == s_Data->EntityClasses.end())
+				continue;
+
+			Ref<ScriptInstance> scriptInstance = CreateRef<ScriptInstance>(
+				s_Data->EntityClasses.at(sig), instance->m_Entity);
+			instances[entityID] = scriptInstance;
+
+			const auto& editor_fields = instance->GetScriptClass()->GetFields();
+
+			for (const auto& [name, field] : editor_fields)
+			{
+				if (field.Type == ScriptFieldType::Entity)
+					continue;
+
+				instance->SetFieldValueInternal(field.Name, field_values[entityID][field.Name]);
+			}
+
+			if (s_Data->SceneContext && isRuntimeInstance)
+				instance->InvokeOnCreate();
+		}
+	}
+
+	void ScriptEngine::GetScriptFields(std::unordered_map<UUID, Ref<ScriptInstance>>& instances,
+		fieldMap& field_values, signatureMap& classSig)
+	{
+		bool isRuntimeInstance = instances == s_Data->EntityRuntimeInstances;
+		if (!s_Data->SceneContext && isRuntimeInstance)
+			return;
+
+		for (const auto& [entityID, instance] : instances)
+		{
+			const auto& monoClass = instance->GetScriptClass()->GetMonoClass();
+
+			std::string_view name = mono_class_get_name(monoClass);
+			std::string_view nameSpace = mono_class_get_namespace(monoClass);
+
+			std::string sig = fmt::format("{}.{}", nameSpace, name);
+			classSig[entityID] = sig;
+
+			const auto& fields = instance->GetScriptClass()->GetFields();
+
+			for (const auto& [name, field] : fields)
+			{
+				if (field.Type == ScriptFieldType::Entity)
+					continue;
+
+				field_values[entityID][field.Name] = new char[16];
+				instance->GetFieldValueInternal(field.Name, field_values[entityID][field.Name]);
+			}
+		}
 	}
 
 	void ScriptEngine::ShutdownMono()

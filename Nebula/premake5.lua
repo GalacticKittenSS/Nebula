@@ -34,16 +34,17 @@ project "Nebula"
 		"src",
 		"%{includedir.Box2D}",
 		"%{includedir.Entt}",
+		"%{includedir.FileWatch}",
+		"%{includedir.FreetypeGL}",
 		"%{includedir.GLFW}",
 		"%{includedir.GLad}",
 		"%{includedir.ImGui}",
 		"%{includedir.ImGuizmo}",
+		"%{includedir.mono}",
 		"%{includedir.Spdlog}",
 		"%{includedir.Stb}",
 		"%{includedir.Yaml}",
-		"%{includedir.VulkanSDK}",
-		"%{includedir.FreetypeGL}",
-		"%{includedir.mono}"
+		"%{includedir.VulkanSDK}"
 	}
 
 	links { 

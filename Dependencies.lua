@@ -6,6 +6,7 @@ includedir = {}
 includedir["Nebula"] =		"%{wks.location}/Nebula/include"
 includedir["Box2D"] =		"%{wks.location}/Nebula/Modules/Box2D/include"
 includedir["Entt"] =		"%{wks.location}/Nebula/Modules/entt/include"
+includedir["FileWatch"] =	"%{wks.location}/Nebula/Modules/filewatch"
 includedir["GLad"] =		"%{wks.location}/Nebula/Modules/glad/include"
 includedir["GLFW"] =		"%{wks.location}/Nebula/Modules/glfw/include"
 includedir["ImGui"] =		"%{wks.location}/Nebula/Modules/imgui/include"
