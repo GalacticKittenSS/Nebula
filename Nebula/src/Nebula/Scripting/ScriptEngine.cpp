@@ -330,6 +330,9 @@ namespace Nebula {
 	
 	void ScriptEngine::OnCollisionEnter(Entity entity, Entity other)
 	{
+		if (!s_Data->SceneContext)
+			return;
+
 		bool instanceFound = s_Data->EntityRuntimeInstances.find(entity.GetUUID()) != 
 			s_Data->EntityRuntimeInstances.end();
 
@@ -344,6 +347,9 @@ namespace Nebula {
 	
 	void ScriptEngine::OnCollisionExit(Entity entity, Entity other)
 	{
+		if (!s_Data->SceneContext)
+			return;
+
 		bool instanceFound = s_Data->EntityRuntimeInstances.find(entity.GetUUID()) != 
 			s_Data->EntityRuntimeInstances.end();
 

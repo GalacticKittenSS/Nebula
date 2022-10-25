@@ -383,6 +383,9 @@ namespace Nebula {
 	}
 
 	void Scene::UpdateRuntime() {
+		if (m_IsPaused && m_StepFrames-- <= 0)
+			return;
+
 		auto camView = m_Registry.view<TransformComponent, CameraComponent>();
 		for (auto entity : camView) {
 			auto [transform, camera] = camView.get<TransformComponent, CameraComponent>(entity);
@@ -436,7 +439,18 @@ namespace Nebula {
 	}
 
 	void Scene::UpdateSimulation() {
+		if (m_IsPaused && m_StepFrames-- <= 0)
+			return;
+
 		UpdatePhysics();
+	}
+
+	void Scene::Step(int frames)
+	{
+		if (m_StepFrames > 0)
+			frames += m_StepFrames;
+
+		m_StepFrames = frames;
 	}
 
 	void Scene::UpdateEditor() { }

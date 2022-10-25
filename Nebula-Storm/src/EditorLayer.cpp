@@ -83,11 +83,13 @@ namespace Nebula {
 	void EditorLayer::Attach() {
 		NB_PROFILE_FUNCTION();
 
-		m_PlayIcon		= Texture2D::Create("Resources/Icons/PlayButton.png");
-		m_SimulateIcon	= Texture2D::Create("Resources/Icons/SimulateButton.png");
-		m_StopIcon		= Texture2D::Create("Resources/Icons/StopButton.png");
+		m_PlayIcon		= Texture2D::Create("Resources/Icons/Play.png");
+		m_SimulateIcon	= Texture2D::Create("Resources/Icons/Simulate.png");
+		m_PauseIcon		= Texture2D::Create("Resources/Icons/Pause.png");
+		m_StopIcon		= Texture2D::Create("Resources/Icons/Stop.png");
+		m_StepIcon		= Texture2D::Create("Resources/Icons/Step.png");
 		m_Backdrop		= Texture2D::Create("Resources/Textures/bg.png");
-
+		
 		//Initialize Frame Buffer
 		FrameBufferSpecification fbSpec;
 		fbSpec.Attachments = { FramebufferTextureFormat::RGBA8, FramebufferTextureFormat::RED_INT, FramebufferTextureFormat::Depth };
@@ -504,27 +506,45 @@ namespace Nebula {
 
 		float size = ImGui::GetWindowHeight() - 4.0f;
 
-		{
-			bool editorsimulate = m_SceneState == SceneState::Edit || m_SceneState == SceneState::Simulate;
-			Ref<Texture2D> icon = editorsimulate ? m_PlayIcon : m_StopIcon;
-			ImGui::SetCursorPosX((ImGui::GetWindowContentRegionMax().x * 0.5f) - (size * 0.5f));
+		ImGui::SetCursorPosX((ImGui::GetWindowContentRegionMax().x * 0.5f) - (size * 0.5f));
+		
+		if (m_SceneState != SceneState::Simulate) {
+			bool inEditor = m_SceneState == SceneState::Edit;
+			Ref<Texture2D> icon = inEditor ? m_PlayIcon : m_StopIcon;
 			if (ImGui::ImageButton((ImTextureID)icon->GetRendererID(), ImVec2(size, size), ImVec2(0, 0), ImVec2(1, 1), 0)) {
-				if (editorsimulate)
+				if (inEditor)
 					OnScenePlay();
 				else
 					OnSceneStop();
 			}
+			ImGui::SameLine();
 		}
-		ImGui::SameLine();
-		{
-			bool editorplay = m_SceneState == SceneState::Edit || m_SceneState == SceneState::Play;
-			Ref<Texture2D> icon = editorplay ? m_SimulateIcon : m_StopIcon;
-			//ImGui::SetCursorPosX((ImGui::GetWindowContentRegionMax().x * 0.5f) - (size * 0.5f));
+		
+		if (m_SceneState != SceneState::Play) {
+			bool inEditor = m_SceneState == SceneState::Edit;
+			Ref<Texture2D> icon = inEditor ? m_SimulateIcon : m_StopIcon;
 			if (ImGui::ImageButton((ImTextureID)icon->GetRendererID(), ImVec2(size, size), ImVec2(0, 0), ImVec2(1, 1), 0)) {
-				if (editorplay)
+				if (inEditor)
 					OnSceneSimulate();
 				else
 					OnSceneStop();
+			}
+			ImGui::SameLine();
+		}
+		
+		if (m_SceneState != SceneState::Edit) {
+			bool paused = m_ActiveScene->IsPaused();
+			Ref<Texture2D> icon = paused ? m_PlayIcon : m_PauseIcon;
+			if (ImGui::ImageButton((ImTextureID)icon->GetRendererID(), ImVec2(size, size), ImVec2(0, 0), ImVec2(1, 1), 0)) {
+				m_ActiveScene->SetPaused(!paused);
+			}
+
+			if (paused) {
+				ImGui::SameLine();
+				Ref<Texture2D> icon = m_StepIcon;
+				if (ImGui::ImageButton((ImTextureID)icon->GetRendererID(), ImVec2(size, size), ImVec2(0, 0), ImVec2(1, 1), 0, ImVec4(0.0f, 0.0f, 0.0f, 0.0f))) {
+					m_ActiveScene->Step(10);
+				}
 			}
 		}
 

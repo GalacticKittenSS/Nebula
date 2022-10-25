@@ -39,8 +39,8 @@ namespace Nebula {
 
 		void OnScenePlay();
 		void OnSceneStop();
-		
 		void OnSceneSimulate();
+		void OnScenePause();
 		
 		void DuplicateEntity();
 
@@ -87,7 +87,9 @@ namespace Nebula {
 		ContentBrowserPanel m_ContentBrowser;
 
 		//Editor Resources
-		Ref<Texture2D> m_PlayIcon, m_SimulateIcon, m_StopIcon, m_Backdrop;
+		Ref<Texture2D> m_PlayIcon, m_SimulateIcon, 
+			m_StopIcon, m_PauseIcon, m_StepIcon, 
+			m_Backdrop;
 
 		Font OpenSans = Font("OpenSans", "Resources/fonts/OpenSans/Regular.ttf", 64);
 	};

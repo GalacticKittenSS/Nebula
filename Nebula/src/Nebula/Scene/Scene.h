@@ -53,7 +53,11 @@ namespace Nebula {
 			return m_Registry.view<Components...>();
 		}
 		
+		void SetPaused(bool paused) { m_IsPaused = paused; }
+		bool IsPaused() const { return m_IsPaused; }
 		bool IsRunning() const { return m_IsRunning; }
+
+		void Step(int frames = 1);
 
 		Array<UUID> m_SceneOrder;
 	private:
@@ -73,14 +77,15 @@ namespace Nebula {
 		entt::registry m_Registry;
 		std::unordered_map<UUID, entt::entity> m_EntityMap;
 
+		bool m_IsRunning = false, m_IsPaused = false;
+		int m_StepFrames = 0;
+
 		uint32_t m_ViewportWidth = 0, m_ViewportHeight = 0;
 
 		b2World* m_PhysicsWorld = nullptr;
 
 		Camera* mainCam = nullptr;
 		mat4 mainCamTransform;
-
-		bool m_IsRunning = false;
 
 		friend class Entity;
 		friend class SceneHierarchyPanel;
