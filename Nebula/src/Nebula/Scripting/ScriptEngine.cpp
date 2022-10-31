@@ -8,6 +8,8 @@
 #include <mono/metadata/assembly.h>
 #include <mono/metadata/object.h>
 #include <mono/metadata/tabledefs.h>
+#include <mono/metadata/mono-debug.h>
+#include <mono/metadata/threads.h>
 
 #include <FileWatch.hpp>
 
@@ -53,7 +55,7 @@ namespace Nebula {
 			return buffer;
 		}
 
-		static MonoAssembly* LoadMonoAssembly(const std::filesystem::path& assemblyPath)
+		static MonoAssembly* LoadMonoAssembly(const std::filesystem::path& assemblyPath, bool loadPDB = false)
 		{
 			uint32_t filesize = 0;
 			char* fileData = ReadBytes(assemblyPath, &filesize);
@@ -62,6 +64,22 @@ namespace Nebula {
 			MonoImage* image = mono_image_open_from_data_full(fileData, filesize, 1, &status, 0);
 
 			NB_ASSERT(status == MONO_IMAGE_OK, mono_image_strerror(status));
+
+			if (loadPDB)
+			{
+				std::filesystem::path pdbPath = assemblyPath;
+				pdbPath.replace_extension(".pdb");
+
+				if (std::filesystem::exists(pdbPath))
+				{
+					uint32_t pdbFilesize = 0;
+					char* pdbFileData = ReadBytes(pdbPath, &pdbFilesize);
+
+					mono_debug_open_image_from_memory(image, (const mono_byte*)pdbFileData, pdbFilesize);
+					NB_INFO("Loaded PDB {}", pdbPath.string());
+					delete[] pdbFileData;
+				}
+			}
 
 			std::string path = assemblyPath.string();
 			MonoAssembly* assembly = mono_assembly_load_from_full(image, path.c_str(), &status, 0);
@@ -153,6 +171,8 @@ namespace Nebula {
 		Scope<filewatch::FileWatch<std::string>> AppAssemblyWatcher;
 		bool AssemblyReloadPending = false;
 
+		bool EnableDebugging = true;
+
 		// Runtime
 		Scene* SceneContext = nullptr;
 		std::unordered_map<UUID, Ref<ScriptInstance>> EntityRuntimeInstances;
@@ -231,7 +251,7 @@ namespace Nebula {
 		mono_domain_set(s_Data->AppDomain, true);
 
 		s_Data->CoreAssemblyFilePath = filepath;
-		s_Data->CoreAssembly = Utils::LoadMonoAssembly(filepath);
+		s_Data->CoreAssembly = Utils::LoadMonoAssembly(filepath, s_Data->EnableDebugging);
 		s_Data->CoreAssemblyImage = mono_assembly_get_image(s_Data->CoreAssembly);
 
 		Utils::PrintAssemblyTypes(s_Data->CoreAssembly);
@@ -240,7 +260,7 @@ namespace Nebula {
 	void ScriptEngine::LoadAppAssembly(const std::filesystem::path& filepath)
 	{
 		s_Data->AppAssemblyFilePath = filepath;
-		s_Data->AppAssembly = Utils::LoadMonoAssembly(filepath);
+		s_Data->AppAssembly = Utils::LoadMonoAssembly(filepath, s_Data->EnableDebugging);
 		s_Data->AppAssemblyImage = mono_assembly_get_image(s_Data->AppAssembly);
 
 		Utils::PrintAssemblyTypes(s_Data->AppAssembly);
@@ -441,10 +461,25 @@ namespace Nebula {
 	{
 		mono_set_assemblies_path("mono/lib");
 
+		if (s_Data->EnableDebugging)
+		{
+			const char* argv[2] = {
+				"--debugger-agent=transport=dt_socket,address=127.0.0.1:2550,server=y,suspend=n,loglevel=3,logfile=MonoDebugger.log",
+				"--soft-breakpoints"
+			};
+
+			mono_jit_parse_options(2, (char**)argv);
+			mono_debug_init(MONO_DEBUG_FORMAT_MONO);
+		}
+
 		MonoDomain* rootDomain = mono_jit_init("NebulaJITRuntime");
 		NB_ASSERT(rootDomain);
-		
 		s_Data->RootDomain = rootDomain;
+
+		if (s_Data->EnableDebugging)
+			mono_debug_domain_create(s_Data->RootDomain);
+
+		mono_thread_set_main(mono_thread_current());
 	}
 
 	void ScriptEngine::LoadAssemblyClasses()
@@ -591,7 +626,8 @@ namespace Nebula {
 	}
 
 	MonoObject* ScriptClass::InvokeMethod(MonoObject* instance, MonoMethod* method, void** parameters) {
-		return mono_runtime_invoke(method, instance, parameters, nullptr);
+		MonoObject* exception = nullptr;
+		return mono_runtime_invoke(method, instance, parameters, &exception);
 	}
 
 	ScriptInstance::ScriptInstance(Ref<ScriptClass> scriptClass, Entity entity) 
