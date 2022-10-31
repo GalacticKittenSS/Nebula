@@ -155,7 +155,12 @@ namespace Nebula {
 		{
 			case SceneState::Edit:
 				if (!m_UsingGizmo && m_GameViewHovered)
+				{
 					m_EditorCam.Update();
+				
+					if (Input::IsMouseButtonPressed(MouseCode::Button0))
+						m_TimeCameraMoved += m_EditorCam.HasMoved() ? Time::DeltaTime() : 0.0f;
+				}
 				
 				m_ActiveScene->UpdateEditor();
 				break;
@@ -559,7 +564,7 @@ namespace Nebula {
 
 		Dispatcher d(e);
 		d.Dispatch<KeyPressedEvent>(BIND_EVENT(EditorLayer::OnKeyPressed));
-		d.Dispatch<MouseButtonPressedEvent>(BIND_EVENT(EditorLayer::OnMousePressed));
+		d.Dispatch<MouseButtonReleasedEvent>(BIND_EVENT(EditorLayer::OnMouseReleased));
 	}
 
 	bool EditorLayer::OnKeyPressed(KeyPressedEvent& e) {
@@ -620,9 +625,14 @@ namespace Nebula {
 		return true;
 	}
 
-	bool EditorLayer::OnMousePressed(MouseButtonPressedEvent& e) {
-		if (e.GetMouseButton() == Mouse::Button0 && !ImGuizmo::IsOver() && m_GameViewHovered && m_SceneState != SceneState::Play)
+	bool EditorLayer::OnMouseReleased(MouseButtonReleasedEvent& e) {
+		bool sceneStatePlay = m_SceneState == SceneState::Play;
+		bool canSelect = m_TimeCameraMoved <= 0.05f && !ImGuizmo::IsOver() && m_GameViewHovered;
+
+		if (e.GetMouseButton() == Mouse::Button0 && canSelect && !sceneStatePlay)
 			m_SceneHierarchy.SetSelectedEntity(m_HoveredEntity);
+
+		m_TimeCameraMoved = 0.0f;
 
 		return false;
 	}

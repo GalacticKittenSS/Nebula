@@ -57,6 +57,8 @@ namespace Nebula {
 		else if (Input::IsMouseButtonPressed(Mouse::ButtonRight))
 			MouseZoom(delta.y);
 		
+		m_HasMoved = delta != vec2(0.0f, 0.0f);
+
 		UpdateView();
 	}
 

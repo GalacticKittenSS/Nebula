@@ -385,8 +385,9 @@ namespace Nebula {
 		out << YAML::Key << "Scene" << YAML::Value << "Untitled";
 		out << YAML::Key << "Entities" << YAML::Value << YAML::BeginSeq;
 
-		for (uint32_t i = 0; i < m_Scene->m_SceneOrder.size(); i++) {
-			Entity entity = { m_Scene->m_SceneOrder[i], m_Scene.get() };
+		auto view = m_Scene->GetAllEntitiesWith<IDComponent>();
+		for (auto entt : view) {
+			Entity entity = { view.get<IDComponent>(entt).ID, m_Scene.get() };
 			if (!entity)
 				return;
 
@@ -440,6 +441,8 @@ namespace Nebula {
 			if (parentComponent) {
 				auto& pcc = deserializedEntity.GetComponent<ParentChildComponent>();
 				pcc.Parent = parentComponent["PrimaryParent"].as<uint64_t>();
+				if (pcc.Parent)
+					m_Scene->m_SceneOrder.remove(uuid);
 
 				uint32_t count = parentComponent["ChildCount"].as<uint32_t>();
 				auto children = parentComponent["Children"];

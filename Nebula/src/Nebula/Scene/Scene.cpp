@@ -119,21 +119,26 @@ namespace Nebula {
 
 	Entity Scene::DuplicateEntity(Entity entity) {
 		std::string name = entity.GetName();
-		Entity newEnt = CreateEntity(name);
+		Entity duplicated = CreateEntity(name);
 
-		CopyComponent(AllComponents{}, newEnt, entity);
+		CopyComponent(AllComponents{}, duplicated, entity);
 
-		ParentChildComponent& pcc = newEnt.GetParentChild();
+		const UUID& duplicatedID = duplicated.GetUUID();
+		ParentChildComponent& pcc = duplicated.GetParentChild();
 		pcc.ChildrenIDs.clear();
-		pcc.Parent = NULL;
+		
+		if (pcc.Parent)
+			m_SceneOrder.remove(duplicatedID);
+
+		//pcc.Parent = NULL;
 
 		for (UUID& childID : entity.GetParentChild().ChildrenIDs) {
 			Entity child = { childID, this };
 
-			Entity newChild = DuplicateEntity(child);
+			Entity duplicatedChild = DuplicateEntity(child);
 
-			newEnt.GetParentChild().AddChild(newChild.GetUUID());
-			newChild.GetParentChild().Parent = newEnt.GetUUID();
+			pcc.AddChild(duplicatedChild.GetUUID());
+			duplicatedChild.GetParentChild().Parent = duplicatedID;
 		}
 
 		if (entity.HasComponent<Rigidbody2DComponent>() && entity.GetComponent<Rigidbody2DComponent>().RuntimeBody) {
@@ -141,7 +146,7 @@ namespace Nebula {
 			CreateBox2DBody(entity);
 		}
 
-		return newEnt;
+		return duplicated;
 	}
 
 	void Scene::DestroyEntity(Entity entity) {

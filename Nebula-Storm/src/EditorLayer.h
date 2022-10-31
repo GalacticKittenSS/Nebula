@@ -23,7 +23,7 @@ namespace Nebula {
 		void OnEvent(Nebula::Event& e) override;
 	private:
 		bool OnKeyPressed(KeyPressedEvent& e);
-		bool OnMousePressed(MouseButtonPressedEvent& e);
+		bool OnMouseReleased(MouseButtonReleasedEvent& e);
 
 		void RenderSelectionUI(Entity selectedEntity);
 		void RenderColliders();
@@ -73,6 +73,7 @@ namespace Nebula {
 		Entity m_HoveredEntity;
 		
 		EditorCamera m_EditorCam;
+		float m_TimeCameraMoved = 0.0f;
 
 		int m_GizmoType = -1;
 
