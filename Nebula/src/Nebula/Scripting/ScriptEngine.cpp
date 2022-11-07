@@ -393,12 +393,23 @@ namespace Nebula {
 		s_Data->EntityRuntimeInstances.clear();
 	}
 
+	void ScriptEngine::DeleteScriptInstance(Entity entity)
+	{
+		if (s_Data->SceneContext)
+			s_Data->EntityRuntimeInstances.erase(entity.GetUUID());
+		else
+			s_Data->EntityEditorInstances.erase(entity.GetUUID());
+	}
+
 	Ref<ScriptInstance> ScriptEngine::CreateScriptInstance(Entity entity)
 	{
 		const auto& sc = entity.GetComponent<ScriptComponent>();
 		if (!EntityClassExists(sc.ClassName))
+		{
+			DeleteScriptInstance(entity);
 			return nullptr;
-
+		}
+			
 		UUID entityID = entity.GetUUID();
 		
 		if (s_Data->SceneContext)

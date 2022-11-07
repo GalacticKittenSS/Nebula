@@ -148,6 +148,7 @@ namespace Nebula {
 		static void LoadAssemblyClasses();
 
 		static MonoObject* InstanciateClass(MonoClass* monoClass);
+		static void DeleteScriptInstance(Entity entity);
 
 		friend class ScriptClass;
 		friend class ScriptGlue;
