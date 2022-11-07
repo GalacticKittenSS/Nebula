@@ -72,7 +72,7 @@ namespace Nebula {
 		Timestep m_Timestep;
 		float m_LastFrameTime;
 
-		std::vector<std::function<void()>> m_MainThreadQueue;
+		Array<std::function<void()>> m_MainThreadQueue;
 		std::mutex m_MainThreadQueueMutex;
 
 		static Application* s_Instance;

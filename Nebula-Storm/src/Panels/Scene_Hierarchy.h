@@ -31,7 +31,7 @@ namespace Nebula {
 		Ref<Scene> m_Context;
 		Entity m_SelectionContext;
 
-		Array<RectData> Rects;
+		Array<RectData*> Rects;
 
 		bool m_HierarchyFocused = false;
 		bool m_HierarchyHovered = false;

@@ -93,7 +93,7 @@ namespace Nebula {
 		}
 
 		CopyComponent(AllComponents{}, dstSceneReg, srcSceneReg, enttMap);
-		newScene->m_SceneOrder = other->m_SceneOrder.Copy();
+		newScene->m_SceneOrder = other->m_SceneOrder;
 
 		return newScene;
 	}

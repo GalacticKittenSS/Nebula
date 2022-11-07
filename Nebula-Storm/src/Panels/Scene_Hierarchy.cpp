@@ -113,27 +113,27 @@ namespace Nebula {
 		DrawArray(m_Context->m_SceneOrder);
 
 		for (uint32_t i = 0; i < Rects.size(); i++) {
-			RectData& data = Rects[i];
-			if (!ImGui::IsMouseHoveringRect(data.Rect.Min, data.Rect.Max)) continue;
+			RectData* data = Rects[i];
+			if (!ImGui::IsMouseHoveringRect(data->Rect.Min, data->Rect.Max)) continue;
 
-			if (ImGui::BeginDragDropTargetCustom(data.Rect, 1)) {
+			if (ImGui::BeginDragDropTargetCustom(data->Rect, 1)) {
 				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENTITY")) {
 					const UUID entityID = *(const UUID*)payload->Data;
 					
-					if (data.Parent) {
-						Entity parent = { data.Parent, m_Context.get() };
+					if (data->Parent) {
+						Entity parent = { data->Parent, m_Context.get() };
 						AddParent(entityID, parent, m_Context.get());
 						
 						Array<UUID>& children = parent.GetParentChild().ChildrenIDs;
 
-						uint32_t entityIndex = children.FindIndex(entityID);
+						uint32_t entityIndex = children.find(entityID);
 						uint32_t newIndex = entityIndex;
 
-						if (entityIndex > data.indexBelow)
-							newIndex = data.indexBelow;
+						if (entityIndex > data->indexBelow)
+							newIndex = data->indexBelow;
 
-						if (entityIndex < data.indexAbove)
-							newIndex = data.indexAbove;
+						if (entityIndex < data->indexAbove)
+							newIndex = data->indexAbove;
 						
 						children.move(entityIndex, newIndex);
 					} 
@@ -152,14 +152,14 @@ namespace Nebula {
 							UpdateChildrenAndTransform(entity);
 						}
 						
-						uint32_t entityIndex = m_Context->m_SceneOrder.FindIndex(entityID);
+						uint32_t entityIndex = m_Context->m_SceneOrder.find(entityID);
 						uint32_t newIndex = entityIndex;
 
-						if (entityIndex > data.indexBelow)
-							newIndex = data.indexBelow;
+						if (entityIndex > data->indexBelow)
+							newIndex = data->indexBelow;
 
-						if (entityIndex < data.indexAbove)
-							newIndex = data.indexAbove;
+						if (entityIndex < data->indexAbove)
+							newIndex = data->indexAbove;
 
 						m_Context->m_SceneOrder.move(entityIndex, newIndex);
 					}
@@ -167,6 +167,7 @@ namespace Nebula {
 				ImGui::EndDragDropTarget();
 			}
 
+			delete data;
 			break;
 		}
 
@@ -216,11 +217,11 @@ namespace Nebula {
 			elementSize.y = ImGui::GetStyle().FramePadding.y;
 			cursorPos.y -= ImGui::GetStyle().FramePadding.y;
 			ImVec2 windowPos = ImGui::GetCurrentWindow()->Pos;
-			RectData data;
-			data.Parent = entity.GetParentChild().Parent;
-			data.Rect = ImRect(windowPos.x + cursorPos.x, windowPos.y + cursorPos.y, windowPos.x + cursorPos.x + elementSize.x, windowPos.y + cursorPos.y + elementSize.y);
-			data.indexAbove = 0;
-			data.indexBelow = 0;
+			RectData* data = new RectData();
+			data->Parent = entity.GetParentChild().Parent;
+			data->Rect = ImRect(windowPos.x + cursorPos.x, windowPos.y + cursorPos.y, windowPos.x + cursorPos.x + elementSize.x, windowPos.y + cursorPos.y + elementSize.y);
+			data->indexAbove = 0;
+			data->indexBelow = 0;
 			Rects.push_back(data);
 		}
 		
@@ -302,15 +303,15 @@ namespace Nebula {
 		elementSize.y = ImGui::GetStyle().FramePadding.y;
 		cursorPos.y -= ImGui::GetStyle().FramePadding.y;
 		ImVec2 windowPos = ImGui::GetCurrentWindow()->Pos;
-		RectData data;
-		data.Parent = entity.GetParentChild().Parent;
+		RectData* data = new RectData();
+		data->Parent = entity.GetParentChild().Parent;
 
 		if (index == 0)
 			elementSize.x = ImGui::GetContentRegionAvailWidth();
 
-		data.Rect = ImRect(windowPos.x + cursorPos.x, windowPos.y + cursorPos.y, windowPos.x + cursorPos.x + elementSize.x, windowPos.y + cursorPos.y + elementSize.y);
-		data.indexAbove = index;
-		data.indexAbove = index + 1;
+		data->Rect = ImRect(windowPos.x + cursorPos.x, windowPos.y + cursorPos.y, windowPos.x + cursorPos.x + elementSize.x, windowPos.y + cursorPos.y + elementSize.y);
+		data->indexAbove = index;
+		data->indexAbove = index + 1;
 
 		Rects.push_back(data);
 

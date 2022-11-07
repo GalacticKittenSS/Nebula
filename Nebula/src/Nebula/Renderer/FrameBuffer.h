@@ -29,7 +29,7 @@ namespace Nebula {
 	struct FrameBufferAttachmentSpecification {
 		FrameBufferAttachmentSpecification() = default;
 		FrameBufferAttachmentSpecification(std::initializer_list<FramebufferTextureSpecification> attachments) :
-			Attachments(attachments) { }
+			Attachments{ attachments } { }
 
 		Array<FramebufferTextureSpecification> Attachments;
 	};
