@@ -261,9 +261,6 @@ namespace Nebula {
 
 		bool entityDeleted = false;
 		if (ImGui::BeginPopupContextItem()) {
-			if (ImGui::MenuItem("Delete Selected Entity"))
-				entityDeleted = true;
-
 			if (ImGui::BeginMenu("Create Entity")) {
 				if (ImGui::MenuItem("Empty")) {
 					auto& newEnt = m_Context->CreateEntity("Entity");
@@ -284,6 +281,12 @@ namespace Nebula {
 
 				ImGui::EndMenu();
 			}
+			
+			if (ImGui::MenuItem("Duplicate Entity"))
+				m_Context->DuplicateEntity(entity);
+
+			if (ImGui::MenuItem("Delete Entity"))
+				entityDeleted = true;
 
 			ImGui::EndPopup();
 		}
@@ -297,6 +300,13 @@ namespace Nebula {
 			ImGui::TreePop();
 		}
 		
+		if (entityDeleted) {
+			m_Context->DestroyEntity(entity);
+			if (m_SelectionContext == entity)
+				m_SelectionContext = {};
+			return;
+		}
+
 		ImVec2 cursorPos = ImGui::GetCursorPos();
 		ImVec2 elementSize = ImGui::GetItemRectSize();
 		elementSize.x -= ImGui::GetStyle().FramePadding.x;
@@ -314,12 +324,6 @@ namespace Nebula {
 		data->indexAbove = index + 1;
 
 		Rects.push_back(data);
-
-		if (entityDeleted) {
-			m_Context->DestroyEntity(entity);
-			if (m_SelectionContext == entity)
-				m_SelectionContext = {};
-		}
 	}
 
 	static void DrawVec3Control(const std::string& label, vec3& values, float resetvalue = 0.0f, float columnWidth = 100.0f) {

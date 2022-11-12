@@ -117,30 +117,35 @@ namespace Nebula {
 		return entity;
 	}
 
-	Entity Scene::DuplicateEntity(Entity entity) {
+	Entity Scene::DuplicateEntity(Entity entity, bool duplicateIntoParent) {
 		std::string name = entity.GetName();
 		Entity duplicated = CreateEntity(name);
 
 		CopyComponent(AllComponents{}, duplicated, entity);
 
 		const UUID& duplicatedID = duplicated.GetUUID();
-		ParentChildComponent& pcc = duplicated.GetParentChild();
-		pcc.ChildrenIDs.clear();
-		
-		if (pcc.Parent)
+
+		ParentChildComponent& pcc = entity.GetParentChild();
+		if (pcc.Parent && duplicateIntoParent)
+		{
+			duplicated.GetParentChild().Parent = pcc.Parent;
+			
+			Entity parent = { pcc.Parent, this };
+			parent.GetParentChild().AddChild(duplicatedID);
+
 			m_SceneOrder.remove(duplicatedID);
-
-		//pcc.Parent = NULL;
-
-		for (UUID& childID : entity.GetParentChild().ChildrenIDs) {
-			Entity child = { childID, this };
-
-			Entity duplicatedChild = DuplicateEntity(child);
-
-			pcc.AddChild(duplicatedChild.GetUUID());
-			duplicatedChild.GetParentChild().Parent = duplicatedID;
 		}
+		
+		for (uint32_t i = 0; i < entity.GetParentChild().ChildrenIDs.size(); i++)
+		{
+			Entity child = DuplicateEntity({ entity.GetParentChild().ChildrenIDs[i], this }, false);
+			UUID childID = child.GetUUID();
 
+			duplicated.GetParentChild().AddChild(childID);
+			child.GetParentChild().Parent = duplicatedID;
+			m_SceneOrder.remove(childID);
+		}
+		
 		if (entity.HasComponent<Rigidbody2DComponent>() && entity.GetComponent<Rigidbody2DComponent>().RuntimeBody) {
 			entity.GetComponent<Rigidbody2DComponent>().RuntimeBody = nullptr;
 			CreateBox2DBody(entity);
@@ -159,13 +164,15 @@ namespace Nebula {
 			m_PhysicsWorld->DestroyBody((b2Body*)entity.GetComponent<Rigidbody2DComponent>().RuntimeBody);
 		}
 		
-		auto& Parent = entity.GetComponent<ParentChildComponent>();
-		for (auto& childID : Parent.ChildrenIDs)
-			DestroyEntity({ childID, this });
+		auto& Parent = entity.GetParentChild();
+		uint32_t size = Parent.ChildrenIDs.size();
+		for (uint32_t i = 0; i < size; i++)
+			DestroyEntity({ Parent.ChildrenIDs[0], this});
 
-		if (Parent.Parent) {
-			Entity{ Parent.Parent, this }.GetComponent<ParentChildComponent>().RemoveChild(entity.GetUUID());
-			Parent.Parent = NULL;
+		if (Parent.Parent) 
+		{
+			Entity parent = { Parent.Parent, this };
+			parent.GetParentChild().RemoveChild(entity.GetUUID());
 		}
 
 		m_SceneOrder.remove(entity.GetUUID());

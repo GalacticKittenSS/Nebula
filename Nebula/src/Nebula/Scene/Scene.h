@@ -21,7 +21,7 @@ namespace Nebula {
 		Entity CreateEntity(UUID uuid, std::string_view name);
 		void DestroyEntity(Entity entity);
 
-		Entity DuplicateEntity(Entity entity);
+		Entity DuplicateEntity(Entity entity, bool duplicateIntoParent = true);
 		
 		void OnRuntimeStart();
 		void OnRuntimeStop();

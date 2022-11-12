@@ -233,7 +233,7 @@ namespace Nebula {
 
 	};
 	using AllComponents = ComponentGroup <
-		ParentChildComponent, TransformComponent, WorldTransformComponent,
+		TransformComponent, WorldTransformComponent,
 		CameraComponent, ScriptComponent, NativeScriptComponent,
 		SpriteRendererComponent, CircleRendererComponent, StringRendererComponent,
 		Rigidbody2DComponent, BoxCollider2DComponent, CircleColliderComponent
