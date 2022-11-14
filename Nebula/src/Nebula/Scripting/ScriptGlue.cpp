@@ -161,7 +161,7 @@ namespace Nebula {
 		NB_ASSERT(entity);
 
 		entity.GetTransform().Translation = *translation;
-		UpdateChildrenAndTransform(entity);
+		entity.UpdateChildren();
 	}
 
 	static void TransformComponent_GetRotation(UUID entityID, vec3* out)
@@ -182,7 +182,7 @@ namespace Nebula {
 		NB_ASSERT(entity);
 
 		entity.GetTransform().Rotation = *rotation;
-		UpdateChildrenAndTransform(entity);
+		entity.UpdateChildren();
 	}
 
 	static void TransformComponent_GetScale(UUID entityID, vec3* out)
@@ -203,7 +203,7 @@ namespace Nebula {
 		NB_ASSERT(entity);
 
 		entity.GetTransform().Scale = *scale;
-		UpdateChildrenAndTransform(entity);
+		entity.UpdateChildren();
 	}
 
 	// CAMERA COMPONENTS
