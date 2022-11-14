@@ -63,6 +63,6 @@ namespace Nebula {
 	float Time::m_LastFrameTime;
 
 	float Time::Now() {
-		return glfwGetTime();
+		return (float)glfwGetTime();
 	}
 }

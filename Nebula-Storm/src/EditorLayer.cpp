@@ -434,7 +434,7 @@ namespace Nebula {
 		ImVec2 panelSize = ImGui::GetContentRegionAvail();
 		m_GameViewSize = { panelSize.x, panelSize.y };
 
-		uint32_t textureID = frameBuffer->GetColourAttachmentRendererID();
+		uint64_t textureID = frameBuffer->GetColourAttachmentRendererID();
 		ImGui::Image((void*)textureID, panelSize, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
 
 		if (ImGui::BeginDragDropTarget()) {
@@ -516,7 +516,7 @@ namespace Nebula {
 		if (m_SceneState != SceneState::Simulate) {
 			bool inEditor = m_SceneState == SceneState::Edit;
 			Ref<Texture2D> icon = inEditor ? m_PlayIcon : m_StopIcon;
-			if (ImGui::ImageButton((ImTextureID)icon->GetRendererID(), ImVec2(size, size), ImVec2(0, 0), ImVec2(1, 1), 0)) {
+			if (ImGui::ImageButton((ImTextureID)(uint64_t)icon->GetRendererID(), ImVec2(size, size), ImVec2(0, 0), ImVec2(1, 1), 0)) {
 				if (inEditor)
 					OnScenePlay();
 				else
@@ -528,7 +528,7 @@ namespace Nebula {
 		if (m_SceneState != SceneState::Play) {
 			bool inEditor = m_SceneState == SceneState::Edit;
 			Ref<Texture2D> icon = inEditor ? m_SimulateIcon : m_StopIcon;
-			if (ImGui::ImageButton((ImTextureID)icon->GetRendererID(), ImVec2(size, size), ImVec2(0, 0), ImVec2(1, 1), 0)) {
+			if (ImGui::ImageButton((ImTextureID)(uint64_t)icon->GetRendererID(), ImVec2(size, size), ImVec2(0, 0), ImVec2(1, 1), 0)) {
 				if (inEditor)
 					OnSceneSimulate();
 				else
@@ -540,14 +540,14 @@ namespace Nebula {
 		if (m_SceneState != SceneState::Edit) {
 			bool paused = m_ActiveScene->IsPaused();
 			Ref<Texture2D> icon = paused ? m_PlayIcon : m_PauseIcon;
-			if (ImGui::ImageButton((ImTextureID)icon->GetRendererID(), ImVec2(size, size), ImVec2(0, 0), ImVec2(1, 1), 0)) {
+			if (ImGui::ImageButton((ImTextureID)(uint64_t)icon->GetRendererID(), ImVec2(size, size), ImVec2(0, 0), ImVec2(1, 1), 0)) {
 				m_ActiveScene->SetPaused(!paused);
 			}
 
 			if (paused) {
 				ImGui::SameLine();
 				Ref<Texture2D> icon = m_StepIcon;
-				if (ImGui::ImageButton((ImTextureID)icon->GetRendererID(), ImVec2(size, size), ImVec2(0, 0), ImVec2(1, 1), 0, ImVec4(0.0f, 0.0f, 0.0f, 0.0f))) {
+				if (ImGui::ImageButton((ImTextureID)(uint64_t)icon->GetRendererID(), ImVec2(size, size), ImVec2(0, 0), ImVec2(1, 1), 0, ImVec4(0.0f, 0.0f, 0.0f, 0.0f))) {
 					m_ActiveScene->Step(10);
 				}
 			}

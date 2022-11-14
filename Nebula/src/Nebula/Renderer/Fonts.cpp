@@ -29,7 +29,7 @@ namespace Nebula {
 		m_FTAtlas = ftgl::texture_atlas_new(size, size, 1);
 		m_FTFont = ftgl::texture_font_new_from_file(m_FTAtlas, m_Resolution, m_Filename.c_str());
 
-		m_Texture = Texture2D::Create(size, size, true);
+		m_Texture = Texture2D::Create((const uint32_t)size, (const uint32_t)size, true);
 
 		m_CharsinAtlas.clear();
 	}

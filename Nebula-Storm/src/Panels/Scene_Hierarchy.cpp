@@ -126,8 +126,8 @@ namespace Nebula {
 						
 						Array<UUID>& children = parent.GetParentChild().ChildrenIDs;
 
-						uint32_t entityIndex = children.find(entityID);
-						uint32_t newIndex = entityIndex;
+						size_t entityIndex = children.find(entityID);
+						size_t newIndex = entityIndex;
 
 						if (entityIndex > data->indexBelow)
 							newIndex = data->indexBelow;
@@ -152,8 +152,8 @@ namespace Nebula {
 							UpdateChildrenAndTransform(entity);
 						}
 						
-						uint32_t entityIndex = m_Context->m_SceneOrder.find(entityID);
-						uint32_t newIndex = entityIndex;
+						size_t entityIndex = m_Context->m_SceneOrder.find(entityID);
+						size_t newIndex = entityIndex;
 
 						if (entityIndex > data->indexBelow)
 							newIndex = data->indexBelow;
@@ -619,7 +619,7 @@ namespace Nebula {
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.1f, 0.105f, 0.11f, 1.0f });
 		if (ImGui::BeginCombo("##V", currentString)) {
 			open = true;
-			for (int i = 0; i < stringsSize; i++) {
+			for (uint32_t i = 0; i < stringsSize; i++) {
 				bool isSelected = currentString == strings[i];
 				if (ImGui::Selectable(strings[i], isSelected)) {
 					currentString = strings[i];

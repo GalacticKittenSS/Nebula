@@ -165,8 +165,8 @@ namespace Nebula {
 		}
 		
 		auto& Parent = entity.GetParentChild();
-		uint32_t size = Parent.ChildrenIDs.size();
-		for (uint32_t i = 0; i < size; i++)
+		size_t size = Parent.ChildrenIDs.size();
+		for (size_t i = 0; i < size; i++)
 			DestroyEntity({ Parent.ChildrenIDs[0], this});
 
 		if (Parent.Parent) 

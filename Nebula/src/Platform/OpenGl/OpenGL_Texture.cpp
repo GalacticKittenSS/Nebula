@@ -15,6 +15,7 @@ namespace Nebula {
 			}
 
 			NB_ASSERT(false, "Unknown OpenGL Format");
+			return 0;
 		}
 	}
 

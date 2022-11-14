@@ -14,6 +14,7 @@
 #include <FileWatch.hpp>
 
 #include "Nebula/Utils/Time.h"
+#include "Nebula/Core/FileSystem.h"
 
 namespace Nebula {
 	static std::unordered_map<std::string, ScriptFieldType> s_ScriptFieldTypeMap = {
@@ -36,32 +37,16 @@ namespace Nebula {
 	};
 
 	namespace Utils {
-		static char* ReadBytes(const std::filesystem::path& filepath, uint32_t* outSize)
-		{
-			std::ifstream stream(filepath, std::ios::binary | std::ios::ate);
-			NB_ASSERT(stream);
-
-			std::streampos end = stream.tellg();
-			stream.seekg(0, std::ios::beg);
-			uint64_t size = end - stream.tellg();
-
-			NB_ASSERT(size);
-
-			char* buffer = new char[size];
-			stream.read((char*)buffer, size);
-			stream.close();
-
-			*outSize = (uint32_t)size;
-			return buffer;
-		}
-
 		static MonoAssembly* LoadMonoAssembly(const std::filesystem::path& assemblyPath, bool loadPDB = false)
 		{
-			uint32_t filesize = 0;
-			char* fileData = ReadBytes(assemblyPath, &filesize);
+			ScopedBuffer fileData = FileSystem::ReadFileBinary(assemblyPath);
+			if (!fileData)
+			{
+
+			}
 
 			MonoImageOpenStatus status;
-			MonoImage* image = mono_image_open_from_data_full(fileData, filesize, 1, &status, 0);
+			MonoImage* image = mono_image_open_from_data_full(fileData.As<char>(), (uint32_t)fileData.Size(), 1, &status, 0);
 
 			NB_ASSERT(status == MONO_IMAGE_OK, mono_image_strerror(status));
 
@@ -72,12 +57,10 @@ namespace Nebula {
 
 				if (std::filesystem::exists(pdbPath))
 				{
-					uint32_t pdbFilesize = 0;
-					char* pdbFileData = ReadBytes(pdbPath, &pdbFilesize);
+					ScopedBuffer pdbFileData = FileSystem::ReadFileBinary(pdbPath);
 
-					mono_debug_open_image_from_memory(image, (const mono_byte*)pdbFileData, pdbFilesize);
+					mono_debug_open_image_from_memory(image, pdbFileData.As<const mono_byte>(), (uint32_t)pdbFileData.Size());
 					NB_INFO("Loaded PDB {}", pdbPath.string());
-					delete[] pdbFileData;
 				}
 			}
 
@@ -85,7 +68,6 @@ namespace Nebula {
 			MonoAssembly* assembly = mono_assembly_load_from_full(image, path.c_str(), &status, 0);
 			mono_image_close(image);
 
-			delete[] fileData;
 			return assembly;
 		}
 
