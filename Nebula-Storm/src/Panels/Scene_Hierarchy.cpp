@@ -737,7 +737,7 @@ namespace Nebula {
 			component.Scale = scale;
 
 			if (p || r || s)
-				UpdateChildrenAndTransform(entity);
+				entity.UpdateChildren();
 		});
 	
 		DrawComponent<CameraComponent>("Camera", entity, [](auto& component, Entity entity) {
