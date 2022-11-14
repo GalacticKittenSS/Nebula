@@ -487,42 +487,40 @@ namespace Nebula {
 				auto scriptFields = scriptComponent["ScriptFields"];
 				if (scriptFields)
 				{
-					Ref<ScriptClass> entityClass = ScriptEngine::GetEntityClass(sc.ClassName);
-					NB_ASSERT(entityClass);
-
-					;
-					
-					const auto& fields = entityClass->GetFields();
-					Ref<ScriptInstance> scriptInstance = ScriptEngine::CreateScriptInstance(deserializedEntity);
-
-					for (auto scriptField : scriptFields)
+					if (Ref<ScriptClass> entityClass = ScriptEngine::GetEntityClass(sc.ClassName))
 					{
-						std::string name = scriptField["Name"].as<std::string>();
-						std::string typeString = scriptField["Type"].as<std::string>();
-						ScriptFieldType type = Utils::ScriptFieldTypeFromString(typeString);
+						const auto& fields = entityClass->GetFields();
+						Ref<ScriptInstance> scriptInstance = ScriptEngine::CreateScriptInstance(deserializedEntity);
 
-						auto it = fields.find(name);
-						if (it == fields.end())
-							continue; 
-						
-						switch (type)
+						for (auto scriptField : scriptFields)
 						{
-							READ_SCRIPT_FIELD(Float,	float);
-							READ_SCRIPT_FIELD(Double,	double);
-							READ_SCRIPT_FIELD(Bool,		bool);
-							READ_SCRIPT_FIELD(Char,		char);
-							READ_SCRIPT_FIELD(Byte,		int8_t);
-							READ_SCRIPT_FIELD(Short,	int16_t);
-							READ_SCRIPT_FIELD(Int,		int32_t);
-							READ_SCRIPT_FIELD(Long,		int64_t);
-							READ_SCRIPT_FIELD(SByte,	uint8_t);
-							READ_SCRIPT_FIELD(UShort,	uint16_t);
-							READ_SCRIPT_FIELD(UInt,		uint32_t);
-							READ_SCRIPT_FIELD(ULong,	uint64_t);
-							READ_SCRIPT_FIELD(Vector2,	vec2);
-							READ_SCRIPT_FIELD(Vector3,	vec3);
-							READ_SCRIPT_FIELD(Vector4,	vec4);
-							READ_SCRIPT_FIELD(Entity,	UUID);
+							std::string name = scriptField["Name"].as<std::string>();
+							std::string typeString = scriptField["Type"].as<std::string>();
+							ScriptFieldType type = Utils::ScriptFieldTypeFromString(typeString);
+
+							auto it = fields.find(name);
+							if (it == fields.end())
+								continue; 
+						
+							switch (type)
+							{
+								READ_SCRIPT_FIELD(Float,	float);
+								READ_SCRIPT_FIELD(Double,	double);
+								READ_SCRIPT_FIELD(Bool,		bool);
+								READ_SCRIPT_FIELD(Char,		char);
+								READ_SCRIPT_FIELD(Byte,		int8_t);
+								READ_SCRIPT_FIELD(Short,	int16_t);
+								READ_SCRIPT_FIELD(Int,		int32_t);
+								READ_SCRIPT_FIELD(Long,		int64_t);
+								READ_SCRIPT_FIELD(SByte,	uint8_t);
+								READ_SCRIPT_FIELD(UShort,	uint16_t);
+								READ_SCRIPT_FIELD(UInt,		uint32_t);
+								READ_SCRIPT_FIELD(ULong,	uint64_t);
+								READ_SCRIPT_FIELD(Vector2,	vec2);
+								READ_SCRIPT_FIELD(Vector3,	vec3);
+								READ_SCRIPT_FIELD(Vector4,	vec4);
+								READ_SCRIPT_FIELD(Entity,	UUID);
+							}
 						}
 					}
 				}

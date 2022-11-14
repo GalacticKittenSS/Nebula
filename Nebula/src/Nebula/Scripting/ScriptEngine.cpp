@@ -40,15 +40,16 @@ namespace Nebula {
 		static MonoAssembly* LoadMonoAssembly(const std::filesystem::path& assemblyPath, bool loadPDB = false)
 		{
 			ScopedBuffer fileData = FileSystem::ReadFileBinary(assemblyPath);
-			if (!fileData)
-			{
-
-			}
-
+			
 			MonoImageOpenStatus status;
 			MonoImage* image = mono_image_open_from_data_full(fileData.As<char>(), (uint32_t)fileData.Size(), 1, &status, 0);
 
-			NB_ASSERT(status == MONO_IMAGE_OK, mono_image_strerror(status));
+			if (status != MONO_IMAGE_OK)
+			{
+				const char* errorMessage = mono_image_strerror(status);
+				NB_ERROR("[ScriptEngine] {}", errorMessage);
+				return nullptr;
+			}
 
 			if (loadPDB)
 			{
@@ -183,8 +184,19 @@ namespace Nebula {
 		s_Data = new ScriptEngineData();
 
 		InitMono();
-		LoadAssembly("Resources/Scripts/Nebula-ScriptCore.dll");
-		LoadAppAssembly("SandboxProj/Binaries/Sandbox.dll");
+		bool status = LoadAssembly("Resources/Scripts/Nebula-ScriptCore.dll");
+		if (!status)
+		{
+			NB_WARN("[ScriptEngine] Could not load Core Assembly");
+			return;
+		}
+		
+		status = LoadAppAssembly("SandboxProj/Binaries/Sandbox.dll");
+		if (!status)
+		{
+			NB_WARN("[ScriptEngine] Could not load App Assembly");
+			return;
+		}
 
 		s_Data->EntityClass = ScriptClass("Nebula", "Entity", true);
 		LoadAssemblyClasses();
@@ -227,28 +239,32 @@ namespace Nebula {
 		delete s_Data;
 	}
 
-	void ScriptEngine::LoadAssembly(const std::filesystem::path& filepath)
+	bool ScriptEngine::LoadAssembly(const std::filesystem::path& filepath)
 	{
 		s_Data->AppDomain = mono_domain_create_appdomain("NebulaScriptRuntime", nullptr);
 		mono_domain_set(s_Data->AppDomain, true);
 
 		s_Data->CoreAssemblyFilePath = filepath;
 		s_Data->CoreAssembly = Utils::LoadMonoAssembly(filepath, s_Data->EnableDebugging);
-		s_Data->CoreAssemblyImage = mono_assembly_get_image(s_Data->CoreAssembly);
+		if (s_Data->CoreAssembly == nullptr)
+			return false;
 
-		Utils::PrintAssemblyTypes(s_Data->CoreAssembly);
+		s_Data->CoreAssemblyImage = mono_assembly_get_image(s_Data->CoreAssembly);
+		return true;
 	}
 
-	void ScriptEngine::LoadAppAssembly(const std::filesystem::path& filepath)
+	bool ScriptEngine::LoadAppAssembly(const std::filesystem::path& filepath)
 	{
 		s_Data->AppAssemblyFilePath = filepath;
 		s_Data->AppAssembly = Utils::LoadMonoAssembly(filepath, s_Data->EnableDebugging);
-		s_Data->AppAssemblyImage = mono_assembly_get_image(s_Data->AppAssembly);
+		if (s_Data->AppAssembly == nullptr)
+			return false;
 
-		Utils::PrintAssemblyTypes(s_Data->AppAssembly);
+		s_Data->AppAssemblyImage = mono_assembly_get_image(s_Data->AppAssembly);
 
 		s_Data->AppAssemblyWatcher = CreateScope<filewatch::FileWatch<std::string>>(filepath.string(), OnAppAssemblyFileEvent);
 		s_Data->AssemblyReloadPending = false;
+		return true;
 	}
 
 	void ScriptEngine::ReloadAssembly()
