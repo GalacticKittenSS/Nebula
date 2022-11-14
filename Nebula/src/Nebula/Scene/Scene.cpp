@@ -93,6 +93,8 @@ namespace Nebula {
 		}
 
 		CopyComponent(AllComponents{}, dstSceneReg, srcSceneReg, enttMap);
+		CopyComponent(ComponentGroup<ParentChildComponent>{}, dstSceneReg, srcSceneReg, enttMap);
+
 		newScene->m_SceneOrder = other->m_SceneOrder;
 
 		return newScene;
