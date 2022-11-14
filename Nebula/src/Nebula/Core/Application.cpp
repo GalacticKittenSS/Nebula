@@ -1,9 +1,8 @@
 #include "nbpch.h"
 #include "Application.h"
 
-#include <filesystem>
-
 #include "Nebula/Renderer/Renderer.h"
+#include "Nebula/Scripting/ScriptEngine.h"
 
 namespace Nebula {
 	Application* Application::s_Instance = nullptr;
@@ -22,6 +21,7 @@ namespace Nebula {
 
 		Time::Init();
 		Renderer::Init();
+		ScriptEngine::Init();
 
 		m_ImGui = new ImGuiLayer();
 		PushOverlay(m_ImGui);
@@ -30,6 +30,7 @@ namespace Nebula {
 	Application::~Application() {
 		NB_PROFILE_FUNCTION();
 
+		ScriptEngine::Shutdown();
 		Renderer::Shutdown();
 	}
 
@@ -40,6 +41,9 @@ namespace Nebula {
 		{
 			NB_PROFILE_SCOPE("Frame - Application::run()");
 			
+			Time::Update();
+			ExecuteMainThreadQueue();
+
 			if (!m_Minimized) {
 				for (Layer* layer : m_LayerStack) {
 					layer->Update(Time::DeltaTime());
@@ -53,8 +57,23 @@ namespace Nebula {
 			m_ImGui->End();
 
 			m_Window->Update();
-			Time::Update();
 		}
+	}
+
+	void Application::SubmitToMainThread(const std::function<void()>& function)
+	{
+		std::scoped_lock<std::mutex> lock(m_MainThreadQueueMutex);
+		m_MainThreadQueue.emplace_back(function);
+	}
+
+	void Application::ExecuteMainThreadQueue()
+	{
+		std::scoped_lock<std::mutex> lock(m_MainThreadQueueMutex);
+		
+		for (auto& func : m_MainThreadQueue)
+			func();
+
+		m_MainThreadQueue.clear();
 	}
 
 	void Application::Close() {

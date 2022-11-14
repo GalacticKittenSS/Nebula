@@ -1,6 +1,8 @@
 #include "nbpch.h"
 #include "ContactListener.h"
 
+#include "Nebula/Scripting/ScriptEngine.h"
+
 #include "box2d/b2_contact.h"
 
 namespace Nebula {
@@ -25,16 +27,18 @@ namespace Nebula {
 	}
 
 	void ContactListener::CallEntityEnter(Entity* entity, Entity* other) {
-		if (!entity->HasComponent<NativeScriptComponent>() || !entity->GetComponent<NativeScriptComponent>().Instance)
-			return;
-
-		entity->GetComponent<NativeScriptComponent>().Instance->OnCollisionEnter(*other);
+		if (entity->HasComponent<NativeScriptComponent>() && entity->GetComponent<NativeScriptComponent>().Instance)
+			entity->GetComponent<NativeScriptComponent>().Instance->OnCollisionEnter(*other);
+		
+		if (entity->HasComponent<ScriptComponent>())
+			ScriptEngine::OnCollisionEnter(*entity, *other);
 	}
 
 	void ContactListener::CallEntityExit(Entity* entity, Entity* other) {
-		if (!entity->HasComponent<NativeScriptComponent>() || !entity->GetComponent<NativeScriptComponent>().Instance)
-			return;
-
-		entity->GetComponent<NativeScriptComponent>().Instance->OnCollisionExit(*other);
+		if (entity->HasComponent<NativeScriptComponent>() && entity->GetComponent<NativeScriptComponent>().Instance)
+			entity->GetComponent<NativeScriptComponent>().Instance->OnCollisionExit(*other);
+		
+		if (entity->HasComponent<ScriptComponent>())
+			ScriptEngine::OnCollisionExit(*entity, *other);
 	}
 }

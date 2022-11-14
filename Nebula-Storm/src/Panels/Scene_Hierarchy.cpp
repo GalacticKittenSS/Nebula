@@ -14,7 +14,8 @@ namespace Nebula {
 	struct RectData {
 		UUID Parent;
 		ImRect Rect;
-		uint32_t index;
+		uint32_t indexAbove;
+		uint32_t indexBelow;
 	};
 
 	static bool DroppedIntoChildren(Entity child, Entity parentEntity) {
@@ -49,6 +50,7 @@ namespace Nebula {
 		}
 
 		parent.AddChild(childID);
+		scene->m_SceneOrder.remove(childID);
 		
 		child.Parent = parentEntity.GetUUID();
 		parentEntity.UpdateChildren();
@@ -111,43 +113,61 @@ namespace Nebula {
 		DrawArray(m_Context->m_SceneOrder);
 
 		for (uint32_t i = 0; i < Rects.size(); i++) {
-			RectData& data = Rects[i];
-			if (!ImGui::IsMouseHoveringRect(data.Rect.Min, data.Rect.Max)) continue;
+			RectData* data = Rects[i];
+			if (!ImGui::IsMouseHoveringRect(data->Rect.Min, data->Rect.Max)) continue;
 
-			if (ImGui::BeginDragDropTargetCustom(data.Rect, 1)) {
+			if (ImGui::BeginDragDropTargetCustom(data->Rect, 1)) {
 				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENTITY")) {
-					const UUID child = *(const UUID*)payload->Data;
+					const UUID entityID = *(const UUID*)payload->Data;
+					
+					if (data->Parent) {
+						Entity parent = { data->Parent, m_Context.get() };
+						AddParent(entityID, parent, m_Context.get());
 						
-					if (data.Parent) {
-						Entity parent = { data.Parent, m_Context.get() };
-						AddParent(child, parent, m_Context.get());
-						if (data.index > parent.GetParentChild().ChildrenIDs.size() - 1)
-							data.index = parent.GetParentChild().ChildrenIDs.size() - 1;
+						Array<UUID>& children = parent.GetParentChild().ChildrenIDs;
 
-						uint32_t childIndex = parent.GetParentChild().ChildrenIDs.FindIndex(child);
+						size_t entityIndex = children.find(entityID);
+						size_t newIndex = entityIndex;
+
+						if (entityIndex > data->indexBelow)
+							newIndex = data->indexBelow;
+
+						if (entityIndex < data->indexAbove)
+							newIndex = data->indexAbove;
 						
-						if (data.index > childIndex && data.index != parent.GetParentChild().ChildrenIDs.size() - 1)
-							data.index -= 1;
+						children.move(entityIndex, newIndex);
+					} 
+					else 
+					{
+						Entity entity = { entityID, m_Context.get() };
+						
+						if (UUID parentID = entity.GetParentChild().Parent)
+						{
+							Entity parent = { parentID, m_Context.get() };
+							parent.GetParentChild().RemoveChild(entityID);
+							
+							entity.GetParentChild().Parent = NULL;
+							m_Context->m_SceneOrder.push_back(entityID);
+							
+							entity.UpdateChildren();
+						}
+						
+						size_t entityIndex = m_Context->m_SceneOrder.find(entityID);
+						size_t newIndex = entityIndex;
 
-						parent.GetParentChild().ChildrenIDs.move(childIndex, data.index);
-					} else {
-						Entity childE = { child, m_Context.get() };
-						if (childE.GetParentChild().Parent)
-							Entity{ childE.GetParentChild().Parent, m_Context.get() }.GetParentChild().RemoveChild(child);
-						childE.GetParentChild().Parent = NULL;
-						childE.CalculateTransform();
+						if (entityIndex > data->indexBelow)
+							newIndex = data->indexBelow;
 
-						uint32_t childIndex = m_Context->m_SceneOrder.FindIndex(child);
+						if (entityIndex < data->indexAbove)
+							newIndex = data->indexAbove;
 
-						if (data.index > childIndex && data.index != m_Context->m_SceneOrder.size() - 1)
-							data.index -= 1;
-
-						m_Context->m_SceneOrder.move(childIndex, data.index);
+						m_Context->m_SceneOrder.move(entityIndex, newIndex);
 					}
 				}
 				ImGui::EndDragDropTarget();
 			}
 
+			delete data;
 			break;
 		}
 
@@ -188,57 +208,30 @@ namespace Nebula {
 			EntityPayload(m_Context.get());
 	}
 
-	void SceneHierarchyPanel::DrawArray(Array<UUID>& entities, bool showIfParent) {
-		Array<UUID> drawn;
-		for (uint32_t n = 0; n < entities.size(); n++) {
-			Entity entity{ entities[n], m_Context.get() };
-
-			if (entity.GetComponent<ParentChildComponent>().Parent && !showIfParent)
-				continue;
-			
-			bool deleted;
-			DrawEntityNode(entity, drawn.size() - 1, deleted);
-			
-			if (deleted)
-				continue;
-
-			drawn.push_back(entities[n]);
-			entities.move(n, drawn.size() - 1);
-		}
-
-		if (drawn.size()) {
-			Entity entity{ drawn[drawn.size() - 1], m_Context.get() };
+	void SceneHierarchyPanel::DrawArray(Array<UUID>& entities) {
+		if (entities.size()) {
+			Entity entity{ entities[0], m_Context.get() };
 			ImVec2 cursorPos = ImGui::GetCursorPos();
 			ImVec2 elementSize = ImGui::GetItemRectSize();
 			elementSize.x -= ImGui::GetStyle().FramePadding.x;
 			elementSize.y = ImGui::GetStyle().FramePadding.y;
 			cursorPos.y -= ImGui::GetStyle().FramePadding.y;
 			ImVec2 windowPos = ImGui::GetCurrentWindow()->Pos;
-			RectData data;
-			data.Parent = entity.GetParentChild().Parent;
-			data.Rect = ImRect(windowPos.x + cursorPos.x, windowPos.y + cursorPos.y, windowPos.x + cursorPos.x + elementSize.x, windowPos.y + cursorPos.y + elementSize.y);
-			data.index = m_Context->m_SceneOrder.size() - 1;
+			RectData* data = new RectData();
+			data->Parent = entity.GetParentChild().Parent;
+			data->Rect = ImRect(windowPos.x + cursorPos.x, windowPos.y + cursorPos.y, windowPos.x + cursorPos.x + elementSize.x, windowPos.y + cursorPos.y + elementSize.y);
+			data->indexAbove = 0;
+			data->indexBelow = 0;
 			Rects.push_back(data);
+		}
+		
+		for (uint32_t n = 0; n < entities.size(); n++) {
+			Entity entity{ entities[n], m_Context.get() };
+			DrawEntityNode(entity, n);
 		}
 	}
 
-	void SceneHierarchyPanel::DrawEntityNode(Entity entity, uint32_t index, bool& entityDeleted) {
-		ImVec2 cursorPos = ImGui::GetCursorPos();
-		ImVec2 elementSize = ImGui::GetItemRectSize();
-		elementSize.x -= ImGui::GetStyle().FramePadding.x;
-		elementSize.y = ImGui::GetStyle().FramePadding.y;
-		cursorPos.y -= ImGui::GetStyle().FramePadding.y;
-		ImVec2 windowPos = ImGui::GetCurrentWindow()->Pos;
-		RectData data;
-		data.Parent = entity.GetParentChild().Parent;
-
-		if (index == 0)
-			elementSize.x = ImGui::GetContentRegionAvailWidth();
-
-		data.Rect = ImRect(windowPos.x + cursorPos.x, windowPos.y + cursorPos.y, windowPos.x + cursorPos.x + elementSize.x, windowPos.y + cursorPos.y + elementSize.y);
-		data.index = index;
-		Rects.push_back(data);
-
+	void SceneHierarchyPanel::DrawEntityNode(Entity entity, uint32_t index) {
 		auto& tag = entity.GetComponent<TagComponent>().Tag;
 
 		ImGuiTreeNodeFlags flags = m_SelectionContext == entity ? ImGuiTreeNodeFlags_Selected : ImGuiTreeNodeFlags_None;
@@ -266,11 +259,8 @@ namespace Nebula {
 			ImGui::EndDragDropTarget();
 		}
 
-		entityDeleted = false;
+		bool entityDeleted = false;
 		if (ImGui::BeginPopupContextItem()) {
-			if (ImGui::MenuItem("Delete Selected Entity"))
-				entityDeleted = true;
-
 			if (ImGui::BeginMenu("Create Entity")) {
 				if (ImGui::MenuItem("Empty")) {
 					auto& newEnt = m_Context->CreateEntity("Entity");
@@ -291,6 +281,12 @@ namespace Nebula {
 
 				ImGui::EndMenu();
 			}
+			
+			if (ImGui::MenuItem("Duplicate Entity"))
+				m_Context->DuplicateEntity(entity);
+
+			if (ImGui::MenuItem("Delete Entity"))
+				entityDeleted = true;
 
 			ImGui::EndPopup();
 		}
@@ -298,7 +294,7 @@ namespace Nebula {
 		if (opened) {
 			if (entity.HasComponent<ParentChildComponent>()) {
 				auto& comp = entity.GetParentChild();
-				DrawArray(comp.ChildrenIDs, true);
+				DrawArray(comp.ChildrenIDs);
 			}
 
 			ImGui::TreePop();
@@ -308,7 +304,26 @@ namespace Nebula {
 			m_Context->DestroyEntity(entity);
 			if (m_SelectionContext == entity)
 				m_SelectionContext = {};
+			return;
 		}
+
+		ImVec2 cursorPos = ImGui::GetCursorPos();
+		ImVec2 elementSize = ImGui::GetItemRectSize();
+		elementSize.x -= ImGui::GetStyle().FramePadding.x;
+		elementSize.y = ImGui::GetStyle().FramePadding.y;
+		cursorPos.y -= ImGui::GetStyle().FramePadding.y;
+		ImVec2 windowPos = ImGui::GetCurrentWindow()->Pos;
+		RectData* data = new RectData();
+		data->Parent = entity.GetParentChild().Parent;
+
+		if (index == 0)
+			elementSize.x = ImGui::GetContentRegionAvailWidth();
+
+		data->Rect = ImRect(windowPos.x + cursorPos.x, windowPos.y + cursorPos.y, windowPos.x + cursorPos.x + elementSize.x, windowPos.y + cursorPos.y + elementSize.y);
+		data->indexAbove = index;
+		data->indexAbove = index + 1;
+
+		Rects.push_back(data);
 	}
 
 	static void DrawVec3Control(const std::string& label, vec3& values, float resetvalue = 0.0f, float columnWidth = 100.0f) {
@@ -604,7 +619,7 @@ namespace Nebula {
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.1f, 0.105f, 0.11f, 1.0f });
 		if (ImGui::BeginCombo("##V", currentString)) {
 			open = true;
-			for (int i = 0; i < stringsSize; i++) {
+			for (uint32_t i = 0; i < stringsSize; i++) {
 				bool isSelected = currentString == strings[i];
 				if (ImGui::Selectable(strings[i], isSelected)) {
 					currentString = strings[i];
@@ -635,28 +650,21 @@ namespace Nebula {
 
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 4, 4 });
 			float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
-			ImGui::Separator();
 			bool open = ImGui::TreeNodeEx((void*)typeid(T).hash_code(), treeFlags, name.c_str());
+			
 			ImGui::PopStyleVar();
-			ImGui::SameLine(contentRegion.x - lineHeight * 0.5f);
-
-			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.2f, 0.205f, 0.21f, 1.0f });
-			if (ImGui::Button("+", { lineHeight, lineHeight }))
-				ImGui::OpenPopup("ComponentSettings");
-			ImGui::PopStyleColor();
 			
 			bool removeComponent = false;
-			if (ImGui::BeginPopup("ComponentSettings")) {
-				if (deletable) {
-					if (ImGui::MenuItem("Remove Component"))
-						removeComponent = true;
-				}
-
+			if (deletable && ImGui::BeginPopupContextItem("ComponentSettings")) {
+				if (ImGui::MenuItem("Remove Component"))
+					removeComponent = true;
+				
 				ImGui::EndPopup();
 			}
 
 			if (open) {
-				function(component, entity);
+				function(component);
+				ImGui::Separator();
 				ImGui::TreePop();
 			}
 
@@ -696,8 +704,7 @@ namespace Nebula {
 			auto& tag = entity.GetComponent<TagComponent>().Tag;
 
 			char buffer[256];
-			memset(buffer, 0, sizeof(buffer));
-			strncpy(buffer, tag.c_str(), sizeof(buffer));
+			strncpy_s(buffer, sizeof(buffer), tag.c_str(), sizeof(buffer));
 
 			if (ImGui::InputText("##Tag", buffer, sizeof(buffer))) {
 				tag = std::string(buffer);
@@ -712,18 +719,22 @@ namespace Nebula {
 
 		if (ImGui::BeginPopup("Add Component")) {
 			DisplayAddComponentEntry<CameraComponent>("Camera");
+			DisplayAddComponentEntry<ScriptComponent>("Script");
+
 			DisplayAddComponentEntry<SpriteRendererComponent>("Sprite Renderer");
 			DisplayAddComponentEntry<CircleRendererComponent>("Circle Renderer");
+			DisplayAddComponentEntry<StringRendererComponent>("String Renderer");
+			
 			DisplayAddComponentEntry<Rigidbody2DComponent>("Rigidbody 2D");
 			DisplayAddComponentEntry<BoxCollider2DComponent>("Box Collider 2D");
 			DisplayAddComponentEntry<CircleColliderComponent>("Circle Collider 2D");
-
+			
 			ImGui::EndPopup();
 		}
 
 		ImGui::PopItemWidth();
 		
-		DrawComponent<TransformComponent>("Transform", entity, [](auto& component, Entity entity) {
+		DrawComponent<TransformComponent>("Transform", entity, [entity](auto& component) mutable {
 			vec3 rotation = degrees(component.Rotation);
 			vec3 translation = component.Translation;
 			vec3 scale = component.Scale;
@@ -739,8 +750,8 @@ namespace Nebula {
 			if (p || r || s)
 				entity.UpdateChildren();
 		});
-	
-		DrawComponent<CameraComponent>("Camera", entity, [](auto& component, Entity entity) {
+
+		DrawComponent<CameraComponent>("Camera", entity, [](auto& component) mutable {
 			auto& camera = component.Camera;
 
 			DrawBool("Primary", component.Primary);
@@ -800,7 +811,92 @@ namespace Nebula {
 			}
 		}, true);
 
-		DrawComponent<SpriteRendererComponent>("Sprite Renderer", entity, [](auto& component, Entity entity) {
+		DrawComponent<ScriptComponent>("Script", entity, [entity, scene = m_Context](auto& component) mutable {
+			bool classExists = ScriptEngine::EntityClassExists(component.ClassName);
+			if (!classExists)
+				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.9f, 0.2f, 0.3f, 1.0f));
+
+			char buffer[64];
+			strncpy_s(buffer, sizeof(buffer), component.ClassName.c_str(), sizeof(buffer));
+
+			if (ImGui::InputText("Class", buffer, sizeof(buffer)))
+			{
+				component.ClassName = std::string(buffer);
+				ScriptEngine::CreateScriptInstance(entity);
+			}
+
+			if (!classExists)
+				ImGui::PopStyleColor();
+
+			// FIELDS
+			Ref<ScriptInstance> scriptInstance = ScriptEngine::GetEntityScriptInstance(entity.GetUUID());
+			if (scriptInstance)
+			{
+				const auto& fields = scriptInstance->GetScriptClass()->GetFields();
+				for (const auto& [name, field] : fields)
+				{
+					switch (field.Type)
+					{
+					case Nebula::ScriptFieldType::Float:
+					{
+						auto data = scriptInstance->GetFieldValue<float>(name);
+						if (ImGui::DragFloat(name.c_str(), &data))
+						{
+							scriptInstance->SetFieldValue(name, data);
+						}
+						break;
+					}
+					case Nebula::ScriptFieldType::Bool:
+					{
+						auto data = scriptInstance->GetFieldValue<bool>(name);
+						if (DrawBool(name.c_str(), data))
+						{
+							scriptInstance->SetFieldValue(name, data);
+						}
+						break;
+					}
+					case Nebula::ScriptFieldType::Int:
+					{
+						auto data = scriptInstance->GetFieldValue<int>(name);
+						if (ImGui::DragInt(name.c_str(), &data))
+						{
+							scriptInstance->SetFieldValue(name, data);
+						}
+						break;
+					}
+					case Nebula::ScriptFieldType::Vector2:
+					{
+						auto data = scriptInstance->GetFieldValue<vec2>(name);
+						if (ImGui::DragFloat2(name.c_str(), value_ptr(data)))
+						{
+							scriptInstance->SetFieldValue(name, data);
+						}
+						break;
+					}
+					case Nebula::ScriptFieldType::Vector3:
+					{
+						auto data = scriptInstance->GetFieldValue<vec3>(name);
+						if (ImGui::DragFloat3(name.c_str(), value_ptr(data)))
+						{
+							scriptInstance->SetFieldValue(name, data);
+						}
+						break;
+					}
+					case Nebula::ScriptFieldType::Vector4:
+					{
+						auto data = scriptInstance->GetFieldValue<vec4>(name);
+						if (ImGui::DragFloat4(name.c_str(), value_ptr(data)))
+						{
+							scriptInstance->SetFieldValue(name, data);
+						}
+						break;
+					}
+					}
+				}
+			}
+		}, true);
+
+		DrawComponent<SpriteRendererComponent>("Sprite Renderer", entity, [](auto& component) {
 			ImGui::ColorEdit4("Colour", value_ptr(component.Colour));
 
 			std::string text;
@@ -869,13 +965,13 @@ namespace Nebula {
 			}
 		}, true);
 
-		DrawComponent<CircleRendererComponent>("Circle Renderer", entity, [](auto& component, Entity entity) {
+		DrawComponent<CircleRendererComponent>("Circle Renderer", entity, [](auto& component) {
 			ImGui::ColorEdit4("Colour", value_ptr(component.Colour));
 			DrawVec1Control("Thickness", component.Thickness, 0.01f, 0.01f, 1.0f);
 			DrawVec1Control("Fade", component.Fade, 0.0025f, 0.01f, 1.0f);
 		}, true);
 
-		DrawComponent<StringRendererComponent>("String Renderer", entity, [](auto& component, Entity entity) {
+		DrawComponent<StringRendererComponent>("String Renderer", entity, [](auto& component) {
 			char buffer[256];
 			memset(buffer, 0, sizeof(buffer));
 			strncpy(buffer, component.Text.c_str(), sizeof(buffer));
@@ -914,7 +1010,7 @@ namespace Nebula {
 			}
 		}, true);
 
-		DrawComponent<Rigidbody2DComponent>("Rigidbody 2D", entity, [](auto& component, Entity entity) {
+		DrawComponent<Rigidbody2DComponent>("Rigidbody 2D", entity, [](auto& component) {
 			int componentType = (int)component.Type;
 			const char* BodyTypeStrings[] = { "Static", "Dynamic", "Kinenmatic"};
 			const char* CurrentBodyTypeString = BodyTypeStrings[componentType];
@@ -925,7 +1021,7 @@ namespace Nebula {
 			DrawBool("Fixed Rotation", component.FixedRotation);
 		}, true);
 
-		DrawComponent<BoxCollider2DComponent>("Box Collider 2D", entity, [](auto& component, Entity entity) {
+		DrawComponent<BoxCollider2DComponent>("Box Collider 2D", entity, [](auto& component) {
 			DrawVec2Control("Offset", component.Offset);
 			DrawVec2Control("Size",   component.Size);
 
@@ -950,7 +1046,7 @@ namespace Nebula {
 			DrawVec1Control("Restitution Threshold", component.RestitutionThreshold, 0.01f, 0.0f);
 		}, true);
 
-		DrawComponent<CircleColliderComponent>("Circle Collider", entity, [](auto& component, Entity entity) {
+		DrawComponent<CircleColliderComponent>("Circle Collider", entity, [](auto& component) {
 			DrawVec2Control("Offset", component.Offset);
 			DrawVec1Control("Radius", component.Radius, 0.01f);
 

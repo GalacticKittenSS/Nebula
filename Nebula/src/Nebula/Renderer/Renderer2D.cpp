@@ -444,7 +444,7 @@ namespace Nebula {
 		case NB_QUAD: {
 			auto& spriteRenderer = entity.GetComponent<SpriteRendererComponent>();
 
-			if (spriteRenderer.Texture) {
+			if (spriteRenderer.Texture && spriteRenderer.Texture->IsLoaded()) {
 				Ref<SubTexture2D> SubT = SubTexture2D::CreateFromCoords(spriteRenderer.Texture,
 					spriteRenderer.SubTextureOffset, spriteRenderer.SubTextureCellSize, spriteRenderer.SubTextureCellNum);
 				DrawQuad(4, s_Data.QuadVertexPos, SubT->GetTextureCoords(), transform,
@@ -452,7 +452,7 @@ namespace Nebula {
 			}
 			else
 				DrawQuad(4, s_Data.QuadVertexPos, s_Data.QuadTexCoords, transform, 
-					spriteRenderer.Colour, spriteRenderer.Texture, spriteRenderer.Tiling, entity);
+					spriteRenderer.Colour, s_Data.WhiteTexture, spriteRenderer.Tiling, entity);
 			break;
 		}
 		case NB_STRING: {

@@ -34,15 +34,17 @@ project "Nebula"
 		"src",
 		"%{includedir.Box2D}",
 		"%{includedir.Entt}",
+		"%{includedir.FileWatch}",
+		"%{includedir.FreetypeGL}",
 		"%{includedir.GLFW}",
 		"%{includedir.GLad}",
 		"%{includedir.ImGui}",
 		"%{includedir.ImGuizmo}",
+		"%{includedir.mono}",
 		"%{includedir.Spdlog}",
 		"%{includedir.Stb}",
 		"%{includedir.Yaml}",
-		"%{includedir.VulkanSDK}",
-		"%{includedir.FreetypeGL}"
+		"%{includedir.VulkanSDK}"
 	}
 
 	links { 
@@ -52,7 +54,9 @@ project "Nebula"
 		"ImGui",
 		"yaml-cpp",
 		"FreetypeGL",
-		"opengl32.lib"
+		"opengl32.lib",
+
+		"%{Library.mono}"
 	}
 	
 	filter "files:Modules/imguizmo/**.cpp"
@@ -69,6 +73,13 @@ project "Nebula"
 
 	filter "system:windows"
 		systemversion "latest"
+
+		links {
+			"%{Library.WinSock}",
+			"%{Library.WinMM}",
+			"%{Library.WinVersion}",
+			"%{Library.BCrypt}"
+		}
 
 	filter "configurations:Debug"
 		defines "NB_DEBUG"

@@ -1,0 +1,170 @@
+Scene: Untitled
+Entities:
+  - Entity: 5354795815195642397
+    TagComponent:
+      Tag: Camera
+    ParentChildComponent:
+      PrimaryParent: 0
+      Children: ~
+      ChildCount: 0
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    CameraComponent:
+      Camera:
+        ProjectionType: 0
+        PerspectiveFOV: 0.785398185
+        PerspectiveNear: 0.00999999978
+        PerspectiveFar: 1000
+        OrthographicSize: 10
+        OrthographicNear: -1
+        OrthographicFar: 1
+      Primary: true
+      FixedAspectRatio: false
+    ScriptComponent:
+      Class: Sandbox.Camera
+      ScriptFields:
+        - Name: DistanceFromPlayer
+          Type: float
+          Data: 10
+        - Name: Offset
+          Type: Vector2
+          Data: [0, 0]
+  - Entity: 14893174671831111502
+    TagComponent:
+      Tag: Player
+    ParentChildComponent:
+      PrimaryParent: 0
+      Children: [7772064114241021311]
+      ChildCount: 1
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    ScriptComponent:
+      Class: Sandbox.Player
+      ScriptFields:
+        - Name: Camera
+          Type: Entity
+          Data: 0
+        - Name: Floor_Collider
+          Type: Entity
+          Data: 0
+        - Name: JumpImpulse
+          Type: Vector2
+          Data: [0, 8]
+        - Name: MoveSpeed
+          Type: Vector2
+          Data: [4.25, 0]
+        - Name: Spawn_Location
+          Type: Entity
+          Data: 0
+    SpriteRendererComponent:
+      Colour: [1, 1, 1, 1]
+      Tiling: 1
+      Offset: [0, 0]
+      CellSize: [128, 128]
+      CellNum: [1, 1]
+    Rigidbody2DComponent:
+      BodyType: Dynamic
+      FixedRotation: false
+    Box2DComponent:
+      Offset: [0, 0]
+      Size: [0.5, 0.5]
+      Category: 1
+      Mask: 65535
+      Density: 1
+      Friction: 0.5
+      Restitution: 0
+      RestitutionThreshold: 0.5
+  - Entity: 10433741447867120391
+    TagComponent:
+      Tag: Sprite
+    ParentChildComponent:
+      PrimaryParent: 0
+      Children: ~
+      ChildCount: 0
+    TransformComponent:
+      Translation: [0, 4.64733791, 0]
+      Rotation: [0, 0, 0]
+      Scale: [12.2438126, 1, 1]
+    SpriteRendererComponent:
+      Colour: [1, 1, 1, 1]
+      Tiling: 1
+      Offset: [0, 0]
+      CellSize: [128, 128]
+      CellNum: [1, 1]
+    Rigidbody2DComponent:
+      BodyType: Static
+      FixedRotation: false
+    Box2DComponent:
+      Offset: [0, 0]
+      Size: [0.5, 0.5]
+      Category: 1
+      Mask: 65535
+      Density: 1
+      Friction: 0.5
+      Restitution: 0
+      RestitutionThreshold: 0.5
+  - Entity: 10596639639892002622
+    TagComponent:
+      Tag: Sprite
+    ParentChildComponent:
+      PrimaryParent: 0
+      Children: ~
+      ChildCount: 0
+    TransformComponent:
+      Translation: [0, -4.77309418, 0]
+      Rotation: [0, 0, 0]
+      Scale: [12.2438126, 1, 1]
+    SpriteRendererComponent:
+      Colour: [1, 1, 1, 1]
+      Tiling: 1
+      Offset: [0, 0]
+      CellSize: [128, 128]
+      CellNum: [1, 1]
+    Rigidbody2DComponent:
+      BodyType: Static
+      FixedRotation: false
+    Box2DComponent:
+      Offset: [0, 0]
+      Size: [0.5, 0.5]
+      Category: 1
+      Mask: 65535
+      Density: 1
+      Friction: 0.5
+      Restitution: 0
+      RestitutionThreshold: 0.5
+  - Entity: 7772064114241021311
+    TagComponent:
+      Tag: Floor Collider
+    ParentChildComponent:
+      PrimaryParent: 14893174671831111502
+      Children: ~
+      ChildCount: 0
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    ScriptComponent:
+      Class: Sandbox.Collision
+      ScriptFields:
+        - Name: CollisionCount
+          Type: float
+          Data: 0
+        - Name: Handled
+          Type: bool
+          Data: true
+    Rigidbody2DComponent:
+      BodyType: Dynamic
+      FixedRotation: false
+    Box2DComponent:
+      Offset: [0, -0.5]
+      Size: [0.349999994, 0.00999999978]
+      Category: 1
+      Mask: 65535
+      Density: 1
+      Friction: 0.5
+      Restitution: 0
+      RestitutionThreshold: 0.5

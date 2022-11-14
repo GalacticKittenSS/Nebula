@@ -24,14 +24,14 @@ namespace Nebula {
 		template<typename T>
 		void DisplayAddComponentEntry(const std::string& entryName);
 
-		void DrawEntityNode(Entity entity, uint32_t index, bool& entityDeleted);
-		void DrawArray(Array<UUID>& entities, bool showIfParent = false);
+		void DrawEntityNode(Entity entity, uint32_t index);
+		void DrawArray(Array<UUID>& entities);
 		void DrawComponents(Entity entity);
 	private:
 		Ref<Scene> m_Context;
 		Entity m_SelectionContext;
 
-		Array<RectData> Rects;
+		Array<RectData*> Rects;
 
 		bool m_HierarchyFocused = false;
 		bool m_HierarchyHovered = false;

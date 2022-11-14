@@ -46,6 +46,8 @@ namespace Nebula {
 		void PushOverlay(Layer* overlay);
 		void PopOverlay(Layer* overlay);
 
+		void SubmitToMainThread(const std::function<void()>& function);
+
 		void Close();
 
 		ImGuiLayer* GetImGuiLayer() { return m_ImGui; }
@@ -58,6 +60,8 @@ namespace Nebula {
 		bool OnWindowClose(WindowCloseEvent& e);
 		bool OnWindowResize(WindowResizeEvent& e);
 		bool OnKeyPressed(KeyPressedEvent& e);
+	
+		void ExecuteMainThreadQueue();
 	private:
 		ApplicationSpecification m_Specification;
 		Scope<Window> m_Window;
@@ -67,6 +71,9 @@ namespace Nebula {
 
 		Timestep m_Timestep;
 		float m_LastFrameTime;
+
+		Array<std::function<void()>> m_MainThreadQueue;
+		std::mutex m_MainThreadQueueMutex;
 
 		static Application* s_Instance;
 		friend int ::main(int argc, char** argv);

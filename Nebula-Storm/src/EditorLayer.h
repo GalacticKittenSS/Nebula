@@ -23,7 +23,7 @@ namespace Nebula {
 		void OnEvent(Nebula::Event& e) override;
 	private:
 		bool OnKeyPressed(KeyPressedEvent& e);
-		bool OnMousePressed(MouseButtonPressedEvent& e);
+		bool OnMouseReleased(MouseButtonReleasedEvent& e);
 
 		void RenderSelectionUI(Entity selectedEntity);
 		void RenderColliders();
@@ -39,8 +39,8 @@ namespace Nebula {
 
 		void OnScenePlay();
 		void OnSceneStop();
-		
 		void OnSceneSimulate();
+		void OnScenePause();
 		
 		void DuplicateEntity();
 
@@ -73,6 +73,7 @@ namespace Nebula {
 		Entity m_HoveredEntity;
 		
 		EditorCamera m_EditorCam;
+		float m_TimeCameraMoved = 0.0f;
 
 		int m_GizmoType = -1;
 
@@ -87,7 +88,9 @@ namespace Nebula {
 		ContentBrowserPanel m_ContentBrowser;
 
 		//Editor Resources
-		Ref<Texture2D> m_PlayIcon, m_SimulateIcon, m_StopIcon, m_Backdrop;
+		Ref<Texture2D> m_PlayIcon, m_SimulateIcon, 
+			m_StopIcon, m_PauseIcon, m_StepIcon, 
+			m_Backdrop;
 
 		Font OpenSans = Font("OpenSans", "Resources/fonts/OpenSans/Regular.ttf", 64);
 	};
