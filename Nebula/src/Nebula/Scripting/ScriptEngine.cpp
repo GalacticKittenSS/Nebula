@@ -278,8 +278,19 @@ namespace Nebula {
 		mono_domain_set(mono_get_root_domain(), false);
 		mono_domain_unload(s_Data->AppDomain);
 
-		LoadAssembly(s_Data->CoreAssemblyFilePath);
-		LoadAppAssembly(s_Data->AppAssemblyFilePath);
+		bool status = LoadAssembly(s_Data->CoreAssemblyFilePath);
+		if (!status)
+		{
+			NB_WARN("[ScriptEngine] Could not reload Core Assembly");
+			return;
+		}
+
+		status = LoadAppAssembly(s_Data->AppAssemblyFilePath);
+		if (!status)
+		{
+			NB_WARN("[ScriptEngine] Could not reload App Assembly");
+			return;
+		}
 		
 		s_Data->EntityClass = ScriptClass("Nebula", "Entity", true);
 		LoadAssemblyClasses();

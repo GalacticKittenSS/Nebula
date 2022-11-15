@@ -236,51 +236,52 @@ namespace Nebula {
 			out << YAML::Key << "Class" << YAML::Value << component.ClassName;
 
 			// Fields
-			Ref<ScriptClass> entityClass = ScriptEngine::GetEntityClass(component.ClassName);
-			const auto& fields = entityClass->GetFields();
-			
-			if (fields.size() > 0)
+			if (Ref<ScriptClass> entityClass = ScriptEngine::GetEntityClass(component.ClassName))
 			{
-				out << YAML::Key << "ScriptFields" << YAML::Value;
-				out << YAML::BeginSeq;
-				
-				Ref<ScriptInstance> scriptInstance = ScriptEngine::GetEntityScriptInstance(entity.GetUUID());
-				for (const auto& [name, field] : fields)
+				const auto& fields = entityClass->GetFields();
+				if (fields.size() > 0)
 				{
-					if (field.Type == ScriptFieldType::None)
-						continue;
+					out << YAML::Key << "ScriptFields" << YAML::Value;
+					out << YAML::BeginSeq;
 
-					out << YAML::BeginMap;
-					out << YAML::Key << "Name" << YAML::Value << name;
-					out << YAML::Key << "Type" << YAML::Value << Utils::ScriptFieldTypeToString(field.Type);
-					out << YAML::Key << "Data" << YAML::Value;
-					
-					switch (field.Type)
+					Ref<ScriptInstance> scriptInstance = ScriptEngine::GetEntityScriptInstance(entity.GetUUID());
+					for (const auto& [name, field] : fields)
 					{
-						WRITE_SCRIPT_FIELD(Float,	float);
-						WRITE_SCRIPT_FIELD(Double,	double);
-						WRITE_SCRIPT_FIELD(Bool,	bool);
-						WRITE_SCRIPT_FIELD(Char,	char);
-						WRITE_SCRIPT_FIELD(Byte,	int8_t);
-						WRITE_SCRIPT_FIELD(Short,	int16_t);
-						WRITE_SCRIPT_FIELD(Int,		int32_t);
-						WRITE_SCRIPT_FIELD(Long,	int64_t);
-						WRITE_SCRIPT_FIELD(SByte,	uint8_t);
-						WRITE_SCRIPT_FIELD(UShort,	uint16_t);
-						WRITE_SCRIPT_FIELD(UInt,	uint32_t);
-						WRITE_SCRIPT_FIELD(ULong,	uint64_t);
-						WRITE_SCRIPT_FIELD(Vector2,	vec2);
-						WRITE_SCRIPT_FIELD(Vector3,	vec3);
-						WRITE_SCRIPT_FIELD(Vector4,	vec4);
-						WRITE_SCRIPT_FIELD(Entity,	UUID);
+						if (field.Type == ScriptFieldType::None)
+							continue;
+
+						out << YAML::BeginMap;
+						out << YAML::Key << "Name" << YAML::Value << name;
+						out << YAML::Key << "Type" << YAML::Value << Utils::ScriptFieldTypeToString(field.Type);
+						out << YAML::Key << "Data" << YAML::Value;
+
+						switch (field.Type)
+						{
+							WRITE_SCRIPT_FIELD(Float, float);
+							WRITE_SCRIPT_FIELD(Double, double);
+							WRITE_SCRIPT_FIELD(Bool, bool);
+							WRITE_SCRIPT_FIELD(Char, char);
+							WRITE_SCRIPT_FIELD(Byte, int8_t);
+							WRITE_SCRIPT_FIELD(Short, int16_t);
+							WRITE_SCRIPT_FIELD(Int, int32_t);
+							WRITE_SCRIPT_FIELD(Long, int64_t);
+							WRITE_SCRIPT_FIELD(SByte, uint8_t);
+							WRITE_SCRIPT_FIELD(UShort, uint16_t);
+							WRITE_SCRIPT_FIELD(UInt, uint32_t);
+							WRITE_SCRIPT_FIELD(ULong, uint64_t);
+							WRITE_SCRIPT_FIELD(Vector2, vec2);
+							WRITE_SCRIPT_FIELD(Vector3, vec3);
+							WRITE_SCRIPT_FIELD(Vector4, vec4);
+							WRITE_SCRIPT_FIELD(Entity, UUID);
+						}
+
+						out << YAML::EndMap;
 					}
 
-					out << YAML::EndMap;
+					out << YAML::EndSeq;
 				}
-
-				out << YAML::EndSeq;
 			}
-
+			
 			out << YAML::EndMap; // ScriptComponent
 		}
 		
@@ -383,13 +384,25 @@ namespace Nebula {
 		YAML::Emitter out;
 		out << YAML::BeginMap;
 		out << YAML::Key << "Scene" << YAML::Value << "Untitled";
+		
+		YAML::Node order;
+		for (const UUID& id : m_Scene->m_SceneOrder)
+			order.push_back((uint64_t)id);
+		order.SetStyle(YAML::EmitterStyle::Flow);
+
+		out << YAML::Key << "Order";
+		out << YAML::BeginMap;
+		out << YAML::Key << "Size" << YAML::Value << m_Scene->m_SceneOrder.size();
+		out << YAML::Key << "Data" << YAML::Value << order;
+		out << YAML::EndMap;
+
 		out << YAML::Key << "Entities" << YAML::Value << YAML::BeginSeq;
 
 		auto view = m_Scene->GetAllEntitiesWith<IDComponent>();
 		for (auto entt : view) {
 			Entity entity = { view.get<IDComponent>(entt).ID, m_Scene.get() };
 			if (!entity)
-				return;
+				return; 
 
 			SerializeEntity(out, entity);
 		}
@@ -411,7 +424,7 @@ namespace Nebula {
 			data = YAML::LoadFile(filepath);
 		}
 		catch (YAML::ParserException e) {
-			NB_ERROR("Failed to load .nebula file '{0}'\n     {1}", filepath, e.what());
+			NB_ERROR("[Scene Sereliazer] Failed to load file '{0}'\n     {1}", filepath, e.what());
 			return false;
 		}
 
@@ -437,8 +450,7 @@ namespace Nebula {
 
 			Entity deserializedEntity = m_Scene->CreateEntity(uuid, name);
 
-			auto parentComponent = entity["ParentChildComponent"];
-			if (parentComponent) {
+			if (auto parentComponent = entity["ParentChildComponent"]) {
 				auto& pcc = deserializedEntity.GetComponent<ParentChildComponent>();
 				pcc.Parent = parentComponent["PrimaryParent"].as<uint64_t>();
 				if (pcc.Parent)
@@ -450,16 +462,14 @@ namespace Nebula {
 					pcc.AddChild(children[i].as<uint64_t>());
 			}
 
-			auto transformComponent = entity["TransformComponent"];
-			if (transformComponent) {
+			if (auto transformComponent = entity["TransformComponent"]) {
 				auto& tc = deserializedEntity.GetComponent<TransformComponent>();
 				tc.Translation = transformComponent["Translation"].as<vec3>();
 				tc.Rotation = transformComponent["Rotation"].as<vec3>();
 				tc.Scale = transformComponent["Scale"].as<vec3>();
 			}
 
-			auto cameraComponent = entity["CameraComponent"];
-			if (cameraComponent)
+			if (auto cameraComponent = entity["CameraComponent"])
 			{
 				auto& cc = deserializedEntity.AddComponent<CameraComponent>();
 
@@ -478,8 +488,7 @@ namespace Nebula {
 				cc.FixedAspectRatio = cameraComponent["FixedAspectRatio"].as<bool>();
 			}
 			
-			auto scriptComponent = entity["ScriptComponent"];
-			if (scriptComponent)
+			if (auto scriptComponent = entity["ScriptComponent"])
 			{
 				auto& sc = deserializedEntity.AddComponent<ScriptComponent>();
 				sc.ClassName = scriptComponent["Class"].as<std::string>();
@@ -526,8 +535,7 @@ namespace Nebula {
 				}
 			}
 
-			auto spriteRendererComponent = entity["SpriteRendererComponent"];
-			if (spriteRendererComponent)
+			if (auto spriteRendererComponent = entity["SpriteRendererComponent"])
 			{
 				auto& src = deserializedEntity.AddComponent<SpriteRendererComponent>();
 				src.Colour = spriteRendererComponent["Colour"].as<vec4>();
@@ -540,8 +548,7 @@ namespace Nebula {
 					src.Texture = Texture2D::Create(spriteRendererComponent["Texture"].as<std::string>());
 			}
 
-			auto circleRendererComponent = entity["CircleRendererComponent"];
-			if (circleRendererComponent)
+			if (auto circleRendererComponent = entity["CircleRendererComponent"])
 			{
 				auto& crc = deserializedEntity.AddComponent<CircleRendererComponent>();
 				crc.Colour = circleRendererComponent["Colour"].as<vec4>();
@@ -549,8 +556,7 @@ namespace Nebula {
 				crc.Fade = circleRendererComponent["Fade"].as<float>();
 			}
 
-			auto stringRendererComponent = entity["StringRendererComponent"];
-			if (stringRendererComponent)
+			if (auto stringRendererComponent = entity["StringRendererComponent"])
 			{
 				auto& src = deserializedEntity.AddComponent<StringRendererComponent>();
 				src.Text = stringRendererComponent["Text"].as<std::string>();
@@ -563,16 +569,14 @@ namespace Nebula {
 				src.InitiateFont();
 			}
 
-			auto rigidbody2DComponent = entity["Rigidbody2DComponent"];
-			if (rigidbody2DComponent)
+			if (auto rigidbody2DComponent = entity["Rigidbody2DComponent"])
 			{
 				auto& rb2d = deserializedEntity.AddComponent<Rigidbody2DComponent>();
 				rb2d.Type = RigidBody2DBodyTypeFromString(rigidbody2DComponent["BodyType"].as<std::string>());
 				rb2d.FixedRotation = rigidbody2DComponent["FixedRotation"].as<bool>();
 			}
 
-			auto box2DComponent = entity["Box2DComponent"];
-			if (box2DComponent)
+			if (auto box2DComponent = entity["Box2DComponent"])
 			{
 				auto& bc2d = deserializedEntity.AddComponent<BoxCollider2DComponent>();
 				bc2d.Offset = box2DComponent["Offset"].as<vec2>();
@@ -586,8 +590,7 @@ namespace Nebula {
 				bc2d.RestitutionThreshold = box2DComponent["RestitutionThreshold"].as<float>();
 			}
 
-			auto circleColliderComponent = entity["CircleColliderComponent"];
-			if (circleColliderComponent) {
+			if (auto circleColliderComponent = entity["CircleColliderComponent"]) {
 				auto& cc = deserializedEntity.AddComponent<CircleColliderComponent>();
 				cc.Offset = circleColliderComponent["Offset"].as<vec2>();
 				cc.Radius = circleColliderComponent["Radius"].as<float>();
@@ -599,6 +602,16 @@ namespace Nebula {
 				cc.Restitution = circleColliderComponent["Restitution"].as<float>();
 				cc.RestitutionThreshold = circleColliderComponent["RestitutionThreshold"].as<float>();
 			}
+		}
+
+		if (auto order = data["Order"])
+		{
+			uint32_t count = order["Size"].as<uint32_t>();
+			auto scene_order = order["Data"];
+
+			m_Scene->m_SceneOrder.clear();
+			for (uint32_t i = 0; i < count; i++)
+				m_Scene->m_SceneOrder.push_back(scene_order[i].as<uint64_t>());
 		}
 
 		for (auto entity : m_Scene->GetAllEntitiesWith<TransformComponent>())
