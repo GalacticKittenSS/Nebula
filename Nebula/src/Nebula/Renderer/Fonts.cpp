@@ -6,6 +6,23 @@
 #include <freetype-gl.h>
 
 namespace Nebula {
+	float FontGlyph::offset_x() { return m_TextureGlyph->offset_x; }
+	float FontGlyph::offset_y() { return m_TextureGlyph->offset_y; }
+
+	float FontGlyph::width()  { return m_TextureGlyph->width; }
+	float FontGlyph::height() { return m_TextureGlyph->height; }
+
+	float FontGlyph::s0() { return m_TextureGlyph->s0; }
+	float FontGlyph::s1() { return m_TextureGlyph->s1; }
+	float FontGlyph::t0() { return m_TextureGlyph->t0; }
+	float FontGlyph::t1() { return m_TextureGlyph->t1; }
+
+	float FontGlyph::advance_x() { return m_TextureGlyph->advance_x; }
+
+	float FontGlyph::GetKerning(std::string_view c) const {
+		return texture_glyph_get_kerning(m_TextureGlyph, c.data());
+	}
+
 	Font::Font(std::string name, std::string filename, float resolution) 
 		: m_Name(name), m_Filename(filename), m_Resolution(resolution), m_Scale(vec2(m_Resolution))
 	{
@@ -34,8 +51,8 @@ namespace Nebula {
 		m_CharsinAtlas.clear();
 	}
 
-	ftgl::texture_glyph_t* Font::GetGlyph(const char* c) {
-		ftgl::texture_glyph_t* glyph = texture_font_get_glyph(m_FTFont, c);
+	FontGlyph Font::GetGlyph(const char* c) {
+		FontGlyph glyph = texture_font_get_glyph(m_FTFont, c);
 		
 		if (!m_CharsinAtlas[c]) {
 			m_CharsinAtlas[c] = true;
@@ -43,10 +60,6 @@ namespace Nebula {
 		}
 
 		return glyph;
-	}
-	
-	float Font::GetGlyphKerning(const ftgl::texture_glyph_t* glyph, const char* c) const {
-		return texture_glyph_get_kerning(glyph, c);
 	}
 
 	const uint32_t Font::GetID() const {

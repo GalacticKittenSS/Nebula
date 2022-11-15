@@ -4,12 +4,43 @@
 #include "Nebula/Utils/Arrays.h"
 
 namespace ftgl {
-	class texture_atlas_t;
-	class texture_font_t;
-	class texture_glyph_t;
+	struct texture_atlas_t;
+	struct texture_font_t;
+	struct texture_glyph_t;
 }
 
 namespace Nebula {
+	class FontGlyph {
+	public:
+		float offset_x();
+		float offset_y();
+
+		float width();
+		float height();
+
+		float s0();
+		float s1();
+		float t0();
+		float t1();
+
+		float advance_x();
+
+		float GetKerning(std::string_view c) const;
+
+		FontGlyph(ftgl::texture_glyph_t* glyph) : m_TextureGlyph(glyph)
+		{
+		}
+
+		operator bool() const 
+		{
+			return m_TextureGlyph != nullptr;
+		}
+
+	private:
+		ftgl::texture_glyph_t* m_TextureGlyph;
+		friend class Font;
+	};
+
 	class Font {
 	public:
 		Font(std::string name, std::string filename, float resolution = 32);
@@ -25,8 +56,7 @@ namespace Nebula {
 		void SetScale(const vec2& scale) { m_Scale = scale; }
 		const vec2& GetScale() const { return m_Scale; }
 
-		ftgl::texture_glyph_t* GetGlyph(const char* c);
-		float GetGlyphKerning(const ftgl::texture_glyph_t* glyph, const char* c) const;
+		FontGlyph GetGlyph(const char* c);
 	private:
 		void RecreateAtlas(bool firstTime = false);
 	private:

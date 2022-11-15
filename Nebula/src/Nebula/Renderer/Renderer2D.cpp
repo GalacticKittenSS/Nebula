@@ -9,10 +9,6 @@
 
 #include "Nebula/Scene/Components.h"
 
-#define GL_WITH_GLAD
-#define NOT_USING_FT_GL_NAMESPACE
-#include <texture-font.h>
-
 namespace Nebula {
 	struct Renderer2DData {
 		static const uint32_t MaxSprites = 10000;
@@ -302,22 +298,22 @@ namespace Nebula {
 		float textureIndex = GetTextureIndex(font->GetTexture());
 
 		for (uint32_t i = 0; i < text.length(); i++) {
-			ftgl::texture_glyph_t* glyph = font->GetGlyph(&text[i]);
-			if (glyph == NULL) continue;
+			FontGlyph glyph = font->GetGlyph(&text[i]);
+			if (!glyph) continue;
 
 			if (i > 0)
-				x += font->GetGlyphKerning(glyph, &text[i - 1]) / fontScale.x;
+				x += glyph.GetKerning(&text[i - 1]) / fontScale.x;
 
-			float x0 = x + glyph->offset_x / fontScale.x;
-			float y0 =	   glyph->offset_y / fontScale.y;
-			float x1 = x0 +  glyph->width  / fontScale.x;
-			float y1 = y0 - glyph->height  / fontScale.y;
+			float x0 = x + glyph.offset_x() / fontScale.x;
+			float y0 =	   glyph.offset_y() / fontScale.y;
+			float x1 = x0 + glyph.width()  / fontScale.x;
+			float y1 = y0 - glyph.height() / fontScale.y;
 			float z = i / 1000.0f;
 
-			float u0 = glyph->s0;
-			float v0 = glyph->t0;
-			float u1 = glyph->s1;
-			float v1 = glyph->t1;
+			float u0 = glyph.s0();
+			float v0 = glyph.t0();
+			float u1 = glyph.s1();
+			float v1 = glyph.t1();
 
 			s_Data.QuadVBPtr->Position = transform * vec4(x0, y0, z, 1.0f);
 			s_Data.QuadVBPtr->TexCoord = vec2(u0, v0);
@@ -352,7 +348,7 @@ namespace Nebula {
 			s_Data.QuadVBPtr++;
 
 			s_Data.QuadIndexCount += 6;
-			x += glyph->advance_x / fontScale.x;
+			x += glyph.advance_x() / fontScale.x;
 		}
 	}
 
