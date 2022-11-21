@@ -2,6 +2,7 @@
 #include "Scene_Serializer.h"
 
 #include "Entity.h"
+#include "Nebula/Project/Project.h"
 #include "Nebula/Scripting/ScriptEngine.h"
 
 #include <fstream>
@@ -423,8 +424,8 @@ namespace Nebula {
 		try {
 			data = YAML::LoadFile(filepath);
 		}
-		catch (YAML::ParserException e) {
-			NB_ERROR("[Scene Sereliazer] Failed to load file '{0}'\n     {1}", filepath, e.what());
+		catch (YAML::Exception e) {
+			NB_ERROR("[Scene Serializer] Failed to load file '{0}'\n     {1}", filepath, e.what());
 			return false;
 		}
 
@@ -545,7 +546,11 @@ namespace Nebula {
 				src.SubTextureCellNum = spriteRendererComponent["CellNum"].as<vec2>();
 
 				if (spriteRendererComponent["Texture"])
-					src.Texture = Texture2D::Create(spriteRendererComponent["Texture"].as<std::string>());
+				{
+					std::string texturePath = spriteRendererComponent["Texture"].as<std::string>();
+					auto path = Project::GetAssetFileSystemPath(texturePath);
+					src.Texture = Texture2D::Create(path.string());
+				}
 			}
 
 			if (auto circleRendererComponent = entity["CircleRendererComponent"])

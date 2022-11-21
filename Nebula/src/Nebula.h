@@ -48,6 +48,10 @@
 #include "Nebula/Scripting/ScriptEngine.h"
 //--------------------
 
+//----PROJECT---------
+#include "Nebula/Project/Project.h"
+//--------------------
+
 //----SCENES----------
 #include "Nebula/Scene/Scene.h"
 #include "Nebula/Scene/Entity.h"

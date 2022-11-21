@@ -3,8 +3,6 @@
 #include "../../Nebula/src/Nebula/Scripting/ScriptEngine.h"
 
 namespace Nebula {
-	extern const std::filesystem::path s_AssetPath = "SandboxProj/Assets";
-
 	static vec4 s_CubeVertexPos[] = {
 		//Front
 		{ -0.5f, -0.5f, -0.5f, 1 },
@@ -103,7 +101,7 @@ namespace Nebula {
 		//Open Scene on Startup
 		auto commandLineArgs = Application::Get().GetSpecification().CommandLineArgs;
 		if (commandLineArgs.Count > 1)
-			LoadScene(commandLineArgs[1]);
+			OpenProject(commandLineArgs[1]);
 		
 		m_EditorCam = EditorCamera(60.0f, 16.0f / 9.0f, 0.01f, 1000.0f);
 
@@ -289,6 +287,9 @@ namespace Nebula {
 				if (ImGui::MenuItem("Save As...", "Ctrl+Shift+S"))
 					SaveSceneAs();
 
+				if (ImGui::MenuItem("Open Project", "Ctrl+P"))
+					OpenProject();
+
 				if (ImGui::MenuItem("Quit"))
 					Application::Get().Close();
 
@@ -440,7 +441,7 @@ namespace Nebula {
 		if (ImGui::BeginDragDropTarget()) {
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
 				const wchar_t* path = (const wchar_t*)payload->Data;
-				LoadScene(s_AssetPath / path);
+				LoadScene(path);
 			}
 			ImGui::EndDragDropTarget();
 		}
@@ -635,6 +636,32 @@ namespace Nebula {
 		m_TimeCameraMoved = 0.0f;
 
 		return false;
+	}
+
+	void EditorLayer::NewProject()
+	{
+		Project::New();
+	}
+
+	void EditorLayer::SaveProject()
+	{
+		//Project::SaveActive();
+	}
+
+	void EditorLayer::OpenProject()
+	{
+		std::filesystem::path filepath = FileDialogs::OpenFile("Nebula Project (*.nproj)\0*.nproj\0");
+		OpenProject(filepath);
+	}
+
+	void EditorLayer::OpenProject(const std::filesystem::path& path)
+	{
+		if (Project::Load(path))
+		{
+			std::filesystem::path startScenePath = Project::GetAssetFileSystemPath(Project::GetActive()->GetConfig().StartScene);
+			LoadScene(startScenePath);
+			m_ContentBrowser.SetContext(Project::GetAssetDirectory());
+		}
 	}
 
 	void EditorLayer::NewScene() {

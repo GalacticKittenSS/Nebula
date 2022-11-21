@@ -3,17 +3,30 @@
 namespace Nebula {
 	extern const std::filesystem::path s_AssetPath;
 	
-	ContentBrowserPanel::ContentBrowserPanel(): m_CurrentDirectory(s_AssetPath) {
+	ContentBrowserPanel::ContentBrowserPanel()
+	{
 		m_DirectoryIcon = Texture2D::Create("Resources/Icons/ContentBrowser/DirectoryIcon.png");
 		m_FileIcon = Texture2D::Create("Resources/Icons/ContentBrowser/FileIcon.png");
 	}
 
-	void ContentBrowserPanel::OnImGuiRender() {
-		ImGui::Begin("Content Browser");
+	void ContentBrowserPanel::SetContext(const std::filesystem::path& assetsPath)
+	{
+		m_BaseDirectory = assetsPath;
+		m_CurrentDirectory = m_BaseDirectory;
+	}
 
+	void ContentBrowserPanel::OnImGuiRender() 
+	{
+		ImGui::Begin("Content Browser");
+		RenderBrowser();
+		ImGui::End();
+	}
+
+	void ContentBrowserPanel::RenderBrowser()
+	{
 		static float size = 1.0f;
 		ImGui::SliderFloat("##thumbnail", &size, 0, 2);
-		
+
 		float thumbnailSize = (size + 1) * 128.0f;
 		float cellSize = thumbnailSize + 16.0f;
 
@@ -22,7 +35,10 @@ namespace Nebula {
 		if (columCount < 1)
 			columCount = 1;
 
-		if (m_CurrentDirectory != std::filesystem::path(s_AssetPath)) {
+		if (m_BaseDirectory.string() == "")
+			return;
+
+		if (m_CurrentDirectory != std::filesystem::path(m_BaseDirectory)) {
 			ImGuiIO& io = ImGui::GetIO();
 			ImFont* boldFont = io.Fonts->Fonts[0];
 			boldFont->Scale = size + 1;
@@ -49,7 +65,7 @@ namespace Nebula {
 			ImGui::PopStyleColor();
 
 			if (ImGui::BeginDragDropSource()) {
-				auto relativePath = std::filesystem::relative(path, s_AssetPath);
+				std::filesystem::path relativePath(path);
 				const wchar_t* itemPath = relativePath.c_str();
 				ImGui::SetDragDropPayload("CONTENT_BROWSER_ITEM", itemPath, (wcslen(itemPath) + 1) * sizeof(wchar_t), ImGuiCond_Once);
 				ImGui::EndDragDropSource();
@@ -76,14 +92,12 @@ namespace Nebula {
 			ImGui::TextWrapped(filename.c_str());
 			ImGui::SetCursorPosY(ImGui::GetCursorPosY() - cellSize + text.y + ImGui::GetStyle().ItemSpacing.y * 3.0f);
 			ImGui::PopTextWrapPos();
-			
+
 			ImGui::NextColumn();
 
 			ImGui::PopID();
 		}
 
 		ImGui::Columns(1);
-		
-		ImGui::End();
 	}
 }

@@ -31,6 +31,11 @@ namespace Nebula {
 		void Resize();
 		void GetPixelData();
 
+		void NewProject();
+		void SaveProject();
+		void OpenProject();
+		void OpenProject(const std::filesystem::path& path);
+		
 		void NewScene();
 		void SaveScene();
 		void SaveSceneAs();

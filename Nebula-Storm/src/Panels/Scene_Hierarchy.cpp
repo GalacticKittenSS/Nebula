@@ -9,8 +9,6 @@ namespace Nebula {
 	static float s_MaxTransformTextLength = 0.0f;
 	static float s_Max = 400.0f;
 
-	extern const std::filesystem::path s_AssetPath;
-
 	struct RectData {
 		UUID Parent;
 		ImRect Rect;
@@ -927,7 +925,7 @@ namespace Nebula {
 			if (ImGui::BeginDragDropTarget()) {
 				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
 					const wchar_t* path = (const wchar_t*)payload->Data;
-					std::filesystem::path texturePath = std::filesystem::path(s_AssetPath) / path;
+					std::filesystem::path texturePath = path;
 					Ref<Texture2D> texture = Texture2D::Create(texturePath.string());
 					if (texture->IsLoaded()) {
 						component.Texture = texture;
