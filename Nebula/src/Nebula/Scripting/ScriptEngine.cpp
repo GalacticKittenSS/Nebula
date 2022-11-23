@@ -15,6 +15,7 @@
 
 #include "Nebula/Utils/Time.h"
 #include "Nebula/Core/FileSystem.h"
+#include "Nebula/Project/Project.h"
 
 namespace Nebula {
 	static std::unordered_map<std::string, ScriptFieldType> s_ScriptFieldTypeMap = {
@@ -191,7 +192,8 @@ namespace Nebula {
 			return;
 		}
 		
-		status = LoadAppAssembly("SandboxProj/Binaries/Sandbox.dll");
+		// Only load if active project
+		status = Project::GetActive() && LoadAppAssembly(Project::GetScriptModulePath());
 		if (!status)
 		{
 			NB_WARN("[ScriptEngine] Could not load App Assembly");
@@ -203,34 +205,6 @@ namespace Nebula {
 
 		ScriptGlue::RegisterFunctions();
 		ScriptGlue::RegisterComponents();
-
-#if 0
-		// Retrieve and Instanciate Class (With Constructor)
-		MonoObject* instance = s_Data->EntityClass.Instanciate();
-
-		// Call Method (No Params)
-		MonoMethod* printMessageFunc = s_Data->EntityClass.GetMethod("PrintMessage", 0);
-		s_Data->EntityClass.InvokeMethod(instance, printMessageFunc);
-		
-		// Call Method (2 Int Params)
-		MonoMethod* printIntFunc = s_Data->EntityClass.GetMethod("PrintInts", 2);
-
-		int value = 5;
-		int value2 = 10;
-
-		void* params[2] = {
-			&value,
-			&value2
-		};
-
-		s_Data->EntityClass.InvokeMethod(instance, printIntFunc, params);
-
-		// Call Method (1 String Param)
-		MonoMethod* printCustomMessageFunc = s_Data->EntityClass.GetMethod("PrintCustomMessage", 1);
-		MonoString* string = mono_string_new(s_Data->AppDomain, "Hello World from C++");
-		void* stringParam = string;
-		s_Data->EntityClass.InvokeMethod(instance, printCustomMessageFunc, &stringParam);
-#endif
 	}
 
 	void ScriptEngine::Shutdown()
@@ -245,10 +219,11 @@ namespace Nebula {
 		mono_domain_set(s_Data->AppDomain, true);
 
 		s_Data->CoreAssemblyFilePath = filepath;
-		s_Data->CoreAssembly = Utils::LoadMonoAssembly(filepath, s_Data->EnableDebugging);
-		if (s_Data->CoreAssembly == nullptr)
+		MonoAssembly* assembly = Utils::LoadMonoAssembly(filepath, s_Data->EnableDebugging);
+		if (assembly == nullptr)
 			return false;
 
+		s_Data->CoreAssembly = assembly;
 		s_Data->CoreAssemblyImage = mono_assembly_get_image(s_Data->CoreAssembly);
 		return true;
 	}
@@ -256,10 +231,11 @@ namespace Nebula {
 	bool ScriptEngine::LoadAppAssembly(const std::filesystem::path& filepath)
 	{
 		s_Data->AppAssemblyFilePath = filepath;
-		s_Data->AppAssembly = Utils::LoadMonoAssembly(filepath, s_Data->EnableDebugging);
-		if (s_Data->AppAssembly == nullptr)
+		MonoAssembly* assembly = Utils::LoadMonoAssembly(filepath, s_Data->EnableDebugging);
+		if (assembly == nullptr)
 			return false;
 
+		s_Data->AppAssembly = assembly;
 		s_Data->AppAssemblyImage = mono_assembly_get_image(s_Data->AppAssembly);
 
 		s_Data->AppAssemblyWatcher = CreateScope<filewatch::FileWatch<std::string>>(filepath.string(), OnAppAssemblyFileEvent);
@@ -285,7 +261,7 @@ namespace Nebula {
 			return;
 		}
 
-		status = LoadAppAssembly(s_Data->AppAssemblyFilePath);
+		status = Project::GetActive() && LoadAppAssembly(Project::GetScriptModulePath());
 		if (!status)
 		{
 			NB_WARN("[ScriptEngine] Could not reload App Assembly");
@@ -295,6 +271,7 @@ namespace Nebula {
 		s_Data->EntityClass = ScriptClass("Nebula", "Entity", true);
 		LoadAssemblyClasses();
 
+		ScriptGlue::RegisterFunctions();
 		ScriptGlue::RegisterComponents();
 
 		SetScriptFields(s_Data->EntityEditorInstances, editor_field_values, editor_class_sig);

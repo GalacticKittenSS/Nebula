@@ -591,6 +591,10 @@ namespace Nebula {
 			if (control)
 				LoadScene();
 			break;
+		case KeyCode::P:
+			if (control)
+				OpenProject();
+			break;
 
 		case KeyCode::D:
 			if (control && (m_GameViewFocus || m_SceneHierarchy.IsFocused()))
@@ -658,9 +662,11 @@ namespace Nebula {
 	{
 		if (Project::Load(path))
 		{
+			ScriptEngine::ReloadAssembly();
+			m_ContentBrowser.SetContext(Project::GetAssetDirectory());
+			
 			std::filesystem::path startScenePath = Project::GetAssetFileSystemPath(Project::GetActive()->GetConfig().StartScene);
 			LoadScene(startScenePath);
-			m_ContentBrowser.SetContext(Project::GetAssetDirectory());
 		}
 	}
 
