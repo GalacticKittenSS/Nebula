@@ -13,8 +13,7 @@ project "Nebula"
 	files {
 		"src/**.h",
 		"src/**.cpp",
-		"include/**.h",
-
+		
 		"Modules/stb_image/*.h",
 		"Modules/stb_image/*.cpp",
 

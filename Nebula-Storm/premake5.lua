@@ -17,8 +17,8 @@ project "Nebula Storm"
 	includedirs {
 		"%{includedir.Nebula}",
 		"%{includedir.Entt}",
-		"%{includedir.FileWatch}",
 		"%{includedir.ImGui}",
+		"%{includedir.ImGuizmo}",
 		"%{includedir.Spdlog}"
 	}
 
@@ -32,7 +32,7 @@ project "Nebula Storm"
 	filter "configurations:Debug"
 		defines  {
 			"NB_DEBUG",
-			"NB_ENABLE_ASSERT"
+			"NB_ENABLE_ASSERTS"
 		}
 		runtime "Debug"
 		symbols "on"

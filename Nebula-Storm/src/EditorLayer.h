@@ -96,7 +96,5 @@ namespace Nebula {
 		Ref<Texture2D> m_PlayIcon, m_SimulateIcon, 
 			m_StopIcon, m_PauseIcon, m_StepIcon, 
 			m_Backdrop;
-
-		Font OpenSans = Font("OpenSans", "Resources/fonts/OpenSans/Regular.ttf", 64);
 	};
 }

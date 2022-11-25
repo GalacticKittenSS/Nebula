@@ -6,7 +6,8 @@ project "Premake"
 	objdir ("%{wks.location}/bin-obj/" .. outputdir .. "/%{prj.name}")
 
 	files {
-		"../**premake5.lua"
+		"../**premake5.lua",
+		"../Dependencies.lua"
 	}
 
 	postbuildmessage "Regenerating project files with Premake5!"

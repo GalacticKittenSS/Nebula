@@ -1,7 +1,10 @@
 #pragma once
 
-//----API DEFINES-----
+//------CORE----------
 #include "Nebula/Core/API.h"
+#include "Nebula/Core/UUID.h"
+#include "Nebula/Core/Buffer.h"
+#include "Nebula/Core/FileSystem.h"
 //--------------------
 
 //----LAYERS---------
@@ -14,17 +17,12 @@
 //--------------------
 
 //----RENDERER--------
-#include "Nebula/Renderer/Shader.h"
+#include "Nebula/Renderer/Camera.h"
 #include "Nebula/Renderer/Texture.h"
-#include "Nebula/renderer/Camera_Controller.h"
+#include "Nebula/Renderer/Fonts.h"
 #include "Nebula/Renderer/FrameBuffer.h"
 
-//--Buffers
-#include "Nebula/Renderer/Buffer.h"
-#include "Nebula/Renderer/Vertex_Array.h"
-
 //--Renderers
-#include "Nebula/Renderer/Renderer.h"
 #include "Nebula/Renderer/Renderer2D.h"
 #include "Nebula/Renderer/Render_Command.h"
 //--------------------
@@ -38,10 +36,10 @@
 //--------------------
 
 //----UTILS-----------
-#include "Nebula/Utils/Platform_Utils.h"
+#include "Nebula/Utils/Time.h"
 #include "Nebula/Utils/Arrays.h"
 #include "Nebula/Utils/Random.h"
-#include "Nebula/Utils/Time.h"
+#include "Nebula/Utils/Platform_Utils.h"
 //--------------------
 
 //----SCRIPTS---------

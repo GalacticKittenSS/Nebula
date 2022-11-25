@@ -26,7 +26,7 @@ namespace Nebula {
 	Font::Font(std::string name, std::string filename, float resolution) 
 		: m_Name(name), m_Filename(filename), m_Resolution(resolution), m_Scale(vec2(m_Resolution))
 	{
-		RecreateAtlas(true);
+		RecreateAtlas();
 	}
 
 	Font::~Font() {
@@ -34,10 +34,17 @@ namespace Nebula {
 		ftgl::texture_font_delete(m_FTFont);
 	}
 
-	void Font::RecreateAtlas(bool firstTime) {
-		if (!firstTime) {
+	void Font::RecreateAtlas() {
+		if (m_FTAtlas)
+		{
 			ftgl::texture_atlas_delete(m_FTAtlas);
+			m_FTAtlas = nullptr;
+		}
+
+		if (m_FTFont) 
+		{
 			ftgl::texture_font_delete(m_FTFont);
+			m_FTFont = nullptr;
 		}
 
 		const size_t size = (const size_t)m_Resolution * 16.0f;

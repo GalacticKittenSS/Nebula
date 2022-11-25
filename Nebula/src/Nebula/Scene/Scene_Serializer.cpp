@@ -581,7 +581,7 @@ namespace Nebula {
 				rb2d.FixedRotation = rigidbody2DComponent["FixedRotation"].as<bool>();
 			}
 
-			if (auto box2DComponent = entity["Box2DComponent"])
+			if (auto box2DComponent = entity["BoxCollider2DComponent"])
 			{
 				auto& bc2d = deserializedEntity.AddComponent<BoxCollider2DComponent>();
 				bc2d.Offset = box2DComponent["Offset"].as<vec2>();

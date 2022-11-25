@@ -1,5 +1,7 @@
 #include "Content_Browser.h"
 
+#include <imgui.h>
+
 namespace Nebula {
 	extern const std::filesystem::path s_AssetPath;
 	

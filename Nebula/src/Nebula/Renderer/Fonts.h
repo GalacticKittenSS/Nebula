@@ -58,10 +58,10 @@ namespace Nebula {
 
 		FontGlyph GetGlyph(const char* c);
 	private:
-		void RecreateAtlas(bool firstTime = false);
+		void RecreateAtlas();
 	private:
-		ftgl::texture_font_t* m_FTFont;
-		ftgl::texture_atlas_t* m_FTAtlas;
+		ftgl::texture_font_t* m_FTFont = nullptr;
+		ftgl::texture_atlas_t* m_FTAtlas = nullptr;
 
 		std::unordered_map<const char*, bool> m_CharsinAtlas;
 

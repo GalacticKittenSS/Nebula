@@ -1,8 +1,10 @@
 #include "Scene_Hierarchy.h"
-#include "../../Nebula/Modules/imgui/src/imgui.cpp"
 
 #include <cstring>
 #include <filesystem>
+
+#include <imgui.h>
+#include <imgui_internal.h>
 
 namespace Nebula {
 	static float s_MaxTextLength = 0.0f;

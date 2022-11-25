@@ -1,15 +1,15 @@
 #include "nbpch.h"
 #include "ImGui_Layer.h"
 
+#include "Nebula/Core/Application.h"
+
 #include <imgui.h>
+#include <ImGuizmo.h>
+
 #include <platform/imgui_impl_glfw.h>
 #include <platform/imgui_impl_opengl3.h>
 
-#include "Nebula/Core/Application.h"
-
 #include <GLFW/glfw3.h>
-
-#include "ImGuizmo.h"
 
 namespace Nebula {
 	ImGuiLayer::ImGuiLayer(): Layer("ImGuiLayer") { }

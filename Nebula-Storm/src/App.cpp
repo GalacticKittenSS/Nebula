@@ -1,5 +1,5 @@
 #include <Nebula.h>
-#include <Nebula_EntryPoint.h>
+#include <Nebula/Core/Entry_Point.h>
 
 #include "EditorLayer.h"
 

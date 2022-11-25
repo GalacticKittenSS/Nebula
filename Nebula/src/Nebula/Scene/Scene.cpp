@@ -148,8 +148,8 @@ namespace Nebula {
 			m_SceneOrder.remove(childID);
 		}
 		
-		if (entity.HasComponent<Rigidbody2DComponent>() && entity.GetComponent<Rigidbody2DComponent>().RuntimeBody) {
-			entity.GetComponent<Rigidbody2DComponent>().RuntimeBody = nullptr;
+		if (entity.HasComponent<Rigidbody2DComponent>())
+		{ 
 			CreateBox2DBody(entity);
 		}
 
@@ -157,13 +157,20 @@ namespace Nebula {
 	}
 
 	void Scene::DestroyEntity(Entity entity) {
-		if (entity.HasComponent<NativeScriptComponent>() && entity.GetComponent<NativeScriptComponent>().Instance)
-			entity.GetComponent<NativeScriptComponent>().DestroyScript(&entity.GetComponent<NativeScriptComponent>());
+		if (entity.HasComponent<NativeScriptComponent>())
+		{
+			auto nsc = entity.GetComponent<NativeScriptComponent>();
+			entity.GetComponent<NativeScriptComponent>().DestroyScript(&nsc);
+		}
 
-		if (entity.HasComponent<Rigidbody2DComponent>() && entity.GetComponent<Rigidbody2DComponent>().RuntimeBody) {
-			delete (Entity*)((b2Body*)entity.GetComponent<Rigidbody2DComponent>().RuntimeBody)->GetUserData().pointer;
-			((b2Body*)entity.GetComponent<Rigidbody2DComponent>().RuntimeBody)->GetUserData().pointer = reinterpret_cast<uintptr_t>(nullptr);
-			m_PhysicsWorld->DestroyBody((b2Body*)entity.GetComponent<Rigidbody2DComponent>().RuntimeBody);
+		if (entity.HasComponent<Rigidbody2DComponent>()) 
+		{
+			if (b2Body* body = (b2Body*)entity.GetComponent<Rigidbody2DComponent>().RuntimeBody)
+			{
+				delete (Entity*)body->GetUserData().pointer;
+				body->GetUserData().pointer = NULL;
+				m_PhysicsWorld->DestroyBody(body);
+			}
 		}
 		
 		auto& Parent = entity.GetParentChild();
@@ -539,45 +546,13 @@ namespace Nebula {
 
 
 	template<typename T>
-	void Scene::OnComponentAdded(Entity entity, T& component) {
-		static_assert(sizeof(T) == 0);
-	}
+	void Scene::OnComponentAdded(Entity entity, T& component) { }
 	
-	template<>
-	void Scene::OnComponentAdded<IDComponent>(Entity entity, IDComponent& component) { }
-
-	template<>
-	void Scene::OnComponentAdded<TagComponent>(Entity entity, TagComponent& component) { }
-
-	template<>
-	void Scene::OnComponentAdded<ParentChildComponent>(Entity entity, ParentChildComponent& component) { }
-	
-	template<>
-	void Scene::OnComponentAdded<TransformComponent>(Entity entity, TransformComponent& component) { }
-	
-	template<>
-	void Scene::OnComponentAdded<WorldTransformComponent>(Entity entity, WorldTransformComponent& component) { }
-
 	template<>
 	void Scene::OnComponentAdded<CameraComponent>(Entity entity, CameraComponent& component) {
 		if (m_ViewportWidth > 0 && m_ViewportHeight > 0)
 			component.Camera.SetViewPortSize(m_ViewportWidth, m_ViewportHeight);
 	}
-
-	template<>
-	void Scene::OnComponentAdded<NativeScriptComponent>(Entity entity, NativeScriptComponent& component) { }
-
-	template<>
-	void Scene::OnComponentAdded<ScriptComponent>(Entity entity, ScriptComponent& component) { }
-
-	template<>
-	void Scene::OnComponentAdded<SpriteRendererComponent>(Entity entity, SpriteRendererComponent& component) { }
-
-	template<>
-	void Scene::OnComponentAdded<CircleRendererComponent>(Entity entity, CircleRendererComponent& component) { }
-
-	template<>
-	void Scene::OnComponentAdded<StringRendererComponent>(Entity entity, StringRendererComponent& component) { component.InitiateFont(); }
 
 	template<>
 	void Scene::OnComponentAdded<Rigidbody2DComponent>(Entity entity, Rigidbody2DComponent& component) {
