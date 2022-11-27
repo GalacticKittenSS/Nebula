@@ -513,7 +513,7 @@ namespace Nebula {
 					tc.Rotation += rotation - wRotation;
 					tc.Scale += scale - wScale;
 
-					selectedEntity.UpdateChildren();
+					selectedEntity.UpdateTransform();
 				}
 			}
 		}

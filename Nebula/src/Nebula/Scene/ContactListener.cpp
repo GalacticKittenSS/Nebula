@@ -27,16 +27,22 @@ namespace Nebula {
 	}
 
 	void ContactListener::CallEntityEnter(Entity* entity, Entity* other) {
-		if (entity->HasComponent<NativeScriptComponent>() && entity->GetComponent<NativeScriptComponent>().Instance)
-			entity->GetComponent<NativeScriptComponent>().Instance->OnCollisionEnter(*other);
-		
+		if (entity->HasComponent<NativeScriptComponent>())
+		{
+			if (ScriptableEntity* instance = entity->GetComponent<NativeScriptComponent>().Instance)
+				instance->OnCollisionEnter(*other);
+		}
+
 		if (entity->HasComponent<ScriptComponent>())
 			ScriptEngine::OnCollisionEnter(*entity, *other);
 	}
 
 	void ContactListener::CallEntityExit(Entity* entity, Entity* other) {
-		if (entity->HasComponent<NativeScriptComponent>() && entity->GetComponent<NativeScriptComponent>().Instance)
-			entity->GetComponent<NativeScriptComponent>().Instance->OnCollisionExit(*other);
+		if (entity->HasComponent<NativeScriptComponent>())
+		{
+			if (ScriptableEntity* instance = entity->GetComponent<NativeScriptComponent>().Instance)
+				instance->OnCollisionExit(*other);
+		}
 		
 		if (entity->HasComponent<ScriptComponent>())
 			ScriptEngine::OnCollisionExit(*entity, *other);

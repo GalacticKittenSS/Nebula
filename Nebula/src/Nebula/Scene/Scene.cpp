@@ -148,7 +148,7 @@ namespace Nebula {
 			m_SceneOrder.remove(childID);
 		}
 		
-		if (entity.HasComponent<Rigidbody2DComponent>())
+		if (m_IsRunning && entity.HasComponent<Rigidbody2DComponent>())
 		{ 
 			CreateBox2DBody(entity);
 		}
@@ -175,8 +175,8 @@ namespace Nebula {
 		
 		auto& Parent = entity.GetParentChild();
 		size_t size = Parent.ChildrenIDs.size();
-		for (size_t i = 0; i < size; i++)
-			DestroyEntity({ Parent.ChildrenIDs[0], this});
+		for (size_t i = 0; i < size;)
+			DestroyEntity({ Parent.ChildrenIDs[i], this});
 
 		if (Parent.Parent) 
 		{
@@ -297,6 +297,15 @@ namespace Nebula {
 	void Scene::UpdatePhysics() {
 		m_PhysicsWorld->Step(Time::DeltaTime(), 6, 2);
 
+		// While m_PhysicsWorld->Step physics bodies cannot be updated. Update the bodies now.
+		for (uint32_t i = 0; i < m_BodiesToUpdate.size();)
+		{
+			Entity entity = { m_BodiesToUpdate[i], this};
+			entity.UpdatePhysicsBody();
+
+			m_BodiesToUpdate.remove_index(i);
+		}
+
 		auto view = m_Registry.view<Rigidbody2DComponent>();
 		for (auto e : view) {
 			Entity entity = { e, this };
@@ -318,7 +327,7 @@ namespace Nebula {
 			transform.Translation.y += position.y - wTranslation.y;
 			transform.Rotation.z += body->GetAngle() - wRotation.z;
 
-			entity.UpdateChildren();
+			entity.UpdateTransform();
 		}
 	}
 

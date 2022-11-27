@@ -58,7 +58,8 @@ namespace Nebula {
 		ParentChildComponent& GetParentChild() { return GetComponent<ParentChildComponent>(); }
 
 		void CalculateTransform();
-		void UpdateChildren();
+		void UpdateTransform();
+		void UpdatePhysicsBody();
 
 		operator bool() const { return m_EntityHandle != entt::null; }
 		operator uint32_t() const { return (uint32_t)m_EntityHandle; }

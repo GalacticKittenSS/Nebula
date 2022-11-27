@@ -1,6 +1,7 @@
 #include "nbpch.h"
 #include "Entity.h"
 
+#include "box2d/b2_world.h"
 #include "box2d/b2_body.h"
 #include "box2d/b2_fixture.h"
 
@@ -19,23 +20,34 @@ namespace Nebula {
 		}
 	}
 
-	void Entity::UpdateChildren() {
+	void Entity::UpdateTransform() {
 		CalculateTransform();
 
-		for (UUID child : GetParentChild().ChildrenIDs)
-			Entity{ child, m_Scene }.UpdateChildren();
-		
-		if (HasComponent<Rigidbody2DComponent>()) {
-			Rigidbody2DComponent& rb2d = GetComponent<Rigidbody2DComponent>();
-			if (rb2d.RuntimeBody) {
-				WorldTransformComponent& transform = GetComponent<WorldTransformComponent>();
+		for (UUID id : GetParentChild().ChildrenIDs)
+		{
+			Entity child = { id, m_Scene };
+			child.UpdateTransform();
+		}
 
-				b2Body* body = (b2Body*)rb2d.RuntimeBody;
+		UpdatePhysicsBody();
+	}
 
-				vec3 translation, rotation, scale;
-				DecomposeTransform(transform.Transform, translation, rotation, scale);
-				body->SetTransform({ translation.x, translation.y }, rotation.z);
-			}
+	void Entity::UpdatePhysicsBody()
+	{
+		if (!HasComponent<Rigidbody2DComponent>())
+			return;
+
+		if (m_Scene->m_PhysicsWorld->IsLocked())
+		{
+			m_Scene->m_BodiesToUpdate.push_back(GetUUID());
+		}
+		else if (b2Body* body = (b2Body*)GetComponent<Rigidbody2DComponent>().RuntimeBody)
+		{
+			WorldTransformComponent& transform = GetComponent<WorldTransformComponent>();
+
+			vec3 translation, rotation, scale;
+			DecomposeTransform(transform.Transform, translation, rotation, scale);
+			body->SetTransform({ translation.x, translation.y }, rotation.z);
 		}
 	}
 

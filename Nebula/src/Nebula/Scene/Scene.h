@@ -83,6 +83,7 @@ namespace Nebula {
 		uint32_t m_ViewportWidth = 0, m_ViewportHeight = 0;
 
 		b2World* m_PhysicsWorld = nullptr;
+		Array<UUID> m_BodiesToUpdate;
 
 		Camera* mainCam = nullptr;
 		mat4 mainCamTransform;

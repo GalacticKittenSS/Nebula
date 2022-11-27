@@ -516,7 +516,10 @@ namespace Nebula {
 				const char* field_name = mono_field_get_name(field);
 				
 				uint32_t flags = mono_field_get_flags(field);
-				if (!(flags & FIELD_ATTRIBUTE_PUBLIC))
+				bool field_public = flags & FIELD_ATTRIBUTE_PUBLIC,
+					field_static = flags & FIELD_ATTRIBUTE_STATIC;
+
+				if (!field_public || field_static)
 					continue;
 
 				MonoType* mono_type = mono_field_get_type(field);

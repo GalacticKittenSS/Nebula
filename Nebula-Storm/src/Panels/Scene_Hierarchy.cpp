@@ -53,7 +53,7 @@ namespace Nebula {
 		scene->m_SceneOrder.remove(childID);
 		
 		child.Parent = parentEntity.GetUUID();
-		parentEntity.UpdateChildren();
+		parentEntity.UpdateTransform();
 	}
 	
 	static void EntityPayload(Scene* currentScene) {
@@ -149,7 +149,7 @@ namespace Nebula {
 							entity.GetParentChild().Parent = NULL;
 							m_Context->m_SceneOrder.push_back(entityID);
 							
-							entity.UpdateChildren();
+							entity.UpdateTransform();
 						}
 						
 						size_t entityIndex = m_Context->m_SceneOrder.find(entityID);
@@ -748,7 +748,7 @@ namespace Nebula {
 			component.Scale = scale;
 
 			if (p || r || s)
-				entity.UpdateChildren();
+				entity.UpdateTransform();
 		});
 
 		DrawComponent<CameraComponent>("Camera", entity, [](auto& component) mutable {
