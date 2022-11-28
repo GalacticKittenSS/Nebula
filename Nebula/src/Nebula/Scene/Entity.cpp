@@ -37,7 +37,7 @@ namespace Nebula {
 		if (!HasComponent<Rigidbody2DComponent>())
 			return;
 
-		if (m_Scene->m_PhysicsWorld->IsLocked())
+		if (m_Scene->m_PhysicsWorld && m_Scene->m_PhysicsWorld->IsLocked())
 		{
 			m_Scene->m_BodiesToUpdate.push_back(GetUUID());
 		}

@@ -149,10 +149,17 @@ namespace Nebula {
 		}
 		
 		if (m_IsRunning && entity.HasComponent<Rigidbody2DComponent>())
-		{ 
-			CreateBox2DBody(entity);
-		}
+			CreateBox2DBody(duplicated);
+		
+		if (entity.HasComponent<ScriptComponent>())
+		{
+			ScriptEngine::CreateScriptInstance(duplicated);
+			ScriptEngine::CopyScriptFields(entity.GetUUID(), duplicatedID);
 
+			if (m_IsRunning)
+				ScriptEngine::OnCreateEntity(duplicated);
+		}
+		
 		return duplicated;
 	}
 
@@ -175,8 +182,8 @@ namespace Nebula {
 		
 		auto& Parent = entity.GetParentChild();
 		size_t size = Parent.ChildrenIDs.size();
-		for (size_t i = 0; i < size;)
-			DestroyEntity({ Parent.ChildrenIDs[i], this});
+		for (size_t i = 0; i < size; i++)
+			DestroyEntity({ Parent.ChildrenIDs[0], this});
 
 		if (Parent.Parent) 
 		{
@@ -298,12 +305,12 @@ namespace Nebula {
 		m_PhysicsWorld->Step(Time::DeltaTime(), 6, 2);
 
 		// While m_PhysicsWorld->Step physics bodies cannot be updated. Update the bodies now.
-		for (uint32_t i = 0; i < m_BodiesToUpdate.size();)
+		for (uint32_t i = 0; i < m_BodiesToUpdate.size(); i++)
 		{
-			Entity entity = { m_BodiesToUpdate[i], this};
+			Entity entity = { m_BodiesToUpdate[0], this};
 			entity.UpdatePhysicsBody();
 
-			m_BodiesToUpdate.remove_index(i);
+			m_BodiesToUpdate.remove_index(0);
 		}
 
 		auto view = m_Registry.view<Rigidbody2DComponent>();
@@ -356,8 +363,19 @@ namespace Nebula {
 		ScriptEngine::OnRuntimeStart(this);
 
 		auto view = m_Registry.view<ScriptComponent>();
-		for (auto e : view) {
-			ScriptEngine::OnCreateEntity({ e, this });
+		
+		// Make sure all entities have a script instance before calling OnCreate
+		// Not doing so may cause a crash when call Entity.As in C#
+		for (auto e : view)
+		{
+			Entity entity = { e, this };
+			ScriptEngine::CreateScriptInstance(entity);
+		}
+
+		for (auto e : view)
+		{
+			Entity entity = { e, this };
+			ScriptEngine::OnCreateEntity(entity);
 		}
 	}
 

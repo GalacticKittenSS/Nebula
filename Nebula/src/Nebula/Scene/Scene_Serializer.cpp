@@ -494,14 +494,14 @@ namespace Nebula {
 				auto& sc = deserializedEntity.AddComponent<ScriptComponent>();
 				sc.ClassName = scriptComponent["Class"].as<std::string>();
 
+				Ref<ScriptInstance> scriptInstance = ScriptEngine::CreateScriptInstance(deserializedEntity);
+
 				auto scriptFields = scriptComponent["ScriptFields"];
 				if (scriptFields)
 				{
 					if (Ref<ScriptClass> entityClass = ScriptEngine::GetEntityClass(sc.ClassName))
 					{
 						const auto& fields = entityClass->GetFields();
-						Ref<ScriptInstance> scriptInstance = ScriptEngine::CreateScriptInstance(deserializedEntity);
-
 						for (auto scriptField : scriptFields)
 						{
 							std::string name = scriptField["Name"].as<std::string>();

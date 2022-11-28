@@ -289,7 +289,7 @@ namespace Nebula {
 		s_Data->EntityRuntimeInstances.clear();
 	}
 
-	bool ScriptEngine::OnCreateEntity(Entity entity)
+	bool ScriptEngine::CreateRuntimeScript(Entity entity)
 	{
 		const auto& sc = entity.GetComponent<ScriptComponent>();
 		if (!EntityClassExists(sc.ClassName))
@@ -297,7 +297,7 @@ namespace Nebula {
 
 		UUID entityID = entity.GetUUID();
 		Ref<ScriptInstance> editorInstance = nullptr;
-		
+
 		auto it = s_Data->EntityEditorInstances.find(entityID);
 		if (it != s_Data->EntityEditorInstances.end())
 			editorInstance = it->second;
@@ -315,8 +315,22 @@ namespace Nebula {
 				runtimeInstance->SetFieldValueInternal(field.Name, buffer);
 			}
 		}
-		
-		runtimeInstance->InvokeOnCreate();
+
+		return true;
+	}
+
+	bool ScriptEngine::OnCreateEntity(Entity entity)
+	{
+		bool instanceFound = s_Data->EntityRuntimeInstances.find(entity.GetUUID()) !=
+			s_Data->EntityRuntimeInstances.end();
+
+		if (!instanceFound)
+		{
+			if (!CreateRuntimeScript(entity))
+				return false;
+		}
+
+		s_Data->EntityRuntimeInstances[entity.GetUUID()]->InvokeOnCreate();
 		return true;
 	}
 
@@ -400,7 +414,7 @@ namespace Nebula {
 		
 		if (s_Data->SceneContext)
 		{
-			OnCreateEntity(entity);
+			CreateRuntimeScript(entity);
 			return s_Data->EntityRuntimeInstances.at(entityID);
 		}
 		
@@ -408,6 +422,23 @@ namespace Nebula {
 		s_Data->EntityEditorInstances[entityID] = instance;
 		
 		return instance;
+	}
+
+	void ScriptEngine::CopyScriptFields(UUID from, UUID to)
+	{
+		Ref<ScriptInstance> from_instance = GetEntityScriptInstance(from);
+		Ref<ScriptInstance> to_instance = GetEntityScriptInstance(to);
+
+		if (from_instance->GetScriptClass() != to_instance->GetScriptClass())
+			return;
+
+		const auto& fields = from_instance->GetScriptClass()->GetFields();
+		for (const auto& [name, field] : fields)
+		{
+			static char buffer[16];
+			from_instance->GetFieldValueInternal(field.Name, buffer);
+			to_instance->SetFieldValueInternal(field.Name, buffer);
+		}
 	}
 
 	Scene* ScriptEngine::GetSceneContext()

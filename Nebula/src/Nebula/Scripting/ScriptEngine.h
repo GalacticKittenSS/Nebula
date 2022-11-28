@@ -137,6 +137,8 @@ namespace Nebula {
 		static Ref<ScriptInstance> CreateScriptInstance(Entity entity);
 		static Ref<ScriptInstance> GetEntityScriptInstance(UUID id);
 		
+		static void CopyScriptFields(UUID from, UUID to);
+
 		static MonoImage* GetCoreAssemblyImage();
 		static MonoDomain* GetAppDomain();
 
@@ -149,6 +151,8 @@ namespace Nebula {
 
 		static MonoObject* InstanciateClass(MonoClass* monoClass);
 		static void DeleteScriptInstance(Entity entity);
+
+		static bool CreateRuntimeScript(Entity entity);
 
 		friend class ScriptClass;
 		friend class ScriptGlue;
