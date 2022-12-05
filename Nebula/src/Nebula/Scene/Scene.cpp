@@ -170,13 +170,20 @@ namespace Nebula {
 			entity.GetComponent<NativeScriptComponent>().DestroyScript(&nsc);
 		}
 
-		if (entity.HasComponent<Rigidbody2DComponent>()) 
+		if (m_PhysicsWorld && entity.HasComponent<Rigidbody2DComponent>())
 		{
 			if (b2Body* body = (b2Body*)entity.GetComponent<Rigidbody2DComponent>().RuntimeBody)
 			{
-				delete (Entity*)body->GetUserData().pointer;
-				body->GetUserData().pointer = NULL;
-				m_PhysicsWorld->DestroyBody(body);
+				if (m_PhysicsWorld->IsLocked())
+				{
+					m_BodiesToDestroy.push_back(body);
+				}
+				else
+				{
+					delete (Entity*)body->GetUserData().pointer;
+					body->GetUserData().pointer = NULL;
+					m_PhysicsWorld->DestroyBody(body);
+				}
 			}
 		}
 		
@@ -224,10 +231,10 @@ namespace Nebula {
 	}
 
 	Entity Scene::GetEntityWithUUID(UUID id) {
-		bool found = m_EntityMap.find(id) != m_EntityMap.end();
-		NB_ASSERT(found, "Could Not Find Entity UUID");
+		auto it = m_EntityMap.find(id);
+		NB_ASSERT(it == m_EntityMap.end(), "Could Not Find Entity UUID");
 
-		return { m_EntityMap[id], this };
+		return { it->second, this };
 	}
 
 	void Scene::CreateBox2DBody(Entity entity) {
@@ -304,13 +311,26 @@ namespace Nebula {
 	void Scene::UpdatePhysics() {
 		m_PhysicsWorld->Step(Time::DeltaTime(), 6, 2);
 
-		// While m_PhysicsWorld->Step physics bodies cannot be updated. Update the bodies now.
+		// While m_PhysicsWorld->Step physics bodies cannot be updated or deleted. 
+		
+		// Update the bodies now.
 		for (uint32_t i = 0; i < m_BodiesToUpdate.size(); i++)
 		{
 			Entity entity = { m_BodiesToUpdate[0], this};
 			entity.UpdatePhysicsBody();
 
 			m_BodiesToUpdate.remove_index(0);
+		}
+
+		// Delete the bodies now.
+		for (uint32_t i = 0; i < m_BodiesToDestroy.size(); i++)
+		{
+			b2Body* body = m_BodiesToDestroy[0];
+			m_BodiesToDestroy.remove_index(0);
+
+			delete (Entity*)body->GetUserData().pointer;
+			body->GetUserData().pointer = NULL;
+			m_PhysicsWorld->DestroyBody(body);
 		}
 
 		auto view = m_Registry.view<Rigidbody2DComponent>();

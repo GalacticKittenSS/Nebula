@@ -1,10 +1,10 @@
 #include "Scene_Hierarchy.h"
 
+#include "Nebula/Utils/UI.h"
+#include <imgui_internal.h>
+
 #include <cstring>
 #include <filesystem>
-
-#include <imgui.h>
-#include <imgui_internal.h>
 
 namespace Nebula {
 	static float s_MaxTextLength = 0.0f;
@@ -813,20 +813,17 @@ namespace Nebula {
 
 		DrawComponent<ScriptComponent>("Script", entity, [entity, scene = m_Context](auto& component) mutable {
 			bool classExists = ScriptEngine::EntityClassExists(component.ClassName);
-			if (!classExists)
-				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.9f, 0.2f, 0.3f, 1.0f));
-
+			
 			char buffer[64];
 			strncpy_s(buffer, sizeof(buffer), component.ClassName.c_str(), sizeof(buffer));
+
+			UI::ScopedStyleColor colour(ImGuiCol_Text, ImVec4(0.9f, 0.2f, 0.3f, 1.0f), !classExists);
 
 			if (ImGui::InputText("Class", buffer, sizeof(buffer)))
 			{
 				component.ClassName = std::string(buffer);
 				ScriptEngine::CreateScriptInstance(entity);
 			}
-
-			if (!classExists)
-				ImGui::PopStyleColor();
 
 			// FIELDS
 			Ref<ScriptInstance> scriptInstance = ScriptEngine::GetEntityScriptInstance(entity.GetUUID());

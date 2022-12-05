@@ -277,19 +277,18 @@ namespace Nebula {
 	void EditorLayer::UI_MenuBar() {
 		if (ImGui::BeginMenuBar()) {
 			if (ImGui::BeginMenu("File")) {
-				if (ImGui::MenuItem("New", "Ctrl+N"))
+				if (ImGui::MenuItem("New Scene", "Ctrl+N"))
 					NewScene();
 
-				if (ImGui::MenuItem("Open...", "Ctrl+O"))
-					LoadScene();
-
-				if (ImGui::MenuItem("Save", "Ctrl+S"))
+				if (ImGui::MenuItem("Save Scene", "Ctrl+S"))
 					SaveScene();
 
-				if (ImGui::MenuItem("Save As...", "Ctrl+Shift+S"))
+				if (ImGui::MenuItem("Save Scene As...", "Ctrl+Shift+S"))
 					SaveSceneAs();
 
-				if (ImGui::MenuItem("Open Project", "Ctrl+P"))
+				ImGui::Separator();
+
+				if (ImGui::MenuItem("Open Project", "Ctrl+O"))
 					OpenProject();
 
 				if (ImGui::MenuItem("Quit"))
@@ -617,13 +616,9 @@ namespace Nebula {
 			break;
 		case KeyCode::O:
 			if (control)
-				LoadScene();
-			break;
-		case KeyCode::P:
-			if (control)
 				OpenProject();
 			break;
-
+			
 		case KeyCode::D:
 			if (control && (m_GameViewFocus || m_SceneHierarchy.IsFocused()))
 				DuplicateEntity();

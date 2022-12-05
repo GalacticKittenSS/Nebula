@@ -155,8 +155,11 @@ namespace Nebula {
 		Scope<filewatch::FileWatch<std::string>> AppAssemblyWatcher;
 		bool AssemblyReloadPending = false;
 
+#ifdef NB_DEBUG
 		bool EnableDebugging = true;
-
+#else
+		bool EnableDebugging = false;
+#endif
 		// Runtime
 		Scene* SceneContext = nullptr;
 		std::unordered_map<UUID, Ref<ScriptInstance>> EntityRuntimeInstances;

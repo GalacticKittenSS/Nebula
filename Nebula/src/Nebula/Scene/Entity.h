@@ -8,13 +8,19 @@ namespace Nebula {
 	public:
 		Entity() = default;
 		Entity(const Entity & other) = default;
-
 		Entity(entt::entity handle, Scene* scene) : m_EntityHandle(handle), m_Scene(scene) { }
-		Entity(UUID uuid, Scene* scene) : m_Scene(scene) {
-			bool found = m_Scene->m_EntityMap.find(uuid) != m_Scene->m_EntityMap.end();
-			NB_ASSERT(found, "Could Not Find Entity UUID");
+		
+		Entity(UUID uuid, Scene* scene) 
+			: m_Scene(scene) 
+		{
+			auto it = m_Scene->m_EntityMap.find(uuid);
+			if (it == m_Scene->m_EntityMap.end())
+			{
+				NB_WARN("Could Not Find Entity UUID");
+				return;
+			}
 
-			m_EntityHandle = m_Scene->m_EntityMap[uuid];
+			m_EntityHandle = it->second;
 		}
 
 		template<typename T, typename... Args>
