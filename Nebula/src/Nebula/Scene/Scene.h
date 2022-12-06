@@ -85,7 +85,7 @@ namespace Nebula {
 
 		b2World* m_PhysicsWorld = nullptr;
 		Array<UUID> m_BodiesToUpdate;
-		Array<b2Body*> m_BodiesToDestroy;
+		Array<UUID> m_EntitiesToDestroy;
 
 		Camera* mainCam = nullptr;
 		mat4 mainCamTransform;

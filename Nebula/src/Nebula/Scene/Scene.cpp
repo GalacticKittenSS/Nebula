@@ -164,6 +164,12 @@ namespace Nebula {
 	}
 
 	void Scene::DestroyEntity(Entity entity) {
+		if (m_PhysicsWorld->IsLocked())
+		{
+			m_EntitiesToDestroy.push_back(entity.GetUUID());
+			return;
+		}
+		
 		if (entity.HasComponent<NativeScriptComponent>())
 		{
 			auto nsc = entity.GetComponent<NativeScriptComponent>();
@@ -174,16 +180,9 @@ namespace Nebula {
 		{
 			if (b2Body* body = (b2Body*)entity.GetComponent<Rigidbody2DComponent>().RuntimeBody)
 			{
-				if (m_PhysicsWorld->IsLocked())
-				{
-					m_BodiesToDestroy.push_back(body);
-				}
-				else
-				{
-					delete (Entity*)body->GetUserData().pointer;
-					body->GetUserData().pointer = NULL;
-					m_PhysicsWorld->DestroyBody(body);
-				}
+				delete (Entity*)body->GetUserData().pointer;
+				body->GetUserData().pointer = NULL;
+				m_PhysicsWorld->DestroyBody(body);
 			}
 		}
 		
@@ -323,14 +322,12 @@ namespace Nebula {
 		}
 
 		// Delete the bodies now.
-		for (uint32_t i = 0; i < m_BodiesToDestroy.size(); i++)
+		for (uint32_t i = 0; i < m_EntitiesToDestroy.size(); i++)
 		{
-			b2Body* body = m_BodiesToDestroy[0];
-			m_BodiesToDestroy.remove_index(0);
+			Entity entity = { m_EntitiesToDestroy[0], this };
+			DestroyEntity(entity);
 
-			delete (Entity*)body->GetUserData().pointer;
-			body->GetUserData().pointer = NULL;
-			m_PhysicsWorld->DestroyBody(body);
+			m_EntitiesToDestroy.remove_index(0);
 		}
 
 		auto view = m_Registry.view<Rigidbody2DComponent>();
@@ -599,6 +596,11 @@ namespace Nebula {
 	void Scene::OnComponentAdded<CameraComponent>(Entity entity, CameraComponent& component) {
 		if (m_ViewportWidth > 0 && m_ViewportHeight > 0)
 			component.Camera.SetViewPortSize(m_ViewportWidth, m_ViewportHeight);
+	}
+
+	template<>
+	void Scene::OnComponentAdded<StringRendererComponent>(Entity entity, StringRendererComponent& component) {
+		component.InitiateFont();
 	}
 
 	template<>

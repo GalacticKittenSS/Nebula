@@ -16,7 +16,7 @@ namespace Nebula {
 			auto it = m_Scene->m_EntityMap.find(uuid);
 			if (it == m_Scene->m_EntityMap.end())
 			{
-				NB_WARN("Could Not Find Entity UUID");
+				NB_WARN("Could Not Find Entity UUID with id {}", uuid);
 				return;
 			}
 

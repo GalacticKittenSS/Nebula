@@ -290,6 +290,9 @@ namespace Nebula {
 		const mat4& transform, const vec4& colour, uint32_t entityID) 
 	{
 		NB_PROFILE_FUNCTION();
+		if (text.empty() || !font)
+			return;
+		
 		if (s_Data.QuadIndexCount >= s_Data.MaxIndices)
 			FlushAndReset();
 
