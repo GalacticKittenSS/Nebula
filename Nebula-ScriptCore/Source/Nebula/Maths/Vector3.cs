@@ -40,9 +40,29 @@
             return new Vector3(vector.x * scalar, vector.y * scalar, vector.z * scalar);
         }
 
+        public static Vector3 operator *(Vector3 a, Vector3 b)
+        {
+            return new Vector3(a.x * b.x, a.y * b.y, a.z * b.z);
+        }
+
+        public static Vector3 operator /(Vector3 vector, float scalar)
+        {
+            return new Vector3(vector.x / scalar, vector.y / scalar, vector.z / scalar);
+        }
+
         public static Vector3 operator +(Vector3 a, Vector3 b)
         {
             return new Vector3(a.x + b.x, a.y + b.y, a.z + b.z);
+        }
+
+        public static Vector3 operator -(Vector3 a, Vector3 b)
+        {
+            return new Vector3(a.x - b.x, a.y - b.y, a.z - b.z);
+        }
+
+        public static Vector3 operator -(Vector3 vector)
+        {
+            return new Vector3(-vector.x, -vector.y, -vector.z);
         }
     }
 }

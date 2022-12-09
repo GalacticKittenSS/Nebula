@@ -164,10 +164,10 @@ namespace Nebula
         internal extern static void StringRendererComponent_SetItalic(ulong entityID, bool italic);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static int StringRendererComponent_GetIndex(ulong entityID);
+        internal extern static string StringRendererComponent_GetFontName(ulong entityID);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static void StringRendererComponent_SetIndex(ulong entityID, int index);
+        internal extern static void StringRendererComponent_SetFontName(ulong entityID, string name);
 
         // RIGIDBODY 2D COMPONENT
 

@@ -124,38 +124,30 @@ namespace Nebula {
 		std::string Text;
 		vec4 Colour{ 1.0f, 1.0f, 1.0f, 1.0f };
 
+		std::string FamilyName = "OpenSans";
+		
 		float Resolution = 86.0f;
 		bool Bold = false;
 		bool Italic = false;
 
-		int FontTypeIndex = 0;
-		Font* Ft = nullptr;
-
+		
 		StringRendererComponent() = default;
 		StringRendererComponent(const StringRendererComponent&) = default;
 
-		void InitiateFont() {
-			static const char* fontStrings[] = StringRenderFontTypeStrings;
-			std::string name = fontStrings[FontTypeIndex];
-			if (name == "Default")
-				name = "OpenSans";
+		Ref<Font> GetFont() 
+		{
+			FontFamily family = FontManager::GetFamily(FamilyName);
 
-			std::string filepath = "Resources/fonts/" + name + "/";
+			if (Bold && Italic)
+				return family.BoldItalic;
 
-			if (Bold) {
-				filepath += "Bold";
-				name += " Bold";
-			}
+			if (Bold)
+				return family.Bold;
 
-			if (Italic) {
-				filepath += "Italic";
-				name += " Italic";
-			}
+			if (Italic)
+				return family.Italic;
 
-			if (!Bold && !Italic)
-				filepath += "Regular";
-
-			Ft = new Font(name, filepath + ".ttf", Resolution);
+			return family.Regular;
 		}
 	};
 

@@ -73,18 +73,33 @@ namespace Nebula {
 		return m_FTAtlas->id;
 	}
 
-	Array<Font*> FontManager::m_Fonts = {};
-
-	void FontManager::Add(Font* font) {
-		m_Fonts.push_back(font);
+	Ref<Font> Font::Create(std::string name, std::string filename, float resolution)
+	{
+		return CreateRef<Font>(name, filename, resolution);
 	}
 
-	Font* FontManager::Get() {
+	Array<Ref<Font>> FontManager::m_Fonts = {};
+	Array<FontFamily> FontManager::m_FontFamilies = {};
+	
+	void FontManager::Add(const Ref<Font>& font)
+	{ 
+		m_Fonts.push_back(font); 
+	}
+
+	void FontManager::Add(const FontFamily& family)
+	{ 
+		m_FontFamilies.push_back(family); 
+	}
+
+	Ref<Font> FontManager::Get() 
+	{
 		return m_Fonts[0];
 	}
 
-	Font* FontManager::Get(const std::string& name) {
-		for (Font* font : m_Fonts) {
+	Ref<Font> FontManager::Get(const std::string& name) 
+	{
+		for (Ref<Font> font : m_Fonts) 
+		{
 			if (font->GetName() == name)
 				return font;
 		}
@@ -92,8 +107,10 @@ namespace Nebula {
 		return nullptr;
 	}
 
-	Font* FontManager::Get(const std::string& name, uint32_t size) {
-		for (Font* font : m_Fonts) {
+	Ref<Font> FontManager::Get(const std::string& name, uint32_t size) 
+	{
+		for (Ref<Font> font : m_Fonts) 
+		{
 			if (font->GetSize() == size && font->GetName() == name)
 				return font;
 		}
@@ -101,8 +118,19 @@ namespace Nebula {
 		return nullptr;
 	}
 
-	void FontManager::Clean() {
-		for (uint32_t i = 0; i < m_Fonts.size(); i++)
-			delete m_Fonts[i];
+	FontFamily FontManager::GetFamily(const std::string& name)
+	{
+		for (FontFamily font : m_FontFamilies)
+		{
+			if (font.Name == name)
+				return font;
+		}
+
+		return {};
+	}
+
+	void FontManager::Clean() 
+	{
+		m_Fonts = {};
 	}
 }

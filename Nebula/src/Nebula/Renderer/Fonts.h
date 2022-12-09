@@ -57,30 +57,69 @@ namespace Nebula {
 		const vec2& GetScale() const { return m_Scale; }
 
 		FontGlyph GetGlyph(const char* c);
+
+		static Ref<Font> Create(std::string name, std::string filename, float resolution = 32);
 	private:
 		void RecreateAtlas();
 	private:
+		std::string m_Name, m_Filename;
+		Ref<Texture2D> m_Texture;
+
 		ftgl::texture_font_t* m_FTFont = nullptr;
 		ftgl::texture_atlas_t* m_FTAtlas = nullptr;
 
-		std::unordered_map<const char*, bool> m_CharsinAtlas;
-
 		float m_AtlasSize, m_Resolution;
 		vec2 m_Scale = { 1.0f, 1.0f };
-		std::string m_Name, m_Filename;
-		Ref<Texture2D> m_Texture;
+
+		std::unordered_map<const char*, bool> m_CharsinAtlas;
+	};
+
+	struct FontFamily
+	{
+		std::string Name = "Unknown";
+
+		Ref<Font> Regular = nullptr;
+		Ref<Font> Bold = nullptr;
+		Ref<Font> BoldItalic = nullptr;
+		Ref<Font> Italic = nullptr;
+
+		// Assumes you have your font layout as:
+		// directory/name/type
+		FontFamily() {}
+		FontFamily(std::string directory, std::string name)
+			: Name(name)
+		{
+			std::filesystem::path path = directory + "/" + name;
+			Regular = Create(path / "Regular.ttf");
+			Bold = Create(path / "Bold.ttf");
+			BoldItalic = Create(path / "BoldItalic.ttf");
+			Italic = Create(path / "Italic.ttf");
+		}
+
+		Ref<Font> Create(std::filesystem::path path)
+		{
+			if (!std::filesystem::exists(path))
+				return nullptr;
+
+			return Font::Create(path.string(), path.string(), 86);
+		}
 	};
 
 	class FontManager {
 	public:
-		static void Add(Font* font);
+		static void Add(const Ref<Font>& font);
+		static void Add(const FontFamily& family);
 		
-		static Font* Get();
-		static Font* Get(const std::string& name);
-		static Font* Get(const std::string& name, uint32_t size);
+		static Ref<Font> Get();
+		static Ref<Font> Get(const std::string& name);
+		static Ref<Font> Get(const std::string& name, uint32_t size);
+		
+		static FontFamily GetFamily(const std::string& name);
+		static const Array<FontFamily>& GetFamilies() { return m_FontFamilies; };
 		
 		static void Clean();
 	private:
-		static Array<Font*> m_Fonts;
+		static Array<Ref<Font>> m_Fonts;
+		static Array<FontFamily> m_FontFamilies;
 	};
 }

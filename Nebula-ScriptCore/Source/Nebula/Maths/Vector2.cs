@@ -47,5 +47,15 @@
         {
             return new Vector2(vector.x / scalar, vector.y / scalar);
         }
+
+        public static bool operator <(Vector2 v1, Vector2 v2)
+        {
+            return v1.x < v2.x || v1.y < v2.y;
+        }
+
+        public static bool operator >(Vector2 v1, Vector2 v2)
+        {
+            return v1.x > v2.x || v1.y > v2.y;
+        }
     }
 }

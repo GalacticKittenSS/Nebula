@@ -58,7 +58,7 @@ Entities:
     StringRendererComponent:
       Text: This is a String
       Colour: [0.126861542, 0.843947768, 0.888030887, 1]
-      FontIndex: 2
+      FamilyName: OpenSans
       Bold: true
       Italic: false
       Resolution: 198

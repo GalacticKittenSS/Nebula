@@ -94,9 +94,8 @@ namespace Nebula {
 		RenderCommand::SetClearColour({ 0.1f, 0.1f, 0.1f, 1.0f });
 		RenderCommand::SetLineWidth(4.0f);
 
-		FontManager::Add(new Font("Default", "Resources/fonts/OpenSans/Regular.ttf", 86));
-		FontManager::Add(new Font("OpenSans", "Resources/fonts/OpenSans/Regular.ttf", 86));
-		FontManager::Add(new Font("OpenSans - BOLD", "Resources/fonts/OpenSans/Bold.ttf", 86));
+		FontManager::Add(FontFamily("Resources/fonts", "OpenSans"));
+		FontManager::Add(FontFamily("Resources/fonts", "Roboto"));
 		
 		//Initialize Frame Buffer
 		FrameBufferSpecification fbSpec;
@@ -782,12 +781,6 @@ namespace Nebula {
 			m_ActiveScene->OnSimulationStop();
 
 		m_ActiveScene = m_EditorScene;
-
-		auto& entities = m_ActiveScene->GetAllEntitiesWith<StringRendererComponent>();
-		for (auto& ent : entities) {
-			auto& src = Entity{ ent, m_ActiveScene.get() }.GetComponent<StringRendererComponent>();
-			src.InitiateFont();
-		}
 
 		m_SceneHierarchy.SetContext(m_EditorScene);
 		m_SceneState = SceneState::Edit;

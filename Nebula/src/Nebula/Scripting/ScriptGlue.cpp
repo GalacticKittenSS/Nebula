@@ -514,9 +514,6 @@ namespace Nebula {
 
 		auto& component = entity.GetComponent<StringRendererComponent>();
 		component.Resolution = resolution;
-
-		delete component.Ft;
-		component.InitiateFont();
 	}
 
 	static float StringRendererComponent_GetResolution(UUID entityID)
@@ -538,9 +535,6 @@ namespace Nebula {
 
 		auto& component = entity.GetComponent<StringRendererComponent>();
 		component.Bold = bold;
-
-		delete component.Ft;
-		component.InitiateFont();
 	}
 
 	static bool StringRendererComponent_GetBold(UUID entityID)
@@ -562,9 +556,6 @@ namespace Nebula {
 
 		auto& component = entity.GetComponent<StringRendererComponent>();
 		component.Italic = italic;
-
-		delete component.Ft;
-		component.InitiateFont();
 	}
 
 	static bool StringRendererComponent_GetItalic(UUID entityID)
@@ -577,17 +568,7 @@ namespace Nebula {
 		return entity.GetComponent<StringRendererComponent>().Italic;
 	}
 
-	static int StringRendererComponent_GetIndex(UUID entityID)
-	{
-		Scene* scene = ScriptEngine::GetSceneContext();
-		NB_ASSERT(scene);
-		Entity entity = { entityID, scene };
-		NB_ASSERT(entity);
-
-		return entity.GetComponent<StringRendererComponent>().FontTypeIndex;
-	}
-
-	static void StringRendererComponent_SetIndex(UUID entityID, int index)
+	static MonoString* StringRendererComponent_GetFontName(UUID entityID)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
@@ -595,10 +576,18 @@ namespace Nebula {
 		NB_ASSERT(entity);
 
 		auto& component = entity.GetComponent<StringRendererComponent>();
-		component.FontTypeIndex = index;
+		return mono_string_new(ScriptEngine::GetAppDomain(), component.FamilyName.c_str());
+	}
 
-		delete component.Ft;
-		component.InitiateFont();
+	static void StringRendererComponent_SetFontName(UUID entityID, MonoString* name)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+		Entity entity = { entityID, scene };
+		NB_ASSERT(entity);
+
+		auto& component = entity.GetComponent<StringRendererComponent>();
+		component.FamilyName = GetStringFromMono(name);
 	}
 
 	// RIGIDBODY 2D COMPONENT
@@ -1204,14 +1193,14 @@ namespace Nebula {
 
 		NB_ADD_INTERNAL_CALL(StringRendererComponent_GetBold);
 		NB_ADD_INTERNAL_CALL(StringRendererComponent_GetColour);
-		NB_ADD_INTERNAL_CALL(StringRendererComponent_GetIndex);
+		NB_ADD_INTERNAL_CALL(StringRendererComponent_GetFontName);
 		NB_ADD_INTERNAL_CALL(StringRendererComponent_GetItalic);
 		NB_ADD_INTERNAL_CALL(StringRendererComponent_GetResolution);
 		NB_ADD_INTERNAL_CALL(StringRendererComponent_GetText);
 		
 		NB_ADD_INTERNAL_CALL(StringRendererComponent_SetBold);
 		NB_ADD_INTERNAL_CALL(StringRendererComponent_SetColour);
-		NB_ADD_INTERNAL_CALL(StringRendererComponent_SetIndex);
+		NB_ADD_INTERNAL_CALL(StringRendererComponent_SetFontName);
 		NB_ADD_INTERNAL_CALL(StringRendererComponent_SetItalic);
 		NB_ADD_INTERNAL_CALL(StringRendererComponent_SetResolution);
 		NB_ADD_INTERNAL_CALL(StringRendererComponent_SetText);

@@ -260,20 +260,15 @@
             }
         }
 
-        public enum Fonts
-        {
-            Default = 0, OpenSans, Roboto
-        }
-
-        public Fonts Font
+        public string FontName
         {
             get
             {
-                return (Fonts)InternalCalls.StringRendererComponent_GetIndex(Entity.ID);
+                return InternalCalls.StringRendererComponent_GetFontName(Entity.ID);
             }
             set
             {
-                InternalCalls.StringRendererComponent_SetIndex(Entity.ID, (int)value);
+                InternalCalls.StringRendererComponent_SetFontName(Entity.ID, value);
             }
         }
     }

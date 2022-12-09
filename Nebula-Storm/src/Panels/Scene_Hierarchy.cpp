@@ -757,23 +757,10 @@ namespace Nebula {
 			DrawBool("Primary", component.Primary);
 
 			const char* projectionTypeStrings[] = { "Perspective", "Orthographic" };
-			const char* currentProjString = projectionTypeStrings[(int)camera.GetProjectionType()];
-
-			if (ImGui::BeginCombo("Projection", currentProjString)) {
-				for (int i = 0; i < 2; i++) {
-					bool isSelected = currentProjString == projectionTypeStrings[i];
-					if (ImGui::Selectable(projectionTypeStrings[i], isSelected)) {
-						currentProjString = projectionTypeStrings[i];
-						camera.SetProjectionType((SceneCamera::ProjectionType)i);
-					}
-
-					if (isSelected)
-						ImGui::SetItemDefaultFocus();
-				}
-
-				ImGui::EndCombo();
-			}
-
+			int index = (int)camera.GetProjectionType();
+			if (DrawCombo("Projection", projectionTypeStrings, 2, projectionTypeStrings[index], index))
+				camera.SetProjectionType((SceneCamera::ProjectionType)index);
+			
 			if (camera.GetProjectionType() == SceneCamera::ProjectionType::Orthographic) {
 				float Size = camera.GetOrthographicSize();
 				if (DrawVec1Control("Size", Size)) {
@@ -969,42 +956,69 @@ namespace Nebula {
 		}, true);
 
 		DrawComponent<StringRendererComponent>("String Renderer", entity, [](auto& component) {
-			char buffer[256];
-			memset(buffer, 0, sizeof(buffer));
-			strncpy(buffer, component.Text.c_str(), sizeof(buffer));
+			{
+				char buffer[256];
+				memset(buffer, 0, sizeof(buffer));
+				strncpy(buffer, component.Text.c_str(), sizeof(buffer));
 
-			ImGui::Text("Text");
-			ImGui::SameLine();
+				ImGui::Text("Text");
+				ImGui::SameLine();
 
-			float tl = ImGui::GetCursorPosX();
-			if (tl > s_MaxTextLength)
-				s_MaxTextLength = tl;
+				float tl = ImGui::GetCursorPosX();
+				if (tl > s_MaxTextLength)
+					s_MaxTextLength = tl;
 
-			float size = ImGui::GetWindowContentRegionMax().x - s_MaxTextLength - 20.0f;
-			if (size > s_Max)
-				size = s_Max;
+				float size = ImGui::GetWindowContentRegionMax().x - s_MaxTextLength - 20.0f;
+				if (size > s_Max)
+					size = s_Max;
 
-			bool open = false;
-			ImGui::SetCursorPosX(ImGui::GetWindowContentRegionMax().x - size);
-			ImGui::SetNextItemWidth(size);
+				ImGui::SetCursorPosX(ImGui::GetWindowContentRegionMax().x - size);
+				ImGui::SetNextItemWidth(size);
 
-			if (ImGui::InputText("##Text", buffer, sizeof(buffer)))
-				component.Text = std::string(buffer);
+				if (ImGui::InputText("##Text", buffer, sizeof(buffer)))
+					component.Text = std::string(buffer);
+			}
 			
-			 false;
+			{
+				ImGui::Text("Font");
+				ImGui::SameLine();
 
-			const char* fontStrings[] = StringRenderFontTypeStrings;
-			bool font = DrawCombo("Font", fontStrings, 3, fontStrings[component.FontTypeIndex], component.FontTypeIndex);
+				float tl = ImGui::GetCursorPosX();
+				if (tl > s_MaxTextLength)
+					s_MaxTextLength = tl;
+
+				float size = ImGui::GetWindowContentRegionMax().x - s_MaxTextLength - 20.0f;
+				if (size > s_Max)
+					size = s_Max;
+
+				ImGui::SetCursorPosX(ImGui::GetWindowContentRegionMax().x - size);
+				ImGui::SetNextItemWidth(size);
+				UI::ScopedStyleColor(ImGuiCol_Button, ImVec4{ 0.1f, 0.105f, 0.11f, 1.0f });
+
+				if (ImGui::BeginCombo("##Font", component.FamilyName.c_str()))
+				{
+					const Array<FontFamily> families = FontManager::GetFamilies();
+
+					for (uint32_t i = 0; i < families.size(); i++)
+					{
+						bool isSelected = component.FamilyName == families[i].Name;
+
+						if (ImGui::Selectable(families[i].Name.c_str(), isSelected))
+							component.FamilyName = families[i].Name;
+
+						if (isSelected)
+							ImGui::SetItemDefaultFocus();
+					}
+
+					ImGui::EndCombo();
+				}
+			}
+			
 			bool italic = DrawBool("Italic", component.Italic);
 			bool bold = DrawBool("Bold", component.Bold);
 			bool resolution = DrawVec1Control("Resolution", component.Resolution, 8.0f, 512.0f, 96.0f, 8.0f);
 			
 			ImGui::ColorEdit4("Colour", value_ptr(component.Colour));
-
-			if (font || italic || bold || resolution) {
-				delete component.Ft;
-				component.InitiateFont();
-			}
 		}, true);
 
 		DrawComponent<Rigidbody2DComponent>("Rigidbody 2D", entity, [](auto& component) {

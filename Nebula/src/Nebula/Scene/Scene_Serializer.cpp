@@ -323,7 +323,7 @@ namespace Nebula {
 			auto& component = entity.GetComponent<StringRendererComponent>();
 			out << YAML::Key << "Text" << YAML::Value << component.Text;
 			out << YAML::Key << "Colour" << YAML::Value << component.Colour;
-			out << YAML::Key << "FontIndex" << YAML::Value << component.FontTypeIndex;
+			out << YAML::Key << "FamilyName" << YAML::Value << component.FamilyName;
 			out << YAML::Key << "Bold" << YAML::Value << component.Bold;
 			out << YAML::Key << "Italic" << YAML::Value << component.Italic;
 			out << YAML::Key << "Resolution" << YAML::Value << component.Resolution;
@@ -566,12 +566,10 @@ namespace Nebula {
 				auto& src = deserializedEntity.AddComponent<StringRendererComponent>();
 				src.Text = stringRendererComponent["Text"].as<std::string>();
 				src.Colour = stringRendererComponent["Colour"].as<vec4>();
-				src.FontTypeIndex = stringRendererComponent["FontIndex"].as<int>();
+				src.FamilyName = stringRendererComponent["FamilyName"].as<std::string>();
 				src.Bold = stringRendererComponent["Bold"].as<bool>();
 				src.Italic = stringRendererComponent["Italic"].as<bool>();
 				src.Resolution = stringRendererComponent["Resolution"].as<float>();
-
-				src.InitiateFont();
 			}
 
 			if (auto rigidbody2DComponent = entity["Rigidbody2DComponent"])

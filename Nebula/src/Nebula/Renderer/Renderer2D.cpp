@@ -286,7 +286,7 @@ namespace Nebula {
 		s_Data.TextureShader->SetBackfaceCulling(cull);
 	}
 
-	void Renderer2D::DrawString(const std::string& text, Font* font, 
+	void Renderer2D::DrawString(const std::string& text, Ref<Font> font, 
 		const mat4& transform, const vec4& colour, uint32_t entityID) 
 	{
 		NB_PROFILE_FUNCTION();
@@ -456,9 +456,8 @@ namespace Nebula {
 		}
 		case NB_STRING: {
 			auto& stringRender = entity.GetComponent<StringRendererComponent>();
-			const char* fontStrings[] = StringRenderFontTypeStrings;
-
-			DrawString(stringRender.Text, stringRender.Ft, transform, stringRender.Colour, entity);
+			
+			DrawString(stringRender.Text, stringRender.GetFont(), transform, stringRender.Colour, entity);
 			break;
 		}
 		default:
