@@ -301,6 +301,15 @@
             }
         }
 
+        public Vector2 LinearVelocity
+        {
+            get
+            {
+                InternalCalls.Rigidbody2DComponent_GetLinearVelocity(Entity.ID, out Vector2 velocity);
+                return velocity;
+            }
+        }
+
         public enum Filters
         {
             A = 0x0001, B = 0x0002, C = 0x0004, D = 0x0008,

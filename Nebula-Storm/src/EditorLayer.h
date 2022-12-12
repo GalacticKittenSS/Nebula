@@ -47,7 +47,7 @@ namespace Nebula {
 		void OnSceneSimulate();
 		void OnScenePause();
 		
-		void DuplicateEntity();
+		Entity DuplicateEntity();
 
 		//Panels
 		void UI_MenuBar();

@@ -1,4 +1,6 @@
-﻿namespace Nebula
+﻿using System;
+
+namespace Nebula
 {
     public struct Vector2
     {
@@ -56,6 +58,16 @@
         public static bool operator >(Vector2 v1, Vector2 v2)
         {
             return v1.x > v2.x || v1.y > v2.y;
+        }
+
+        public float LengthSquared()
+        {
+            return x * x + y * y;
+        }
+        
+        public float Length()
+        {
+            return (float)Math.Sqrt(LengthSquared());
         }
     }
 }

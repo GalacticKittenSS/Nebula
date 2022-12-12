@@ -619,16 +619,23 @@ namespace Nebula {
 			break;
 			
 		case KeyCode::D:
-			if (control && (m_GameViewFocus || m_SceneHierarchy.IsFocused()))
-				DuplicateEntity();
+			if (Application::Get().GetImGuiLayer()->GetActiveWidgetID() == 0)
+			{
+				if (control)
+					m_SceneHierarchy.SetSelectedEntity(DuplicateEntity());
+			}
 			break;
 
 		case KeyCode::Backspace:
-			if (m_SceneHierarchy.GetSelectedEntity() && (m_GameViewFocus || m_SceneHierarchy.IsFocused())) 
+			if (Application::Get().GetImGuiLayer()->GetActiveWidgetID() == 0)
 			{
-				m_EditorScene->DestroyEntity(m_SceneHierarchy.GetSelectedEntity());
-				m_SceneHierarchy.SetSelectedEntity({});
+				if (m_SceneHierarchy.GetSelectedEntity())
+				{
+					m_EditorScene->DestroyEntity(m_SceneHierarchy.GetSelectedEntity());
+					m_SceneHierarchy.SetSelectedEntity({});
+				}
 			}
+			break;
 
 		//Gizmos
 		case KeyCode::Q:
@@ -802,11 +809,13 @@ namespace Nebula {
 		m_SceneState = SceneState::Simulate;
 	}
 
-	void EditorLayer::DuplicateEntity() {
+	Entity EditorLayer::DuplicateEntity() {
 		if (m_SceneState != SceneState::Edit)
-			return;
+			return {};
 		
 		if (Entity entity = m_SceneHierarchy.GetSelectedEntity())
-			m_EditorScene->DuplicateEntity(entity);
+			return m_EditorScene->DuplicateEntity(entity);
+
+		return {};
 	}
 }

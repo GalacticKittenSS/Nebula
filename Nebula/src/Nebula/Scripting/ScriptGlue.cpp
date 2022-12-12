@@ -5,11 +5,12 @@
 
 #include "Nebula/Scene/Scene.h"
 #include "Nebula/Core/Input.h"
-
 #include "Nebula/Utils/Time.h"
 
 #include <mono/metadata/object.h>
 #include <mono/metadata/reflection.h>
+
+#include <box2d/b2_body.h>
 
 namespace Nebula {
 
@@ -657,6 +658,19 @@ namespace Nebula {
 		rigidbody.ApplyLinearImpulseToCenter(*impulse);
 	}
 
+	static void Rigidbody2DComponent_GetLinearVelocity(UUID entityID, vec2* out)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+		Entity entity = { entityID, scene };
+		NB_ASSERT(entity);
+
+		auto& rigidbody = entity.GetComponent<Rigidbody2DComponent>();
+		b2Body* body = (b2Body*)rigidbody.RuntimeBody;
+		const b2Vec2& linearVecolity = body->GetLinearVelocity();
+		*out = vec2(linearVecolity.x, linearVecolity.y);
+	}
+
 	static void Rigidbody2DComponent_ApplyForce(UUID entityID, vec2* force, vec2* point)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
@@ -1214,6 +1228,7 @@ namespace Nebula {
 		NB_ADD_INTERNAL_CALL(Rigidbody2DComponent_ApplyForceToCenter);
 		NB_ADD_INTERNAL_CALL(Rigidbody2DComponent_ApplyLinearImpulse);
 		NB_ADD_INTERNAL_CALL(Rigidbody2DComponent_ApplyLinearImpulseToCenter);
+		NB_ADD_INTERNAL_CALL(Rigidbody2DComponent_GetLinearVelocity);
 
 		NB_ADD_INTERNAL_CALL(BoxCollider2DComponent_GetCategory);
 		NB_ADD_INTERNAL_CALL(BoxCollider2DComponent_GetDensity);

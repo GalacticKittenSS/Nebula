@@ -16,6 +16,8 @@ namespace Nebula {
 		void End();
 
 		void SetBlockEvents(bool block) { m_BlockEvents = block; }
+
+		uint32_t GetActiveWidgetID() const;
 	private:
 		void SetDarkThemeColour();
 	private:

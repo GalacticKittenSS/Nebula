@@ -164,7 +164,7 @@ namespace Nebula {
 	}
 
 	void Scene::DestroyEntity(Entity entity) {
-		if (m_PhysicsWorld->IsLocked())
+		if (m_PhysicsWorld && m_PhysicsWorld->IsLocked())
 		{
 			m_EntitiesToDestroy.push_back(entity.GetUUID());
 			return;
@@ -176,7 +176,7 @@ namespace Nebula {
 			entity.GetComponent<NativeScriptComponent>().DestroyScript(&nsc);
 		}
 
-		if (m_PhysicsWorld && entity.HasComponent<Rigidbody2DComponent>())
+		if (entity.HasComponent<Rigidbody2DComponent>())
 		{
 			if (b2Body* body = (b2Body*)entity.GetComponent<Rigidbody2DComponent>().RuntimeBody)
 			{
