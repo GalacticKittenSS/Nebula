@@ -188,6 +188,8 @@ namespace Nebula {
 		s_Data = new ScriptEngineData();
 
 		InitMono();
+		ScriptGlue::RegisterFunctions();
+
 		bool status = LoadAssembly("Resources/Scripts/Nebula-ScriptCore.dll");
 		if (!status)
 		{
@@ -195,6 +197,9 @@ namespace Nebula {
 			return;
 		}
 		
+		s_Data->EntityClass = ScriptClass("Nebula", "Entity", true);
+		ScriptGlue::RegisterComponents();
+
 		// Only load if active project
 		status = Project::GetActive() && LoadAppAssembly(Project::GetScriptModulePath());
 		if (!status)
@@ -203,11 +208,7 @@ namespace Nebula {
 			return;
 		}
 
-		s_Data->EntityClass = ScriptClass("Nebula", "Entity", true);
 		LoadAssemblyClasses();
-
-		ScriptGlue::RegisterFunctions();
-		ScriptGlue::RegisterComponents();
 	}
 
 	void ScriptEngine::Shutdown()
@@ -221,26 +222,24 @@ namespace Nebula {
 		s_Data->AppDomain = mono_domain_create_appdomain("NebulaScriptRuntime", nullptr);
 		mono_domain_set(s_Data->AppDomain, true);
 
-		s_Data->CoreAssemblyFilePath = filepath;
-		MonoAssembly* assembly = Utils::LoadMonoAssembly(filepath, s_Data->EnableDebugging);
-		if (assembly == nullptr)
+		s_Data->CoreAssembly = Utils::LoadMonoAssembly(filepath, s_Data->EnableDebugging);
+		if (s_Data->CoreAssembly == nullptr)
 			return false;
 
-		s_Data->CoreAssembly = assembly;
+		s_Data->CoreAssemblyFilePath = filepath;
 		s_Data->CoreAssemblyImage = mono_assembly_get_image(s_Data->CoreAssembly);
 		return true;
 	}
 
 	bool ScriptEngine::LoadAppAssembly(const std::filesystem::path& filepath)
 	{
-		s_Data->AppAssemblyFilePath = filepath;
-		MonoAssembly* assembly = Utils::LoadMonoAssembly(filepath, s_Data->EnableDebugging);
-		if (assembly == nullptr)
+		s_Data->AppAssembly = Utils::LoadMonoAssembly(filepath, s_Data->EnableDebugging);
+		if (s_Data->AppAssembly == nullptr)
 			return false;
 
-		s_Data->AppAssembly = assembly;
+		s_Data->AppAssemblyFilePath = filepath;
 		s_Data->AppAssemblyImage = mono_assembly_get_image(s_Data->AppAssembly);
-
+		
 		s_Data->AppAssemblyWatcher = CreateScope<filewatch::FileWatch<std::string>>(filepath.string(), OnAppAssemblyFileEvent);
 		s_Data->AssemblyReloadPending = false;
 		return true;
@@ -257,12 +256,19 @@ namespace Nebula {
 		mono_domain_set(mono_get_root_domain(), false);
 		mono_domain_unload(s_Data->AppDomain);
 
+		s_Data->EntityClasses.clear();
+		s_Data->EntityEditorInstances.clear();
+		s_Data->EntityRuntimeInstances.clear();
+		
 		bool status = LoadAssembly(s_Data->CoreAssemblyFilePath);
 		if (!status)
 		{
 			NB_WARN("[ScriptEngine] Could not reload Core Assembly");
 			return;
 		}
+
+		s_Data->EntityClass = ScriptClass("Nebula", "Entity", true);
+		ScriptGlue::RegisterComponents();
 
 		status = Project::GetActive() && LoadAppAssembly(Project::GetScriptModulePath());
 		if (!status)
@@ -271,14 +277,13 @@ namespace Nebula {
 			return;
 		}
 		
-		s_Data->EntityClass = ScriptClass("Nebula", "Entity", true);
 		LoadAssemblyClasses();
-
-		ScriptGlue::RegisterFunctions();
-		ScriptGlue::RegisterComponents();
 
 		SetScriptFields(s_Data->EntityEditorInstances, editor_field_values, editor_class_sig);
 		SetScriptFields(s_Data->EntityRuntimeInstances, runtime_field_values, runtime_class_sig);
+
+		for (const auto& [entityID, instance] : s_Data->EntityRuntimeInstances)
+			instance->InvokeOnCreate();
 	}
 
 	void ScriptEngine::OnRuntimeStart(Scene* scene)
@@ -383,6 +388,14 @@ namespace Nebula {
 		}
 		
 		s_Data->EntityRuntimeInstances[entity.GetUUID()]->InvokeOnCollisionExit(other);
+	}
+
+	void ScriptEngine::OnDeleteEntity(UUID entity)
+	{
+		if (!s_Data->SceneContext)
+			s_Data->EntityEditorInstances.erase(entity);
+		
+		s_Data->EntityRuntimeInstances.erase(entity);
 	}
 
 	bool ScriptEngine::EntityClassExists(const std::string& signature)
@@ -590,9 +603,6 @@ namespace Nebula {
 
 				instance->SetFieldValueInternal(field.Name, field_values[entityID][field.Name]);
 			}
-
-			if (s_Data->SceneContext && isRuntimeInstance)
-				instance->InvokeOnCreate();
 		}
 	}
 

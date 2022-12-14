@@ -164,9 +164,11 @@ namespace Nebula {
 	}
 
 	void Scene::DestroyEntity(Entity entity) {
+		UUID entityID = entity.GetUUID();
+
 		if (m_PhysicsWorld && m_PhysicsWorld->IsLocked())
 		{
-			m_EntitiesToDestroy.push_back(entity.GetUUID());
+			m_EntitiesToDestroy.push_back(entityID);
 			return;
 		}
 		
@@ -194,11 +196,13 @@ namespace Nebula {
 		if (Parent.Parent) 
 		{
 			Entity parent = { Parent.Parent, this };
-			parent.GetParentChild().RemoveChild(entity.GetUUID());
+			parent.GetParentChild().RemoveChild(entityID);
 		}
 
-		m_SceneOrder.remove(entity.GetUUID());
-		m_EntityMap.erase(entity.GetUUID());
+		ScriptEngine::OnDeleteEntity(entityID);
+
+		m_SceneOrder.remove(entityID);
+		m_EntityMap.erase(entityID);
 		m_Registry.destroy(entity);
 	}
 
