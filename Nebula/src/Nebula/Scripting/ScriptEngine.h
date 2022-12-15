@@ -126,7 +126,7 @@ namespace Nebula {
 		static void OnUpdateEntity(Entity entity, float ts);
 		static void OnCollisionEnter(Entity entity, Entity other);
 		static void OnCollisionExit(Entity entity, Entity other);
-		static void OnDeleteEntity(UUID entity);
+		static void DeleteScriptInstance(UUID entityID);
 
 		static bool EntityClassExists(const std::string& signature);
 		static Scene* GetSceneContext();
@@ -149,9 +149,7 @@ namespace Nebula {
 		static void ShutdownMono();
 
 		static void LoadAssemblyClasses();
-
 		static MonoObject* InstanciateClass(MonoClass* monoClass);
-		static void DeleteScriptInstance(Entity entity);
 
 		static bool CreateRuntimeScript(Entity entity);
 

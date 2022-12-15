@@ -390,14 +390,6 @@ namespace Nebula {
 		s_Data->EntityRuntimeInstances[entity.GetUUID()]->InvokeOnCollisionExit(other);
 	}
 
-	void ScriptEngine::OnDeleteEntity(UUID entity)
-	{
-		if (!s_Data->SceneContext)
-			s_Data->EntityEditorInstances.erase(entity);
-		
-		s_Data->EntityRuntimeInstances.erase(entity);
-	}
-
 	bool ScriptEngine::EntityClassExists(const std::string& signature)
 	{
 		return s_Data->EntityClasses.find(signature) != s_Data->EntityClasses.end();
@@ -409,25 +401,25 @@ namespace Nebula {
 		s_Data->EntityRuntimeInstances.clear();
 	}
 
-	void ScriptEngine::DeleteScriptInstance(Entity entity)
+	void ScriptEngine::DeleteScriptInstance(UUID entityID)
 	{
 		if (s_Data->SceneContext)
-			s_Data->EntityRuntimeInstances.erase(entity.GetUUID());
+			s_Data->EntityRuntimeInstances.erase(entityID);
 		else
-			s_Data->EntityEditorInstances.erase(entity.GetUUID());
+			s_Data->EntityEditorInstances.erase(entityID);
 	}
 
 	Ref<ScriptInstance> ScriptEngine::CreateScriptInstance(Entity entity)
 	{
+		UUID entityID = entity.GetUUID();
+
 		const auto& sc = entity.GetComponent<ScriptComponent>();
 		if (!EntityClassExists(sc.ClassName))
 		{
-			DeleteScriptInstance(entity);
+			DeleteScriptInstance(entityID);
 			return nullptr;
 		}
 			
-		UUID entityID = entity.GetUUID();
-		
 		if (s_Data->SceneContext)
 		{
 			CreateRuntimeScript(entity);

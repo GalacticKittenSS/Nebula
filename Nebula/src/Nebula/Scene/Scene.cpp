@@ -199,7 +199,7 @@ namespace Nebula {
 			parent.GetParentChild().RemoveChild(entityID);
 		}
 
-		ScriptEngine::OnDeleteEntity(entityID);
+		ScriptEngine::DeleteScriptInstance(entityID);
 
 		m_SceneOrder.remove(entityID);
 		m_EntityMap.erase(entityID);
