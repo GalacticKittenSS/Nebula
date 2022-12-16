@@ -247,23 +247,25 @@ namespace Nebula {
 
 	void ScriptEngine::ReloadAssembly()
 	{
-		fieldMap editor_field_values, runtime_field_values;
+		fieldMap editor_field_values , runtime_field_values;
 		signatureMap editor_class_sig, runtime_class_sig;
 		
-		GetScriptFields(s_Data->EntityEditorInstances, editor_field_values, editor_class_sig);
-		GetScriptFields(s_Data->EntityRuntimeInstances, runtime_field_values, runtime_class_sig);
+		GetScriptData(s_Data->EntityEditorInstances, editor_field_values, editor_class_sig);
+		GetScriptData(s_Data->EntityRuntimeInstances, runtime_field_values, runtime_class_sig);
 		
 		mono_domain_set(mono_get_root_domain(), false);
 		mono_domain_unload(s_Data->AppDomain);
-
+		
 		s_Data->EntityClasses.clear();
-		s_Data->EntityEditorInstances.clear();
-		s_Data->EntityRuntimeInstances.clear();
 		
 		bool status = LoadAssembly(s_Data->CoreAssemblyFilePath);
 		if (!status)
 		{
 			NB_WARN("[ScriptEngine] Could not reload Core Assembly");
+
+			s_Data->EntityEditorInstances.clear();
+			s_Data->EntityRuntimeInstances.clear();
+
 			return;
 		}
 
@@ -274,16 +276,21 @@ namespace Nebula {
 		if (!status)
 		{
 			NB_WARN("[ScriptEngine] Could not reload App Assembly");
+
+			s_Data->EntityEditorInstances.clear();
+			s_Data->EntityRuntimeInstances.clear();
+
 			return;
 		}
 		
 		LoadAssemblyClasses();
 
-		SetScriptFields(s_Data->EntityEditorInstances, editor_field_values, editor_class_sig);
-		SetScriptFields(s_Data->EntityRuntimeInstances, runtime_field_values, runtime_class_sig);
-
-		for (const auto& [entityID, instance] : s_Data->EntityRuntimeInstances)
-			instance->InvokeOnCreate();
+		ReloadScripts(s_Data->EntityEditorInstances, editor_field_values, editor_class_sig);
+		if (s_Data->SceneContext)
+		{
+			s_Data->SceneContext->InitScripts();
+			ReloadScripts(s_Data->EntityRuntimeInstances, runtime_field_values, runtime_class_sig);
+		}
 	}
 
 	void ScriptEngine::OnRuntimeStart(Scene* scene)
@@ -432,10 +439,10 @@ namespace Nebula {
 		return instance;
 	}
 
-	void ScriptEngine::CopyScriptFields(UUID from, UUID to)
+	void ScriptEngine::CopyScriptFields(Entity from, Entity to)
 	{
-		Ref<ScriptInstance> from_instance = GetEntityScriptInstance(from);
-		Ref<ScriptInstance> to_instance = GetEntityScriptInstance(to);
+		Ref<ScriptInstance> from_instance = GetScriptInstance(from);
+		Ref<ScriptInstance> to_instance = GetScriptInstance(to);
 
 		if (from_instance->GetScriptClass() != to_instance->GetScriptClass())
 			return;
@@ -468,14 +475,14 @@ namespace Nebula {
 		return it->second;
 	}
 	
-	Ref<ScriptInstance> ScriptEngine::GetEntityScriptInstance(UUID id)
+	Ref<ScriptInstance> ScriptEngine::GetScriptInstance(Entity entity)
 	{
 		const auto& instances = s_Data->SceneContext ? s_Data->EntityRuntimeInstances : s_Data->EntityEditorInstances;
 
-		auto it = instances.find(id);
+		auto it = instances.find(entity.GetUUID());
 		if (it == instances.end())
-			return nullptr;
-
+			return CreateScriptInstance(entity);
+		
 		return it->second;
 	}
 
@@ -569,42 +576,43 @@ namespace Nebula {
 		}
 	}
 
-	void ScriptEngine::SetScriptFields(std::unordered_map<UUID, Ref<ScriptInstance>>& instances,
+	void ScriptEngine::ReloadScripts(std::unordered_map<UUID, Ref<ScriptInstance>>& instances,
 		fieldMap& field_values, signatureMap& classSig)
 	{
-		bool isRuntimeInstance = instances == s_Data->EntityRuntimeInstances;
-		if (!s_Data->SceneContext && isRuntimeInstance)
-			return;
-
-		for (const auto& [entityID, instance] : instances)
+		Array<UUID> instancesToRemove;
+		for (auto& [entityID, instance] : instances)
 		{
-			std::string sig = classSig.at(entityID);
-			if (s_Data->EntityClasses.find(sig) == s_Data->EntityClasses.end())
+			if (instances == s_Data->EntityEditorInstances)
+			{
+				std::string sig = classSig.at(entityID);
+				if (s_Data->EntityClasses.find(sig) == s_Data->EntityClasses.end())
+				{
+					instancesToRemove.push_back(entityID);
+					continue;
+				}
+
+				instance = CreateRef<ScriptInstance>(s_Data->EntityClasses.at(sig), instance->m_Entity);
+			}
+
+			auto it = field_values.find(entityID);
+			if (it == field_values.end())
 				continue;
 
-			Ref<ScriptInstance> scriptInstance = CreateRef<ScriptInstance>(
-				s_Data->EntityClasses.at(sig), instance->m_Entity);
-			instances[entityID] = scriptInstance;
-
-			const auto& editor_fields = instance->GetScriptClass()->GetFields();
-
-			for (const auto& [name, field] : editor_fields)
+			auto entity_fields = it->second;
+			for (const auto& [name, data] : entity_fields)
 			{
-				if (field.Type == ScriptFieldType::Entity)
-					continue;
-
-				instance->SetFieldValueInternal(field.Name, field_values[entityID][field.Name]);
+				instance->SetFieldValueInternal(name, data);
+				delete data;
 			}
 		}
+
+		for (const UUID& id : instancesToRemove)
+			instances.erase(id);
 	}
 
-	void ScriptEngine::GetScriptFields(std::unordered_map<UUID, Ref<ScriptInstance>>& instances,
+	void ScriptEngine::GetScriptData(std::unordered_map<UUID, Ref<ScriptInstance>>& instances,
 		fieldMap& field_values, signatureMap& classSig)
 	{
-		bool isRuntimeInstance = instances == s_Data->EntityRuntimeInstances;
-		if (!s_Data->SceneContext && isRuntimeInstance)
-			return;
-
 		for (const auto& [entityID, instance] : instances)
 		{
 			const auto& monoClass = instance->GetScriptClass()->GetMonoClass();
@@ -619,7 +627,8 @@ namespace Nebula {
 
 			for (const auto& [name, field] : fields)
 			{
-				if (field.Type == ScriptFieldType::Entity)
+				if (field.Type == ScriptFieldType::Entity || 
+					field.Type == ScriptFieldType::None)
 					continue;
 
 				field_values[entityID][field.Name] = new char[16];

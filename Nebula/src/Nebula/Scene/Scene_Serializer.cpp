@@ -245,7 +245,7 @@ namespace Nebula {
 					out << YAML::Key << "ScriptFields" << YAML::Value;
 					out << YAML::BeginSeq;
 
-					Ref<ScriptInstance> scriptInstance = ScriptEngine::GetEntityScriptInstance(entity.GetUUID());
+					Ref<ScriptInstance> scriptInstance = ScriptEngine::GetScriptInstance(entity);
 					for (const auto& [name, field] : fields)
 					{
 						if (field.Type == ScriptFieldType::None)

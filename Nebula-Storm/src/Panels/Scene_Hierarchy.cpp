@@ -813,8 +813,7 @@ namespace Nebula {
 			}
 
 			// FIELDS
-			Ref<ScriptInstance> scriptInstance = ScriptEngine::GetEntityScriptInstance(entity.GetUUID());
-			if (scriptInstance)
+			if (Ref<ScriptInstance> scriptInstance = ScriptEngine::GetScriptInstance(entity))
 			{
 				const auto& fields = scriptInstance->GetScriptClass()->GetFields();
 				for (const auto& [name, field] : fields)
