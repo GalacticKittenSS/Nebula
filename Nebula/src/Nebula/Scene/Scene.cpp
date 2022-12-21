@@ -166,12 +166,6 @@ namespace Nebula {
 	void Scene::DestroyEntity(Entity entity) {
 		UUID entityID = entity.GetUUID();
 
-		if (m_PhysicsWorld && m_PhysicsWorld->IsLocked())
-		{
-			m_EntitiesToDestroy.push_back(entityID);
-			return;
-		}
-		
 		if (entity.HasComponent<NativeScriptComponent>())
 		{
 			auto nsc = entity.GetComponent<NativeScriptComponent>();
@@ -255,7 +249,7 @@ namespace Nebula {
 		bodyDef.fixedRotation = rb2d.FixedRotation;
 
 		b2BodyUserData data;
-		data.pointer = reinterpret_cast<uintptr_t>(new Entity(entity, this));
+		data.pointer = reinterpret_cast<uintptr_t>(new UUID(entity.GetUUID()));
 		bodyDef.userData = data;
 
 		b2Body* body = m_PhysicsWorld->CreateBody(&bodyDef);
@@ -302,9 +296,11 @@ namespace Nebula {
 	}
 
 	void Scene::InitPhysics() {
+		m_ContactListener = new ContactListener(this);
+
 		m_PhysicsWorld = new b2World({ 0.0f, -9.81f });
 		m_PhysicsWorld->SetAllowSleeping(false);
-		m_PhysicsWorld->SetContactListener(new ContactListener());
+		m_PhysicsWorld->SetContactListener(m_ContactListener);
 
 		auto view = m_Registry.view<Rigidbody2DComponent>();
 		for (auto e : view)
@@ -313,26 +309,7 @@ namespace Nebula {
 
 	void Scene::UpdatePhysics() {
 		m_PhysicsWorld->Step(Time::DeltaTime(), 6, 2);
-
-		// While m_PhysicsWorld->Step physics bodies cannot be updated or deleted. 
-		
-		// Update the bodies now.
-		for (uint32_t i = 0; i < m_BodiesToUpdate.size(); i++)
-		{
-			Entity entity = { m_BodiesToUpdate[0], this};
-			entity.UpdatePhysicsBody();
-
-			m_BodiesToUpdate.remove_index(0);
-		}
-
-		// Delete the bodies now.
-		for (uint32_t i = 0; i < m_EntitiesToDestroy.size(); i++)
-		{
-			Entity entity = { m_EntitiesToDestroy[0], this };
-			DestroyEntity(entity);
-
-			m_EntitiesToDestroy.remove_index(0);
-		}
+		m_ContactListener->Clear();
 
 		auto view = m_Registry.view<Rigidbody2DComponent>();
 		for (auto e : view) {
@@ -371,6 +348,7 @@ namespace Nebula {
 		}
 
 		delete m_PhysicsWorld; m_PhysicsWorld = nullptr;
+		delete m_ContactListener; m_ContactListener = nullptr;
 	}
 
 	void Scene::InitScripts() {

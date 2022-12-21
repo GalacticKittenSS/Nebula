@@ -1,9 +1,10 @@
 #include "nbpch.h"
 #include "Entity.h"
 
-#include "box2d/b2_world.h"
 #include "box2d/b2_body.h"
 #include "box2d/b2_fixture.h"
+#include "box2d/b2_polygon_shape.h"
+#include "box2d/b2_circle_shape.h"
 
 namespace Nebula {
 	void Entity::CalculateTransform() {
@@ -37,17 +38,33 @@ namespace Nebula {
 		if (!HasComponent<Rigidbody2DComponent>())
 			return;
 
-		if (m_Scene->m_PhysicsWorld && m_Scene->m_PhysicsWorld->IsLocked())
-		{
-			m_Scene->m_BodiesToUpdate.push_back(GetUUID());
-		}
-		else if (b2Body* body = (b2Body*)GetComponent<Rigidbody2DComponent>().RuntimeBody)
-		{
-			WorldTransformComponent& transform = GetComponent<WorldTransformComponent>();
+		WorldTransformComponent& transform = GetComponent<WorldTransformComponent>();
 
-			vec3 translation, rotation, scale;
-			DecomposeTransform(transform.Transform, translation, rotation, scale);
+		vec3 translation, rotation, scale;
+		DecomposeTransform(transform.Transform, translation, rotation, scale);
+		
+		if (b2Body* body = (b2Body*)GetComponent<Rigidbody2DComponent>().RuntimeBody)
 			body->SetTransform({ translation.x, translation.y }, rotation.z);
+		
+		if (HasComponent<BoxCollider2DComponent>())
+		{
+			BoxCollider2DComponent bc2d = GetComponent<BoxCollider2DComponent>();
+			if (b2Fixture* fixture = (b2Fixture*)bc2d.RuntimeFixture)
+			{
+				b2PolygonShape* shape = (b2PolygonShape*)fixture->GetShape();
+				shape->SetAsBox(scale.x * bc2d.Size.x, scale.y * bc2d.Size.y, 
+					b2Vec2(bc2d.Offset.x, bc2d.Offset.y), 0.0f);
+			}
+		}
+
+		if (HasComponent<CircleColliderComponent>())
+		{
+			CircleColliderComponent cc = GetComponent<CircleColliderComponent>();
+			if (b2Fixture* fixture = (b2Fixture*)cc.RuntimeFixture)
+			{
+				b2CircleShape* circle = (b2CircleShape*)fixture->GetShape();
+				circle->m_radius = cc.Radius * scale.x;
+			}
 		}
 	}
 

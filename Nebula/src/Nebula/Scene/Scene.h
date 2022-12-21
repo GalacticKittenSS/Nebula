@@ -10,6 +10,7 @@ class b2Body;
 
 namespace Nebula {
 	class Entity;
+	class ContactListener;
 	
 	class Scene {
 	public:
@@ -84,8 +85,7 @@ namespace Nebula {
 		uint32_t m_ViewportWidth = 0, m_ViewportHeight = 0;
 
 		b2World* m_PhysicsWorld = nullptr;
-		Array<UUID> m_BodiesToUpdate;
-		Array<UUID> m_EntitiesToDestroy;
+		ContactListener* m_ContactListener = nullptr;
 
 		Camera* mainCam = nullptr;
 		mat4 mainCamTransform;
