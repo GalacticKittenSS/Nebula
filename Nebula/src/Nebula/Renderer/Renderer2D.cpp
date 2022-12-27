@@ -244,6 +244,8 @@ namespace Nebula {
 		
 		//Camera Uniform
 		s_Data.CameraUniformBuffer = UniformBuffer::Create(sizeof(Renderer2DData::CameraData), 0);
+
+		FontManager::Init();
 	}
 
 	void Renderer2D::Shutdown() {
@@ -260,6 +262,9 @@ namespace Nebula {
 
 		delete[] s_Data.QuadTexCoords;
 		delete[] s_Data.TriTexCoords;
+
+		FontManager::Clean();
+		FontManager::Shutdown();
 	}
 	
 	void Renderer2D::BeginScene(const Camera& camera, const mat4& transform) {
@@ -297,26 +302,27 @@ namespace Nebula {
 			FlushAndReset();
 
 		float x = 0.0f;
-		const vec2& fontScale = font->GetScale();
+		float scale = 1.0f / font->GetResolution();
 		float textureIndex = GetTextureIndex(font->GetTexture());
 
-		for (uint32_t i = 0; i < text.length(); i++) {
+		for (uint32_t i = 0; i < text.length(); i++)
+		{
 			FontGlyph glyph = font->GetGlyph(&text[i]);
-			if (!glyph) continue;
-
+			
 			if (i > 0)
-				x += glyph.GetKerning(&text[i - 1]) / fontScale.x;
+				x += font->GetGlyphKerning(glyph, &text[i - 1]) * scale;
 
-			float x0 = x + glyph.offset_x() / fontScale.x;
-			float y0 =	   glyph.offset_y() / fontScale.y;
-			float x1 = x0 + glyph.width()  / fontScale.x;
-			float y1 = y0 - glyph.height() / fontScale.y;
+			float x0 = x  +	glyph.offset_x * scale;
+			float y0 =		glyph.offset_y * scale;
+			float x1 = x0 + glyph.width    * scale;
+			float y1 = y0 - glyph.height   * scale;
+
 			float z = i / 1000.0f;
-
-			float u0 = glyph.s0();
-			float v0 = glyph.t0();
-			float u1 = glyph.s1();
-			float v1 = glyph.t1();
+			
+			float u0 = glyph.s0;
+			float v0 = glyph.t0;
+			float u1 = glyph.s1;
+			float v1 = glyph.t1;
 
 			s_Data.QuadVBPtr->Position = transform * vec4(x0, y0, z, 1.0f);
 			s_Data.QuadVBPtr->TexCoord = vec2(u0, v0);
@@ -351,7 +357,7 @@ namespace Nebula {
 			s_Data.QuadVBPtr++;
 
 			s_Data.QuadIndexCount += 6;
-			x += glyph.advance_x() / fontScale.x;
+			x += glyph.advance_x * scale;
 		}
 	}
 

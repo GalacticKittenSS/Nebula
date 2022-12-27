@@ -21,11 +21,11 @@ outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 group "Dependencies"
 	include "premake"
 	include "Nebula/Modules/Box2D"
+	include "Nebula/Modules/Freetype"
 	include "Nebula/Modules/GLFW"
 	include "Nebula/Modules/GLad"
 	include "Nebula/Modules/ImGui"
 	include "Nebula/Modules/yaml-cpp"
-	include "Nebula/Modules/FreetypeGL"
 group ""
 
 --The Nebula Engine

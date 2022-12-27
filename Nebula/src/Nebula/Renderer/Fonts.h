@@ -3,75 +3,65 @@
 #include "Texture.h"
 #include "Nebula/Utils/Arrays.h"
 
-namespace ftgl {
-	struct texture_atlas_t;
-	struct texture_font_t;
-	struct texture_glyph_t;
+#include <map>
+
+extern "C" {
+	typedef struct FT_LibraryRec_* FT_Library;
+	typedef struct FT_FaceRec_* FT_Face;
 }
 
 namespace Nebula {
-	class FontGlyph {
+	class FontGlyph 
+	{
 	public:
-		float offset_x();
-		float offset_y();
-
-		float width();
-		float height();
-
-		float s0();
-		float s1();
-		float t0();
-		float t1();
-
-		float advance_x();
-
-		float GetKerning(std::string_view c) const;
-
-		FontGlyph(ftgl::texture_glyph_t* glyph) : m_TextureGlyph(glyph)
-		{
-		}
-
-		operator bool() const 
-		{
-			return m_TextureGlyph != nullptr;
-		}
-
+		uint32_t character;
+		float offset_x, offset_y;
+		float width, height;
+		float s0, s1, t0, t1;
+		float advance_x;
 	private:
-		ftgl::texture_glyph_t* m_TextureGlyph;
+		std::unordered_map<uint32_t, float> m_KerningValues;
 		friend class Font;
 	};
 
-	class Font {
+	struct FontGlyphPoint;
+	struct FontGlyphBox;
+
+	class Font 
+	{
 	public:
-		Font(std::string name, std::string filename, float resolution = 32);
+		Font(std::string name, std::string filename, uint32_t resolution = 32);
 		~Font();
 
-		inline const uint32_t GetID() const;
 		inline const Ref<Texture2D> GetTexture() const { return m_Texture; }
 
 		inline const std::string& GetName() const { return m_Name; }
 		inline const std::string& GetFilename() const { return m_Filename; }
-		inline const float GetSize() const { return m_Resolution; }
+		inline const float GetResolution() const { return m_Resolution; }
 		
-		void SetScale(const vec2& scale) { m_Scale = scale; }
-		const vec2& GetScale() const { return m_Scale; }
-
 		FontGlyph GetGlyph(const char* c);
-
-		static Ref<Font> Create(std::string name, std::string filename, float resolution = 32);
+		
+		// Freetype only supports specific (older) fonts
+		// Most cases will return 0.0f
+		float GetGlyphKerning(FontGlyph glyph, const char* previous) const;
 	private:
-		void RecreateAtlas();
+		void CreateAtlas();
+		void CreateGlyph(uint32_t character);
+		FontGlyphPoint GetAtlasRegion(uint32_t width, uint32_t height);
+		void SetAtlasRegion(unsigned char* data, const size_t& x, const size_t& y, const size_t& width, const size_t& height);
 	private:
 		std::string m_Name, m_Filename;
-		Ref<Texture2D> m_Texture;
+		uint32_t m_AtlasSize, m_Resolution = 32;
+		
+		Ref<Texture2D> m_Texture = nullptr;
+		unsigned char* m_AtlasData = nullptr;
 
-		ftgl::texture_font_t* m_FTFont = nullptr;
-		ftgl::texture_atlas_t* m_FTAtlas = nullptr;
+		std::unordered_map<uint32_t, FontGlyph*> m_Glyphs;
+		std::map<FontGlyphPoint, uint32_t> m_GlyphPoints;
+		Array<FontGlyphBox> m_GlyphBoxes;
 
-		float m_AtlasSize, m_Resolution;
-		vec2 m_Scale = { 1.0f, 1.0f };
-
-		std::unordered_map<const char*, bool> m_CharsinAtlas;
+		FT_Face m_Face = nullptr;
+		friend class FontGlyph;
 	};
 
 	struct FontFamily
@@ -101,12 +91,16 @@ namespace Nebula {
 			if (!std::filesystem::exists(path))
 				return nullptr;
 
-			return Font::Create(path.string(), path.string(), 86);
+			return CreateRef<Font>(path.string(), path.string(), 86);
 		}
 	};
 
-	class FontManager {
+	class FontManager 
+	{
 	public:
+		static void Init();
+		static void Shutdown();
+
 		static void Add(const Ref<Font>& font);
 		static void Add(const FontFamily& family);
 		
@@ -121,5 +115,8 @@ namespace Nebula {
 	private:
 		static Array<Ref<Font>> m_Fonts;
 		static Array<FontFamily> m_FontFamilies;
+
+		static FT_Library m_Freetype;
+		friend class Font;
 	};
 }

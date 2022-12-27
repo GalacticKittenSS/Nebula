@@ -33,8 +33,8 @@ project "Nebula"
 		"src",
 		"%{includedir.Box2D}",
 		"%{includedir.Entt}",
+		"%{includedir.Freetype}",
 		"%{includedir.FileWatch}",
-		"%{includedir.FreetypeGL}",
 		"%{includedir.GLFW}",
 		"%{includedir.GLad}",
 		"%{includedir.ImGui}",
@@ -48,11 +48,11 @@ project "Nebula"
 
 	links { 
 		"Box2D",
+		"Freetype",
 		"GLad",
 		"GLFW",
 		"ImGui",
 		"yaml-cpp",
-		"FreetypeGL",
 		"opengl32.lib",
 
 		"%{Library.mono}"
@@ -62,9 +62,6 @@ project "Nebula"
 	flags { "NoPCH" }
 
 	filter "files:Modules/imgui/src/**.cpp"
-	flags { "NoPCH" }
-
-	filter "files:Modules/FreetypeGL/**.c"
 	flags { "NoPCH" }
 
 	filter "files:Modules/Freetype/**.c"
