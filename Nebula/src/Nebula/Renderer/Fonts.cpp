@@ -45,6 +45,8 @@ namespace Nebula {
 	Font::Font(std::string name, std::string filename, uint32_t resolution) 
 		: m_Name(name), m_Filename(filename), m_Resolution(resolution)
 	{
+
+		FT_New_Face(FontManager::m_Freetype, m_Filename.c_str(), 0, &m_Face);
 		CreateAtlas();
 	}
 
@@ -59,11 +61,15 @@ namespace Nebula {
 
 	void Font::CreateAtlas()
 	{
+		m_Glyphs.clear();
+		m_GlyphBoxes.clear();
+		m_GlyphPoints.clear();
+		delete m_AtlasData;
+
 		m_AtlasSize = m_Resolution * 8;
 		m_Texture = Texture2D::Create(m_AtlasSize, m_AtlasSize, true);
 		m_AtlasData = (unsigned char*)calloc(m_AtlasSize * m_AtlasSize, sizeof(unsigned char));
-
-		FT_New_Face(FontManager::m_Freetype, m_Filename.c_str(), 0, &m_Face);
+		
 		FT_Set_Pixel_Sizes(m_Face, 0, m_Resolution);
 	}
 
@@ -220,8 +226,28 @@ namespace Nebula {
 		return it->second;
 	}
 
+	FontFamily::FontFamily(std::string directory, std::string name)
+		: Name(name)
+	{
+		std::filesystem::path path = directory + "/" + name;
+		Regular = Create(path / "Regular.ttf");
+		Bold = Create(path / "Bold.ttf");
+		BoldItalic = Create(path / "BoldItalic.ttf");
+		Italic = Create(path / "Italic.ttf");
+	}
+
+	Ref<Font> FontFamily::Create(const std::filesystem::path path)
+	{
+		if (!std::filesystem::exists(path))
+			return nullptr;
+
+		return CreateRef<Font>(path.string(), path.string(), FontManager::GetFontResolution());
+	}
+
 	Array<Ref<Font>> FontManager::m_Fonts = {};
 	Array<FontFamily> FontManager::m_FontFamilies = {};
+
+	uint32_t FontManager::m_FontResolution = 86.0f;
 
 	FT_Library FontManager::m_Freetype;
 
@@ -245,12 +271,7 @@ namespace Nebula {
 		m_FontFamilies.push_back(family); 
 	}
 
-	Ref<Font> FontManager::Get() 
-	{
-		return m_Fonts[0];
-	}
-
-	Ref<Font> FontManager::Get(const std::string& name) 
+	Ref<Font> FontManager::GetFont(const std::string& name) 
 	{
 		for (Ref<Font> font : m_Fonts) 
 		{
@@ -261,11 +282,11 @@ namespace Nebula {
 		return nullptr;
 	}
 
-	Ref<Font> FontManager::Get(const std::string& name, uint32_t size) 
+	Ref<Font> FontManager::GetFont(const std::string& name, uint32_t resolution) 
 	{
 		for (Ref<Font> font : m_Fonts) 
 		{
-			if (font->GetResolution() == size && font->GetName() == name)
+			if (font->GetResolution() == resolution && font->GetName() == name)
 				return font;
 		}
 

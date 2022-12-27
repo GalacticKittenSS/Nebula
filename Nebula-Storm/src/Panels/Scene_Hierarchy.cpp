@@ -1013,9 +1013,8 @@ namespace Nebula {
 				}
 			}
 			
-			bool italic = DrawBool("Italic", component.Italic);
-			bool bold = DrawBool("Bold", component.Bold);
-			bool resolution = DrawVec1Control("Resolution", component.Resolution, 8.0f, 512.0f, 96.0f, 8.0f);
+			DrawBool("Italic", component.Italic);
+			DrawBool("Bold", component.Bold);
 			
 			ImGui::ColorEdit4("Colour", value_ptr(component.Colour));
 		}, true);

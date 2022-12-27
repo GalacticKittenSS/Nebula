@@ -119,18 +119,15 @@ namespace Nebula {
 		CircleRendererComponent(const CircleRendererComponent&) = default;
 	};
 
-#define StringRenderFontTypeStrings { "Default", "OpenSans", "Roboto" }
 	struct StringRendererComponent {
 		std::string Text;
 		vec4 Colour{ 1.0f, 1.0f, 1.0f, 1.0f };
 
 		std::string FamilyName = "OpenSans";
 		
-		float Resolution = 86.0f;
 		bool Bold = false;
 		bool Italic = false;
 
-		
 		StringRendererComponent() = default;
 		StringRendererComponent(const StringRendererComponent&) = default;
 

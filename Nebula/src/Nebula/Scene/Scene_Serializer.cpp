@@ -326,7 +326,6 @@ namespace Nebula {
 			out << YAML::Key << "FamilyName" << YAML::Value << component.FamilyName;
 			out << YAML::Key << "Bold" << YAML::Value << component.Bold;
 			out << YAML::Key << "Italic" << YAML::Value << component.Italic;
-			out << YAML::Key << "Resolution" << YAML::Value << component.Resolution;
 			
 			out << YAML::EndMap; // StringRendererComponent
 		}
@@ -569,7 +568,6 @@ namespace Nebula {
 				src.FamilyName = stringRendererComponent["FamilyName"].as<std::string>();
 				src.Bold = stringRendererComponent["Bold"].as<bool>();
 				src.Italic = stringRendererComponent["Italic"].as<bool>();
-				src.Resolution = stringRendererComponent["Resolution"].as<float>();
 			}
 
 			if (auto rigidbody2DComponent = entity["Rigidbody2DComponent"])

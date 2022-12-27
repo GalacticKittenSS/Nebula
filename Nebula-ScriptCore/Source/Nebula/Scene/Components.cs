@@ -224,18 +224,6 @@
             }
         }
 
-        public float Resolution
-        {
-            get
-            {
-                return InternalCalls.StringRendererComponent_GetResolution(Entity.ID);
-            }
-            set
-            {
-                InternalCalls.StringRendererComponent_SetResolution(Entity.ID, value);
-            }
-        }
-
         public bool Bold
         {
             get

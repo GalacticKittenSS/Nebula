@@ -37,7 +37,9 @@ namespace Nebula {
 
 		inline const std::string& GetName() const { return m_Name; }
 		inline const std::string& GetFilename() const { return m_Filename; }
+		
 		inline const float GetResolution() const { return m_Resolution; }
+		inline void SetResolution(float resolution) { m_Resolution = resolution; CreateAtlas(); }
 		
 		FontGlyph GetGlyph(const char* c);
 		
@@ -75,27 +77,13 @@ namespace Nebula {
 
 		// Assumes you have your font layout as:
 		// directory/name/type
-		FontFamily() {}
-		FontFamily(std::string directory, std::string name)
-			: Name(name)
-		{
-			std::filesystem::path path = directory + "/" + name;
-			Regular = Create(path / "Regular.ttf");
-			Bold = Create(path / "Bold.ttf");
-			BoldItalic = Create(path / "BoldItalic.ttf");
-			Italic = Create(path / "Italic.ttf");
-		}
+		FontFamily() = default;
+		FontFamily(std::string directory, std::string name);
 
-		Ref<Font> Create(std::filesystem::path path)
-		{
-			if (!std::filesystem::exists(path))
-				return nullptr;
-
-			return CreateRef<Font>(path.string(), path.string(), 86);
-		}
+		Ref<Font> Create(std::filesystem::path path);
 	};
 
-	class FontManager 
+	class FontManager
 	{
 	public:
 		static void Init();
@@ -103,18 +91,23 @@ namespace Nebula {
 
 		static void Add(const Ref<Font>& font);
 		static void Add(const FontFamily& family);
-		
-		static Ref<Font> Get();
-		static Ref<Font> Get(const std::string& name);
-		static Ref<Font> Get(const std::string& name, uint32_t size);
-		
-		static FontFamily GetFamily(const std::string& name);
-		static const Array<FontFamily>& GetFamilies() { return m_FontFamilies; };
-		
+
 		static void Clean();
+
+		static void SetFontResolution(float resolution) { m_FontResolution = resolution; }
+		static float GetFontResolution() { return m_FontResolution; }
+		
+		static Array<Ref<Font>> GetFonts() { return m_Fonts; }
+		static Ref<Font> GetFont(const std::string& name);
+		static Ref<Font> GetFont(const std::string& name, uint32_t resolution);
+		
+		static const Array<FontFamily>& GetFamilies() { return m_FontFamilies; };
+		static FontFamily GetFamily(const std::string& name);
 	private:
 		static Array<Ref<Font>> m_Fonts;
 		static Array<FontFamily> m_FontFamilies;
+
+		static uint32_t m_FontResolution;
 
 		static FT_Library m_Freetype;
 		friend class Font;

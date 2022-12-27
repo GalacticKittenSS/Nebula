@@ -146,12 +146,6 @@ namespace Nebula
         internal extern static void StringRendererComponent_SetColour(ulong entityID, ref Vector4 colour);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static float StringRendererComponent_GetResolution(ulong entityID);
-
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static void StringRendererComponent_SetResolution(ulong entityID, float resolution);
-
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static bool StringRendererComponent_GetBold(ulong entityID);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]

@@ -506,27 +506,6 @@ namespace Nebula {
 		*colour = entity.GetComponent<StringRendererComponent>().Colour;
 	}
 
-	static void StringRendererComponent_SetResolution(UUID entityID, float resolution)
-	{
-		Scene* scene = ScriptEngine::GetSceneContext();
-		NB_ASSERT(scene);
-		Entity entity = { entityID, scene };
-		NB_ASSERT(entity);
-
-		auto& component = entity.GetComponent<StringRendererComponent>();
-		component.Resolution = resolution;
-	}
-
-	static float StringRendererComponent_GetResolution(UUID entityID)
-	{
-		Scene* scene = ScriptEngine::GetSceneContext();
-		NB_ASSERT(scene);
-		Entity entity = { entityID, scene };
-		NB_ASSERT(entity);
-
-		return entity.GetComponent<StringRendererComponent>().Resolution;
-	}
-
 	static void StringRendererComponent_SetBold(UUID entityID, bool bold)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
@@ -1209,14 +1188,12 @@ namespace Nebula {
 		NB_ADD_INTERNAL_CALL(StringRendererComponent_GetColour);
 		NB_ADD_INTERNAL_CALL(StringRendererComponent_GetFontName);
 		NB_ADD_INTERNAL_CALL(StringRendererComponent_GetItalic);
-		NB_ADD_INTERNAL_CALL(StringRendererComponent_GetResolution);
 		NB_ADD_INTERNAL_CALL(StringRendererComponent_GetText);
 		
 		NB_ADD_INTERNAL_CALL(StringRendererComponent_SetBold);
 		NB_ADD_INTERNAL_CALL(StringRendererComponent_SetColour);
 		NB_ADD_INTERNAL_CALL(StringRendererComponent_SetFontName);
 		NB_ADD_INTERNAL_CALL(StringRendererComponent_SetItalic);
-		NB_ADD_INTERNAL_CALL(StringRendererComponent_SetResolution);
 		NB_ADD_INTERNAL_CALL(StringRendererComponent_SetText);
 		
 		NB_ADD_INTERNAL_CALL(Rigidbody2DComponent_GetBodyType);
