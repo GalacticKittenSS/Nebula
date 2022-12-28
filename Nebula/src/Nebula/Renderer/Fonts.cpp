@@ -268,7 +268,27 @@ namespace Nebula {
 
 	void FontManager::Add(const FontFamily& family)
 	{ 
-		m_FontFamilies.push_back(family); 
+		m_FontFamilies.push_back(family);
+
+		if (family.Bold)
+			m_Fonts.push_back(family.Bold);
+
+		if (family.BoldItalic)
+			m_Fonts.push_back(family.BoldItalic);
+		
+		if (family.Italic)
+			m_Fonts.push_back(family.Italic);
+		
+		if (family.Regular)
+			m_Fonts.push_back(family.Regular);
+	}
+
+	void FontManager::SetFontResolution(float resolution)
+	{
+		m_FontResolution = resolution;
+		
+		for (const Ref<Font> font : m_Fonts)
+			font->SetResolution(resolution);
 	}
 
 	Ref<Font> FontManager::GetFont(const std::string& name) 

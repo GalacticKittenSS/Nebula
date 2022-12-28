@@ -94,7 +94,7 @@ namespace Nebula {
 
 		static void Clean();
 
-		static void SetFontResolution(float resolution) { m_FontResolution = resolution; }
+		static void SetFontResolution(float resolution);
 		static float GetFontResolution() { return m_FontResolution; }
 		
 		static Array<Ref<Font>> GetFonts() { return m_Fonts; }
