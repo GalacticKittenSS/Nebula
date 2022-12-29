@@ -1,5 +1,7 @@
 #include "EditorLayer.h"
 
+#include <Nebula/Utils/UI.h>
+
 #include <imgui.h>
 #include <ImGuizmo.h>
 
@@ -113,8 +115,9 @@ namespace Nebula {
 			OpenProject(commandLineArgs[1]);
 	}
 
-	void EditorLayer::Detach() {
-		FontManager::Clean();
+	void EditorLayer::Detach() 
+	{
+		SaveProject();
 	}
 
 	void EditorLayer::Resize() {
@@ -436,7 +439,7 @@ namespace Nebula {
 	}
 
 	void EditorLayer::UI_GameView() {
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+		UI::ScopedStyleVar padding(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 		ImGui::Begin("Game View", nullptr, ImGuiWindowFlags_NoCollapse);
 
 		auto viewportMinRegion = ImGui::GetWindowContentRegionMin();
@@ -517,18 +520,19 @@ namespace Nebula {
 		}
 
 		ImGui::End();
-		ImGui::PopStyleVar();
 	}
 
 	void EditorLayer::UI_Toolbar() {
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 2));
-		ImGui::PushStyleVar(ImGuiStyleVar_ItemInnerSpacing, ImVec2(0, 0));
-		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+		UI::ScopedStyleVar padding(ImGuiStyleVar_WindowPadding, ImVec2(0, 2));
+		UI::ScopedStyleVar spacing(ImGuiStyleVar_ItemInnerSpacing, ImVec2(0, 0));
+		
 		auto& colours = ImGui::GetStyle().Colors;
 		const auto& buttonHovered = colours[ImGuiCol_ButtonHovered];
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(buttonHovered.x, buttonHovered.y, buttonHovered.z, 0.5f));
 		const auto& buttonActive = colours[ImGuiCol_ButtonActive];
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(buttonActive.x, buttonActive.y, buttonActive.z, 0.5f));
+		
+		UI::ScopedStyleColor button(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+		UI::ScopedStyleColor hovered(ImGuiCol_ButtonHovered, ImVec4(buttonHovered.x, buttonHovered.y, buttonHovered.z, 0.5f));
+		UI::ScopedStyleColor active(ImGuiCol_ButtonActive, ImVec4(buttonActive.x, buttonActive.y, buttonActive.z, 0.5f));
 
 		ImGui::Begin("##toolbar", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
@@ -579,8 +583,6 @@ namespace Nebula {
 			}
 		}
 
-		ImGui::PopStyleVar(2);
-		ImGui::PopStyleColor(3);
 		ImGui::End();
 	}
 
@@ -678,7 +680,8 @@ namespace Nebula {
 
 	void EditorLayer::SaveProject()
 	{
-		//Project::SaveActive();
+		if (Project::GetActive())
+			Project::SaveActive(Project::GetProjectDirectory());
 	}
 
 	void EditorLayer::OpenProject()
@@ -689,6 +692,8 @@ namespace Nebula {
 
 	void EditorLayer::OpenProject(const std::filesystem::path& path)
 	{
+		SaveProject();
+
 		if (Project::Load(path))
 		{
 			ScriptEngine::ReloadAssembly();

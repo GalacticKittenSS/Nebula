@@ -30,4 +30,31 @@ namespace Nebula::UI {
 	private:
 		bool m_Set = false;
 	};
+
+	struct ScopedStyleVar
+	{
+		ScopedStyleVar() = default;
+
+		ScopedStyleVar(ImGuiStyleVar idx, ImVec2 val, bool predicate = true)
+			: m_Set(predicate)
+		{
+			if (predicate)
+				ImGui::PushStyleVar(idx, val);
+		}
+
+		ScopedStyleVar(ImGuiStyleVar idx, float val, bool predicate = true)
+			: m_Set(predicate)
+		{
+			if (predicate)
+				ImGui::PushStyleVar(idx, val);
+		}
+
+		~ScopedStyleVar()
+		{
+			if (m_Set)
+				ImGui::PopStyleVar();
+		}
+	private:
+		bool m_Set = false;
+	};
 }
