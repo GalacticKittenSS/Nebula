@@ -2,5 +2,5 @@ Project:
   Name: Sandbox
   StartScene: "Scenes/Scripting.nebula"
   AssetDirectory: "Assets"
-  ScriptModulePath: "Scripts/Binaries/Sandbox.dll"
+  ScriptModulePath: "Binaries/Sandbox.dll"
   FontResolution: 256

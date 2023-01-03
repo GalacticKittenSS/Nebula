@@ -7,9 +7,8 @@
 #include <filesystem>
 
 namespace Nebula {
-	static float s_MaxTextLength = 0.0f;
-	static float s_MaxTransformTextLength = 0.0f;
-	static float s_Max = 400.0f;
+	static float s_TextColumnWidth	= 100.0f;
+	static float s_MaxItemWidth		= 425.0f;
 
 	struct RectData {
 		UUID Parent;
@@ -239,7 +238,7 @@ namespace Nebula {
 
 		if (entity.GetParentChild().ChildrenIDs.size() == 0)
 			flags |= ImGuiTreeNodeFlags_Leaf;
-		
+
 		bool opened = ImGui::TreeNodeEx((void*)(uint32_t)entity, flags, tag.c_str());
 
 		if (ImGui::IsItemClicked())
@@ -321,116 +320,49 @@ namespace Nebula {
 
 		data->Rect = ImRect(windowPos.x + cursorPos.x, windowPos.y + cursorPos.y, windowPos.x + cursorPos.x + elementSize.x, windowPos.y + cursorPos.y + elementSize.y);
 		data->indexAbove = index;
-		data->indexAbove = index + 1;
+		data->indexBelow = index + 1;
 
 		Rects.push_back(data);
 	}
 
-	static void DrawVec3Control(const std::string& label, vec3& values, float resetvalue = 0.0f, float columnWidth = 100.0f) {
-		ImGuiIO& io = ImGui::GetIO();
-		auto boldFont = io.Fonts->Fonts[0];
-		
-		ImGui::PushID(label.c_str());
+	static float DrawLabel(std::string label) 
+	{
+		float padding = ImGui::GetStyle().ItemSpacing.x * 2;
+		float max_width = Max(s_TextColumnWidth, ImGui::GetWindowContentRegionMax().x - s_MaxItemWidth);
+
+		if (ImGui::CalcTextSize(label.c_str()).x + padding > max_width)
+		{
+			int i = 0;
+			for (; i < label.length(); i++)
+			{
+				if (ImGui::CalcTextSize(label.c_str(), &label[i]).x + padding > max_width)
+					break;
+			}
+
+			label = label.substr(0, i - 3) + "...";
+		}
+
 		ImGui::Text(label.c_str());
 		ImGui::SameLine();
 
-		ImGui::PushMultiItemsWidths(3, ImGui::CalcItemWidth());
-		
-		float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
-		ImVec2 buttonSize = { lineHeight + 3.0f, lineHeight };
-
-		float tl = ImGui::GetCursorPosX();
-		if (tl > s_MaxTextLength)
-			s_MaxTextLength = tl;
-
-		float size = ImGui::GetWindowContentRegionMax().x - s_MaxTextLength - 20.0f;
-		if (size > s_Max)
-			size = s_Max;
-
-		float width = (size - (buttonSize.x * 3 + ImGui::GetStyle().ItemSpacing.x * 5)) / 3;
+		float size = Min(s_MaxItemWidth, ImGui::GetWindowContentRegionMax().x - max_width - padding);
 		ImGui::SetCursorPosX(ImGui::GetWindowContentRegionMax().x - size);
-
-		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.8f, 0.2f, 0.1f, 1.0f });
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 1.0f, 0.3f, 0.3f, 1.0f });
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.8f, 0.2f, 0.1f, 1.0f });
-		ImGui::PushFont(boldFont);
-		
-		if (ImGui::Button("X", buttonSize))
-			values.x = resetvalue;
-		
-		ImGui::PopFont();
-		ImGui::PopStyleColor(3);
-
-		ImGui::SameLine();
-		ImGui::SetNextItemWidth(width);
-		ImGui::DragFloat("##X", &values.x, 0.1f, 0.0f, 0.0f, "%.2f");
-		ImGui::PopItemWidth();
-		ImGui::SameLine();
-
-
-		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.3f, 0.8f, 0.3f, 1.0f });
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
-		ImGui::PushFont(boldFont);
-		
-		if (ImGui::Button("Y", buttonSize))
-			values.y = resetvalue;
-		
-		ImGui::PopFont();
-		ImGui::PopStyleColor(3);
-		
-		ImGui::SameLine();
-		ImGui::SetNextItemWidth(width);
-		ImGui::DragFloat("##Y", &values.y, 0.1f, 0.0f, 0.0f, "%.2f");
-		ImGui::PopItemWidth();
-		ImGui::SameLine();
-		
-		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.1f, 0.25f, 0.8f, 1.0f });
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.2f, 0.35f, 0.9f, 1.0f });
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.1f, 0.25f, 0.8f, 1.0f });
-		ImGui::PushFont(boldFont);
-		
-		if (ImGui::Button("Z", buttonSize))
-			values.z = resetvalue;
-		
-		ImGui::PopFont();
-		ImGui::PopStyleColor(3);
-		
-		ImGui::SameLine();
-		ImGui::SetNextItemWidth(width);
-		ImGui::DragFloat("##Z", &values.z, 0.1f, 0.0f, 0.0f, "%.2f");
-		ImGui::PopStyleVar();
-
-		ImGui::PopItemWidth();
-		ImGui::Columns(1);
-		ImGui::PopID();
+		return size;
 	}
 
-	static bool DrawVec3Transform(const std::string& label, vec3& values, float resetvalue = 0.0f, float columnWidth = 100.0f) {
+	static bool DrawVec3Control(const std::string& label, vec3& values, float resetvalue = 0.0f) 
+	{
 		ImGuiIO& io = ImGui::GetIO();
 		auto boldFont = io.Fonts->Fonts[0];
 
 		ImGui::PushID(label.c_str());
-		ImGui::Text(label.c_str());
-		ImGui::SameLine();
-
-		ImGui::PushMultiItemsWidths(3, ImGui::CalcItemWidth());
-		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 0, 0 });
-
+		float size = DrawLabel(label);
+		
 		float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
 		ImVec2 buttonSize = { lineHeight + 3.0f, lineHeight };
+		float item_width = (size - buttonSize.x * 3 - GImGui->Style.ItemSpacing.x * 2) / 3;
 
-		float tl = ImGui::GetCursorPosX();
-		if (tl > s_MaxTransformTextLength)
-			s_MaxTransformTextLength = tl;
-
-		float size = ImGui::GetWindowContentRegionMax().x - s_MaxTransformTextLength - 20.0f;
-		if (size > s_Max)
-			size = s_Max;
-
-		float width = (size - buttonSize.x * 3) / 3;
-		ImGui::SetCursorPosX(ImGui::GetWindowContentRegionMax().x - size);
-
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 0, GImGui->Style.ItemSpacing.y });
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{0.8f, 0.2f, 0.1f, 1.0f});
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 1.0f, 0.3f, 0.3f, 1.0f });
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.8f, 0.2f, 0.1f, 1.0f });
@@ -444,11 +376,14 @@ namespace Nebula {
 		ImGui::PopStyleColor(3);
 
 		ImGui::SameLine();
-		ImGui::SetNextItemWidth(width);
+
+		ImGui::SetNextItemWidth(item_width);
 		bool x = ImGui::DragFloat("##X", &values.x, 0.1f, 0.0f, 0.0f, "%.2f");
-		ImGui::PopItemWidth();
+		ImGui::PopStyleVar();
+
 		ImGui::SameLine();
 
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 0, GImGui->Style.ItemSpacing.y });
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.3f, 0.8f, 0.3f, 1.0f });
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
@@ -462,11 +397,14 @@ namespace Nebula {
 		ImGui::PopStyleColor(3);
 
 		ImGui::SameLine();
-		ImGui::SetNextItemWidth(width);
+		
+		ImGui::SetNextItemWidth(item_width);
 		bool y = ImGui::DragFloat("##Y", &values.y, 0.1f, 0.0f, 0.0f, "%.2f");
-		ImGui::PopItemWidth();
+		ImGui::PopStyleVar();
+
 		ImGui::SameLine();
 
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 0, GImGui->Style.ItemSpacing.y });
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.1f, 0.25f, 0.8f, 1.0f });
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.2f, 0.35f, 0.9f, 1.0f });
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.1f, 0.25f, 0.8f, 1.0f });
@@ -475,124 +413,116 @@ namespace Nebula {
 		bool zb = ImGui::Button("Z", buttonSize);
 		if (zb)
 			values.z = resetvalue;
-		
+
 		ImGui::PopFont();
 		ImGui::PopStyleColor(3);
 
 		ImGui::SameLine();
-		ImGui::SetNextItemWidth(width);
-		bool z = ImGui::DragFloat("##Z", &values.z, 0.1f, 0.0f, 0.0f, "%.2f");
-		ImGui::PopItemWidth();
 
+		ImGui::SetNextItemWidth(item_width);
+		bool z = ImGui::DragFloat("##Z", &values.z, 0.1f, 0.0f, 0.0f, "%.2f");
 		ImGui::PopStyleVar();
 
 		ImGui::Columns(1);
-
 		ImGui::PopID();
+
 		return x || xb || y || yb || z || zb;
 	}
 
-	static void DrawVec2Control(const std::string& label, vec2& values, const vec2& min = vec2(0.0f), const vec2& max = vec2(0.0f), const vec2& resetvalue = vec2(0.0f), float columnWidth = 100.0f) {
+	static bool DrawVec2Control(const std::string& label, vec2& values, const vec2& min = vec2(0.0f), const vec2& max = vec2(0.0f), 
+		const vec2& resetvalue = vec2(0.0f)) {
 		ImGuiIO& io = ImGui::GetIO();
 		auto boldFont = io.Fonts->Fonts[0];
 
 		ImGui::PushID(label.c_str());
-		ImGui::Text(label.c_str());
-		ImGui::SameLine();
-		
-		ImGui::PushMultiItemsWidths(2, ImGui::CalcItemWidth());
+		float size = DrawLabel(label);
 		
 		float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
 		ImVec2 buttonSize = { lineHeight + 3.0f, lineHeight };
-
-		float tl = ImGui::GetCursorPosX();
-		if (tl > s_MaxTextLength)
-			s_MaxTextLength = tl;
-
-		float size = ImGui::GetWindowContentRegionMax().x - s_MaxTextLength - 20.0f;
-		if (size > s_Max)
-			size = s_Max;
-
-		float width = (size - (buttonSize.x * 2 + ImGui::GetStyle().ItemSpacing.x * 3)) / 2;
-		ImGui::SetCursorPosX(ImGui::GetWindowContentRegionMax().x - size);
-
+		float item_width = (size - buttonSize.x * 2 - GImGui->Style.ItemSpacing.x) / 2;
+		
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 0, GImGui->Style.ItemSpacing.y });
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.8f, 0.2f, 0.1f, 1.0f });
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 1.0f, 0.3f, 0.3f, 1.0f });
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.8f, 0.2f, 0.1f, 1.0f });
 		ImGui::PushFont(boldFont);
-		
-		if (ImGui::Button("X", buttonSize))
+
+		bool xb = ImGui::Button("X", buttonSize);
+		if (xb)
 			values.x = resetvalue.x;
 		
 		ImGui::PopFont();
 		ImGui::PopStyleColor(3);
 		
 		ImGui::SameLine();
-		ImGui::SetNextItemWidth(width);
-		ImGui::DragFloat("##X", &values.x, 0.1f, min.x, max.x, "%.2f");
-		ImGui::PopItemWidth();
+		
+		ImGui::SetNextItemWidth(item_width);
+		bool x = ImGui::DragFloat("##X", &values.x, 0.1f, min.x, max.x, "%.2f");
+		ImGui::PopStyleVar();
+		
+		ImGui::NextColumn();
 		ImGui::SameLine();
 
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 0, GImGui->Style.ItemSpacing.y });
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.3f, 0.8f, 0.3f, 1.0f });
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
 		ImGui::PushFont(boldFont);
 
-		if (ImGui::Button("Y", buttonSize))
+		bool yb = ImGui::Button("Y", buttonSize);
+		if (yb)
 			values.y = resetvalue.y;
 
 		ImGui::PopFont();
 		ImGui::PopStyleColor(3);
 
 		ImGui::SameLine();
-		ImGui::SetNextItemWidth(width);
-		ImGui::DragFloat("##Y", &values.y, 0.1f, min.y, max.y, "%.2f");
-		ImGui::PopItemWidth();
-		
+
+		ImGui::SetNextItemWidth(item_width);
+		bool y = ImGui::DragFloat("##Y", &values.y, 0.1f, min.y, max.y, "%.2f");
+		ImGui::PopStyleVar();
+
 		ImGui::PopID();
+		return x || xb || y || yb;
 	}
 
-	static bool DrawVec1Control(const std::string& label, float& values, const float& min = 0.0f, const float& max = 0.0f, const float& resetvalue = 0.0f, float step = 0.1f, float columnWidth = 100.0f) {
-		ImGuiIO& io = ImGui::GetIO();
-		auto boldFont = io.Fonts->Fonts[0];
-
+	static bool DrawVec1Control(std::string label, float& values, const float& min = 0.0f, const float& max = 0.0f, 
+		const float& resetvalue = 0.0f, float step = 0.1f)
+	{
 		ImGui::PushID(label.c_str());
-		ImGui::Text(label.c_str());
-		ImGui::SameLine();
-		
-		float tl = ImGui::GetCursorPosX();
-		if (tl > s_MaxTextLength)
-			s_MaxTextLength = tl;
-
-		float size = ImGui::GetWindowContentRegionMax().x - s_MaxTextLength - 20.0f;
-		if (size > s_Max)
-			size = s_Max;
-		
-		ImGui::SetCursorPosX(ImGui::GetWindowContentRegionMax().x - size);
+		float size = DrawLabel(label);
 		ImGui::SetNextItemWidth(size);
+
 		bool open = ImGui::DragFloat("##V", &values, step, min, max, "%.2f");
 		ImGui::PopID();
 		return open;
 	}
 
-	static bool DrawBool(const std::string& label, bool& values) {
-		ImGuiIO& io = ImGui::GetIO();
-		auto boldFont = io.Fonts->Fonts[0];
-
+	static bool DrawBool(const std::string& label, bool& values) 
+	{
 		ImGui::PushID(label.c_str());
 		ImGui::Text(label.c_str());
 		ImGui::SameLine();
 
-		float tl = ImGui::GetCursorPosX();
-		if (tl > s_MaxTextLength)
-			s_MaxTextLength = tl;
-
-		float size = ImGui::GetWindowContentRegionMax().x - s_MaxTextLength - 20.0f;
-		if (size > s_Max)
-			size = s_Max;
-
-		ImGui::SetCursorPosX(ImGui::GetWindowContentRegionMax().x - size);
+		ImGui::SetCursorPosX(ImGui::GetWindowContentRegionMax().x - 25.0f);
 		bool open = ImGui::Checkbox("##V", &values);
+		ImGui::PopID();
+		return open;
+	}
+	
+	static bool DrawTextBox(const std::string& label, std::string& text)
+	{
+		ImGui::PushID(label.c_str());
+		float size = DrawLabel(label);
+		ImGui::SetNextItemWidth(size);
+
+		char buffer[64];
+		strncpy_s(buffer, sizeof(buffer), text.c_str(), sizeof(buffer));
+
+		bool open = ImGui::InputText("##Class", buffer, sizeof(buffer));
+		if (open)
+			text = std::string(buffer);
+		
 		ImGui::PopID();
 		return open;
 	}
@@ -602,26 +532,20 @@ namespace Nebula {
 		auto boldFont = io.Fonts->Fonts[0];
 
 		ImGui::PushID(label.c_str());
-		ImGui::Text(label.c_str());
-		ImGui::SameLine();
-
-		float tl = ImGui::GetCursorPosX();
-		if (tl > s_MaxTextLength)
-			s_MaxTextLength = tl;
-
-		float size = ImGui::GetWindowContentRegionMax().x - s_MaxTextLength - 20.0f;
-		if (size > s_Max)
-			size = s_Max;
+		float size = DrawLabel(label);
+		ImGui::SetNextItemWidth(size);
+		
+		UI::ScopedStyleColor(ImGuiCol_Button, ImVec4{ 0.1f, 0.105f, 0.11f, 1.0f });
 
 		bool open = false;
-		ImGui::SetCursorPosX(ImGui::GetWindowContentRegionMax().x - size);
-		ImGui::SetNextItemWidth(size);
-		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.1f, 0.105f, 0.11f, 1.0f });
-		if (ImGui::BeginCombo("##V", currentString)) {
+		if (ImGui::BeginCombo("##V", currentString)) 
+		{
 			open = true;
-			for (uint32_t i = 0; i < stringsSize; i++) {
+			for (uint32_t i = 0; i < stringsSize; i++) 
+			{
 				bool isSelected = currentString == strings[i];
-				if (ImGui::Selectable(strings[i], isSelected)) {
+				if (ImGui::Selectable(strings[i], isSelected)) 
+				{
 					currentString = strings[i];
 					index = i;
 				}
@@ -632,12 +556,29 @@ namespace Nebula {
 
 			ImGui::EndCombo();
 		}
-		ImGui::PopStyleColor();
-
+		
 		ImGui::PopID();
 		return open;
 	}
 	
+	static void DrawColourEdit(const std::string& label, vec4& colour)
+	{
+		ImGui::PushID(label.c_str());
+		float size = DrawLabel(label);
+		const ImVec4 col_v4(colour.x, colour.y, colour.z, colour.w);
+
+		if (ImGui::ColorButton("##button", col_v4, 0, ImVec2{ size, 0.0f }))
+			ImGui::OpenPopup("picker");
+
+		if (ImGui::BeginPopup("picker"))
+		{
+			ImGui::ColorPicker4("##picker", value_ptr(colour));
+			ImGui::EndPopup();
+		}
+
+		ImGui::PopID();
+	}
+
 	template<typename T, typename UIFunction>
 	static void DrawComponent(const std::string& name, Entity entity, UIFunction function, bool deletable = false) {
 		if (entity.HasComponent<T>()) {
@@ -649,10 +590,10 @@ namespace Nebula {
 			ImGui::PushID(name.c_str());
 
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 4, 4 });
+			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 7.5f);
 			float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
 			bool open = ImGui::TreeNodeEx((void*)typeid(T).hash_code(), treeFlags, name.c_str());
-			
-			ImGui::PopStyleVar();
+			ImGui::PopStyleVar(2);
 			
 			bool removeComponent = false;
 			if (deletable && ImGui::BeginPopupContextItem("ComponentSettings")) {
@@ -663,8 +604,14 @@ namespace Nebula {
 			}
 
 			if (open) {
+				ImGuiStyle& style = ImGui::GetStyle();
+				float indentation = ImGui::GetTreeNodeToLabelSpacing() - (style.FramePadding.x + style.ItemSpacing.x);
+				ImGui::Unindent(indentation);
+				
 				function(component);
 				ImGui::Separator();
+				
+				ImGui::Indent(indentation);
 				ImGui::TreePop();
 			}
 
@@ -700,21 +647,24 @@ namespace Nebula {
 	}
 
 	void SceneHierarchyPanel::DrawComponents(Entity entity) {
+		float buttonWidth = ImGui::CalcTextSize("Add Component").x + GImGui->Style.ItemSpacing.x * 2;
+
 		if (entity.HasComponent<TagComponent>()) {
 			auto& tag = entity.GetComponent<TagComponent>().Tag;
 
 			char buffer[256];
 			strncpy_s(buffer, sizeof(buffer), tag.c_str(), sizeof(buffer));
 
+			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvailWidth() - buttonWidth - GImGui->Style.ItemSpacing.x);
+
 			if (ImGui::InputText("##Tag", buffer, sizeof(buffer))) {
 				tag = std::string(buffer);
 			}
 		}
 
-		ImGui::SameLine();
-		ImGui::PushItemWidth(-1);
-
-		if (ImGui::Button("Add Component"))
+		ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - buttonWidth);
+		
+		if (ImGui::Button("Add Component", ImVec2{ buttonWidth, 0.0f }))
 			ImGui::OpenPopup("Add Component");
 
 		if (ImGui::BeginPopup("Add Component")) {
@@ -732,15 +682,15 @@ namespace Nebula {
 			ImGui::EndPopup();
 		}
 
-		ImGui::PopItemWidth();
-		
 		DrawComponent<TransformComponent>("Transform", entity, [entity](auto& component) mutable {
 			vec3 rotation = degrees(component.Rotation);
 			vec3 translation = component.Translation;
 			vec3 scale = component.Scale;
-			bool p = DrawVec3Transform("Position", translation);
-			bool r = DrawVec3Transform("Rotation", rotation);
-			bool s = DrawVec3Transform("Scale", scale, 1.0f);
+
+			bool p = DrawVec3Control("Position", translation);
+			bool r = DrawVec3Control("Rotation", rotation);
+			bool s = DrawVec3Control("Scale", scale, 1.0f);
+			
 			ImGui::Spacing();
 
 			component.Rotation = radians(rotation);
@@ -761,9 +711,12 @@ namespace Nebula {
 			if (DrawCombo("Projection", projectionTypeStrings, 2, projectionTypeStrings[index], index))
 				camera.SetProjectionType((SceneCamera::ProjectionType)index);
 			
+			ImGui::Separator();
+			ImGui::Spacing();
+
 			if (camera.GetProjectionType() == SceneCamera::ProjectionType::Orthographic) {
 				float Size = camera.GetOrthographicSize();
-				if (DrawVec1Control("Size", Size)) {
+				if (DrawVec1Control("Size", Size, 0.0f, 0.0f, 0.0f, 0.1f)) {
 					camera.SetOrthographicSize(Size);
 				}
 
@@ -800,21 +753,17 @@ namespace Nebula {
 
 		DrawComponent<ScriptComponent>("Script", entity, [entity, scene = m_Context](auto& component) mutable {
 			bool classExists = ScriptEngine::EntityClassExists(component.ClassName);
-			
-			char buffer[64];
-			strncpy_s(buffer, sizeof(buffer), component.ClassName.c_str(), sizeof(buffer));
-
 			UI::ScopedStyleColor colour(ImGuiCol_Text, ImVec4(0.9f, 0.2f, 0.3f, 1.0f), !classExists);
-
-			if (ImGui::InputText("Class", buffer, sizeof(buffer)))
-			{
-				component.ClassName = std::string(buffer);
+			
+			if (DrawTextBox("Class", component.ClassName))
 				ScriptEngine::CreateScriptInstance(entity);
-			}
-
+			
 			// FIELDS
 			if (Ref<ScriptInstance> scriptInstance = ScriptEngine::GetScriptInstance(entity))
 			{
+				ImGui::Separator();
+				ImGui::Spacing();
+
 				const auto& fields = scriptInstance->GetScriptClass()->GetFields();
 				for (const auto& [name, field] : fields)
 				{
@@ -823,7 +772,7 @@ namespace Nebula {
 					case Nebula::ScriptFieldType::Float:
 					{
 						auto data = scriptInstance->GetFieldValue<float>(name);
-						if (ImGui::DragFloat(name.c_str(), &data))
+						if (DrawVec1Control(name.c_str(), data))
 						{
 							scriptInstance->SetFieldValue(name, data);
 						}
@@ -850,7 +799,7 @@ namespace Nebula {
 					case Nebula::ScriptFieldType::Vector2:
 					{
 						auto data = scriptInstance->GetFieldValue<vec2>(name);
-						if (ImGui::DragFloat2(name.c_str(), value_ptr(data)))
+						if (DrawVec2Control(name.c_str(), data))
 						{
 							scriptInstance->SetFieldValue(name, data);
 						}
@@ -859,7 +808,7 @@ namespace Nebula {
 					case Nebula::ScriptFieldType::Vector3:
 					{
 						auto data = scriptInstance->GetFieldValue<vec3>(name);
-						if (ImGui::DragFloat3(name.c_str(), value_ptr(data)))
+						if (DrawVec3Control(name.c_str(), data))
 						{
 							scriptInstance->SetFieldValue(name, data);
 						}
@@ -880,32 +829,26 @@ namespace Nebula {
 		}, true);
 
 		DrawComponent<SpriteRendererComponent>("Sprite Renderer", entity, [](auto& component) {
-			ImGui::ColorEdit4("Colour", value_ptr(component.Colour));
+			DrawColourEdit("Colour", component.Colour);
 
-			std::string text;
-			if (component.Texture == nullptr)
-				text = "Texture";
-			else
-				text = component.Texture->GetPath();
-			
-			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, ImGui::GetStyle().ItemSpacing.y));
-			ImGui::BeginGroup();
-			
-			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.1f, 0.105f, 0.11f, 1.0f });
-			ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.1f, 0.105f, 0.11f, 1.0f });
-			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.1f, 0.105f, 0.11f, 1.0f });
-			ImGui::Button(text.c_str(), ImVec2(ImGui::GetContentRegionAvailWidth() - 40.0f, 0.0f));
-			ImGui::PopStyleColor(3);
+			ImGui::Separator();
+			ImGui::Spacing();
 
-			ImGui::SameLine();
-			
-			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.1f, 0.105f, 0.11f, 1.0f });
-			if (ImGui::Button("X", ImVec2(40.0f, 0.0f)))
-				component.Texture = nullptr;
-			ImGui::PopStyleColor();
-			
-			ImGui::EndGroup();
-			ImGui::PopStyleVar();
+			float width = ImGui::GetContentRegionAvailWidth();
+
+			std::string text = "Drop File to Add Texture";
+			if (component.Texture)
+			{
+				std::filesystem::path path = component.Texture->GetPath();
+				text = std::filesystem::relative(path, Project::GetAssetDirectory()).string();
+
+				width -= 40.0f - GImGui->Style.FrameRounding;
+			}
+
+			ImGui::PushStyleColor(ImGuiCol_ButtonActive, GImGui->Style.Colors[ImGuiCol_Button]);
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, GImGui->Style.Colors[ImGuiCol_Button]);
+			ImGui::Button(text.c_str(), ImVec2(width, 0.0f));
+			ImGui::PopStyleColor(2);
 
 			if (ImGui::BeginDragDropTarget()) {
 				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
@@ -921,77 +864,52 @@ namespace Nebula {
 				}
 				ImGui::EndDragDropTarget();
 			}
-
-			if (component.Texture != nullptr) {
-				DrawVec1Control("Texture Tiling Factor", component.Tiling, 0.1f, 0.0f, 100.0f);
+			
+			bool remove = false;
+			if (component.Texture)
+			{
+				ImGui::SameLine(ImGui::GetContentRegionMax().x - 40.0f);
+				remove = ImGui::Button("X", ImVec2(40.0f, 0.0f));
+				ImGui::Spacing();
 				
-				if (ImGui::TreeNodeEx("Sub Texture")) {
-					vec2 textureSize = { (float)component.Texture->GetWidth(), (float)component.Texture->GetHeight() };
-					vec2 maxOffset = textureSize - component.SubTextureCellSize * component.SubTextureCellNum;
+				DrawVec1Control("Tiling Factor", component.Tiling, 0.1f, 0.0f, 100.0f);
 
-					if (component.SubTextureOffset > maxOffset)
-						component.SubTextureOffset = maxOffset;
+				vec2 textureSize = { (float)component.Texture->GetWidth(), (float)component.Texture->GetHeight() };
+				vec2 maxOffset = textureSize - component.SubTextureCellSize * component.SubTextureCellNum;
 
-					if (component.SubTextureOffset < vec2(0.0f))
-						component.SubTextureOffset = vec2(0.0f);
+				if (component.SubTextureOffset > maxOffset)
+					component.SubTextureOffset = maxOffset;
 
-					vec2 maxCellNum = textureSize / component.SubTextureCellSize;
+				if (component.SubTextureOffset < vec2(0.0f))
+					component.SubTextureOffset = vec2(0.0f);
 
-					if (component.SubTextureCellNum > maxCellNum)
-						component.SubTextureCellNum = maxCellNum;
+				vec2 maxCellNum = textureSize / component.SubTextureCellSize;
 
-					DrawVec2Control("Offset", component.SubTextureOffset, vec2(0.0f), maxOffset != vec2(0.0f) ? maxOffset : vec2(0.001f));
-					DrawVec2Control("Cell Size", component.SubTextureCellSize, vec2(0.1f), textureSize, textureSize);
-					DrawVec2Control("Cell Number", component.SubTextureCellNum, vec2(0.01f), maxCellNum);
-					ImGui::TreePop();
-				}
+				if (component.SubTextureCellNum > maxCellNum)
+					component.SubTextureCellNum = maxCellNum;
+
+				DrawVec2Control("Offset", component.SubTextureOffset, vec2(0.0f), maxOffset != vec2(0.0f) ? maxOffset : vec2(0.001f));
+				DrawVec2Control("Cell Size", component.SubTextureCellSize, vec2(0.1f), textureSize, textureSize);
+				DrawVec2Control("Cell Number", component.SubTextureCellNum, vec2(0.01f), maxCellNum);
 			}
+
+			if (remove)
+				component.Texture = nullptr;
 		}, true);
 
 		DrawComponent<CircleRendererComponent>("Circle Renderer", entity, [](auto& component) {
-			ImGui::ColorEdit4("Colour", value_ptr(component.Colour));
+			DrawColourEdit("Colour", component.Colour);
 			DrawVec1Control("Thickness", component.Thickness, 0.01f, 0.01f, 1.0f);
 			DrawVec1Control("Fade", component.Fade, 0.0025f, 0.01f, 1.0f);
 		}, true);
 
 		DrawComponent<StringRendererComponent>("String Renderer", entity, [](auto& component) {
-			{
-				char buffer[256];
-				memset(buffer, 0, sizeof(buffer));
-				strncpy(buffer, component.Text.c_str(), sizeof(buffer));
-
-				ImGui::Text("Text");
-				ImGui::SameLine();
-
-				float tl = ImGui::GetCursorPosX();
-				if (tl > s_MaxTextLength)
-					s_MaxTextLength = tl;
-
-				float size = ImGui::GetWindowContentRegionMax().x - s_MaxTextLength - 20.0f;
-				if (size > s_Max)
-					size = s_Max;
-
-				ImGui::SetCursorPosX(ImGui::GetWindowContentRegionMax().x - size);
-				ImGui::SetNextItemWidth(size);
-
-				if (ImGui::InputText("##Text", buffer, sizeof(buffer)))
-					component.Text = std::string(buffer);
-			}
+			DrawTextBox("Text", component.Text);
 			
 			{
-				ImGui::Text("Font");
-				ImGui::SameLine();
-
-				float tl = ImGui::GetCursorPosX();
-				if (tl > s_MaxTextLength)
-					s_MaxTextLength = tl;
-
-				float size = ImGui::GetWindowContentRegionMax().x - s_MaxTextLength - 20.0f;
-				if (size > s_Max)
-					size = s_Max;
-
-				ImGui::SetCursorPosX(ImGui::GetWindowContentRegionMax().x - size);
+				float size = DrawLabel("Font");
 				ImGui::SetNextItemWidth(size);
+
 				UI::ScopedStyleColor(ImGuiCol_Button, ImVec4{ 0.1f, 0.105f, 0.11f, 1.0f });
 
 				if (ImGui::BeginCombo("##Font", component.FamilyName.c_str()))
@@ -1015,8 +933,8 @@ namespace Nebula {
 			
 			DrawBool("Italic", component.Italic);
 			DrawBool("Bold", component.Bold);
-			
-			ImGui::ColorEdit4("Colour", value_ptr(component.Colour));
+
+			DrawColourEdit("Colour", component.Colour);
 		}, true);
 
 		DrawComponent<Rigidbody2DComponent>("Rigidbody 2D", entity, [](auto& component) {

@@ -1,6 +1,7 @@
 #include "Content_Browser.h"
 
-#include <imgui.h>
+#include <Nebula/Utils/UI.h>
+#include <imgui_internal.h>
 
 namespace Nebula {
 	extern const std::filesystem::path s_AssetPath;
@@ -26,21 +27,22 @@ namespace Nebula {
 
 	void ContentBrowserPanel::RenderBrowser()
 	{
-		static float size = 1.0f;
-		ImGui::SliderFloat("##thumbnail", &size, 0, 2);
-
-		float thumbnailSize = (size + 1) * 128.0f;
-		float cellSize = thumbnailSize + 16.0f;
-
-		float panelWidth = ImGui::GetContentRegionAvail().x;
-		int columCount = (int)(panelWidth / cellSize);
-		if (columCount < 1)
-			columCount = 1;
+		static float size = 0.0f;
 
 		if (m_BaseDirectory.string() == "")
 			return;
 
-		if (m_CurrentDirectory != std::filesystem::path(m_BaseDirectory)) {
+		UI::ScopedStyleVar rounding(ImGuiStyleVar_FrameRounding, 7.5f);
+
+		ImGui::SetCursorPosX(ImGui::GetContentRegionMax().x - 200.0f);
+		ImGui::SetNextItemWidth(200.0f);
+		ImGui::SliderFloat("##thumbnail", &size, 0, 2);
+
+		ImGui::SameLine();
+		ImGui::SetCursorPosX(ImGui::GetWindowContentRegionMin().x);
+
+		if (m_CurrentDirectory != std::filesystem::path(m_BaseDirectory))
+		{
 			ImGuiIO& io = ImGui::GetIO();
 			ImFont* boldFont = io.Fonts->Fonts[0];
 			boldFont->Scale = size + 1;
@@ -52,6 +54,14 @@ namespace Nebula {
 			ImGui::PopFont();
 			boldFont->Scale = 1;
 		}
+
+		float thumbnailSize = (size + 1) * 128.0f;
+		float cellSize = thumbnailSize + 16.0f;
+
+		float panelWidth = ImGui::GetContentRegionAvail().x;
+		int columCount = (int)(panelWidth / cellSize);
+		if (columCount < 1)
+			columCount = 1;
 
 		ImGui::Columns(columCount, 0, false);
 
@@ -73,27 +83,25 @@ namespace Nebula {
 				ImGui::EndDragDropSource();
 			}
 
-
 			if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
 				if (directoryEntry.is_directory())
 					m_CurrentDirectory /= path.filename();
 			}
 
-			ImVec2 text = ImGui::CalcTextSize(filename.c_str());
-			float text_width = text.x;
-
+			float text_width = ImGui::CalcTextSize(filename.c_str()).x;
 			float text_indentation = (cellSize - text_width) * 0.5f;
-			float min_indentation = 20.0f;
-			if (text_indentation <= min_indentation) {
-				text_indentation = min_indentation;
+			
+			if (text_width > cellSize)
+			{
+				ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + cellSize - GImGui->Style.ItemSpacing.x);
+				ImGui::TextWrapped(filename.c_str());
+				ImGui::PopTextWrapPos();
 			}
-
-			ImGui::SameLine(text_indentation);
-			ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + cellSize - text_indentation);
-			ImGui::SetCursorPosY(ImGui::GetCursorPosY() + cellSize);
-			ImGui::TextWrapped(filename.c_str());
-			ImGui::SetCursorPosY(ImGui::GetCursorPosY() - cellSize + text.y + ImGui::GetStyle().ItemSpacing.y * 3.0f);
-			ImGui::PopTextWrapPos();
+			else
+			{
+				ImGui::SetCursorPosX(ImGui::GetCursorPosX() + text_indentation - GImGui->Style.ItemSpacing.x);
+				ImGui::Text(filename.c_str());
+			}
 
 			ImGui::NextColumn();
 

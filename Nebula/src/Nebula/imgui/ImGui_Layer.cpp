@@ -35,6 +35,8 @@ namespace Nebula {
 		io.FontDefault = io.Fonts->AddFontFromFileTTF("Resources/fonts/OpenSans/Regular.ttf", 18.0f);
 
 		SetDarkThemeColour();
+		
+		ImGui::GetStyle().FrameRounding = 4.0f;
 
 		Application& app = Application::Get();
 		GLFWwindow* window = static_cast<GLFWwindow*>(app.GetWindow().GetNativeWindow());
@@ -58,7 +60,6 @@ namespace Nebula {
 			e.Handled |= e.IsInCategory(MouseCat) & io.WantCaptureMouse;
 			e.Handled |= e.IsInCategory(KeyboardCat) & io.WantCaptureKeyboard;
 		}
-
 	}
 
 	void ImGuiLayer::Begin() {
@@ -90,38 +91,80 @@ namespace Nebula {
 		}
 	}
 
-	void ImGuiLayer::SetDarkThemeColour() {
+	void ImGuiLayer::SetColours(ImVec4 primary, ImVec4 text, ImVec4 regular, ImVec4 hovered, ImVec4 active) {
 		auto& colours = ImGui::GetStyle().Colors;
-		colours[ImGuiCol_WindowBg] = ImVec4{ 0.2f, 0.205f, 0.21f, 1.0f };
-		
+		colours[ImGuiCol_WindowBg] = primary;
+		colours[ImGuiCol_MenuBarBg] = active;
+		colours[ImGuiCol_PopupBg] = primary;
+		colours[ImGuiCol_Text] = text;
+
 		// Headers
-		colours[ImGuiCol_Header] = ImVec4{ 0.2f, 0.205f, 0.21f, 1.0f };
-		colours[ImGuiCol_HeaderHovered] = ImVec4{ 0.3f, 0.305f, 0.31f, 1.0f };
-		colours[ImGuiCol_HeaderActive] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
+		colours[ImGuiCol_Header] = active;
+		colours[ImGuiCol_HeaderHovered] = hovered;
+		colours[ImGuiCol_HeaderActive] = regular;
 
 		// Buttons
-		colours[ImGuiCol_Button] = ImVec4{ 0.125f, 0.13f, 0.135f, 1.0f };
-		colours[ImGuiCol_ButtonHovered] = ImVec4{ 0.3f, 0.305f, 0.31f, 1.0f };
-		colours[ImGuiCol_ButtonActive] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
+		colours[ImGuiCol_Button] = regular;
+		colours[ImGuiCol_ButtonHovered] = hovered;
+		colours[ImGuiCol_ButtonActive] = active;
 
 		// Frame BG
-		colours[ImGuiCol_FrameBg] = ImVec4{ 0.1f, 0.105f, 0.11f, 1.0f };
-		colours[ImGuiCol_FrameBgHovered] = ImVec4{ 0.3f, 0.305f, 0.31f, 1.0f };
-		colours[ImGuiCol_FrameBgActive] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
+		colours[ImGuiCol_FrameBg] = regular;
+		colours[ImGuiCol_FrameBgHovered] = hovered;
+		colours[ImGuiCol_FrameBgActive] = active;
 
 		// Tabs
-		colours[ImGuiCol_Tab] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
-		colours[ImGuiCol_TabHovered] = ImVec4{ 0.38f, 0.3805f, 0.381f, 1.0f };
-		colours[ImGuiCol_TabActive] = ImVec4{ 0.28f, 0.2805f, 0.281f, 1.0f };
-		colours[ImGuiCol_TabUnfocused] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
-		colours[ImGuiCol_TabUnfocusedActive] = ImVec4{ 0.2f, 0.205f, 0.21f, 1.0f };
+		colours[ImGuiCol_Tab] = regular;
+		colours[ImGuiCol_TabHovered] = hovered; 
+		colours[ImGuiCol_TabActive] = hovered;
+		colours[ImGuiCol_TabUnfocused] = regular;
+		colours[ImGuiCol_TabUnfocusedActive] = primary;
 
 		// Title
-		colours[ImGuiCol_TitleBg] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
-		colours[ImGuiCol_TitleBgActive] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
-		colours[ImGuiCol_TitleBgCollapsed] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
+		colours[ImGuiCol_TitleBg] = active;
+		colours[ImGuiCol_TitleBgActive] = active;
+		colours[ImGuiCol_TitleBgCollapsed] = active;
 	}
 
+	void ImGuiLayer::SetDarkThemeColour() {
+		ImVec4 primary = ImVec4{ 0.2f, 0.205f, 0.21f, 1.0f };
+		ImVec4 text = ImVec4{ 1.0f, 1.0f, 1.0f, 1.0f };
+		ImVec4 regular = ImVec4{ 0.1f, 0.105f, 0.11f, 1.0f };
+		ImVec4 hovered = ImVec4{ 0.3f, 0.305f, 0.31f, 1.0f };
+		ImVec4 active  = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
+
+		SetColours(primary, text, regular, hovered, active);
+	}
+
+	void ImGuiLayer::SetColdThemeColour() {
+		ImVec4 primary = ImVec4{ 0.175f, 0.2f, 0.26f, 1.0f };
+		ImVec4 text = ImVec4{ 1.0f, 1.0f, 1.0f, 1.0f };
+		ImVec4 regular = ImVec4{ 0.075f, 0.105f, 0.16f, 1.0f };
+		ImVec4 hovered = ImVec4{ 0.275f, 0.305f, 0.36f, 1.0f };
+		ImVec4 active = ImVec4{ 0.125f, 0.1505f, 0.201f, 1.0f };
+
+		SetColours(primary, text, regular, hovered, active);
+	}
+
+	void ImGuiLayer::SetLightThemeColour() {
+		ImVec4 primary = ImVec4{ 0.8f, 0.805f, 0.81f, 1.0f };
+		ImVec4 text = ImVec4{ 0.115f, 0.12f, 0.125f, 1.0f };
+		ImVec4 regular = ImVec4{ 0.5f, 0.505f, 0.51f, 1.0f };
+		ImVec4 hovered = ImVec4{ 0.9f, 0.905f, 0.91f, 1.0f };
+		ImVec4 active = ImVec4{ 0.55f, 0.5505f, 0.551f, 1.0f };
+
+		SetColours(primary, text, regular, hovered, active);
+	}
+
+	void ImGuiLayer::SetWarmThemeColour() {
+		ImVec4 primary = ImVec4{ 0.9f, 0.755f, 0.61f, 1.0f };
+		ImVec4 text = ImVec4{ 0.115f, 0.12f, 0.125f, 1.0f };
+		ImVec4 regular = ImVec4{ 0.7f, 0.505f, 0.41f, 1.0f };
+		ImVec4 hovered = ImVec4{ 1.0f, 0.905f, 0.61f, 1.0f };
+		ImVec4 active = ImVec4{ 0.65f, 0.4505f, 0.351f, 1.0f };
+
+		SetColours(primary, text, regular, hovered, active);
+	}
 
 	uint32_t ImGuiLayer::GetActiveWidgetID() const
 	{
