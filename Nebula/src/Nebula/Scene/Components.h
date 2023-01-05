@@ -153,6 +153,7 @@ namespace Nebula {
 		enum class BodyType { Static = 0, Dynamic, Kinematic };
 		BodyType Type = BodyType::Dynamic;
 		bool FixedRotation = false;
+		bool Trigger = false;
 
 		enum Filters {
 			A = 0x0001, B = 0x0002, C = 0x0004, D = 0x0008,

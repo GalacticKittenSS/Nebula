@@ -268,6 +268,7 @@ namespace Nebula {
 			fixtureDef.restitution = bc2d.Restitution;
 			fixtureDef.restitutionThreshold = bc2d.RestitutionThreshold;
 
+			fixtureDef.isSensor = rb2d.Trigger;
 			fixtureDef.filter.categoryBits = bc2d.Category;
 			fixtureDef.filter.maskBits = bc2d.Mask;
 			
@@ -288,6 +289,7 @@ namespace Nebula {
 			fixtureDef.restitution = cc.Restitution;
 			fixtureDef.restitutionThreshold = cc.RestitutionThreshold;
 
+			fixtureDef.isSensor = rb2d.Trigger;
 			fixtureDef.filter.categoryBits = cc.Category;
 			fixtureDef.filter.maskBits = cc.Mask;
 

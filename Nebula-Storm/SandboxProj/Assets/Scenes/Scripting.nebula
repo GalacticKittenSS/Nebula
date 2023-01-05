@@ -19,6 +19,7 @@ Entities:
     Rigidbody2DComponent:
       BodyType: Dynamic
       FixedRotation: false
+      IsTrigger: false
   - Entity: 10596639639892002622
     TagComponent:
       Tag: Sprite
@@ -39,6 +40,7 @@ Entities:
     Rigidbody2DComponent:
       BodyType: Static
       FixedRotation: false
+      IsTrigger: false
   - Entity: 10433741447867120391
     TagComponent:
       Tag: Sprite
@@ -59,6 +61,7 @@ Entities:
     Rigidbody2DComponent:
       BodyType: Static
       FixedRotation: false
+      IsTrigger: false
   - Entity: 14893174671831111502
     TagComponent:
       Tag: Player
@@ -81,6 +84,7 @@ Entities:
     Rigidbody2DComponent:
       BodyType: Dynamic
       FixedRotation: false
+      IsTrigger: false
   - Entity: 5354795815195642397
     TagComponent:
       Tag: Camera
