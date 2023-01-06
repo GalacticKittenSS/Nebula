@@ -23,6 +23,7 @@ namespace Nebula {
 		Contact c;
 		c.EntityA = *a;
 		c.EntityB = *b;
+		c.IsTypeEnter = true;
 
 		m_Contacts.push_back(c);
 	}
@@ -38,6 +39,7 @@ namespace Nebula {
 		Contact c;
 		c.EntityA = *a;
 		c.EntityB = *b;
+		c.IsTypeEnter = false;
 
 		m_Contacts.push_back(c);
 	}
