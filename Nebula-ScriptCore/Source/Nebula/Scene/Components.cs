@@ -45,6 +45,33 @@
                 InternalCalls.TransformComponent_SetScale(Entity.ID, ref value);
             }
         }
+
+        public Vector3 WorldTranslation
+        {
+            get
+            {
+                InternalCalls.TransformComponent_GetWorldTranslation(Entity.ID, out Vector3 translation);
+                return translation;
+            }
+        }
+
+        public Vector3 WorldRotation
+        {
+            get
+            {
+                InternalCalls.TransformComponent_GetWorldRotation(Entity.ID, out Vector3 rotation);
+                return rotation;
+            }
+        }
+
+        public Vector3 WorldScale
+        {
+            get
+            {
+                InternalCalls.TransformComponent_GetScale(Entity.ID, out Vector3 scale);
+                return scale;
+            }
+        }
     }
 
     public class CameraComponent : Component

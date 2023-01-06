@@ -58,7 +58,16 @@ namespace Nebula
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void TransformComponent_SetScale(ulong entityID, ref Vector3 scale);
-        
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void TransformComponent_GetWorldTranslation(ulong entityID, out Vector3 translation);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void TransformComponent_GetWorldRotation(ulong entityID, out Vector3 rotation);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void TransformComponent_GetWorldScale(ulong entityID, out Vector3 scale);
+
         // CAMERA COMPONENT
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]

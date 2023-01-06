@@ -207,6 +207,41 @@ namespace Nebula {
 		entity.UpdateTransform();
 	}
 
+	static void TransformComponent_GetWorldTranslation(UUID entityID, vec3* out)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+		Entity entity = { entityID, scene };
+		NB_ASSERT(entity);
+
+		WorldTransformComponent& world = entity.GetComponent<WorldTransformComponent>();
+		*out = world.Transform[3];
+	}
+
+	static void TransformComponent_GetWorldRotation(UUID entityID, vec3* out)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+		Entity entity = { entityID, scene };
+		NB_ASSERT(entity);
+
+		vec3 translation, scale;
+		WorldTransformComponent& world = entity.GetComponent<WorldTransformComponent>();
+		DecomposeTransform(world.Transform, translation, *out, scale);
+	}
+
+	static void TransformComponent_GetWorldScale(UUID entityID, vec3* out)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+		Entity entity = { entityID, scene };
+		NB_ASSERT(entity);
+
+		vec3 translation, rotation;
+		WorldTransformComponent& world = entity.GetComponent<WorldTransformComponent>();
+		DecomposeTransform(world.Transform, translation, rotation, *out);
+	}
+
 	// CAMERA COMPONENTS
 
 	static bool CameraComponent_GetPrimary(UUID entityID) 
@@ -1148,7 +1183,11 @@ namespace Nebula {
 		NB_ADD_INTERNAL_CALL(TransformComponent_GetTranslation);
 		NB_ADD_INTERNAL_CALL(TransformComponent_GetRotation);
 		NB_ADD_INTERNAL_CALL(TransformComponent_GetScale);
-		
+
+		NB_ADD_INTERNAL_CALL(TransformComponent_GetWorldTranslation);
+		NB_ADD_INTERNAL_CALL(TransformComponent_GetWorldRotation);
+		NB_ADD_INTERNAL_CALL(TransformComponent_GetWorldScale);
+
 		NB_ADD_INTERNAL_CALL(TransformComponent_SetTranslation);
 		NB_ADD_INTERNAL_CALL(TransformComponent_SetRotation);
 		NB_ADD_INTERNAL_CALL(TransformComponent_SetScale);
