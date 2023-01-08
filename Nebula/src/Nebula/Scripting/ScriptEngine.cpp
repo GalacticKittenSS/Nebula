@@ -496,8 +496,11 @@ namespace Nebula {
 
 	MonoObject* ScriptEngine::GetManagedInstance(UUID uuid)
 	{
-		NB_ASSERT(s_Data->EntityRuntimeInstances.find(uuid) != s_Data->EntityRuntimeInstances.end());
-		return s_Data->EntityRuntimeInstances.at(uuid)->GetManagedObject();
+		auto it = s_Data->EntityRuntimeInstances.find(uuid);
+		if (it == s_Data->EntityRuntimeInstances.end())
+			return nullptr;
+
+		return it->second->GetManagedObject();
 	}
 
 	void ScriptEngine::InitMono()
