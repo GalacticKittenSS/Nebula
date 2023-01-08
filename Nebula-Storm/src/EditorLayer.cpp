@@ -306,6 +306,23 @@ namespace Nebula {
 				if (ImGui::MenuItem("Show Grid", NULL, m_ShowGrid))
 					m_ShowGrid = !m_ShowGrid;
 
+				if (ImGui::BeginMenu("Style"))
+				{
+					if (ImGui::Button("Dark", ImVec2{ 100.0f, 0.0f }))
+						Application::Get().GetImGuiLayer()->SetDarkThemeColour();
+					
+					if (ImGui::Button("Cold", ImVec2{ 100.0f, 0.0f }))
+						Application::Get().GetImGuiLayer()->SetColdThemeColour();
+
+					if (ImGui::Button("Light", ImVec2{ 100.0f, 0.0f }))
+						Application::Get().GetImGuiLayer()->SetLightThemeColour();
+
+					if (ImGui::Button("Warm", ImVec2{ 100.0f, 0.0f }))
+						Application::Get().GetImGuiLayer()->SetWarmThemeColour();
+
+					ImGui::EndMenu();
+				}
+
 				ImGui::EndMenu();
 			}
 
