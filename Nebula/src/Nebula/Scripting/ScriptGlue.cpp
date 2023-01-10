@@ -3,9 +3,11 @@
 
 #include "ScriptEngine.h"
 
-#include "Nebula/Scene/Scene.h"
 #include "Nebula/Core/Input.h"
+#include "Nebula/Core/Application.h"
+#include "Nebula/Scene/Scene.h"
 #include "Nebula/Utils/Time.h"
+#include "Nebula/Utils/Physics2D.h"
 
 #include <mono/metadata/object.h>
 #include <mono/metadata/reflection.h>
@@ -40,6 +42,14 @@ namespace Nebula {
 		}
 		
 		mono_free(cStr);
+	}
+
+	// APPLICATION CLASS
+
+	static void Application_GetWindowSize(vec2* size)
+	{
+		Window& window = Application::Get().GetWindow();
+		*size = { (float)window.GetHeight(), (float)window.GetHeight() };
 	}
 
 	// ENTITY CLASS
@@ -626,6 +636,9 @@ namespace Nebula {
 
 		auto& component = entity.GetComponent<Rigidbody2DComponent>();
 		component.Type = (Rigidbody2DComponent::BodyType)type;
+
+		b2Body* body = (b2Body*)component.RuntimeBody;
+		body->SetType(Utils::Rigibody2DToBox2D(component.Type));
 	}
 
 	static bool Rigidbody2DComponent_GetFixedRotation(UUID entityID) 
@@ -1172,6 +1185,8 @@ namespace Nebula {
 
 	void ScriptGlue::RegisterFunctions() {
 		NB_ADD_INTERNAL_CALL(Native_Log);
+
+		NB_ADD_INTERNAL_CALL(Application_GetWindowSize);
 
 		NB_ADD_INTERNAL_CALL(Entity_HasComponent);
 		NB_ADD_INTERNAL_CALL(Entity_AddComponent);

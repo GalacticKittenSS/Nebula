@@ -8,6 +8,11 @@ namespace Nebula
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void Native_Log(int level, string text);
 
+        // APPLICATION CLASS
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static bool Application_GetWindowSize(out Vector2 size);
+
         // ENTITY CLASS
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]

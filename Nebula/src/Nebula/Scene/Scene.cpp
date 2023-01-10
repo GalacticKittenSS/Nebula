@@ -2,8 +2,9 @@
 #include "Scene.h"
 
 #include "Nebula/Renderer/Renderer2D.h"
-#include "Nebula/Utils/Time.h"
 #include "Nebula/Scripting/ScriptEngine.h"
+#include "Nebula/Utils/Time.h"
+#include "Nebula/Utils/Physics2D.h"
 
 #include "Components.h"
 #include "Entity.h"
@@ -16,18 +17,6 @@
 #include "box2d/b2_circle_shape.h"
 
 namespace Nebula {
-	static b2BodyType Rigibody2DToBox2D(Rigidbody2DComponent::BodyType bodyType) {
-		switch (bodyType)
-		{
-		case Rigidbody2DComponent::BodyType::Static:	return b2BodyType::b2_staticBody;
-		case Rigidbody2DComponent::BodyType::Dynamic:	return b2BodyType::b2_dynamicBody;
-		case Rigidbody2DComponent::BodyType::Kinematic: return b2BodyType::b2_kinematicBody;
-		}
-
-		NB_ASSERT(false, "Unknown Rigidbody Type!");
-		return b2BodyType::b2_staticBody;
-	}
-
 	template<typename... Component>
 	static void CopyComponent(entt::registry& dst, entt::registry& src, const std::unordered_map<UUID, entt::entity>& map) {
 		([&]()
@@ -243,7 +232,7 @@ namespace Nebula {
 		DecomposeTransform(world.Transform, translation, rotation, scale);
 
 		b2BodyDef bodyDef;
-		bodyDef.type = Rigibody2DToBox2D(rb2d.Type);
+		bodyDef.type = Utils::Rigibody2DToBox2D(rb2d.Type);
 		bodyDef.position.Set(translation.x, translation.y);
 		bodyDef.angle = rotation.z;
 		bodyDef.fixedRotation = rb2d.FixedRotation;
