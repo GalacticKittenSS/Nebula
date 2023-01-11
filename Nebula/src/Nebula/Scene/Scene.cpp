@@ -153,7 +153,16 @@ namespace Nebula {
 	}
 
 	void Scene::DestroyEntity(Entity entity) {
+		if (!entity)
+			return;
+		
 		UUID entityID = entity.GetUUID();
+
+		if (m_ContactListener->IsFlushing())
+		{
+			m_ContactListener->DeleteEntity(entityID);
+			return;
+		}
 
 		if (entity.HasComponent<NativeScriptComponent>())
 		{
@@ -163,11 +172,15 @@ namespace Nebula {
 
 		if (entity.HasComponent<Rigidbody2DComponent>())
 		{
-			if (b2Body* body = (b2Body*)entity.GetComponent<Rigidbody2DComponent>().RuntimeBody)
+			Rigidbody2DComponent& rb2d = entity.GetComponent<Rigidbody2DComponent>();
+			if (b2Body* body = (b2Body*)rb2d.RuntimeBody)
 			{
-				delete (Entity*)body->GetUserData().pointer;
-				body->GetUserData().pointer = NULL;
+				Entity* entity = (Entity*)body->GetUserData().pointer;
+				
 				m_PhysicsWorld->DestroyBody(body);
+				rb2d.RuntimeBody = nullptr;
+
+				delete entity;
 			}
 		}
 		
@@ -300,7 +313,7 @@ namespace Nebula {
 
 	void Scene::UpdatePhysics() {
 		m_PhysicsWorld->Step(Time::DeltaTime(), 6, 2);
-		m_ContactListener->Clear();
+		m_ContactListener->Flush();
 
 		auto view = m_Registry.view<Rigidbody2DComponent>();
 		for (auto e : view) {

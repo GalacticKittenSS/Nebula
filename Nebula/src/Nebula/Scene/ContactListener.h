@@ -22,12 +22,17 @@ namespace Nebula
 		void BeginContact(b2Contact* contact) override;
 		void EndContact(b2Contact* contact) override;
 
-		void Clear();
+		void Flush();
+		void DeleteEntity(UUID entity);
+
+		inline bool IsFlushing() const { return m_FlushingContacts; }
 	private:
 		void CallEntityEnter(UUID entity, UUID other);
 		void CallEntityExit(UUID entity, UUID other);
 
 		Scene* m_Scene;
 		Array<Contact> m_Contacts;
+		Array<UUID> m_EntitiesToDelete;
+		bool m_FlushingContacts = false, m_DeletingEntities = false;
 	};
 }
