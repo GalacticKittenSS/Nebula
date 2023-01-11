@@ -31,6 +31,9 @@ namespace Nebula
         internal extern static object Entity_GetScriptInstance(ulong entityID);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static object Entity_SetScriptInstance(ulong entityID, Type script);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static ulong Entity_FindChildByName(ulong entityID, string name);
         
         // INPUT CLASS

@@ -107,6 +107,24 @@ namespace Nebula {
 		return ScriptEngine::GetManagedInstance(entityID);
 	}
 
+	static MonoObject* Entity_SetScriptInstance(UUID entityID, MonoReflectionType* scriptType)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+		Entity entity = { entityID, scene };
+		NB_ASSERT(entity);
+
+		MonoClass* monoClass = mono_type_get_class(mono_reflection_type_get_type(scriptType));
+		std::string name = mono_class_get_name(monoClass);
+		std::string nameSpace = mono_class_get_namespace(monoClass);
+
+		auto& component = entity.AddOrReplaceComponent<ScriptComponent>();
+		component.ClassName = fmt::format("{}.{}", nameSpace, name);
+
+		Ref<ScriptInstance> instance = ScriptEngine::CreateScriptInstance(entity);
+		return ScriptEngine::GetManagedInstance(entityID);
+	}
+
 	static uint64_t Entity_FindChildByName(UUID entityID, MonoString* name)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
@@ -1193,6 +1211,7 @@ namespace Nebula {
 		NB_ADD_INTERNAL_CALL(Entity_GetName);
 		NB_ADD_INTERNAL_CALL(Entity_SetName);
 		NB_ADD_INTERNAL_CALL(Entity_GetScriptInstance);
+		NB_ADD_INTERNAL_CALL(Entity_SetScriptInstance);
 		NB_ADD_INTERNAL_CALL(Entity_FindChildByName);
 
 		NB_ADD_INTERNAL_CALL(TransformComponent_GetTranslation);

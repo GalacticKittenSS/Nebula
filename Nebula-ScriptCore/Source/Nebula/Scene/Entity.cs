@@ -94,6 +94,13 @@ namespace Nebula
             return instance as T;
         }
 
+        public T SetAs<T>() where T : Entity, new()
+        {
+            Type scriptType = typeof(T);
+            object instance = InternalCalls.Entity_SetScriptInstance(ID, scriptType);
+            return instance as T;
+        }
+
         public Entity FindChildByName(string name)
         {
             ulong id = InternalCalls.Entity_FindChildByName(ID, name);
