@@ -25,3 +25,6 @@
 	path = Nebula/Modules/Box2D
 	url = https://github.com/TheCherno/box2d
 	ignore = untracked
+[submodule "Nebula/Modules/glm"]
+	path = Nebula/Modules/glm
+	url = https://github.com/g-truc/glm

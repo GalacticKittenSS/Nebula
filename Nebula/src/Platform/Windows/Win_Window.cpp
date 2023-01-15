@@ -12,6 +12,8 @@
 
 #include "Platform/OpenGl/OpenGL_Context.h"
 
+#include <stb_image.h>
+
 namespace Nebula {
 	static uint8_t s_GLFWWindowCount = 0;
 
@@ -188,8 +190,8 @@ namespace Nebula {
 			glfwGetMonitorPos(monitors[i], &mx, &my);
 			
 			int overlap =
-				Max(0, Min(int(m_Data.PosX + m_Data.Width ), mx + mode->width ) - Max(int(m_Data.PosX), mx)) *
-				Max(0, Min(int(m_Data.PosY + m_Data.Height), my + mode->height) - Max(int(m_Data.PosY), my));
+				Maths::Max(0, Maths::Min(int(m_Data.PosX + m_Data.Width ), mx + mode->width ) - Maths::Max(int(m_Data.PosX), mx)) *
+				Maths::Max(0, Maths::Min(int(m_Data.PosY + m_Data.Height), my + mode->height) - Maths::Max(int(m_Data.PosY), my));
 
 			if (bestoverlap < overlap) {
 				bestoverlap = overlap;

@@ -6,7 +6,7 @@
 #include <ImGuizmo.h>
 
 namespace Nebula {
-	static vec4 s_CubeVertexPos[] = {
+	static glm::vec4 s_CubeVertexPos[] = {
 		//Front
 		{ -0.5f, -0.5f, -0.5f, 1 },
 		{  0.5f, -0.5f, -0.5f, 1 },
@@ -43,7 +43,7 @@ namespace Nebula {
 		{  0.5f, -0.5f,  0.5f, 1 },
 		{ -0.5f, -0.5f,  0.5f, 1 }
 	};
-	static vec2 s_CubeTexturePos[] = {
+	static glm::vec2 s_CubeTexturePos[] = {
 		//Front
 		{ 0.50f, 0.345f },
 		{ 0.25f, 0.345f },
@@ -135,7 +135,7 @@ namespace Nebula {
 		auto [mx, my] = ImGui::GetMousePos();
 		mx -= m_ViewPortBounds[0].x;
 		my -= m_ViewPortBounds[0].y;
-		vec2 viewportSize = m_ViewPortBounds[1] - m_ViewPortBounds[0];
+		glm::vec2 viewportSize = m_ViewPortBounds[1] - m_ViewPortBounds[0];
 		my = viewportSize.y - my;
 
 		if (mx >= 0 && my >= 0 && mx < viewportSize.x && my < viewportSize.y) {
@@ -384,11 +384,11 @@ namespace Nebula {
 			Renderer2D::BeginScene(m_EditorCam);
 
 			{
-				uint32_t vertexCount = sizeof(s_CubeVertexPos) / sizeof(vec4);
-				mat4 transform = translate(m_EditorCam.GetPosition()) * scale(vec3(1000.0f));
+				uint32_t vertexCount = sizeof(s_CubeVertexPos) / sizeof(glm::vec4);
+				glm::mat4 transform = glm::translate(m_EditorCam.GetPosition()) * glm::scale(glm::vec3(1000.0f));
 
 				Renderer2D::DrawQuad(vertexCount, s_CubeVertexPos, s_CubeTexturePos, 
-					transform, vec4(1.0f), m_Backdrop, 1.0f);
+					transform, glm::vec4(1.0f), m_Backdrop, 1.0f);
 			}
 
 			if (Entity selectedEntity = m_SceneHierarchy.GetSelectedEntity())
@@ -405,35 +405,35 @@ namespace Nebula {
 	void EditorLayer::RenderColliders() {
 		// Calculate z index for translation
 		float zIndex = 0.001f;
-		vec3 cameraForwardDirection = m_EditorCam.GetForwardDirection();
-		vec3 projectionCollider = cameraForwardDirection * vec3(zIndex);
+		glm::vec3 cameraForwardDirection = m_EditorCam.GetForwardDirection();
+		glm::vec3 projectionCollider = cameraForwardDirection * glm::vec3(zIndex);
 
 		auto CircleView = m_ActiveScene->GetAllEntitiesWith<WorldTransformComponent, CircleColliderComponent>();
 		for (auto entity : CircleView) {
 			auto [wtc, cc] = CircleView.get<WorldTransformComponent, CircleColliderComponent>(entity);
 
-			vec3 wTranslation, wRotation, wScale;
-			DecomposeTransform(wtc.Transform, wTranslation, wRotation, wScale);
+			glm::vec3 wTranslation, wRotation, wScale;
+			Maths::DecomposeTransform(wtc.Transform, wTranslation, wRotation, wScale);
 
-			vec3 Scale = wScale.x * vec3(cc.Radius * 2.0f);
+			glm::vec3 Scale = wScale.x * glm::vec3(cc.Radius * 2.0f);
 
-			mat4 transform = translate(wTranslation) * toMat4(quat(wRotation))
-				* translate(vec3(cc.Offset, -projectionCollider.z)) * scale(Scale);
-			Renderer2D::DrawCircle(transform, vec4(0.0f, 1.0f, 0.0f, 1.0f), 0.05f);
+			glm::mat4 transform = glm::translate(wTranslation) * glm::toMat4(glm::quat(wRotation))
+				* glm::translate(glm::vec3(cc.Offset, -projectionCollider.z)) * glm::scale(Scale);
+			Renderer2D::DrawCircle(transform, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), 0.05f);
 		}
 
 		auto BoxView = m_ActiveScene->GetAllEntitiesWith<WorldTransformComponent, BoxCollider2DComponent>();
 		for (auto entity : BoxView) {
 			auto [wtc, bc2d] = BoxView.get<WorldTransformComponent, BoxCollider2DComponent>(entity);
 
-			vec3 wTranslation, wRotation, wScale;
-			DecomposeTransform(wtc.Transform, wTranslation, wRotation, wScale);
+			glm::vec3 wTranslation, wRotation, wScale;
+			Maths::DecomposeTransform(wtc.Transform, wTranslation, wRotation, wScale);
 
-			vec3 Scale = wScale * vec3(bc2d.Size) * 2.0f;
+			glm::vec3 Scale = wScale * glm::vec3(bc2d.Size, 0.0f) * 2.0f;
 
-			mat4 transform = translate(wTranslation) * toMat4(quat(wRotation)) *
-				translate(vec3(bc2d.Offset, zIndex)) * scale(Scale);
-			Renderer2D::Draw(NB_RECT, transform, vec4(0.0f, 1.0f, 0.0f, 1.0f));
+			glm::mat4 transform = glm::translate(wTranslation) * glm::toMat4(glm::quat(wRotation)) *
+				glm::translate(glm::vec3(bc2d.Offset, zIndex)) * glm::scale(Scale);
+			Renderer2D::Draw(NB_RECT, transform, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
 		}
 	}
 
@@ -443,9 +443,9 @@ namespace Nebula {
 			|| selectedEntity.HasComponent<CircleRendererComponent>())
 		{
 			const WorldTransformComponent& wtc = selectedEntity.GetComponent<WorldTransformComponent>();
-			mat4 transform = wtc.Transform * translate(vec3(0.0f, 0.0f, 0.01f));
+			glm::mat4 transform = wtc.Transform * glm::translate(glm::vec3(0.0f, 0.0f, 0.01f));
 
-			Renderer2D::Draw(NB_RECT, transform, vec4(1.0f, 0.5f, 0.0f, 1.0f));
+			Renderer2D::Draw(NB_RECT, transform, glm::vec4(1.0f, 0.5f, 0.0f, 1.0f));
 		}
 		
 		for (auto& id : selectedEntity.GetParentChild().ChildrenIDs)
@@ -496,18 +496,18 @@ namespace Nebula {
 			ImGuizmo::SetRect(m_ViewPortBounds[0].x, m_ViewPortBounds[0].y, m_ViewPortBounds[1].x - m_ViewPortBounds[0].x, m_ViewPortBounds[1].y - m_ViewPortBounds[0].y);
 			ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, ImGui::GetWindowWidth(), ImGui::GetWindowHeight());
 
-			const mat4& cameraProj = m_EditorCam.GetProjection();
-			mat4 cameraView = m_EditorCam.GetViewMatrix();
+			const glm::mat4& cameraProj = m_EditorCam.GetProjection();
+			glm::mat4 cameraView = m_EditorCam.GetViewMatrix();
 
 			if (m_ShowGrid)
-				ImGuizmo::DrawGrid(value_ptr(cameraView), value_ptr(cameraProj), value_ptr(mat4(1.0f)), 50.0f);
+				ImGuizmo::DrawGrid(glm::value_ptr(cameraView), glm::value_ptr(cameraProj), glm::value_ptr(glm::mat4(1.0f)), 50.0f);
 
 			Entity selectedEntity = m_SceneHierarchy.GetSelectedEntity();
 			if (selectedEntity && m_GizmoType != -1) 
 			{
 				auto& tc = selectedEntity.GetComponent<TransformComponent>();
 				auto& wc = selectedEntity.GetComponent<WorldTransformComponent>();
-				mat4 transform = wc.Transform;
+				glm::mat4 transform = wc.Transform;
 				
 				bool snap = Input::IsKeyPressed(Key::LeftControl);
 				float snapValue = 0.25f;
@@ -521,11 +521,11 @@ namespace Nebula {
 
 				if (ImGuizmo::IsUsing()) 
 				{
-					vec3 translation, rotation, scale;
-					DecomposeTransform(transform, translation, rotation, scale);
+					glm::vec3 translation, rotation, scale;
+					Maths::DecomposeTransform(transform, translation, rotation, scale);
 					
-					vec3 wTranslation, wRotation, wScale;
-					DecomposeTransform(wc.Transform, wTranslation, wRotation, wScale);
+					glm::vec3 wTranslation, wRotation, wScale;
+					Maths::DecomposeTransform(wc.Transform, wTranslation, wRotation, wScale);
 
 					tc.Translation += translation - wTranslation;
 					tc.Rotation += rotation - wRotation;

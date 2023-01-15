@@ -20,13 +20,13 @@ namespace Nebula {
 		static void Submit(
 			const Ref<Shader>& shader,
 			const Ref<VertexArray>& vertexArray,
-			const mat4& transform = mat4(1.0f)
+			const glm::mat4& transform = glm::mat4(1.0f)
 		);
 
 		inline static RendererAPI::API GetAPI() { return RendererAPI::GetAPI(); }
 	private:
 		struct SceneData {
-			mat4 ViewProjectMatrix;
+			glm::mat4 ViewProjectMatrix;
 		};
 
 		static Scope<SceneData> s_Data;

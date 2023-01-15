@@ -26,7 +26,7 @@ namespace Nebula {
 		
 		struct CameraData
 		{
-			mat4 ViewProjection;
+			glm::mat4 ViewProjection;
 		};
 		CameraData CameraBuffer;
 		Ref<UniformBuffer> CameraUniformBuffer;
@@ -35,8 +35,8 @@ namespace Nebula {
 		Ref<VertexArray>	   QuadVertexArray;
 		Ref<VertexBuffer>	  QuadVertexBuffer;
 		
-		vec4* QuadVertexPos = new vec4[4];
-		vec2* QuadTexCoords = new vec2[4];
+		glm::vec4* QuadVertexPos = new glm::vec4[4];
+		glm::vec2* QuadTexCoords = new glm::vec2[4];
 		uint32_t QuadIndexCount = 0;
 		
 		Vertex* QuadVBBase = nullptr;
@@ -46,8 +46,8 @@ namespace Nebula {
 		Ref<VertexArray>   TriangleVertexArray;
 		Ref<VertexBuffer> TriangleVertexBuffer;
 
-		vec4* TriVertexPos = new vec4[3];
-		vec2* TriTexCoords = new vec2[3];
+		glm::vec4* TriVertexPos = new glm::vec4[3];
+		glm::vec2* TriTexCoords = new glm::vec2[3];
 		uint32_t TriIndexCount = 0;
 		
 		Vertex* TriVBBase = nullptr;
@@ -66,7 +66,7 @@ namespace Nebula {
 		Ref<VertexArray>	LineVertexArray;
 		Ref<VertexBuffer>  LineVertexBuffer;
 
-		vec4* LineVertexPos = new vec4[2];
+		glm::vec4* LineVertexPos = new glm::vec4[2];
 		uint32_t LineVertexCount = 0;
 
 		LineVertex* LineVBBase = nullptr;
@@ -77,9 +77,9 @@ namespace Nebula {
 	static Renderer2DData s_Data;
 	
 	struct Vertex {
-		vec3 Position;
-		vec4 Colour;
-		vec2 TexCoord;
+		glm::vec3 Position;
+		glm::vec4 Colour;
+		glm::vec2 TexCoord;
 		float TexIndex;
 		float TilingFactor;
 
@@ -87,9 +87,9 @@ namespace Nebula {
 		int EntityID;
 	};
 	struct CircleVertex {
-		vec3 Position;
-		vec3 LocalPosition;
-		vec4 Colour;
+		glm::vec3 Position;
+		glm::vec3 LocalPosition;
+		glm::vec4 Colour;
 		float Thickness;
 		float Fade;
 
@@ -97,8 +97,8 @@ namespace Nebula {
 		int EntityID;
 	};
 	struct LineVertex {
-		vec3 Position;
-		vec4 Colour;
+		glm::vec3 Position;
+		glm::vec4 Colour;
 		
 		//Editor Only
 		int EntityID;
@@ -267,10 +267,10 @@ namespace Nebula {
 		FontManager::Shutdown();
 	}
 	
-	void Renderer2D::BeginScene(const Camera& camera, const mat4& transform) {
+	void Renderer2D::BeginScene(const Camera& camera, const glm::mat4& transform) {
 		NB_PROFILE_FUNCTION();
 		
-		s_Data.CameraBuffer.ViewProjection = camera.GetProjection() * inverse(transform);
+		s_Data.CameraBuffer.ViewProjection = camera.GetProjection() * glm::inverse(transform);
 		s_Data.CameraUniformBuffer->SetData(&s_Data.CameraBuffer, sizeof(Renderer2DData::CameraData));
 
 		ResetBatch();
@@ -292,7 +292,7 @@ namespace Nebula {
 	}
 
 	void Renderer2D::DrawString(const std::string& text, Ref<Font> font, 
-		const mat4& transform, const vec4& colour, uint32_t entityID) 
+		const glm::mat4& transform, const glm::vec4& colour, uint32_t entityID) 
 	{
 		NB_PROFILE_FUNCTION();
 		if (text.empty() || !font)
@@ -324,32 +324,32 @@ namespace Nebula {
 			float u1 = glyph.s1;
 			float v1 = glyph.t1;
 
-			s_Data.QuadVBPtr->Position = transform * vec4(x0, y0, z, 1.0f);
-			s_Data.QuadVBPtr->TexCoord = vec2(u0, v0);
+			s_Data.QuadVBPtr->Position = transform * glm::vec4(x0, y0, z, 1.0f);
+			s_Data.QuadVBPtr->TexCoord = glm::vec2(u0, v0);
 			s_Data.QuadVBPtr->TexIndex = textureIndex;
 			s_Data.QuadVBPtr->TilingFactor = 1.0f;
 			s_Data.QuadVBPtr->Colour = colour;
 			s_Data.QuadVBPtr->EntityID = entityID;
 			s_Data.QuadVBPtr++;
 
-			s_Data.QuadVBPtr->Position = transform * vec4(x0, y1, z, 1.0f);
-			s_Data.QuadVBPtr->TexCoord = vec2(u0, v1);
+			s_Data.QuadVBPtr->Position = transform * glm::vec4(x0, y1, z, 1.0f);
+			s_Data.QuadVBPtr->TexCoord = glm::vec2(u0, v1);
 			s_Data.QuadVBPtr->TexIndex = textureIndex;
 			s_Data.QuadVBPtr->TilingFactor = 1.0f;
 			s_Data.QuadVBPtr->Colour = colour;
 			s_Data.QuadVBPtr->EntityID = entityID;
 			s_Data.QuadVBPtr++;
 
-			s_Data.QuadVBPtr->Position = transform * vec4(x1, y1, z, 1.0f);
-			s_Data.QuadVBPtr->TexCoord = vec2(u1, v1);
+			s_Data.QuadVBPtr->Position = transform * glm::vec4(x1, y1, z, 1.0f);
+			s_Data.QuadVBPtr->TexCoord = glm::vec2(u1, v1);
 			s_Data.QuadVBPtr->TexIndex = textureIndex;
 			s_Data.QuadVBPtr->TilingFactor = 1.0f;
 			s_Data.QuadVBPtr->Colour = colour;
 			s_Data.QuadVBPtr->EntityID = entityID;
 			s_Data.QuadVBPtr++;
 
-			s_Data.QuadVBPtr->Position = transform * vec4(x1, y0, z, 1.0f);
-			s_Data.QuadVBPtr->TexCoord = vec2(u1, v0);
+			s_Data.QuadVBPtr->Position = transform * glm::vec4(x1, y0, z, 1.0f);
+			s_Data.QuadVBPtr->TexCoord = glm::vec2(u1, v0);
 			s_Data.QuadVBPtr->TexIndex = textureIndex;
 			s_Data.QuadVBPtr->TilingFactor = 1.0f;
 			s_Data.QuadVBPtr->Colour = colour;
@@ -361,8 +361,8 @@ namespace Nebula {
 		}
 	}
 
-	void Renderer2D::DrawTri(const uint32_t vertexCount, const vec4* vertexPos, vec2* texCoords,
-		const mat4& transform, const vec4& colour, Ref<Texture2D> texture, float tiling, uint32_t entityID)
+	void Renderer2D::DrawTri(const uint32_t vertexCount, const glm::vec4* vertexPos, glm::vec2* texCoords,
+		const glm::mat4& transform, const glm::vec4& colour, Ref<Texture2D> texture, float tiling, uint32_t entityID)
 	{
 		NB_PROFILE_FUNCTION();
 
@@ -374,8 +374,8 @@ namespace Nebula {
 		s_Data.TriIndexCount += vertexCount;
 	}
 
-	void Renderer2D::DrawQuad(const uint32_t vertexCount, const vec4* vertexPos, vec2* texCoords,
-		const mat4& transform, const vec4& colour, Ref<Texture2D> texture, float tiling, uint32_t entityID)
+	void Renderer2D::DrawQuad(const uint32_t vertexCount, const glm::vec4* vertexPos, glm::vec2* texCoords,
+		const glm::mat4& transform, const glm::vec4& colour, Ref<Texture2D> texture, float tiling, uint32_t entityID)
 	{
 		NB_PROFILE_FUNCTION();
 		if (s_Data.QuadIndexCount >= s_Data.MaxIndices)
@@ -386,7 +386,7 @@ namespace Nebula {
 		s_Data.QuadIndexCount += uint32_t(vertexCount * 1.5);
 	}
 
-	void Renderer2D::DrawCircle(const mat4& transform, const vec4& colour, const float thickness, const float fade, uint32_t entityID) {
+	void Renderer2D::DrawCircle(const glm::mat4& transform, const glm::vec4& colour, const float thickness, const float fade, uint32_t entityID) {
 		NB_PROFILE_FUNCTION();
 
 		if (s_Data.CircleIndexCount >= s_Data.MaxIndices)
@@ -396,7 +396,7 @@ namespace Nebula {
 		s_Data.CircleIndexCount += 6;
 	}
 
-	void Renderer2D::DrawLine(const vec3& p0, const vec3& p1, const vec4& colour, int entityID) {
+	void Renderer2D::DrawLine(const glm::vec3& p0, const glm::vec3& p1, const glm::vec4& colour, int entityID) {
 		s_Data.LineVBPtr->Position = p0;
 		s_Data.LineVBPtr->Colour = colour;
 		s_Data.LineVBPtr->EntityID = entityID;
@@ -413,21 +413,21 @@ namespace Nebula {
 	void Renderer2D::Draw(const uint32_t type, Entity& entity) {
 		NB_PROFILE_FUNCTION();
 
-		mat4 transform = entity.GetComponent<WorldTransformComponent>().Transform;
+		glm::mat4 transform = entity.GetComponent<WorldTransformComponent>().Transform;
 		switch (type)
 		{
 		case NB_RECT: {
-			vec4 colour = { 1, 1, 1, 1 };
+			glm::vec4 colour = { 1, 1, 1, 1 };
 
 			if (entity.HasComponent<SpriteRendererComponent>())
 				colour = entity.GetComponent<SpriteRendererComponent>().Colour;
 			else if (entity.HasComponent<CircleRendererComponent>())
 				colour = entity.GetComponent<CircleRendererComponent>().Colour;
 
-			vec3 p0 = transform * vec4(-0.5f, -0.5f, 0.0f, 1.0f);
-			vec3 p1 = transform * vec4(0.5f, -0.5f, 0.0f, 1.0f);
-			vec3 p2 = transform * vec4(0.5f, 0.5f, 0.0f, 1.0f);
-			vec3 p3 = transform * vec4(-0.5f, 0.5f, 0.0f, 1.0f);
+			glm::vec3 p0 = transform * glm::vec4(-0.5f, -0.5f, 0.0f, 1.0f);
+			glm::vec3 p1 = transform * glm::vec4(0.5f, -0.5f, 0.0f, 1.0f);
+			glm::vec3 p2 = transform * glm::vec4(0.5f, 0.5f, 0.0f, 1.0f);
+			glm::vec3 p3 = transform * glm::vec4(-0.5f, 0.5f, 0.0f, 1.0f);
 
 			DrawLine(p0, p1, colour, entity);
 			DrawLine(p1, p2, colour, entity);
@@ -443,7 +443,7 @@ namespace Nebula {
 		}
 		case NB_LINE: {
 			//TODO: Line Renderer Component
-			DrawLine(s_Data.LineVertexPos[0] * transform[3], s_Data.LineVertexPos[1] * transform[3], vec4(1.0f));
+			DrawLine(s_Data.LineVertexPos[0] * transform[3], s_Data.LineVertexPos[1] * transform[3], glm::vec4(1.0f));
 			break;
 		}
 		case NB_QUAD: {
@@ -472,13 +472,13 @@ namespace Nebula {
 		}
 	}
 
-	void Renderer2D::Draw(const uint32_t type, const mat4& transform, const vec4& colour, Ref<Texture2D> texture, float tiling) {
+	void Renderer2D::Draw(const uint32_t type, const glm::mat4& transform, const glm::vec4& colour, Ref<Texture2D> texture, float tiling) {
 		switch (type) {
 		case NB_RECT: {
-			vec3 p0 = transform * s_Data.QuadVertexPos[0];
-			vec3 p1 = transform * s_Data.QuadVertexPos[1];
-			vec3 p2 = transform * s_Data.QuadVertexPos[2];
-			vec3 p3 = transform * s_Data.QuadVertexPos[3];
+			glm::vec3 p0 = transform * s_Data.QuadVertexPos[0];
+			glm::vec3 p1 = transform * s_Data.QuadVertexPos[1];
+			glm::vec3 p2 = transform * s_Data.QuadVertexPos[2];
+			glm::vec3 p3 = transform * s_Data.QuadVertexPos[3];
 
 			DrawLine(p0, p1, colour);
 			DrawLine(p1, p2, colour);
@@ -510,13 +510,13 @@ namespace Nebula {
 		}
 	}
 	
-	void Renderer2D::Draw(const uint32_t type, const vec4* vertexPos, vec2* texCoords, 
-		const mat4& transform, const vec4& colour, Ref<Texture2D> texture, float tiling) {
-		uint32_t size = sizeof(vertexPos) / sizeof(vec4);
+	void Renderer2D::Draw(const uint32_t type, const glm::vec4* vertexPos, glm::vec2* texCoords, 
+		const glm::mat4& transform, const glm::vec4& colour, Ref<Texture2D> texture, float tiling) {
+		uint32_t size = sizeof(vertexPos) / sizeof(glm::vec4);
 		switch (type) {
 			case NB_QUAD:
 				if (!texCoords) {
-					texCoords = new vec2[size];
+					texCoords = new glm::vec2[size];
 					for (uint32_t i = 0; i < size; i += 4) {
 						texCoords[i + 0] = s_Data.QuadVertexPos[0];
 						texCoords[i + 1] = s_Data.QuadVertexPos[1];
@@ -530,7 +530,7 @@ namespace Nebula {
 
 			case NB_TRI:
 				if (!texCoords) {
-					texCoords = new vec2[size];
+					texCoords = new glm::vec2[size];
 					for (uint32_t i = 0; i < size; i += 4) {
 						texCoords[i + 0] = s_Data.TriVertexPos[0];
 						texCoords[i + 1] = s_Data.TriVertexPos[1];
@@ -562,8 +562,8 @@ namespace Nebula {
 		return textureIndex;
 	}
 
-	Vertex* Renderer2D::CalculateVertexData(Vertex* vertexPtr, const uint32_t vertexCount, const vec4* vertexPos,
-		const mat4& transform, const vec4& colour, Ref<Texture2D> texture, vec2* texCoord, float tiling, uint32_t entityID)
+	Vertex* Renderer2D::CalculateVertexData(Vertex* vertexPtr, const uint32_t vertexCount, const glm::vec4* vertexPos,
+		const glm::mat4& transform, const glm::vec4& colour, Ref<Texture2D> texture, glm::vec2* texCoord, float tiling, uint32_t entityID)
 	{
 		NB_PROFILE_FUNCTION();
 
@@ -582,7 +582,7 @@ namespace Nebula {
 		return vertexPtr;
 	}
 
-	CircleVertex* Renderer2D::CalculateVertexData(CircleVertex* vertexPtr, const uint32_t vertexCount, const vec4* vertexPos, const mat4& transform, const vec4& colour, float thickness, float fade, uint32_t entityID) 
+	CircleVertex* Renderer2D::CalculateVertexData(CircleVertex* vertexPtr, const uint32_t vertexCount, const glm::vec4* vertexPos, const glm::mat4& transform, const glm::vec4& colour, float thickness, float fade, uint32_t entityID) 
 	{
 		NB_PROFILE_FUNCTION();
 

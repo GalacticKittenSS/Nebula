@@ -54,7 +54,7 @@ namespace Nebula {
 		glClearColor(r, g, b, a);
 	}
 
-	void OpenGL_RendererAPI::SetClearColour(const vec4& colour) {
+	void OpenGL_RendererAPI::SetClearColour(const glm::vec4& colour) {
 		glClearColor(colour.r, colour.g, colour.b, colour.a);
 	}
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Nebula/Maths/Maths.h"
+#include "Nebula/Maths/Transform.h"
 
 #include "Nebula/Renderer/Camera.h"
 #include "Nebula/Renderer/Fonts.h"
@@ -46,21 +47,21 @@ namespace Nebula {
 	};
 
 	struct TransformComponent {
-		vec3 Translation = { 0.0f, 0.0f, 0.0f };
-		vec3 Rotation =	{ 0.0f, 0.0f, 0.0f };
-		vec3 Scale = { 1.0f, 1.0f, 1.0f };
+		glm::vec3 Translation = { 0.0f, 0.0f, 0.0f };
+		glm::vec3 Rotation =	{ 0.0f, 0.0f, 0.0f };
+		glm::vec3 Scale = { 1.0f, 1.0f, 1.0f };
 
 		TransformComponent() = default;
 		TransformComponent(const TransformComponent&) = default;
 
-		inline operator mat4() const { return CalculateMatrix(); }
-		inline mat4 CalculateMatrix() const {
-			return translate(Translation) * toMat4(quat(Rotation)) * scale(Scale);
+		inline operator glm::mat4() const { return CalculateMatrix(); }
+		inline glm::mat4 CalculateMatrix() const {
+			return glm::translate(Translation) * glm::toMat4(glm::quat(Rotation)) * glm::scale(Scale);
 		}
 	};
 
 	struct WorldTransformComponent {
-		mat4 Transform = mat4(1.0f);
+		glm::mat4 Transform = glm::mat4(1.0f);
 
 		WorldTransformComponent() = default;
 		WorldTransformComponent(const WorldTransformComponent&) = default;
@@ -98,11 +99,11 @@ namespace Nebula {
 	};
 
 	struct SpriteRendererComponent {
-		vec4 Colour{ 1.0f, 1.0f, 1.0f, 1.0f };
+		glm::vec4 Colour{ 1.0f, 1.0f, 1.0f, 1.0f };
 		Ref<Texture2D> Texture = nullptr;
-		vec2 SubTextureOffset = { 0.0f, 0.0f };
-		vec2 SubTextureCellSize = { 128.0f, 128.0f };
-		vec2 SubTextureCellNum = { 1, 1 };
+		glm::vec2 SubTextureOffset = { 0.0f, 0.0f };
+		glm::vec2 SubTextureCellSize = { 128.0f, 128.0f };
+		glm::vec2 SubTextureCellNum = { 1, 1 };
 		float Tiling = 1.0f;
 
 		SpriteRendererComponent() = default;
@@ -110,7 +111,7 @@ namespace Nebula {
 	};
 
 	struct CircleRendererComponent {
-		vec4 Colour{ 1.0f, 1.0f, 1.0f, 1.0f };
+		glm::vec4 Colour{ 1.0f, 1.0f, 1.0f, 1.0f };
 		float Radius = 0.5f;
 		float Thickness = 1.0f;
 		float Fade = 0.005f;
@@ -121,7 +122,7 @@ namespace Nebula {
 
 	struct StringRendererComponent {
 		std::string Text;
-		vec4 Colour{ 1.0f, 1.0f, 1.0f, 1.0f };
+		glm::vec4 Colour{ 1.0f, 1.0f, 1.0f, 1.0f };
 
 		std::string FamilyName = "OpenSans";
 		
@@ -167,19 +168,19 @@ namespace Nebula {
 		Rigidbody2DComponent() = default;
 		Rigidbody2DComponent(const Rigidbody2DComponent&) = default;
 
-		void ApplyForce(vec2 force, vec2 point);
-		void ApplyLinearImpulse(vec2 impulse, vec2 point);
+		void ApplyForce(glm::vec2 force, glm::vec2 point);
+		void ApplyLinearImpulse(glm::vec2 impulse, glm::vec2 point);
 
 		void ApplyAngularImpulse(float impulse);
 		void ApplyTorque(float torque);
 
-		void ApplyForceToCenter(vec2 force);
-		void ApplyLinearImpulseToCenter(vec2 impulse);
+		void ApplyForceToCenter(glm::vec2 force);
+		void ApplyLinearImpulseToCenter(glm::vec2 impulse);
 	};
 
 	struct BoxCollider2DComponent {
-		vec2 Size = { 0.5f, 0.5f };
-		vec2 Offset = { 0.0f, 0.0f };
+		glm::vec2 Size = { 0.5f, 0.5f };
+		glm::vec2 Offset = { 0.0f, 0.0f };
 
 		Rigidbody2DComponent::Filters Category = Rigidbody2DComponent::Filters::A;
 		uint16_t Mask = 0xFFFF;
@@ -198,7 +199,7 @@ namespace Nebula {
 	};
 
 	struct CircleColliderComponent {
-		vec2 Offset = { 0.0f, 0.0f };
+		glm::vec2 Offset = { 0.0f, 0.0f };
 		float Radius = 0.5f;
 
 		uint16_t Category = Rigidbody2DComponent::Filters::A;

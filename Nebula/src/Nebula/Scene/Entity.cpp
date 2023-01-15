@@ -9,7 +9,7 @@
 namespace Nebula {
 	void Entity::CalculateTransform() {
 		auto& world = GetComponent<WorldTransformComponent>();
-		mat4 transform = GetTransform().CalculateMatrix();
+		glm::mat4 transform = GetTransform().CalculateMatrix();
 		world.Transform = transform;
 		
 		UUID parentID = GetParentChild().Parent;
@@ -40,8 +40,8 @@ namespace Nebula {
 
 		WorldTransformComponent& transform = GetComponent<WorldTransformComponent>();
 
-		vec3 translation, rotation, scale;
-		DecomposeTransform(transform.Transform, translation, rotation, scale);
+		glm::vec3 translation, rotation, scale;
+		Maths::DecomposeTransform(transform.Transform, translation, rotation, scale);
 		
 		if (b2Body* body = (b2Body*)GetComponent<Rigidbody2DComponent>().RuntimeBody)
 			body->SetTransform({ translation.x, translation.y }, rotation.z);
@@ -72,11 +72,11 @@ namespace Nebula {
 		((b2Body*)RuntimeBody)->ApplyAngularImpulse(impulse, true);
 	}
 
-	void Rigidbody2DComponent::ApplyForce(vec2 force, vec2 point) {
+	void Rigidbody2DComponent::ApplyForce(glm::vec2 force, glm::vec2 point) {
 		((b2Body*)RuntimeBody)->ApplyForce({ force.x, force.y }, { point.x, point.y }, true);
 	}
 
-	void Rigidbody2DComponent::ApplyLinearImpulse(vec2 impulse, vec2 point) {
+	void Rigidbody2DComponent::ApplyLinearImpulse(glm::vec2 impulse, glm::vec2 point) {
 		((b2Body*)RuntimeBody)->ApplyLinearImpulse({ impulse.x, impulse.y }, { point.x, point.y }, true);
 	}
 
@@ -84,11 +84,11 @@ namespace Nebula {
 		((b2Body*)RuntimeBody)->ApplyTorque(torque, true);
 	}
 
-	void Rigidbody2DComponent::ApplyForceToCenter(vec2 force) {
+	void Rigidbody2DComponent::ApplyForceToCenter(glm::vec2 force) {
 		((b2Body*)RuntimeBody)->ApplyForceToCenter({ force.x, force.y }, true);
 	}
 
-	void Rigidbody2DComponent::ApplyLinearImpulseToCenter(vec2 impulse) {
+	void Rigidbody2DComponent::ApplyLinearImpulseToCenter(glm::vec2 impulse) {
 		((b2Body*)RuntimeBody)->ApplyLinearImpulseToCenter({ impulse.x, impulse.y }, true);
 	}
 

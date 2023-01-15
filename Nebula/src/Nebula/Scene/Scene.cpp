@@ -241,8 +241,8 @@ namespace Nebula {
 		auto& transform = entity.GetComponent<TransformComponent>();
 		auto& rb2d = entity.GetComponent<Rigidbody2DComponent>();
 
-		vec3 translation, rotation, scale;
-		DecomposeTransform(world.Transform, translation, rotation, scale);
+		glm::vec3 translation, rotation, scale;
+		Maths::DecomposeTransform(world.Transform, translation, rotation, scale);
 
 		b2BodyDef bodyDef;
 		bodyDef.type = Utils::Rigibody2DToBox2D(rb2d.Type);
@@ -329,8 +329,8 @@ namespace Nebula {
 			b2Body* body = (b2Body*)rb2d.RuntimeBody;
 			auto position = body->GetPosition();
 
-			vec3 wTranslation, wRotation, wScale;
-			DecomposeTransform(world.Transform, wTranslation, wRotation, wScale);
+			glm::vec3 wTranslation, wRotation, wScale;
+			Maths::DecomposeTransform(world.Transform, wTranslation, wRotation, wScale);
 			
 			transform.Translation.x += position.x - wTranslation.x;
 			transform.Translation.y += position.y - wTranslation.y;
@@ -533,7 +533,7 @@ namespace Nebula {
 		Renderer2D::EndScene();
 	}
 
-	void Scene::Render(const Camera& camera, const mat4& transform) {
+	void Scene::Render(const Camera& camera, const glm::mat4& transform) {
 		Renderer2D::BeginScene(camera, transform);
 
 		auto group = m_Registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
@@ -549,7 +549,7 @@ namespace Nebula {
 		Renderer2D::EndScene();
 	}
 
-	void Scene::RenderOverlay(const Camera& camera, const mat4& transform) {
+	void Scene::RenderOverlay(const Camera& camera, const glm::mat4& transform) {
 		Renderer2D::BeginScene(camera, transform);
 
 		auto StringGroup = m_Registry.view<StringRendererComponent>();

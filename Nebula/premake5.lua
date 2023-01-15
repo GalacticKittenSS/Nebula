@@ -37,6 +37,7 @@ project "Nebula"
 		"%{includedir.FileWatch}",
 		"%{includedir.GLFW}",
 		"%{includedir.GLad}",
+		"%{includedir.glm}",
 		"%{includedir.ImGui}",
 		"%{includedir.ImGuizmo}",
 		"%{includedir.mono}",

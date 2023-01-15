@@ -32,13 +32,13 @@ namespace Nebula {
 
 	void SceneCamera::RecalculateProjectionMatrix() {
 		if (m_ProjectionType == ProjectionType::Perspective) {
-			m_ProjectionMatrix = perspective(m_PerspectiveFOV, m_AspectRatio, m_PerspectiveNear, m_PerspectiveFar);
+			m_ProjectionMatrix = glm::perspective(m_PerspectiveFOV, m_AspectRatio, m_PerspectiveNear, m_PerspectiveFar);
 		} else {
 			float Left = -m_OrthographicSize * m_AspectRatio * 0.5f;
 			float Right = m_OrthographicSize * m_AspectRatio * 0.5f;
 			float Bottom = -m_OrthographicSize * 0.5f;
 			float Top = m_OrthographicSize * 0.5f;
-			m_ProjectionMatrix = ortho(Left, Right, Bottom, Top, m_OrthographicNear, m_OrthographicFar);
+			m_ProjectionMatrix = glm::ortho(Left, Right, Bottom, Top, m_OrthographicNear, m_OrthographicFar);
 		}
 	}
 }

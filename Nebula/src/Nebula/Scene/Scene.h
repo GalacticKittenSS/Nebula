@@ -41,8 +41,8 @@ namespace Nebula {
 		void Render(EditorCamera& camera);
 		void RenderOverlay(EditorCamera& camera);
 
-		void Render(const Camera& camera, const mat4& transform);
-		void RenderOverlay(const Camera& camera, const mat4& transform);
+		void Render(const Camera& camera, const glm::mat4& transform);
+		void RenderOverlay(const Camera& camera, const glm::mat4& transform);
 		
 		void OnViewportResize(uint32_t width, uint32_t height);
 
@@ -88,7 +88,7 @@ namespace Nebula {
 		ContactListener* m_ContactListener = nullptr;
 
 		Camera* mainCam = nullptr;
-		mat4 mainCamTransform;
+		glm::mat4 mainCamTransform;
 
 		friend class Entity;
 		friend class SceneHierarchyPanel;

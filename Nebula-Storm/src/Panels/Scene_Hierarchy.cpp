@@ -1,6 +1,8 @@
 #include "Scene_Hierarchy.h"
 
+#include "Nebula/Maths/MinMax.h"
 #include "Nebula/Utils/UI.h"
+
 #include <imgui_internal.h>
 
 #include <cstring>
@@ -328,7 +330,7 @@ namespace Nebula {
 	static float DrawLabel(std::string label) 
 	{
 		float padding = ImGui::GetStyle().ItemSpacing.x * 2;
-		float max_width = Max(s_TextColumnWidth, ImGui::GetWindowContentRegionMax().x - s_MaxItemWidth);
+		float max_width = Maths::Max(s_TextColumnWidth, ImGui::GetWindowContentRegionMax().x - s_MaxItemWidth);
 
 		if (ImGui::CalcTextSize(label.c_str()).x + padding > max_width)
 		{
@@ -345,12 +347,12 @@ namespace Nebula {
 		ImGui::Text(label.c_str());
 		ImGui::SameLine();
 
-		float size = Min(s_MaxItemWidth, ImGui::GetWindowContentRegionMax().x - max_width - padding);
+		float size = Maths::Min(s_MaxItemWidth, ImGui::GetWindowContentRegionMax().x - max_width - padding);
 		ImGui::SetCursorPosX(ImGui::GetWindowContentRegionMax().x - size);
 		return size;
 	}
 
-	static bool DrawVec3Control(const std::string& label, vec3& values, float resetvalue = 0.0f) 
+	static bool DrawVec3Control(const std::string& label, glm::vec3& values, float resetvalue = 0.0f) 
 	{
 		ImGuiIO& io = ImGui::GetIO();
 		auto boldFont = io.Fonts->Fonts[0];
@@ -429,8 +431,8 @@ namespace Nebula {
 		return x || xb || y || yb || z || zb;
 	}
 
-	static bool DrawVec2Control(const std::string& label, vec2& values, const vec2& min = vec2(0.0f), const vec2& max = vec2(0.0f), 
-		const vec2& resetvalue = vec2(0.0f)) {
+	static bool DrawVec2Control(const std::string& label, glm::vec2& values, const glm::vec2& min = glm::vec2(0.0f), const glm::vec2& max = glm::vec2(0.0f),
+		const glm::vec2& resetvalue = glm::vec2(0.0f)) {
 		ImGuiIO& io = ImGui::GetIO();
 		auto boldFont = io.Fonts->Fonts[0];
 
@@ -561,7 +563,7 @@ namespace Nebula {
 		return open;
 	}
 	
-	static void DrawColourEdit(const std::string& label, vec4& colour)
+	static void DrawColourEdit(const std::string& label, glm::vec4& colour)
 	{
 		ImGui::PushID(label.c_str());
 		float size = DrawLabel(label);
@@ -572,7 +574,7 @@ namespace Nebula {
 
 		if (ImGui::BeginPopup("picker"))
 		{
-			ImGui::ColorPicker4("##picker", value_ptr(colour));
+			ImGui::ColorPicker4("##picker", glm::value_ptr(colour));
 			ImGui::EndPopup();
 		}
 
@@ -683,9 +685,9 @@ namespace Nebula {
 		}
 
 		DrawComponent<TransformComponent>("Transform", entity, [entity](auto& component) mutable {
-			vec3 rotation = degrees(component.Rotation);
-			vec3 translation = component.Translation;
-			vec3 scale = component.Scale;
+			glm::vec3 rotation = degrees(component.Rotation);
+			glm::vec3 translation = component.Translation;
+			glm::vec3 scale = component.Scale;
 
 			bool p = DrawVec3Control("Position", translation);
 			bool r = DrawVec3Control("Rotation", rotation);
@@ -734,9 +736,9 @@ namespace Nebula {
 			}
 
 			if (camera.GetProjectionType() == SceneCamera::ProjectionType::Perspective) {
-				float fov = degrees(camera.GetPerspectiveFOV());
+				float fov = glm::degrees(camera.GetPerspectiveFOV());
 				if (DrawVec1Control("FOV", fov)) {
-					camera.SetPerspectiveFOV(radians(fov));
+					camera.SetPerspectiveFOV(glm::radians(fov));
 				}
 
 				float Near = camera.GetPerspectiveNearClip();
@@ -798,7 +800,7 @@ namespace Nebula {
 					}
 					case Nebula::ScriptFieldType::Vector2:
 					{
-						auto data = scriptInstance->GetFieldValue<vec2>(name);
+						auto data = scriptInstance->GetFieldValue<glm::vec2>(name);
 						if (DrawVec2Control(name.c_str(), data))
 						{
 							scriptInstance->SetFieldValue(name, data);
@@ -807,7 +809,7 @@ namespace Nebula {
 					}
 					case Nebula::ScriptFieldType::Vector3:
 					{
-						auto data = scriptInstance->GetFieldValue<vec3>(name);
+						auto data = scriptInstance->GetFieldValue<glm::vec3>(name);
 						if (DrawVec3Control(name.c_str(), data))
 						{
 							scriptInstance->SetFieldValue(name, data);
@@ -816,7 +818,7 @@ namespace Nebula {
 					}
 					case Nebula::ScriptFieldType::Vector4:
 					{
-						auto data = scriptInstance->GetFieldValue<vec4>(name);
+						auto data = scriptInstance->GetFieldValue<glm::vec4>(name);
 						if (ImGui::DragFloat4(name.c_str(), value_ptr(data)))
 						{
 							scriptInstance->SetFieldValue(name, data);
@@ -874,23 +876,23 @@ namespace Nebula {
 				
 				DrawVec1Control("Tiling Factor", component.Tiling, 0.1f, 0.0f, 100.0f);
 
-				vec2 textureSize = { (float)component.Texture->GetWidth(), (float)component.Texture->GetHeight() };
-				vec2 maxOffset = textureSize - component.SubTextureCellSize * component.SubTextureCellNum;
+				glm::vec2 textureSize = { (float)component.Texture->GetWidth(), (float)component.Texture->GetHeight() };
+				glm::vec2 maxOffset = textureSize - component.SubTextureCellSize * component.SubTextureCellNum;
 
 				if (component.SubTextureOffset > maxOffset)
 					component.SubTextureOffset = maxOffset;
 
-				if (component.SubTextureOffset < vec2(0.0f))
-					component.SubTextureOffset = vec2(0.0f);
+				if (component.SubTextureOffset < glm::vec2(0.0f))
+					component.SubTextureOffset = glm::vec2(0.0f);
 
-				vec2 maxCellNum = textureSize / component.SubTextureCellSize;
+				glm::vec2 maxCellNum = textureSize / component.SubTextureCellSize;
 
 				if (component.SubTextureCellNum > maxCellNum)
 					component.SubTextureCellNum = maxCellNum;
 
-				DrawVec2Control("Offset", component.SubTextureOffset, vec2(0.0f), maxOffset != vec2(0.0f) ? maxOffset : vec2(0.001f));
-				DrawVec2Control("Cell Size", component.SubTextureCellSize, vec2(0.1f), textureSize, textureSize);
-				DrawVec2Control("Cell Number", component.SubTextureCellNum, vec2(0.01f), maxCellNum);
+				DrawVec2Control("Offset", component.SubTextureOffset, glm::vec2(0.0f), maxOffset != glm::vec2(0.0f) ? maxOffset : glm::vec2(0.001f));
+				DrawVec2Control("Cell Size", component.SubTextureCellSize, glm::vec2(0.1f), textureSize, textureSize);
+				DrawVec2Control("Cell Number", component.SubTextureCellNum, glm::vec2(0.01f), maxCellNum);
 			}
 
 			if (remove)

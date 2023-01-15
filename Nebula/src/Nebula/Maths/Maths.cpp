@@ -1,9 +1,9 @@
 #include "nbpch.h"
 #include "Maths.h"
 
-namespace Nebula {
-	bool DecomposeTransform(mat4& transform, vec3& translation, vec3& rotation, vec3& scale) {
-		mat4 LocalMatrix(transform);
+namespace Nebula::Maths {
+	bool DecomposeTransform(glm::mat4& transform, glm::vec3& translation, glm::vec3& rotation, glm::vec3& scale) {
+		glm::mat4 LocalMatrix(transform);
 
 		// Normalize the matrix.
 		if (epsilonEqual(LocalMatrix[3][3], 0.0f, epsilon()))
@@ -21,14 +21,14 @@ namespace Nebula {
 		}
 
 		// Next take care of translation (easy).
-		translation = vec3(LocalMatrix[3]);
-		LocalMatrix[3] = vec4(0, 0, 0, LocalMatrix[3].w);
+		translation = glm::vec3(LocalMatrix[3]);
+		LocalMatrix[3] = glm::vec4(0, 0, 0, LocalMatrix[3].w);
 
-		vec3 Row[3], Pdum3;
+		glm::vec3 Row[3], Pdum3;
 
 		// Now get scale and shear.
-		for (length_t i = 0; i < 3; ++i)
-			for (length_t j = 0; j < 3; ++j)
+		for (glm::length_t i = 0; i < 3; ++i)
+			for (glm::length_t j = 0; j < 3; ++j)
 				Row[i][j] = LocalMatrix[i][j];
 
 		// Compute X scale factor and normalize first row.

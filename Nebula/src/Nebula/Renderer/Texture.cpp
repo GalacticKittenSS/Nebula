@@ -25,13 +25,13 @@ namespace Nebula {
 		return nullptr;
 	}
 	
-	Ref<SubTexture2D> SubTexture2D::CreateFromCoords(const Ref<Texture2D>& texture, const vec2& coords, const vec2& cellSize, const vec2& spriteSize) {
-		vec2 min = {
+	Ref<SubTexture2D> SubTexture2D::CreateFromCoords(const Ref<Texture2D>& texture, const glm::vec2& coords, const glm::vec2& cellSize, const glm::vec2& spriteSize) {
+		glm::vec2 min = {
 			((coords.x + 0) * cellSize.x) / texture->GetWidth(),
 			((coords.y + 0) * cellSize.y) / texture->GetHeight()
 		};
 
-		vec2 max = {
+		glm::vec2 max = {
 			((coords.x + spriteSize.x) * cellSize.x) / texture->GetWidth(),
 			((coords.y + spriteSize.y) * cellSize.y) / texture->GetHeight()
 		};
@@ -39,16 +39,16 @@ namespace Nebula {
 		return CreateRef<SubTexture2D>(texture, min, max);
 	}
 
-	Ref<SubTexture2D> SubTexture2D::CreateFromCoords(const std::string& path, const vec2& coords, const vec2& cellSize, const vec2& spriteSize) {
+	Ref<SubTexture2D> SubTexture2D::CreateFromCoords(const std::string& path, const glm::vec2& coords, const glm::vec2& cellSize, const glm::vec2& spriteSize) {
 
 		Ref<Texture2D> texture = Texture2D::Create(path);
 
-		vec2 min = { 
+		glm::vec2 min = {
 			((coords.x + 0) * cellSize.x) / texture->GetWidth(), 
 			((coords.y + 0) * cellSize.y) / texture->GetHeight() 
 		};
 
-		vec2 max = { 
+		glm::vec2 max = {
 			((coords.x + spriteSize.x) * cellSize.x) / texture->GetWidth(), 
 			((coords.y + spriteSize.y) * cellSize.y) / texture->GetHeight() 
 		};
@@ -62,8 +62,8 @@ namespace Nebula {
 	/////////////////////////////////////////////////////////
 	//-----------------------------------------------------//
 
-	SubTexture2D::SubTexture2D(const Ref<Texture2D>& texture, vec2& min, vec2& max): m_Texture(texture) {
-		m_TexCoords = new vec2[4];
+	SubTexture2D::SubTexture2D(const Ref<Texture2D>& texture, glm::vec2& min, glm::vec2& max): m_Texture(texture) {
+		m_TexCoords = new glm::vec2[4];
 		m_TexCoords[0] = { min.x, min.y };
 		m_TexCoords[1] = { max.x, min.y };
 		m_TexCoords[2] = { max.x, max.y };

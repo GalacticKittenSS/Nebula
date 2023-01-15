@@ -66,8 +66,8 @@ namespace Nebula {
 		float m_LastTime;
 		float m_TimeSinceReset = 0;
 		
-		vec2 m_GameViewSize = { 1280.0f, 720.0f };
-		vec2 m_ViewPortBounds[2];
+		glm::vec2 m_GameViewSize = { 1280.0f, 720.0f };
+		glm::vec2 m_ViewPortBounds[2];
 
 		Ref<Scene> m_ActiveScene, m_EditorScene;
 		std::string m_ScenePath;

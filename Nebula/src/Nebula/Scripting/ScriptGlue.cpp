@@ -46,7 +46,7 @@ namespace Nebula {
 
 	// APPLICATION CLASS
 
-	static void Application_GetWindowSize(vec2* size)
+	static void Application_GetWindowSize(glm::vec2* size)
 	{
 		Window& window = Application::Get().GetWindow();
 		*size = { (float)window.GetHeight(), (float)window.GetHeight() };
@@ -165,14 +165,14 @@ namespace Nebula {
 		return Input::IsMouseButtonPressed(mouseCode);
 	}
 
-	static void Input_GetMousePos(vec2* out)
+	static void Input_GetMousePos(glm::vec2* out)
 	{
 		*out = { Input::GetMouseX(), Input::GetMouseY() };
 	}
 
 	// TRANSFORM COMPONENT
 
-	static void TransformComponent_GetTranslation(UUID entityID, vec3* out)
+	static void TransformComponent_GetTranslation(UUID entityID, glm::vec3* out)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
@@ -182,7 +182,7 @@ namespace Nebula {
 		*out = entity.GetTransform().Translation;
 	}
 
-	static void TransformComponent_SetTranslation(UUID entityID, vec3* translation)
+	static void TransformComponent_SetTranslation(UUID entityID, glm::vec3* translation)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
@@ -193,7 +193,7 @@ namespace Nebula {
 		entity.UpdateTransform();
 	}
 
-	static void TransformComponent_GetRotation(UUID entityID, vec3* out)
+	static void TransformComponent_GetRotation(UUID entityID, glm::vec3* out)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
@@ -203,7 +203,7 @@ namespace Nebula {
 		*out = entity.GetTransform().Rotation;
 	}
 
-	static void TransformComponent_SetRotation(UUID entityID, vec3* rotation)
+	static void TransformComponent_SetRotation(UUID entityID, glm::vec3* rotation)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
@@ -214,7 +214,7 @@ namespace Nebula {
 		entity.UpdateTransform();
 	}
 
-	static void TransformComponent_GetScale(UUID entityID, vec3* out)
+	static void TransformComponent_GetScale(UUID entityID, glm::vec3* out)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
@@ -224,7 +224,7 @@ namespace Nebula {
 		*out = entity.GetTransform().Scale;
 	}
 
-	static void TransformComponent_SetScale(UUID entityID, vec3* scale)
+	static void TransformComponent_SetScale(UUID entityID, glm::vec3* scale)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
@@ -235,7 +235,7 @@ namespace Nebula {
 		entity.UpdateTransform();
 	}
 
-	static void TransformComponent_GetWorldTranslation(UUID entityID, vec3* out)
+	static void TransformComponent_GetWorldTranslation(UUID entityID, glm::vec3* out)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
@@ -246,28 +246,28 @@ namespace Nebula {
 		*out = world.Transform[3];
 	}
 
-	static void TransformComponent_GetWorldRotation(UUID entityID, vec3* out)
+	static void TransformComponent_GetWorldRotation(UUID entityID, glm::vec3* out)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
 		Entity entity = { entityID, scene };
 		NB_ASSERT(entity);
 
-		vec3 translation, scale;
+		glm::vec3 translation, scale;
 		WorldTransformComponent& world = entity.GetComponent<WorldTransformComponent>();
-		DecomposeTransform(world.Transform, translation, *out, scale);
+		Maths::DecomposeTransform(world.Transform, translation, *out, scale);
 	}
 
-	static void TransformComponent_GetWorldScale(UUID entityID, vec3* out)
+	static void TransformComponent_GetWorldScale(UUID entityID, glm::vec3* out)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
 		Entity entity = { entityID, scene };
 		NB_ASSERT(entity);
 
-		vec3 translation, rotation;
+		glm::vec3 translation, rotation;
 		WorldTransformComponent& world = entity.GetComponent<WorldTransformComponent>();
-		DecomposeTransform(world.Transform, translation, rotation, *out);
+		Maths::DecomposeTransform(world.Transform, translation, rotation, *out);
 	}
 
 	// CAMERA COMPONENTS
@@ -342,7 +342,7 @@ namespace Nebula {
 
 	// SPRITE RENDERER COMPONENT
 
-	static void SpriteRendererComponent_SetColour(UUID entityID, vec4* colour)
+	static void SpriteRendererComponent_SetColour(UUID entityID, glm::vec4* colour)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
@@ -352,7 +352,7 @@ namespace Nebula {
 		entity.GetComponent<SpriteRendererComponent>().Colour = *colour;
 	}
 
-	static void SpriteRendererComponent_GetColour(UUID entityID, vec4* colour)
+	static void SpriteRendererComponent_GetColour(UUID entityID, glm::vec4* colour)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
@@ -362,7 +362,7 @@ namespace Nebula {
 		*colour = entity.GetComponent<SpriteRendererComponent>().Colour;
 	}
 
-	static void SpriteRendererComponent_SetOffset(UUID entityID, vec2* offset)
+	static void SpriteRendererComponent_SetOffset(UUID entityID, glm::vec2* offset)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
@@ -372,7 +372,7 @@ namespace Nebula {
 		entity.GetComponent<SpriteRendererComponent>().SubTextureOffset = *offset;
 	}
 
-	static void SpriteRendererComponent_GetOffset(UUID entityID, vec2* offset)
+	static void SpriteRendererComponent_GetOffset(UUID entityID, glm::vec2* offset)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
@@ -382,7 +382,7 @@ namespace Nebula {
 		*offset = entity.GetComponent<SpriteRendererComponent>().SubTextureOffset;
 	}
 
-	static void SpriteRendererComponent_SetCellSize(UUID entityID, vec2* size)
+	static void SpriteRendererComponent_SetCellSize(UUID entityID, glm::vec2* size)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
@@ -392,7 +392,7 @@ namespace Nebula {
 		entity.GetComponent<SpriteRendererComponent>().SubTextureCellSize = *size;
 	}
 
-	static void SpriteRendererComponent_GetCellSize(UUID entityID, vec2* size)
+	static void SpriteRendererComponent_GetCellSize(UUID entityID, glm::vec2* size)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
@@ -402,7 +402,7 @@ namespace Nebula {
 		*size = entity.GetComponent<SpriteRendererComponent>().SubTextureCellSize;
 	}
 
-	static void SpriteRendererComponent_SetCellNumber(UUID entityID, vec2* number)
+	static void SpriteRendererComponent_SetCellNumber(UUID entityID, glm::vec2* number)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
@@ -412,7 +412,7 @@ namespace Nebula {
 		entity.GetComponent<SpriteRendererComponent>().SubTextureCellNum = *number;
 	}
 
-	static void SpriteRendererComponent_GetCellNumber(UUID entityID, vec2* number)
+	static void SpriteRendererComponent_GetCellNumber(UUID entityID, glm::vec2* number)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
@@ -444,7 +444,7 @@ namespace Nebula {
 
 	// CIRCLE RENDERER COMPONENT
 
-	static void CircleRendererComponent_SetColour(UUID entityID, vec4* colour)
+	static void CircleRendererComponent_SetColour(UUID entityID, glm::vec4* colour)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
@@ -454,7 +454,7 @@ namespace Nebula {
 		entity.GetComponent<CircleRendererComponent>().Colour = *colour;
 	}
 
-	static void CircleRendererComponent_GetColour(UUID entityID, vec4* colour)
+	static void CircleRendererComponent_GetColour(UUID entityID, glm::vec4* colour)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
@@ -548,7 +548,7 @@ namespace Nebula {
 		return mono_string_new(ScriptEngine::GetAppDomain(), text.c_str());
 	}
 
-	static void StringRendererComponent_SetColour(UUID entityID, vec4* colour)
+	static void StringRendererComponent_SetColour(UUID entityID, glm::vec4* colour)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
@@ -559,7 +559,7 @@ namespace Nebula {
 		component.Colour = *colour;
 	}
 
-	static void StringRendererComponent_GetColour(UUID entityID, vec4* colour)
+	static void StringRendererComponent_GetColour(UUID entityID, glm::vec4* colour)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
@@ -681,7 +681,7 @@ namespace Nebula {
 		component.FixedRotation = fixedRotation;
 	}
 
-	static void Rigidbody2DComponent_ApplyLinearImpulse(UUID entityID, vec2* impulse, vec2* point)
+	static void Rigidbody2DComponent_ApplyLinearImpulse(UUID entityID, glm::vec2* impulse, glm::vec2* point)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
@@ -692,7 +692,7 @@ namespace Nebula {
 		rigidbody.ApplyLinearImpulse(*impulse, *point);
 	}
 
-	static void Rigidbody2DComponent_ApplyLinearImpulseToCenter(UUID entityID, vec2* impulse)
+	static void Rigidbody2DComponent_ApplyLinearImpulseToCenter(UUID entityID, glm::vec2* impulse)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
@@ -703,7 +703,7 @@ namespace Nebula {
 		rigidbody.ApplyLinearImpulseToCenter(*impulse);
 	}
 
-	static void Rigidbody2DComponent_GetLinearVelocity(UUID entityID, vec2* out)
+	static void Rigidbody2DComponent_GetLinearVelocity(UUID entityID, glm::vec2* out)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
@@ -713,10 +713,10 @@ namespace Nebula {
 		auto& rigidbody = entity.GetComponent<Rigidbody2DComponent>();
 		b2Body* body = (b2Body*)rigidbody.RuntimeBody;
 		const b2Vec2& linearVecolity = body->GetLinearVelocity();
-		*out = vec2(linearVecolity.x, linearVecolity.y);
+		*out = glm::vec2(linearVecolity.x, linearVecolity.y);
 	}
 
-	static void Rigidbody2DComponent_ApplyForce(UUID entityID, vec2* force, vec2* point)
+	static void Rigidbody2DComponent_ApplyForce(UUID entityID, glm::vec2* force, glm::vec2* point)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
@@ -727,7 +727,7 @@ namespace Nebula {
 		rigidbody.ApplyForce(*force, *point);
 	}
 
-	static void Rigidbody2DComponent_ApplyForceToCenter(UUID entityID, vec2* force)
+	static void Rigidbody2DComponent_ApplyForceToCenter(UUID entityID, glm::vec2* force)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
@@ -740,7 +740,7 @@ namespace Nebula {
 
 	// BOX COLLIDER 2D COMPONENT
 
-	static void BoxCollider2DComponent_GetSize(UUID entityID, vec2* size)
+	static void BoxCollider2DComponent_GetSize(UUID entityID, glm::vec2* size)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
@@ -751,7 +751,7 @@ namespace Nebula {
 		*size = component.Size;
 	}
 
-	static void BoxCollider2DComponent_SetSize(UUID entityID, vec2* size)
+	static void BoxCollider2DComponent_SetSize(UUID entityID, glm::vec2* size)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
@@ -762,7 +762,7 @@ namespace Nebula {
 		component.Size = *size;
 	}
 
-	static void BoxCollider2DComponent_GetOffset(UUID entityID, vec2* offset)
+	static void BoxCollider2DComponent_GetOffset(UUID entityID, glm::vec2* offset)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
@@ -773,7 +773,7 @@ namespace Nebula {
 		*offset = component.Offset;
 	}
 
-	static void BoxCollider2DComponent_SetOffset(UUID entityID, vec2* offset)
+	static void BoxCollider2DComponent_SetOffset(UUID entityID, glm::vec2* offset)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
@@ -940,7 +940,7 @@ namespace Nebula {
 		component.Radius = radius;
 	}
 
-	static void CircleCollider2DComponent_GetOffset(UUID entityID, vec2* offset)
+	static void CircleCollider2DComponent_GetOffset(UUID entityID, glm::vec2* offset)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
@@ -951,7 +951,7 @@ namespace Nebula {
 		*offset = component.Offset;
 	}
 
-	static void CircleCollider2DComponent_SetOffset(UUID entityID, vec2* offset)
+	static void CircleCollider2DComponent_SetOffset(UUID entityID, glm::vec2* offset)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
@@ -1151,12 +1151,12 @@ namespace Nebula {
 
 	static float Mathf_ToDegrees(float radians)
 	{
-		return degrees(radians);
+		return glm::degrees(radians);
 	}
 
 	static float Mathf_ToRadians(float degrees)
 	{
-		return radians(degrees);
+		return glm::radians(degrees);
 	}
 
 	static float Mathf_Tan(float value)

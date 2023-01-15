@@ -21,7 +21,7 @@ namespace Nebula {
 			s_RendererAPI->SetClearColour(r, g, b, a);
 		}
 
-		inline static void SetClearColour(const vec4& colour) {
+		inline static void SetClearColour(const glm::vec4& colour) {
 			s_RendererAPI->SetClearColour(colour);
 		}
 

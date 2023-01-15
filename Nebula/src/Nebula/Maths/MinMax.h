@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Nebula {
+namespace Nebula::Maths {
 	template <typename T>
 	T Min(const T& A, const T& B) {
 		if (A > B)

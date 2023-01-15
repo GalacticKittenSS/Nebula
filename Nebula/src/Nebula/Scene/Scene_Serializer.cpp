@@ -10,9 +10,9 @@
 
 namespace YAML {
 	template<>
-	struct convert<Nebula::vec2>
+	struct convert<glm::vec2>
 	{
-		static Node encode(const Nebula::vec2& rhs)
+		static Node encode(const glm::vec2& rhs)
 		{
 			Node node;
 			node.push_back(rhs.x);
@@ -21,7 +21,7 @@ namespace YAML {
 			return node;
 		}
 
-		static bool decode(const Node& node, Nebula::vec2& rhs)
+		static bool decode(const Node& node, glm::vec2& rhs)
 		{
 			if (!node.IsSequence() || node.size() != 2)
 				return false;
@@ -33,9 +33,9 @@ namespace YAML {
 	};
 
 	template<>
-	struct convert <Nebula::vec3>
+	struct convert <glm::vec3>
 	{
-		static Node encode(const Nebula::vec3& rhs)
+		static Node encode(const glm::vec3& rhs)
 		{
 			Node node;
 			node.push_back(rhs.x);
@@ -45,7 +45,7 @@ namespace YAML {
 			return node;
 		}
 
-		static bool decode(const Node& node, Nebula::vec3& rhs)
+		static bool decode(const Node& node, glm::vec3& rhs)
 		{
 			if (!node.IsSequence() || node.size() != 3)
 				return false;
@@ -58,9 +58,9 @@ namespace YAML {
 	};
 
 	template<>
-	struct convert<Nebula::vec4>
+	struct convert<glm::vec4>
 	{
-		static Node encode(const Nebula::vec4& rhs)
+		static Node encode(const glm::vec4& rhs)
 		{
 			Node node;
 			node.push_back(rhs.x);
@@ -71,7 +71,7 @@ namespace YAML {
 			return node;
 		}
 
-		static bool decode(const Node& node, Nebula::vec4& rhs)
+		static bool decode(const Node& node, glm::vec4& rhs)
 		{
 			if (!node.IsSequence() || node.size() != 4)
 				return false;
@@ -116,20 +116,20 @@ namespace Nebula {
 		break; \
 	}
 
-	YAML::Emitter& operator<<(YAML::Emitter& out, const vec2& v)
+	YAML::Emitter& operator<<(YAML::Emitter& out, const glm::vec2& v)
 	{
 		out << YAML::Flow;
 		out << YAML::BeginSeq << v.x << v.y << YAML::EndSeq;
 		return out;
 	}
 
-	YAML::Emitter& operator<<(YAML::Emitter& out, const vec3& v) {
+	YAML::Emitter& operator<<(YAML::Emitter& out, const glm::vec3& v) {
 		out << YAML::Flow;
 		out << YAML::BeginSeq << v.x << v.y << v.z << YAML::EndSeq;
 		return out;
 	}
 
-	YAML::Emitter& operator<<(YAML::Emitter& out, const vec4& v) {
+	YAML::Emitter& operator<<(YAML::Emitter& out, const glm::vec4& v) {
 		out << YAML::Flow;
 		out << YAML::BeginSeq << v.x << v.y << v.z << v.w <<YAML::EndSeq;
 		return out;
@@ -258,22 +258,22 @@ namespace Nebula {
 
 						switch (field.Type)
 						{
-							WRITE_SCRIPT_FIELD(Float, float);
-							WRITE_SCRIPT_FIELD(Double, double);
-							WRITE_SCRIPT_FIELD(Bool, bool);
-							WRITE_SCRIPT_FIELD(Char, char);
-							WRITE_SCRIPT_FIELD(Byte, int8_t);
-							WRITE_SCRIPT_FIELD(Short, int16_t);
-							WRITE_SCRIPT_FIELD(Int, int32_t);
-							WRITE_SCRIPT_FIELD(Long, int64_t);
-							WRITE_SCRIPT_FIELD(SByte, uint8_t);
-							WRITE_SCRIPT_FIELD(UShort, uint16_t);
-							WRITE_SCRIPT_FIELD(UInt, uint32_t);
-							WRITE_SCRIPT_FIELD(ULong, uint64_t);
-							WRITE_SCRIPT_FIELD(Vector2, vec2);
-							WRITE_SCRIPT_FIELD(Vector3, vec3);
-							WRITE_SCRIPT_FIELD(Vector4, vec4);
-							WRITE_SCRIPT_FIELD(Entity, UUID);
+							WRITE_SCRIPT_FIELD(Float,	float);
+							WRITE_SCRIPT_FIELD(Double,	double);
+							WRITE_SCRIPT_FIELD(Bool,	bool);
+							WRITE_SCRIPT_FIELD(Char,	char);
+							WRITE_SCRIPT_FIELD(Byte,	int8_t);
+							WRITE_SCRIPT_FIELD(Short,	int16_t);
+							WRITE_SCRIPT_FIELD(Int,		int32_t);
+							WRITE_SCRIPT_FIELD(Long,	int64_t);
+							WRITE_SCRIPT_FIELD(SByte,	uint8_t);
+							WRITE_SCRIPT_FIELD(UShort,	uint16_t);
+							WRITE_SCRIPT_FIELD(UInt,	uint32_t);
+							WRITE_SCRIPT_FIELD(ULong,	uint64_t);
+							WRITE_SCRIPT_FIELD(Vector2, glm::vec2);
+							WRITE_SCRIPT_FIELD(Vector3, glm::vec3);
+							WRITE_SCRIPT_FIELD(Vector4, glm::vec4);
+							WRITE_SCRIPT_FIELD(Entity,	UUID);
 						}
 
 						out << YAML::EndMap;
@@ -545,9 +545,9 @@ namespace Nebula {
 								READ_SCRIPT_FIELD(UShort,	uint16_t);
 								READ_SCRIPT_FIELD(UInt,		uint32_t);
 								READ_SCRIPT_FIELD(ULong,	uint64_t);
-								READ_SCRIPT_FIELD(Vector2,	vec2);
-								READ_SCRIPT_FIELD(Vector3,	vec3);
-								READ_SCRIPT_FIELD(Vector4,	vec4);
+								READ_SCRIPT_FIELD(Vector2,	glm::vec2);
+								READ_SCRIPT_FIELD(Vector3,	glm::vec3);
+								READ_SCRIPT_FIELD(Vector4,	glm::vec4);
 								READ_SCRIPT_FIELD(Entity,	UUID);
 							}
 						}

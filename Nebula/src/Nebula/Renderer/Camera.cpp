@@ -2,6 +2,7 @@
 #include "Camera.h"
 
 #include "Nebula/Core/Input.h"
+#include "Nebula/Maths/Transform.h"
 
 namespace Nebula {
 	EditorCamera::EditorCamera(float fov, float aspectRatio, float nearClip, float farClip) {
@@ -10,16 +11,16 @@ namespace Nebula {
 
 	void EditorCamera::UpdateProjection() {
 		m_AspectRatio = m_ViewportWidth / m_ViewportHeight;
-		m_ProjectionMatrix = perspective(radians(m_FOV), m_AspectRatio, m_NearClip, m_FarClip);
+		m_ProjectionMatrix = glm::perspective(glm::radians(m_FOV), m_AspectRatio, m_NearClip, m_FarClip);
 	}
 	
 	void EditorCamera::UpdateView() {
 		// m_Yaw = m_Pitch = 0.0f; // Lock the camera's rotation
 		m_Position = CalculatePosition();
 
-		quat orientation = GetOrientation();
-		m_ViewMatrix = translate(mat4(1.0f), m_Position) * toMat4(orientation);
-		m_ViewMatrix = inverse(m_ViewMatrix);
+		glm::quat orientation = GetOrientation();
+		m_ViewMatrix = glm::translate(glm::mat4(1.0f), m_Position) * glm::toMat4(orientation);
+		m_ViewMatrix = glm::inverse(m_ViewMatrix);
 	}
 	
 	std::pair<float, float> EditorCamera::PanSpeed() const {
@@ -46,8 +47,8 @@ namespace Nebula {
 
 
 	void EditorCamera::Update() {
-		const vec2& mouse{ Input::GetMouseX(), Input::GetMouseY() };
-		vec2 delta = (mouse - m_InitialMousePosition) * 0.003f;
+		const glm::vec2& mouse{ Input::GetMouseX(), Input::GetMouseY() };
+		glm::vec2 delta = (mouse - m_InitialMousePosition) * 0.003f;
 		m_InitialMousePosition = mouse;
 
 		if (Input::IsMouseButtonPressed(Mouse::ButtonMiddle))
@@ -57,7 +58,7 @@ namespace Nebula {
 		else if (Input::IsMouseButtonPressed(Mouse::ButtonRight))
 			MouseZoom(delta.y);
 		
-		m_HasMoved = delta != vec2(0.0f, 0.0f);
+		m_HasMoved = delta != glm::vec2(0.0f, 0.0f);
 
 		UpdateView();
 	}
@@ -75,13 +76,13 @@ namespace Nebula {
 	}
 
 
-	void EditorCamera::MousePan(const vec2& delta) {
+	void EditorCamera::MousePan(const glm::vec2& delta) {
 		auto [xSpeed, ySpeed] = PanSpeed();
 		m_FocalPoint += -GetRightDirection() * delta.x * xSpeed * m_Distance;
 		m_FocalPoint += GetUpDirection() * delta.y * ySpeed * m_Distance;
 	}
 
-	void EditorCamera::MouseRotate(const vec2& delta) {
+	void EditorCamera::MouseRotate(const glm::vec2& delta) {
 		float yawSign = GetUpDirection().y < 0 ? -1.0f : 1.0f;
 		m_Yaw += yawSign * delta.x * RotationSpeed();
 		m_Pitch += delta.y * RotationSpeed();
@@ -96,24 +97,24 @@ namespace Nebula {
 		}
 	}
 
-	vec3 EditorCamera::GetUpDirection() const {
-		return rotate(GetOrientation(), vec3(0.0f, 1.0f, 0.0f));
+	glm::vec3 EditorCamera::GetUpDirection() const {
+		return glm::rotate(GetOrientation(), glm::vec3(0.0f, 1.0f, 0.0f));
 	}
 
-	vec3 EditorCamera::GetRightDirection() const {
-		return rotate(GetOrientation(), vec3(1.0f, 0.0f, 0.0f));
+	glm::vec3 EditorCamera::GetRightDirection() const {
+		return glm::rotate(GetOrientation(), glm::vec3(1.0f, 0.0f, 0.0f));
 	}
 
-	vec3 EditorCamera::GetForwardDirection() const {
-		return rotate(GetOrientation(), vec3(0.0f, 0.0f, -1.0f));
+	glm::vec3 EditorCamera::GetForwardDirection() const {
+		return glm::rotate(GetOrientation(), glm::vec3(0.0f, 0.0f, -1.0f));
 	}
 	
-	vec3 EditorCamera::CalculatePosition() const {
+	glm::vec3 EditorCamera::CalculatePosition() const {
 		return m_FocalPoint - GetForwardDirection() * m_Distance;
 	}
 	
-	quat EditorCamera::GetOrientation() const {
-		return quat(vec3(-m_Pitch, -m_Yaw, 0.0f));
+	glm::quat EditorCamera::GetOrientation() const {
+		return glm::quat(glm::vec3(-m_Pitch, -m_Yaw, 0.0f));
 	}
 
 	OrthographicCamera::OrthographicCamera(float left, float right, float bottom, float top):
@@ -126,17 +127,17 @@ namespace Nebula {
 	void OrthographicCamera::SetProjection(float left, float right, float bottom, float top) {
 		NB_PROFILE_FUNCTION();
 
-		m_ProjectionMatrix = ortho(left, right, bottom, top, -1.0f, 1.0f);
+		m_ProjectionMatrix = glm::ortho(left, right, bottom, top, -1.0f, 1.0f);
 		m_ViewProjectionMatrix = m_ProjectionMatrix * m_ViewMatrix;
 	}
 
 	void OrthographicCamera::RecalculateViewMatrix() {
 		NB_PROFILE_FUNCTION();
 
-		mat4 transform = translate(m_Position)
-			* rotate(radians(m_Rotation), vec3(0, 0, 1));
+		glm::mat4 transform = glm::translate(m_Position)
+			* glm::rotate(glm::radians(m_Rotation), glm::vec3(0, 0, 1));
 
-		m_ViewMatrix = inverse(transform);
+		m_ViewMatrix = glm::inverse(transform);
 		m_ViewProjectionMatrix = m_ProjectionMatrix * m_ViewMatrix;
 	}
 }

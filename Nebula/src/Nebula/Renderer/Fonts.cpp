@@ -5,19 +5,19 @@
 #include FT_FREETYPE_H
 
 namespace Nebula {
-	struct FontGlyphPoint : public vec<2, uint32_t>
+	struct FontGlyphPoint : public glm::uvec2
 	{
-		FontGlyphPoint() : vec<2, uint32_t>() {}
-		FontGlyphPoint(uint32_t _x) : vec<2, uint32_t>(_x) {}
-		FontGlyphPoint(uint32_t _x, uint32_t _y) : vec<2, uint32_t>(_x, _y) {}
-		FontGlyphPoint(vec<2, uint32_t> vec) {
+		FontGlyphPoint() : glm::uvec2() {}
+		FontGlyphPoint(uint32_t _x) : glm::uvec2(_x) {}
+		FontGlyphPoint(uint32_t _x, uint32_t _y) : glm::uvec2(_x, _y) {}
+		FontGlyphPoint(glm::uvec2 vec) {
 			x = vec.x;
 			y = vec.y;
 		}
 
 		bool IsZero() const { return x == 0 && y == 0; }
 
-		bool operator>(const vec<2, uint32_t>& other) const { return other.y > y || other.x > other.y; }
+		bool operator>(const glm::uvec2 other) const { return other.y > y || other.x > other.y; }
 		bool operator<(const FontGlyphPoint& other) const
 		{
 			if (other.y == y)

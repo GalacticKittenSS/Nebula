@@ -19,20 +19,20 @@ namespace Nebula {
 		NB_PROFILE_FUNCTION();
 
 		if (Input::IsKeyPressed(NB_W)) {
-			m_CamPosition.x += -sin(radians(m_CamRotation)) * m_CamTranslationSpeed * ts;
-			m_CamPosition.y +=  cos(radians(m_CamRotation)) * m_CamTranslationSpeed * ts;
+			m_CamPosition.x += -glm::sin(glm::radians(m_CamRotation)) * m_CamTranslationSpeed * ts;
+			m_CamPosition.y +=  glm::cos(glm::radians(m_CamRotation)) * m_CamTranslationSpeed * ts;
 		}
 		else if (Input::IsKeyPressed(NB_S)) {
-			m_CamPosition.x -= -sin(radians(m_CamRotation)) * m_CamTranslationSpeed * ts;
-			m_CamPosition.y -=  cos(radians(m_CamRotation)) * m_CamTranslationSpeed * ts;
+			m_CamPosition.x -= -sin(glm::radians(m_CamRotation)) * m_CamTranslationSpeed * ts;
+			m_CamPosition.y -=  cos(glm::radians(m_CamRotation)) * m_CamTranslationSpeed * ts;
 		}
 		if (Input::IsKeyPressed(NB_A)) {
-			m_CamPosition.x -= cos(radians(m_CamRotation)) * m_CamTranslationSpeed * ts;
-			m_CamPosition.y -= sin(radians(m_CamRotation)) * m_CamTranslationSpeed * ts;
+			m_CamPosition.x -= glm::cos(glm::radians(m_CamRotation)) * m_CamTranslationSpeed * ts;
+			m_CamPosition.y -= glm::sin(glm::radians(m_CamRotation)) * m_CamTranslationSpeed * ts;
 		}
 		else if (Input::IsKeyPressed(NB_D)) {
-			m_CamPosition.x += cos(radians(m_CamRotation)) * m_CamTranslationSpeed * ts;
-			m_CamPosition.y += sin(radians(m_CamRotation)) * m_CamTranslationSpeed * ts;
+			m_CamPosition.x += glm::cos(glm::radians(m_CamRotation)) * m_CamTranslationSpeed * ts;
+			m_CamPosition.y += glm::sin(glm::radians(m_CamRotation)) * m_CamTranslationSpeed * ts;
 		}
 
 		if (m_Rotation) {
