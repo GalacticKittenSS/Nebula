@@ -28,3 +28,7 @@
 [submodule "Nebula/Modules/glm"]
 	path = Nebula/Modules/glm
 	url = https://github.com/g-truc/glm
+[submodule "Nebula/Modules/msdf-atlas-gen"]
+	path = Nebula/Modules/msdf-atlas-gen
+	url = https://github.com/TheCherno/msdf-atlas-gen
+	ignore = untracked

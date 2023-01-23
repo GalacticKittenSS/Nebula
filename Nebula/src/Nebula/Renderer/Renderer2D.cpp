@@ -244,8 +244,6 @@ namespace Nebula {
 		
 		//Camera Uniform
 		s_Data.CameraUniformBuffer = UniformBuffer::Create(sizeof(Renderer2DData::CameraData), 0);
-
-		FontManager::Init();
 	}
 
 	void Renderer2D::Shutdown() {
@@ -264,7 +262,6 @@ namespace Nebula {
 		delete[] s_Data.TriTexCoords;
 
 		FontManager::Clean();
-		FontManager::Shutdown();
 	}
 	
 	void Renderer2D::BeginScene(const Camera& camera, const glm::mat4& transform) {
@@ -294,6 +291,8 @@ namespace Nebula {
 	void Renderer2D::DrawString(const std::string& text, Ref<Font> font, 
 		const glm::mat4& transform, const glm::vec4& colour, uint32_t entityID) 
 	{
+		return;
+
 		NB_PROFILE_FUNCTION();
 		if (text.empty() || !font)
 			return;
@@ -302,7 +301,7 @@ namespace Nebula {
 			FlushAndReset();
 
 		float x = 0.0f;
-		float scale = 1.0f / font->GetResolution();
+		float scale = 1.0f;// / font->GetResolution();
 		float textureIndex = GetTextureIndex(font->GetTexture());
 
 		for (uint32_t i = 0; i < text.length(); i++)
