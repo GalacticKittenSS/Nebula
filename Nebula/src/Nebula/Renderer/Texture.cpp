@@ -15,10 +15,10 @@ namespace Nebula {
 		return nullptr;
 	}
 
-	Ref<Texture2D> Texture2D::Create(uint32_t width, uint32_t height, bool alphaOnly) {
+	Ref<Texture2D> Texture2D::Create(const TextureSpecification& specification) {
 		switch (RendererAPI::GetAPI()) {
 			case RendererAPI::API::None:	NB_ASSERT(false, "RendererAPI::None is currently not supported!"); return nullptr;
-			case RendererAPI::API::OpenGL:	return CreateRef<OpenGL_Texture2D>(width, height, alphaOnly);
+			case RendererAPI::API::OpenGL:	return CreateRef<OpenGL_Texture2D>(specification);
 		}
 
 		NB_ASSERT(false, "Unknown Renderer API!");

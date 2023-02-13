@@ -1,37 +1,25 @@
 #pragma once
 
-#include "Texture.h"
+#include "Nebula/Core/API.h"
 #include "Nebula/Utils/Arrays.h"
-
-#include <map>
+#include "Nebula/Renderer/Texture.h"
 
 namespace Nebula {
-	class FontGlyph 
-	{
-	public:
-		uint32_t character;
-		float offset_x, offset_y;
-		float width, height;
-		float s0, s1, t0, t1;
-		float advance_x;
-	private:
-		std::unordered_map<uint32_t, float> m_KerningValues;
-		friend class Font;
-	};
-
+	struct MSDFData;
+	
 	class Font 
 	{
 	public:
 		Font(const std::filesystem::path& filename);
 		~Font();
 
-		inline const Ref<Texture2D> GetTexture() const { return nullptr; }
+		const MSDFData* GetMSDFData() const { return m_Data.get(); }
+		inline const Ref<Texture2D> GetAtlasTexture() const { return m_AtlasTexture; }
 		inline const std::filesystem::path& GetFilename() const { return m_Filename; }
-		
-		FontGlyph GetGlyph(const char* c);
-		float GetGlyphKerning(FontGlyph glyph, const char* previous) const;
 	private:
 		std::filesystem::path m_Filename;
+		Scope<MSDFData> m_Data;
+		Ref<Texture2D> m_AtlasTexture;
 	};
 
 	struct FontFamily

@@ -17,19 +17,40 @@ namespace Nebula {
 			NB_ASSERT(false, "Unknown OpenGL Format");
 			return 0;
 		}
-	}
 
-	OpenGL_Texture2D::OpenGL_Texture2D(uint32_t width, uint32_t height, bool alphaOnly) : m_Width(width), m_Height(height) {
-		NB_PROFILE_FUNCTION();
+		static GLenum NebulaToGLDataFormat(ImageFormat format)
+		{
+			switch (format)
+			{
+				case ImageFormat::RGB8:		return GL_RGB;
+				case ImageFormat::RGBA8:	return GL_RGBA;
+			}
 
-		m_InternalFormat = GL_RGBA8;
-		m_Format = GL_RGBA;
-		
-		if (alphaOnly) {
-			m_InternalFormat = GL_R8;
-			m_Format = GL_RED;
+			NB_ASSERT(false);
+			return 0;
 		}
 
+		static GLenum NebulaToGLInternalFormat(ImageFormat format)
+		{
+			switch (format)
+			{
+				case ImageFormat::RGB8:		return GL_RGB8;
+				case ImageFormat::RGBA8:	return GL_RGBA8;
+			}
+
+			NB_ASSERT(false);
+			return 0;
+		}
+	}
+
+	OpenGL_Texture2D::OpenGL_Texture2D(const TextureSpecification& specification)
+		: m_Specification(specification), m_Width(specification.Width), m_Height(specification.Height)
+	{
+		NB_PROFILE_FUNCTION();
+
+		m_InternalFormat = Utils::NebulaToGLInternalFormat(specification.Format);
+		m_Format = Utils::NebulaToGLDataFormat(specification.Format);
+		
 		glCreateTextures(GL_TEXTURE_2D, 1, &m_RendererID);
 		glTextureStorage2D(m_RendererID, 1, m_InternalFormat, m_Width, m_Height);
 		
@@ -38,14 +59,6 @@ namespace Nebula {
 
 		glTextureParameteri(m_RendererID, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTextureParameteri(m_RendererID, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-		if (alphaOnly) {
-			GLint swizzleMask[] = { GL_ONE, GL_ONE, GL_ONE, GL_RED };
-
-			glBindTexture(GL_TEXTURE_2D, m_RendererID);
-			glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
-			glBindTexture(GL_TEXTURE_2D, 0);
-		}
 	}
 
 	OpenGL_Texture2D::OpenGL_Texture2D(const std::string& path): m_Path(path) {
