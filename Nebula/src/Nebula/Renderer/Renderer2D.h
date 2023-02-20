@@ -16,11 +16,12 @@
 namespace Nebula {
 	class VertexArray;
 	class VertexBuffer;
+
 	struct Vertex;
 	struct CircleVertex;
-	struct LineVertex;
 	
-	class Renderer2D {
+	class Renderer2D 
+	{
 	public:
 		static void Init();
 		static void Shutdown();
@@ -48,9 +49,5 @@ namespace Nebula {
 	private:
 		static void FlushAndReset();
 		static float GetTextureIndex(const Ref<Texture2D>& texture);
-		static Vertex* CalculateVertexData(Vertex* vertexPtr, const uint32_t vertexCount, const glm::vec4* vertexPos,
-			const glm::mat4& transform, const glm::vec4& colour, Ref<Texture2D> texture, glm::vec2* texCoord, float tiling, uint32_t entityID);
-		static CircleVertex* CalculateVertexData(CircleVertex* vertexPtr, const uint32_t vertexCount, const glm::vec4* vertexPos,
-			const glm::mat4& transform, const glm::vec4& colour, float thickness, float fade, uint32_t entityID);
 	};
 }

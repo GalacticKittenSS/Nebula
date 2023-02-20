@@ -130,6 +130,15 @@ namespace Nebula
 	{
 	}
 
+	Ref<Font> Font::GetDefault()
+	{
+		static Ref<Font> DefaultFont;
+		if (!DefaultFont)
+			DefaultFont = CreateRef<Font>("Resources/font/OpenSans/Regular.ttf");
+
+		return DefaultFont;
+	}
+
 	FontFamily::FontFamily(std::string directory, std::string name)
 		: Name(name)
 	{
@@ -151,8 +160,6 @@ namespace Nebula
 	Array<Ref<Font>> FontManager::m_Fonts = {};
 	Array<FontFamily> FontManager::m_FontFamilies = {};
 
-	uint32_t FontManager::m_FontResolution = 86.0f;
-
 	void FontManager::Add(const Ref<Font>& font)
 	{ 
 		m_Fonts.push_back(font); 
@@ -173,11 +180,6 @@ namespace Nebula
 		
 		if (family.Regular)
 			m_Fonts.push_back(family.Regular);
-	}
-
-	void FontManager::SetFontResolution(float resolution)
-	{
-		m_FontResolution = resolution;
 	}
 
 	Ref<Font> FontManager::GetFont(const std::filesystem::path& path)

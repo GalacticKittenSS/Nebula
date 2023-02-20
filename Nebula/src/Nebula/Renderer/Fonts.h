@@ -16,6 +16,8 @@ namespace Nebula {
 		const MSDFData* GetMSDFData() const { return m_Data.get(); }
 		inline const Ref<Texture2D> GetAtlasTexture() const { return m_AtlasTexture; }
 		inline const std::filesystem::path& GetFilename() const { return m_Filename; }
+
+		static Ref<Font> GetDefault();
 	private:
 		std::filesystem::path m_Filename;
 		Scope<MSDFData> m_Data;
@@ -46,9 +48,6 @@ namespace Nebula {
 		static void Add(const FontFamily& family);
 
 		static void Clean();
-
-		static void SetFontResolution(float resolution);
-		static float GetFontResolution() { return m_FontResolution; }
 		
 		static const Array<Ref<Font>>& GetFonts() { return m_Fonts; }
 		static Ref<Font> GetFont(const std::filesystem::path& path);
@@ -58,8 +57,6 @@ namespace Nebula {
 	private:
 		static Array<Ref<Font>> m_Fonts;
 		static Array<FontFamily> m_FontFamilies;
-
-		static uint32_t m_FontResolution;
 
 		friend class Font;
 	};

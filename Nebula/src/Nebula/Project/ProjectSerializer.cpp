@@ -26,7 +26,6 @@ namespace Nebula {
 		out << YAML::Key << "StartScene" << YAML::Value << config.StartScene.string();
 		out << YAML::Key << "AssetDirectory" << YAML::Value << config.AssetDirectory.string();
 		out << YAML::Key << "ScriptModulePath" << YAML::Value << config.ScriptModulePath.string();
-		out << YAML::Key << "FontResolution" << YAML::Value << FontManager::GetFontResolution();
 		out << YAML::EndMap; // Project
 		
 		out << YAML::EndMap; // Root
@@ -60,12 +59,6 @@ namespace Nebula {
 		config.StartScene = projectNode["StartScene"].as<std::string>();
 		config.AssetDirectory = projectNode["AssetDirectory"].as<std::string>();
 		config.ScriptModulePath = projectNode["ScriptModulePath"].as<std::string>();
-		
-		if (projectNode["FontResolution"])
-		{
-			uint32_t resolution = projectNode["FontResolution"].as<uint32_t>();
-			FontManager::SetFontResolution(resolution);
-		}
 
 		return true;
 	}

@@ -9,8 +9,54 @@
 
 #include "Nebula/Scene/Components.h"
 
+#include "MSDFData.h"
+
 namespace Nebula {
-	struct Renderer2DData {
+	struct Vertex
+	{
+		glm::vec3 Position;
+		glm::vec4 Colour;
+		glm::vec2 TexCoord;
+		float TexIndex;
+		float TilingFactor;
+
+		//Editor Only
+		int EntityID;
+	};
+
+	struct CircleVertex
+	{
+		glm::vec3 Position;
+		glm::vec3 LocalPosition;
+		glm::vec4 Colour;
+		float Thickness;
+		float Fade;
+
+		//Editor Only
+		int EntityID;
+	};
+
+	struct LineVertex
+	{
+		glm::vec3 Position;
+		glm::vec4 Colour;
+
+		//Editor Only
+		int EntityID;
+	};
+
+	struct TextVertex
+	{
+		glm::vec3 Position;
+		glm::vec4 Colour;
+		glm::vec2 TexCoord;
+
+		//Editor Only
+		int EntityID;
+	};
+
+	struct Renderer2DData 
+	{
 		static const uint32_t MaxSprites = 10000;
 		static const uint32_t MaxTextureSlots = 32;
 		static const uint32_t MaxVertices  = MaxSprites * 4;
@@ -19,11 +65,12 @@ namespace Nebula {
 		Ref<Shader>		TextureShader;
 		Ref<Shader>		 CircleShader;
 		Ref<Shader>		   LineShader;
+		Ref<Shader>		   TextShader;
 		Ref<Texture2D>	 WhiteTexture;
 
 		std::array<Ref<Texture2D>, MaxTextureSlots> TextureSlots;
-		uint32_t TextureSlotIndex = 1; 
-		
+		uint32_t TextureSlotIndex = 1; // 0 = White Texture 
+
 		struct CameraData
 		{
 			glm::mat4 ViewProjection;
@@ -73,37 +120,19 @@ namespace Nebula {
 		LineVertex* LineVBPtr  = nullptr;
 
 		Ref<Texture2D> FontTexture;
+		
+		// Text
+		Ref<VertexArray>	TextVertexArray;
+		Ref<VertexBuffer>	TextVertexBuffer;
+		Ref<Texture2D>		FontAtlasTexture;
+
+		uint32_t TextIndexCount = 0;
+
+		TextVertex* TextVBBase = nullptr;
+		TextVertex* TextVBPtr = nullptr;
 	};
 	static Renderer2DData s_Data;
 	
-	struct Vertex {
-		glm::vec3 Position;
-		glm::vec4 Colour;
-		glm::vec2 TexCoord;
-		float TexIndex;
-		float TilingFactor;
-
-		//Editor Only
-		int EntityID;
-	};
-	struct CircleVertex {
-		glm::vec3 Position;
-		glm::vec3 LocalPosition;
-		glm::vec4 Colour;
-		float Thickness;
-		float Fade;
-
-		//Editor Only
-		int EntityID;
-	};
-	struct LineVertex {
-		glm::vec3 Position;
-		glm::vec4 Colour;
-		
-		//Editor Only
-		int EntityID;
-	};
-
 	static void SetupShape(const uint32_t Type, BufferLayout layout, uint32_t maxVertices, uint32_t maxIndices, 
 		uint32_t indicesPerShape, uint32_t verticesPerShape) {
 		Ref<VertexArray> vArray  = VertexArray::Create();
@@ -151,6 +180,11 @@ namespace Nebula {
 			s_Data.LineVertexBuffer = vBuffer;
 			s_Data.LineVBBase = new LineVertex[s_Data.MaxVertices];
 		}
+		else if (Type == NB_STRING) {
+			s_Data.TextVertexArray = vArray;
+			s_Data.TextVertexBuffer = vBuffer;
+			s_Data.TextVBBase = new TextVertex[s_Data.MaxVertices];
+		}
 	}
 
 	static void ResetBatch() {
@@ -167,6 +201,9 @@ namespace Nebula {
 
 		s_Data.LineVertexCount = 0;
 		s_Data.LineVBPtr = s_Data.LineVBBase;
+
+		s_Data.TextIndexCount = 0;
+		s_Data.TextVBPtr = s_Data.TextVBBase;
 
 		s_Data.TextureSlotIndex = 1;
 	}
@@ -198,10 +235,18 @@ namespace Nebula {
 			{ShaderDataType::Int, "entityID"}
 		};
 
+		BufferLayout Textlayout = {
+			{ShaderDataType::Float3, "position"},
+			{ShaderDataType::Float4, "colour"},
+			{ShaderDataType::Float2, "texCoord"},
+			{ShaderDataType::Int, "entityID"}
+		};
+
 		SetupShape(NB_QUAD, layout, s_Data.MaxVertices, s_Data.MaxIndices, 6, 4);
-		SetupShape(NB_CIRCLE, CircleLayout, s_Data.MaxVertices, s_Data.MaxIndices, 6, 4);
 		SetupShape(NB_TRI, layout, s_Data.MaxVertices, s_Data.MaxIndices, 3, 3);
+		SetupShape(NB_CIRCLE, CircleLayout, s_Data.MaxVertices, s_Data.MaxIndices, 6, 4);
 		SetupShape(NB_LINE, LineLayout, s_Data.MaxVertices, s_Data.MaxIndices, 2, 2);
+		SetupShape(NB_STRING, Textlayout, s_Data.MaxVertices, s_Data.MaxIndices, 6, 4);
 
 		s_Data.QuadVertexPos[0] = { -0.5f, -0.5f, 0.0f, 1.0f };
 		s_Data.QuadVertexPos[1] = {  0.5f, -0.5f, 0.0f, 1.0f };
@@ -225,7 +270,7 @@ namespace Nebula {
 		s_Data.LineVertexPos[1] = {  0.5f, 0.0f, 0.0f, 1.0f };
 
 		//White Texture
-		s_Data.WhiteTexture = Texture2D::Create(1, 1);
+		s_Data.WhiteTexture = Texture2D::Create(TextureSpecification());
 		uint32_t whiteTextureData = 0xffffffff;
 		s_Data.WhiteTexture->SetData(&whiteTextureData, sizeof(uint32_t));
 		s_Data.TextureSlots[0] = s_Data.WhiteTexture;
@@ -234,6 +279,7 @@ namespace Nebula {
 		s_Data.TextureShader = Shader::Create("Resources/shaders/Default.glsl");
 		s_Data.CircleShader = Shader::Create("Resources/shaders/Circle.glsl");
 		s_Data.LineShader = Shader::Create("Resources/shaders/Line.glsl");
+		s_Data.TextShader = Shader::Create("Resources/shaders/Text.glsl");
 		
 		int32_t samplers[s_Data.MaxTextureSlots];
 		for (uint32_t i = 0; i < s_Data.MaxTextureSlots; i++)
@@ -253,6 +299,7 @@ namespace Nebula {
 		delete[] s_Data.TriVBBase;
 		delete[] s_Data.CircleVBBase;
 		delete[] s_Data.LineVBBase;
+		delete[] s_Data.TextVBBase;
 
 		delete[] s_Data.QuadVertexPos;
 		delete[] s_Data.TriVertexPos;
@@ -288,75 +335,107 @@ namespace Nebula {
 		s_Data.TextureShader->SetBackfaceCulling(cull);
 	}
 
-	void Renderer2D::DrawString(const std::string& text, Ref<Font> font, 
-		const glm::mat4& transform, const glm::vec4& colour, uint32_t entityID) 
+	void Renderer2D::DrawString(const std::string& text, Ref<Font> font,
+		const glm::mat4& transform, const glm::vec4& colour, uint32_t entityID)
 	{
-		return;
-
 		NB_PROFILE_FUNCTION();
 		if (text.empty() || !font)
 			return;
-		
-		if (s_Data.QuadIndexCount >= s_Data.MaxIndices)
+
+		if (s_Data.TextIndexCount >= s_Data.MaxIndices)
 			FlushAndReset();
 
-		float x = 0.0f;
-		float scale = 1.0f;// / font->GetResolution();
-		float textureIndex = GetTextureIndex(font->GetTexture());
+		if (s_Data.FontAtlasTexture != font->GetAtlasTexture())
+		{
+			FlushAndReset();
+			s_Data.FontAtlasTexture = font->GetAtlasTexture();
+		}
+
+		const auto& fontGeometry = font->GetMSDFData()->FontGeometry;
+		const auto& metrics = fontGeometry.getMetrics();
+		
+		Ref<Texture2D> fontAtlas = font->GetAtlasTexture();
+		float texelWidth = 1.0f / fontAtlas->GetWidth();
+		float texelHeight = 1.0f / fontAtlas->GetHeight();
+
+		float x = 0.0f, y = 0.0f;
+		float fsScale = 1.0f / (metrics.ascenderY - metrics.descenderY);
+		float lineHeightOffset = 0.0f;
 
 		for (uint32_t i = 0; i < text.length(); i++)
 		{
-			FontGlyph glyph = font->GetGlyph(&text[i]);
+			char character = text[i];
+			if (character == '\r')
+				continue;
+
+			if (character == '\n')
+			{
+				x = 0;
+				y -= fsScale * metrics.lineHeight + lineHeightOffset;
+				continue;
+			}
+
+			auto glyph = fontGeometry.getGlyph(character);
 			
-			if (i > 0)
-				x += font->GetGlyphKerning(glyph, &text[i - 1]) * scale;
-
-			float x0 = x  +	glyph.offset_x * scale;
-			float y0 =		glyph.offset_y * scale;
-			float x1 = x0 + glyph.width    * scale;
-			float y1 = y0 - glyph.height   * scale;
-
-			float z = i / 1000.0f;
+			if (character == '\t')
+				glyph = fontGeometry.getGlyph(' ');
 			
-			float u0 = glyph.s0;
-			float v0 = glyph.t0;
-			float u1 = glyph.s1;
-			float v1 = glyph.t1;
+			if (!glyph)
+				glyph = fontGeometry.getGlyph('?');
 
-			s_Data.QuadVBPtr->Position = transform * glm::vec4(x0, y0, z, 1.0f);
-			s_Data.QuadVBPtr->TexCoord = glm::vec2(u0, v0);
-			s_Data.QuadVBPtr->TexIndex = textureIndex;
-			s_Data.QuadVBPtr->TilingFactor = 1.0f;
-			s_Data.QuadVBPtr->Colour = colour;
-			s_Data.QuadVBPtr->EntityID = entityID;
-			s_Data.QuadVBPtr++;
+			if (!glyph)
+				continue;
 
-			s_Data.QuadVBPtr->Position = transform * glm::vec4(x0, y1, z, 1.0f);
-			s_Data.QuadVBPtr->TexCoord = glm::vec2(u0, v1);
-			s_Data.QuadVBPtr->TexIndex = textureIndex;
-			s_Data.QuadVBPtr->TilingFactor = 1.0f;
-			s_Data.QuadVBPtr->Colour = colour;
-			s_Data.QuadVBPtr->EntityID = entityID;
-			s_Data.QuadVBPtr++;
+			double al, ab, ar, at;
+			glyph->getQuadAtlasBounds(al, ab, ar, at);
+			
+			double pl, pb, pr, pt;
+			glyph->getQuadPlaneBounds(pl, pb, pr, pt);
 
-			s_Data.QuadVBPtr->Position = transform * glm::vec4(x1, y1, z, 1.0f);
-			s_Data.QuadVBPtr->TexCoord = glm::vec2(u1, v1);
-			s_Data.QuadVBPtr->TexIndex = textureIndex;
-			s_Data.QuadVBPtr->TilingFactor = 1.0f;
-			s_Data.QuadVBPtr->Colour = colour;
-			s_Data.QuadVBPtr->EntityID = entityID;
-			s_Data.QuadVBPtr++;
+			float x0 = x + pl * fsScale;
+			float y0 = y + pb * fsScale;
+			float x1 = x + pr * fsScale;
+			float y1 = y + pt * fsScale;
 
-			s_Data.QuadVBPtr->Position = transform * glm::vec4(x1, y0, z, 1.0f);
-			s_Data.QuadVBPtr->TexCoord = glm::vec2(u1, v0);
-			s_Data.QuadVBPtr->TexIndex = textureIndex;
-			s_Data.QuadVBPtr->TilingFactor = 1.0f;
-			s_Data.QuadVBPtr->Colour = colour;
-			s_Data.QuadVBPtr->EntityID = entityID;
-			s_Data.QuadVBPtr++;
+			float u0 = al * texelWidth;
+			float v0 = ab * texelHeight;
+			float u1 = ar * texelWidth;
+			float v1 = at * texelHeight;
 
-			s_Data.QuadIndexCount += 6;
-			x += glyph.advance_x * scale;
+			s_Data.TextVBPtr->Position = transform * glm::vec4(x0, y0, 0.0f, 1.0f);
+			s_Data.TextVBPtr->TexCoord = glm::vec2(u0, v0);
+			s_Data.TextVBPtr->Colour = colour;
+			s_Data.TextVBPtr->EntityID = entityID;
+			s_Data.TextVBPtr++;
+
+			s_Data.TextVBPtr->Position = transform * glm::vec4(x1, y0, 0.0f, 1.0f);
+			s_Data.TextVBPtr->TexCoord = glm::vec2(u1, v0);
+			s_Data.TextVBPtr->Colour = colour;
+			s_Data.TextVBPtr->EntityID = entityID;
+			s_Data.TextVBPtr++;
+
+			s_Data.TextVBPtr->Position = transform * glm::vec4(x1, y1, 0.0f, 1.0f);
+			s_Data.TextVBPtr->TexCoord = glm::vec2(u1, v1);
+			s_Data.TextVBPtr->Colour = colour;
+			s_Data.TextVBPtr->EntityID = entityID;
+			s_Data.TextVBPtr++;
+
+			s_Data.TextVBPtr->Position = transform * glm::vec4(x0, y1, 0.0f, 1.0f);
+			s_Data.TextVBPtr->TexCoord = glm::vec2(u0, v1);
+			s_Data.TextVBPtr->Colour = colour;
+			s_Data.TextVBPtr->EntityID = entityID;
+			s_Data.TextVBPtr++;
+
+			s_Data.TextIndexCount += 6;
+
+			if (i < text.length() - 1)
+			{
+				double advance = glyph->getAdvance();
+				fontGeometry.getAdvance(advance, text[i], text[i + 1]);
+
+				float kerningOffset = 0.0f;
+				x += fsScale * advance + kerningOffset;
+			}
 		}
 	}
 
@@ -368,8 +447,19 @@ namespace Nebula {
 		if (s_Data.TriIndexCount >= s_Data.MaxIndices)
 			FlushAndReset();
 
-		texture = texture ? texture : s_Data.WhiteTexture;
-		s_Data.TriVBPtr = CalculateVertexData(s_Data.TriVBPtr, vertexCount, vertexPos, transform, colour, texture, texCoords, tiling, entityID);
+		float textureIndex = GetTextureIndex(texture ? texture : s_Data.WhiteTexture);
+
+		for (size_t i = 0; i < vertexCount; i++) 
+		{
+			s_Data.TriVBPtr->Position = transform * vertexPos[i];
+			s_Data.TriVBPtr->Colour = colour;
+			s_Data.TriVBPtr->TexCoord = texCoords[i];
+			s_Data.TriVBPtr->TexIndex = textureIndex;
+			s_Data.TriVBPtr->TilingFactor = tiling;
+			s_Data.TriVBPtr->EntityID = entityID;
+			s_Data.TriVBPtr++;
+		}
+
 		s_Data.TriIndexCount += vertexCount;
 	}
 
@@ -380,22 +470,45 @@ namespace Nebula {
 		if (s_Data.QuadIndexCount >= s_Data.MaxIndices)
 			FlushAndReset();
 
-		texture = texture ? texture : s_Data.WhiteTexture;
-		s_Data.QuadVBPtr = CalculateVertexData(s_Data.QuadVBPtr, vertexCount, vertexPos, transform, colour, texture, texCoords, tiling, entityID);
-		s_Data.QuadIndexCount += uint32_t(vertexCount * 1.5);
+		float textureIndex = GetTextureIndex(texture ? texture : s_Data.WhiteTexture);
+
+		for (size_t i = 0; i < vertexCount; i++)
+		{
+			s_Data.QuadVBPtr->Position = transform * vertexPos[i];
+			s_Data.QuadVBPtr->Colour = colour;
+			s_Data.QuadVBPtr->TexCoord = texCoords[i];
+			s_Data.QuadVBPtr->TexIndex = textureIndex;
+			s_Data.QuadVBPtr->TilingFactor = tiling;
+			s_Data.QuadVBPtr->EntityID = entityID;
+			s_Data.QuadVBPtr++;
+		}
+
+		s_Data.TriIndexCount += vertexCount; s_Data.QuadIndexCount += uint32_t(vertexCount * 1.5);
 	}
 
-	void Renderer2D::DrawCircle(const glm::mat4& transform, const glm::vec4& colour, const float thickness, const float fade, uint32_t entityID) {
+	void Renderer2D::DrawCircle(const glm::mat4& transform, const glm::vec4& colour, const float thickness, const float fade, uint32_t entityID) 
+	{
 		NB_PROFILE_FUNCTION();
 
 		if (s_Data.CircleIndexCount >= s_Data.MaxIndices)
 			FlushAndReset();
 
-		s_Data.CircleVBPtr = CalculateVertexData(s_Data.CircleVBPtr, 4, s_Data.QuadVertexPos, transform, colour, thickness, fade, entityID);
+		for (size_t i = 0; i < 4; i++)
+		{
+			s_Data.CircleVBPtr->Position = transform * s_Data.QuadVertexPos[i];
+			s_Data.CircleVBPtr->LocalPosition = s_Data.QuadVertexPos[i] * 2.0f;
+			s_Data.CircleVBPtr->Colour = colour;
+			s_Data.CircleVBPtr->Thickness = thickness;
+			s_Data.CircleVBPtr->Fade = fade;
+			s_Data.CircleVBPtr->EntityID = entityID;
+			s_Data.CircleVBPtr++;
+		}
+
 		s_Data.CircleIndexCount += 6;
 	}
 
-	void Renderer2D::DrawLine(const glm::vec3& p0, const glm::vec3& p1, const glm::vec4& colour, int entityID) {
+	void Renderer2D::DrawLine(const glm::vec3& p0, const glm::vec3& p1, const glm::vec4& colour, int entityID) 
+	{
 		s_Data.LineVBPtr->Position = p0;
 		s_Data.LineVBPtr->Colour = colour;
 		s_Data.LineVBPtr->EntityID = entityID;
@@ -409,7 +522,8 @@ namespace Nebula {
 		s_Data.LineVertexCount += 2;
 	}
 
-	void Renderer2D::Draw(const uint32_t type, Entity& entity) {
+	void Renderer2D::Draw(const uint32_t type, Entity& entity) 
+	{
 		NB_PROFILE_FUNCTION();
 
 		glm::mat4 transform = entity.GetComponent<WorldTransformComponent>().Transform;
@@ -463,6 +577,77 @@ namespace Nebula {
 			auto& stringRender = entity.GetComponent<StringRendererComponent>();
 			
 			DrawString(stringRender.Text, stringRender.GetFont(), transform, stringRender.Colour, entity);
+			DrawString(R"(#type vertex
+#version 450 core
+
+layout(location = 0) in vec3 position;
+layout(location = 1) in vec4 colour;
+layout(location = 2) in vec2 texCoord;
+layout(location = 3) in int entityID;
+
+layout(std140, binding = 0) uniform Camera
+{
+	mat4 u_ViewProjection;
+};
+
+struct VertexOutput
+{
+	vec4 Colour;
+	vec2 TexCoord;
+};
+
+layout (location = 0) out VertexOutput Output;
+layout (location = 2) out flat float v_TexIndex;
+layout (location = 3) out flat int v_EntityID;
+			
+void main() {
+	Output.Colour = colour;
+	Output.TexCoord = texCoord;
+	v_EntityID = entityID;
+	gl_Position = u_ViewProjection * vec4(position, 1.0);
+}
+
+#type fragment
+#version 450 core
+
+layout(location = 0) out vec4 colour;
+layout(location = 1) out int id;
+
+struct VertexOutput
+{
+	vec4 Colour;
+	vec2 TexCoord;
+};
+
+layout (location = 0) in VertexOutput Input;
+layout (location = 2) in flat int v_EntityID;
+
+layout (binding = 0) uniform sampler2D u_FontAtlas;
+
+float screenPxRange() {
+    const float pxRange = 2.0;
+	vec2 unitRange = vec2(pxRange) / vec2(textureSize(u_FontAtlas, 0));
+    vec2 screenTexSize = vec2(1.0) / fwidth(Input.TexCoord);
+    return max(0.5 * dot(unitRange, screenTexSize), 1.0);
+}
+
+float median(float r, float g, float b) {
+    return max(min(r, g), min(max(r, g), b));
+}
+
+void main() {
+	vec4 texColour = Input.Colour * texture(u_FontAtlas, Input.TexCoord);
+	
+	float sd = median(texColour.r, texColour.g, texColour.b);
+    float screenPxDistance = screenPxRange() * (sd - 0.5);
+    float opacity = clamp(screenPxDistance + 0.5, 0.0, 1.0);
+    
+	if (opacity == 0)
+		discard;
+
+	colour = vec4(Input.Colour.rgb, opacity);
+	id = v_EntityID;
+})", stringRender.GetFont(), transform, stringRender.Colour, entity);
 			break;
 		}
 		default:
@@ -541,16 +726,20 @@ namespace Nebula {
 		}
 	}
 
-	float Renderer2D::GetTextureIndex(const Ref<Texture2D>& texture) {
+	float Renderer2D::GetTextureIndex(const Ref<Texture2D>& texture) 
+	{
 		float textureIndex = 0.0f;
-		for (uint32_t i = 1; i < s_Data.TextureSlotIndex; i++) {
-			if (*s_Data.TextureSlots[i].get() == *texture.get()) {
+		for (uint32_t i = 1; i < s_Data.TextureSlotIndex; i++) 
+		{
+			if (*s_Data.TextureSlots[i].get() == *texture.get()) 
+			{
 				textureIndex = (float)i;
 				break;
 			}
 		}
 
-		if (textureIndex == 0.0f) {
+		if (textureIndex == 0.0f) 
+		{
 			if (s_Data.TextureSlotIndex >= Renderer2DData::MaxTextureSlots)
 				FlushAndReset();
 
@@ -559,43 +748,6 @@ namespace Nebula {
 			s_Data.TextureSlotIndex++;
 		}
 		return textureIndex;
-	}
-
-	Vertex* Renderer2D::CalculateVertexData(Vertex* vertexPtr, const uint32_t vertexCount, const glm::vec4* vertexPos,
-		const glm::mat4& transform, const glm::vec4& colour, Ref<Texture2D> texture, glm::vec2* texCoord, float tiling, uint32_t entityID)
-	{
-		NB_PROFILE_FUNCTION();
-
-		float textureIndex = GetTextureIndex(texture);
-		
-		for (size_t i = 0; i < vertexCount; i++) {
-			vertexPtr->Position = transform * vertexPos[i];
-			vertexPtr->Colour = colour;
-			vertexPtr->TexCoord = texCoord[i];
-			vertexPtr->TexIndex = textureIndex;
-			vertexPtr->TilingFactor = tiling;
-			vertexPtr->EntityID = entityID;
-			vertexPtr++;
-		}
-
-		return vertexPtr;
-	}
-
-	CircleVertex* Renderer2D::CalculateVertexData(CircleVertex* vertexPtr, const uint32_t vertexCount, const glm::vec4* vertexPos, const glm::mat4& transform, const glm::vec4& colour, float thickness, float fade, uint32_t entityID) 
-	{
-		NB_PROFILE_FUNCTION();
-
-		for (size_t i = 0; i < vertexCount; i++) {
-			vertexPtr->Position = transform * vertexPos[i];
-			vertexPtr->LocalPosition = vertexPos[i] * 2.0f;
-			vertexPtr->Colour = colour;
-			vertexPtr->Thickness = thickness;
-			vertexPtr->Fade = fade;
-			vertexPtr->EntityID = entityID;
-			vertexPtr++;
-		}
-
-		return vertexPtr;
 	}
 
 	void Renderer2D::EndScene() {
@@ -636,6 +788,16 @@ namespace Nebula {
 
 			s_Data.LineShader->Bind();
 			RenderCommand::DrawLines(s_Data.LineVertexArray, s_Data.LineVertexCount);
+		}
+
+		if (s_Data.TextIndexCount) {
+			uint32_t dataSize = (uint32_t)((uint8_t*)s_Data.TextVBPtr - (uint8_t*)s_Data.TextVBBase);
+			s_Data.TextVertexBuffer->SetData(s_Data.TextVBBase, dataSize);
+
+			s_Data.TextShader->Bind();
+			s_Data.FontAtlasTexture->Bind();
+
+			RenderCommand::DrawIndexed(s_Data.TextVertexArray, s_Data.TextIndexCount);
 		}
 	}
 
