@@ -18,8 +18,7 @@ struct VertexOutput
 };
 
 layout (location = 0) out VertexOutput Output;
-layout (location = 2) out flat float v_TexIndex;
-layout (location = 3) out flat int v_EntityID;
+layout (location = 2) out flat int v_EntityID;
 			
 void main() {
 	Output.Colour = colour;
@@ -57,15 +56,19 @@ float median(float r, float g, float b) {
 }
 
 void main() {
-    vec4 texColour = Input.Colour * texture(u_FontAtlas, Input.TexCoord);
-	
-    float sd = median(texColour.r, texColour.g, texColour.b);
+    vec3 msd = texture(u_FontAtlas, Input.TexCoord).rgb;
+    float sd = median(msd.r, msd.g, msd.b);
     float screenPxDistance = screenPxRange() * (sd - 0.5);
     float opacity = clamp(screenPxDistance + 0.5, 0.0, 1.0);
     
-	if (opacity == 0)
+	if (opacity == 0.0)
 		discard;
 
-	colour = vec4(Input.Colour.rgb, opacity);
+	vec4 bgColor = vec4(0.0);
+	colour = mix(bgColor, Input.Colour, opacity);
+	
+	if (colour.a == 0.0)
+		discard;
+
 	id = v_EntityID;
 }

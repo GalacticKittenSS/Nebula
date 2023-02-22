@@ -109,18 +109,6 @@ namespace Nebula
 		}
 
 		m_AtlasTexture = CreateAndCacheAtlas<uint8_t, float, 3, msdf_atlas::msdfGenerator>("Test", (float)emSize, m_Data->Glyphs, m_Data->FontGeometry, width, height);
-		
-#if 0
-		msdfgen::Shape shape;
-		if (msdfgen::loadGlyph(shape, font, 'A'))
-		{
-			shape.normalize();
-			msdfgen::edgeColoringSimple(shape, 3.0);
-			msdfgen::Bitmap<float, 3> msdf(32, 32);
-			msdfgen::generateMSDF(msdf, shape, 4.0, 1.0, msdfgen::Vector2(4.0, 4.0));
-			msdfgen::savePng(msdf, "output.png");
-		}
-#endif
 
 		msdfgen::destroyFont(font);
 		msdfgen::deinitializeFreetype(ft);
