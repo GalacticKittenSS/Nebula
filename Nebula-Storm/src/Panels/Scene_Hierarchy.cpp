@@ -8,6 +8,8 @@
 #include <cstring>
 #include <filesystem>
 
+#include "../Modules/imgui/misc/cpp/imgui_stdlib.h"
+
 namespace Nebula {
 	static float s_TextColumnWidth	= 100.0f;
 	static float s_MaxItemWidth		= 425.0f;
@@ -906,7 +908,9 @@ namespace Nebula {
 		}, true);
 
 		DrawComponent<StringRendererComponent>("String Renderer", entity, [](auto& component) {
-			DrawTextBox("Text", component.Text);
+			float size = DrawLabel("Text");
+			ImGui::SetNextItemWidth(size);
+			ImGui::InputTextMultiline("##Text", &component.Text);
 			
 			{
 				float size = DrawLabel("Font");
@@ -935,6 +939,9 @@ namespace Nebula {
 			
 			DrawBool("Italic", component.Italic);
 			DrawBool("Bold", component.Bold);
+
+			DrawVec1Control("Kerning", component.Kerning);
+			DrawVec1Control("Line Spacing", component.LineSpacing);
 
 			DrawColourEdit("Colour", component.Colour);
 		}, true);

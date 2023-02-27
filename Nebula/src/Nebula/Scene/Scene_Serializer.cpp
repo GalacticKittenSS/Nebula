@@ -326,6 +326,8 @@ namespace Nebula {
 			out << YAML::Key << "FamilyName" << YAML::Value << component.FamilyName;
 			out << YAML::Key << "Bold" << YAML::Value << component.Bold;
 			out << YAML::Key << "Italic" << YAML::Value << component.Italic;
+			out << YAML::Key << "Kerning" << YAML::Value << component.Kerning;
+			out << YAML::Key << "LineSpacing" << YAML::Value << component.LineSpacing;
 			
 			out << YAML::EndMap; // StringRendererComponent
 		}
@@ -588,6 +590,8 @@ namespace Nebula {
 				DeserializeValue(src.FamilyName, stringRendererComponent["FamilyName"]);
 				DeserializeValue(src.Bold, stringRendererComponent["Bold"]);
 				DeserializeValue(src.Italic, stringRendererComponent["Italic"]);
+				DeserializeValue(src.Kerning, stringRendererComponent["Kerning"]);
+				DeserializeValue(src.LineSpacing, stringRendererComponent["LineSpacing"]);
 			}
 
 			if (auto rigidbody2DComponent = entity["Rigidbody2DComponent"])

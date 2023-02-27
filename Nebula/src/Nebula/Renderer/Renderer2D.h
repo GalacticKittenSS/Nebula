@@ -38,8 +38,15 @@ namespace Nebula {
 			const glm::mat4& transform, const glm::vec4& colour, Ref<Texture2D> texture, float tiling);
 
 		//Primitives
+
+		struct TextParams
+		{
+			glm::vec4 Colour { 1.0f };
+			float Kerning = 0.0f;
+			float LineSpacing = 0.0f;
+		};
 		static void DrawString(const std::string& text, Ref<Font> font,
-			const glm::mat4& transform, const glm::vec4& colour, uint32_t entityID = -1);
+			const glm::mat4& transform, const TextParams& params, uint32_t entityID = -1);
 		static void DrawTri(const uint32_t vertexCount, const glm::vec4* vertexPos, glm::vec2* texCoords,
 			const glm::mat4& transform, const glm::vec4& colour, Ref<Texture2D> texture = nullptr, float tiling = 1.0f, uint32_t entityID = -1);
 		static void DrawQuad(const uint32_t vertexCount, const glm::vec4* vertexPos, glm::vec2* texCoords,

@@ -125,9 +125,11 @@ namespace Nebula {
 		glm::vec4 Colour{ 1.0f, 1.0f, 1.0f, 1.0f };
 
 		std::string FamilyName = "OpenSans";
-		
 		bool Bold = false;
 		bool Italic = false;
+
+		float Kerning = 0.0f;
+		float LineSpacing = 0.0f;
 
 		StringRendererComponent() = default;
 		StringRendererComponent(const StringRendererComponent&) = default;

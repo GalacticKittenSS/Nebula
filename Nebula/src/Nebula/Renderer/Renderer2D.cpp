@@ -336,7 +336,7 @@ namespace Nebula {
 	}
 
 	void Renderer2D::DrawString(const std::string& text, Ref<Font> font,
-		const glm::mat4& transform, const glm::vec4& colour, uint32_t entityID)
+		const glm::mat4& transform, const TextParams& params, uint32_t entityID)
 	{
 		NB_PROFILE_FUNCTION();
 		if (text.empty() || !font)
@@ -360,8 +360,9 @@ namespace Nebula {
 
 		float x = 0.0f, y = 0.0f;
 		float fsScale = 1.0f / (metrics.ascenderY - metrics.descenderY);
-		float lineHeightOffset = 0.0f;
 
+		const float spaceGlyphAdvance = fontGeometry.getGlyph(' ')->getAdvance();
+		
 		for (uint32_t i = 0; i < text.length(); i++)
 		{
 			char character = text[i];
@@ -371,14 +372,32 @@ namespace Nebula {
 			if (character == '\n')
 			{
 				x = 0;
-				y -= fsScale * metrics.lineHeight + lineHeightOffset;
+				y -= fsScale * metrics.lineHeight + params.LineSpacing;
+				continue;
+			}
+
+			if (character == ' ')
+			{
+				float advance = spaceGlyphAdvance;
+				if (i < text.size() - 1)
+				{
+					char nextChar = text[i + 1];
+					double dAdvance;
+					fontGeometry.getAdvance(dAdvance, character, nextChar);
+					advance = (float)dAdvance;
+				}
+
+				x += fsScale * advance;
+				continue;
+			}
+
+			if (character == '\t')
+			{
+				x += 4.0f * (fsScale * spaceGlyphAdvance);
 				continue;
 			}
 
 			auto glyph = fontGeometry.getGlyph(character);
-			
-			if (character == '\t')
-				glyph = fontGeometry.getGlyph(' ');
 			
 			if (!glyph)
 				glyph = fontGeometry.getGlyph('?');
@@ -404,25 +423,25 @@ namespace Nebula {
 
 			s_Data.TextVBPtr->Position = transform * glm::vec4(x0, y0, 0.0f, 1.0f);
 			s_Data.TextVBPtr->TexCoord = glm::vec2(u0, v0);
-			s_Data.TextVBPtr->Colour = colour;
+			s_Data.TextVBPtr->Colour = params.Colour;
 			s_Data.TextVBPtr->EntityID = entityID;
 			s_Data.TextVBPtr++;
 
 			s_Data.TextVBPtr->Position = transform * glm::vec4(x1, y0, 0.0f, 1.0f);
 			s_Data.TextVBPtr->TexCoord = glm::vec2(u1, v0);
-			s_Data.TextVBPtr->Colour = colour;
+			s_Data.TextVBPtr->Colour = params.Colour;
 			s_Data.TextVBPtr->EntityID = entityID;
 			s_Data.TextVBPtr++;
 
 			s_Data.TextVBPtr->Position = transform * glm::vec4(x1, y1, 0.0f, 1.0f);
 			s_Data.TextVBPtr->TexCoord = glm::vec2(u1, v1);
-			s_Data.TextVBPtr->Colour = colour;
+			s_Data.TextVBPtr->Colour = params.Colour;
 			s_Data.TextVBPtr->EntityID = entityID;
 			s_Data.TextVBPtr++;
 
 			s_Data.TextVBPtr->Position = transform * glm::vec4(x0, y1, 0.0f, 1.0f);
 			s_Data.TextVBPtr->TexCoord = glm::vec2(u0, v1);
-			s_Data.TextVBPtr->Colour = colour;
+			s_Data.TextVBPtr->Colour = params.Colour;
 			s_Data.TextVBPtr->EntityID = entityID;
 			s_Data.TextVBPtr++;
 
@@ -432,9 +451,7 @@ namespace Nebula {
 			{
 				double advance = glyph->getAdvance();
 				fontGeometry.getAdvance(advance, text[i], text[i + 1]);
-
-				float kerningOffset = 0.0f;
-				x += fsScale * advance + kerningOffset;
+				x += fsScale * advance + params.Kerning;
 			}
 		}
 	}
@@ -576,7 +593,8 @@ namespace Nebula {
 		case NB_STRING: {
 			auto& stringRender = entity.GetComponent<StringRendererComponent>();
 			
-			DrawString(stringRender.Text, stringRender.GetFont(), transform, stringRender.Colour, entity);
+			TextParams params = { stringRender.Colour, stringRender.Kerning, stringRender.LineSpacing };
+			DrawString(stringRender.Text, stringRender.GetFont(), transform, params, entity);
 			break;
 		}
 		default:
