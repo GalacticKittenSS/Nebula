@@ -10,15 +10,17 @@ namespace Nebula {
 	class Font 
 	{
 	public:
-		Font(const std::filesystem::path& filename);
+		Font(const std::string& name, const std::filesystem::path& filename);
 		~Font();
 
 		const MSDFData* GetMSDFData() const { return m_Data.get(); }
 		inline const Ref<Texture2D> GetAtlasTexture() const { return m_AtlasTexture; }
 		inline const std::filesystem::path& GetFilename() const { return m_Filename; }
+		inline const std::filesystem::path& GetName() const { return m_Name; }
 
 		static Ref<Font> GetDefault();
 	private:
+		std::string m_Name;
 		std::filesystem::path m_Filename;
 		Scope<MSDFData> m_Data;
 		Ref<Texture2D> m_AtlasTexture;
@@ -51,6 +53,7 @@ namespace Nebula {
 		
 		static const Array<Ref<Font>>& GetFonts() { return m_Fonts; }
 		static Ref<Font> GetFont(const std::filesystem::path& path);
+		static Ref<Font> GetFont(const std::string& name);
 		
 		static const Array<FontFamily>& GetFamilies() { return m_FontFamilies; };
 		static FontFamily GetFamily(const std::string& name);

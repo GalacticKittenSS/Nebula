@@ -6,6 +6,8 @@
 #include "FontGeometry.h"
 #include "GlyphGeometry.h"
 
+#include "stb_image_write.h"
+
 #include "MSDFData.h"
 
 namespace Nebula 
@@ -14,6 +16,14 @@ namespace Nebula
 	static Ref<Texture2D> CreateAndCacheAtlas(const std::string& fontName, float fontSize, const std::vector<msdf_atlas::GlyphGeometry>& glyphs, 
 		msdf_atlas::FontGeometry fontGeometry, uint32_t width, uint32_t height)
 	{
+		if (!std::filesystem::is_directory("Resources/cache/font"))
+			std::filesystem::create_directory("Resources/cache/font");
+
+		std::string cachePath = "Resources/cache/font/" + fontName + ".png";
+		Ref<Texture2D> texture = Texture2D::Create(cachePath);
+		if (texture->IsLoaded())
+			return texture;
+
 		msdf_atlas::GeneratorAttributes attributes;
 		attributes.config.overlapSupport = true;
 		attributes.scanlinePass = true;
@@ -25,19 +35,22 @@ namespace Nebula
 
 		msdfgen::BitmapConstRef<T, N> bitmap = (msdfgen::BitmapConstRef<T, N>)generator.atlasStorage();
 
+		stbi_flip_vertically_on_write(1);
+		stbi_write_png(cachePath.c_str(), bitmap.width, bitmap.height, N, (void*)bitmap.pixels, 0);
+
 		TextureSpecification spec;
 		spec.Width = bitmap.width;
 		spec.Height = bitmap.height;
 		spec.Format = ImageFormat::RGB8;
 		spec.GenerateMips = false;
 
-		Ref<Texture2D> texture = Texture2D::Create(spec);
+		texture = Texture2D::Create(spec);
 		texture->SetData((void*)bitmap.pixels, bitmap.width * bitmap.height * 3);
 		return texture;
 	}
 
-	Font::Font(const std::filesystem::path& filename)
-		: m_Data(CreateScope<MSDFData>())
+	Font::Font(const std::string& name, const std::filesystem::path& filename)
+		: m_Data(CreateScope<MSDFData>()), m_Name(name), m_Filename(filename)
 	{
 		msdfgen::FreetypeHandle* ft = msdfgen::initializeFreetype();
 		NB_ASSERT(ft);
@@ -108,7 +121,7 @@ namespace Nebula
 			}
 		}
 
-		m_AtlasTexture = CreateAndCacheAtlas<uint8_t, float, 3, msdf_atlas::msdfGenerator>("Test", (float)emSize, m_Data->Glyphs, m_Data->FontGeometry, width, height);
+		m_AtlasTexture = CreateAndCacheAtlas<uint8_t, float, 3, msdf_atlas::msdfGenerator>(name, (float)emSize, m_Data->Glyphs, m_Data->FontGeometry, width, height);
 
 		msdfgen::destroyFont(font);
 		msdfgen::deinitializeFreetype(ft);
@@ -122,7 +135,7 @@ namespace Nebula
 	{
 		static Ref<Font> DefaultFont;
 		if (!DefaultFont)
-			DefaultFont = CreateRef<Font>("Resources/font/OpenSans/Regular.ttf");
+			DefaultFont = CreateRef<Font>("OpenSans_Regular", "Resources/font/OpenSans/Regular.ttf");
 
 		return DefaultFont;
 	}
@@ -132,9 +145,9 @@ namespace Nebula
 	{
 		std::filesystem::path path = directory + "/" + name;
 		Regular = Create(path / "Regular.ttf");
-		//Bold = Create(path / "Bold.ttf");
-		//BoldItalic = Create(path / "BoldItalic.ttf");
-		//Italic = Create(path / "Italic.ttf");
+		Bold = Create(path / "Bold.ttf");
+		BoldItalic = Create(path / "BoldItalic.ttf");
+		Italic = Create(path / "Italic.ttf");
 	}
 
 	Ref<Font> FontFamily::Create(const std::filesystem::path path)
@@ -142,7 +155,7 @@ namespace Nebula
 		if (!std::filesystem::exists(path))
 			return nullptr;
 
-		return CreateRef<Font>(path.string());
+		return CreateRef<Font>(Name + "_" + path.stem().string(), path);
 	}
 
 	Array<Ref<Font>> FontManager::m_Fonts = {};
@@ -175,6 +188,17 @@ namespace Nebula
 		for (Ref<Font> font : m_Fonts) 
 		{
 			if (font->GetFilename() == path)
+				return font;
+		}
+
+		return nullptr;
+	}
+	
+	Ref<Font> FontManager::GetFont(const std::string& name)
+	{
+		for (Ref<Font> font : m_Fonts) 
+		{
+			if (font->GetName() == name)
 				return font;
 		}
 
