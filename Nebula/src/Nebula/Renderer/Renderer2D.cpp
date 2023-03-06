@@ -329,12 +329,6 @@ namespace Nebula {
 		ResetBatch();
 	}
 
-	void Renderer2D::SetBackCulling(bool cull) {
-		s_Data.LineShader->SetBackfaceCulling(cull);
-		s_Data.CircleShader->SetBackfaceCulling(cull);
-		s_Data.TextureShader->SetBackfaceCulling(cull);
-	}
-
 	void Renderer2D::DrawString(const std::string& text, Ref<Font> font,
 		const glm::mat4& transform, const TextParams& params, uint32_t entityID)
 	{

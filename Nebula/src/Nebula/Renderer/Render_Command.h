@@ -25,6 +25,10 @@ namespace Nebula {
 			s_RendererAPI->SetClearColour(colour);
 		}
 
+		inline static void SetBackfaceCulling(bool cull = true) {
+			s_RendererAPI->SetBackfaceCulling(cull);
+		}
+
 		inline static void DrawIndexed(const Ref<VertexArray>& vertexArray, uint32_t indexCount = 0) {
 			s_RendererAPI->DrawIndexed(vertexArray, indexCount);
 		}

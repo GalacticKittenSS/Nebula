@@ -380,7 +380,6 @@ namespace Nebula {
 		}
 		else 
 		{
-			Renderer2D::SetBackCulling(false);
 			Renderer2D::BeginScene(m_EditorCam);
 
 			{
@@ -399,7 +398,6 @@ namespace Nebula {
 			RenderColliders();
 		
 		Renderer2D::EndScene();
-		Renderer2D::SetBackCulling(true);
 	}
 
 	void EditorLayer::RenderColliders() {

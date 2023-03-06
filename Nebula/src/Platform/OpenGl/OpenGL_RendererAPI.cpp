@@ -38,7 +38,7 @@ namespace Nebula {
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LESS);
 
-		glEnable(GL_CULL_FACE);
+		//glEnable(GL_CULL_FACE);
 		glEnable(GL_LINE_SMOOTH);
 	}
 
@@ -56,6 +56,15 @@ namespace Nebula {
 
 	void OpenGL_RendererAPI::SetClearColour(const glm::vec4& colour) {
 		glClearColor(colour.r, colour.g, colour.b, colour.a);
+	}
+
+	void OpenGL_RendererAPI::SetBackfaceCulling(bool cull) {
+		if (cull) {
+			glEnable(GL_CULL_FACE);
+		}
+		else {
+			glDisable(GL_CULL_FACE);
+		}
 	}
 
 	void OpenGL_RendererAPI::DrawIndexed(const Ref<VertexArray>& vertexArray, uint32_t indexCount) {

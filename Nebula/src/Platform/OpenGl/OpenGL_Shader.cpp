@@ -518,14 +518,6 @@ namespace Nebula {
 		glUseProgram(0);
 	}
 
-	void OpenGL_Shader::SetBackfaceCulling(bool cull) {
-		if (cull) {
-			glEnable(GL_CULL_FACE);
-		} else {
-			glDisable(GL_CULL_FACE);
-		}
-	}
-
 	void OpenGL_Shader::SetInt(const std::string& name, int value)
 	{
 		NB_PROFILE_FUNCTION();

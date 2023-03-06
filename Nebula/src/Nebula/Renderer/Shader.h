@@ -13,7 +13,6 @@ namespace Nebula {
 		virtual void Unbind() const = 0;
 
 		virtual const std::string& GetName() const = 0;
-		virtual void SetBackfaceCulling(bool) = 0;
 
 		static Ref<Shader> Create(const std::string& path);
 		static Ref<Shader> Create(const std::string& name, const std::string& vertSrc, const std::string& fragSrc);

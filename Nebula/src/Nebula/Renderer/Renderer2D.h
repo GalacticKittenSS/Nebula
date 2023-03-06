@@ -30,8 +30,6 @@ namespace Nebula {
 		static void BeginScene(const EditorCamera& camera);
 		static void EndScene();
 
-		static void SetBackCulling(bool);
-
 		static void Draw(const uint32_t type, Entity& quad);
 		static void Draw(const uint32_t type, const glm::mat4& transform, const glm::vec4& colour, const Ref<Texture2D> texture = nullptr, float tiling = 1.0f);
 		static void Draw(const uint32_t type, const glm::vec4* vertexPos, glm::vec2* texCoords,
