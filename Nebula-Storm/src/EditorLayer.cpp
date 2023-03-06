@@ -441,9 +441,7 @@ namespace Nebula {
 			|| selectedEntity.HasComponent<CircleRendererComponent>())
 		{
 			const WorldTransformComponent& wtc = selectedEntity.GetComponent<WorldTransformComponent>();
-			glm::mat4 transform = wtc.Transform * glm::translate(glm::vec3(0.0f, 0.0f, 0.01f));
-
-			Renderer2D::Draw(NB_RECT, transform, glm::vec4(1.0f, 0.5f, 0.0f, 1.0f));
+			Renderer2D::Draw(NB_RECT, wtc.Transform, glm::vec4(1.0f, 0.5f, 0.0f, 1.0f));
 		}
 		
 		for (auto& id : selectedEntity.GetParentChild().ChildrenIDs)

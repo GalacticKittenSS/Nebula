@@ -794,10 +794,16 @@ namespace Nebula {
 					case Nebula::ScriptFieldType::Int:
 					{
 						auto data = scriptInstance->GetFieldValue<int>(name);
-						if (ImGui::DragInt(name.c_str(), &data))
+						
+						ImGui::PushID(name.c_str());
+						float size = DrawLabel(name);
+						ImGui::SetNextItemWidth(size);
+
+						if (ImGui::DragInt("##V", &data))
 						{
 							scriptInstance->SetFieldValue(name, data);
 						}
+						ImGui::PopID();
 						break;
 					}
 					case Nebula::ScriptFieldType::Vector2:
@@ -861,7 +867,8 @@ namespace Nebula {
 					Ref<Texture2D> texture = Texture2D::Create(texturePath.string());
 					if (texture->IsLoaded()) {
 						component.Texture = texture;
-						component.SubTextureCellSize = { (float)texture->GetWidth(), (float)texture->GetHeight() };
+						component.SubTextureCellSize = glm::min(component.SubTextureCellSize, 
+							{ (float)texture->GetWidth(), (float)texture->GetHeight() });
 					}
 					else
 						NB_WARN("Could not load texture {0}", texturePath.filename().string());
@@ -880,21 +887,14 @@ namespace Nebula {
 
 				glm::vec2 textureSize = { (float)component.Texture->GetWidth(), (float)component.Texture->GetHeight() };
 				glm::vec2 maxOffset = textureSize - component.SubTextureCellSize * component.SubTextureCellNum;
-
-				if (component.SubTextureOffset > maxOffset)
-					component.SubTextureOffset = maxOffset;
-
-				if (component.SubTextureOffset < glm::vec2(0.0f))
-					component.SubTextureOffset = glm::vec2(0.0f);
+				component.SubTextureOffset = glm::min(glm::max(component.SubTextureOffset, glm::vec2(0.0f)), maxOffset);
 
 				glm::vec2 maxCellNum = textureSize / component.SubTextureCellSize;
-
-				if (component.SubTextureCellNum > maxCellNum)
-					component.SubTextureCellNum = maxCellNum;
+				component.SubTextureCellNum = glm::min(component.SubTextureCellNum, maxCellNum);
 
 				DrawVec2Control("Offset", component.SubTextureOffset, glm::vec2(0.0f), maxOffset != glm::vec2(0.0f) ? maxOffset : glm::vec2(0.001f));
 				DrawVec2Control("Cell Size", component.SubTextureCellSize, glm::vec2(0.1f), textureSize, textureSize);
-				DrawVec2Control("Cell Number", component.SubTextureCellNum, glm::vec2(0.01f), maxCellNum);
+				DrawVec2Control("Cell Number", component.SubTextureCellNum, glm::vec2(0.1f), maxCellNum, glm::vec2(1.0f));
 			}
 
 			if (remove)

@@ -395,15 +395,15 @@
             }
         }
 
-        public int Mask
+        public Rigidbody2DComponent.Filters Mask
         {
             get
             {
-                return InternalCalls.BoxCollider2DComponent_GetMask(Entity.ID);
+                return (Rigidbody2DComponent.Filters)InternalCalls.BoxCollider2DComponent_GetMask(Entity.ID);
             }
             set
             {
-                InternalCalls.BoxCollider2DComponent_SetMask(Entity.ID, value);
+                InternalCalls.BoxCollider2DComponent_SetMask(Entity.ID, (int)value);
             }
         }
 
@@ -496,15 +496,15 @@
             }
         }
 
-        public int Mask
+        public Rigidbody2DComponent.Filters Mask
         {
             get
             {
-                return InternalCalls.CircleCollider2DComponent_GetMask(Entity.ID);
+                return (Rigidbody2DComponent.Filters)InternalCalls.CircleCollider2DComponent_GetMask(Entity.ID);
             }
             set
             {
-                InternalCalls.CircleCollider2DComponent_SetMask(Entity.ID, value);
+                InternalCalls.CircleCollider2DComponent_SetMask(Entity.ID, (int)value);
             }
         }
 

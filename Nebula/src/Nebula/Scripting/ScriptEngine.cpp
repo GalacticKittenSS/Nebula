@@ -429,7 +429,7 @@ namespace Nebula {
 			
 		if (s_Data->SceneContext)
 		{
-			CreateRuntimeScript(entity);
+			OnCreateEntity(entity);
 			return s_Data->EntityRuntimeInstances.at(entityID);
 		}
 		

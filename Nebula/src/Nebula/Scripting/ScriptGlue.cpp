@@ -122,7 +122,7 @@ namespace Nebula {
 		component.ClassName = fmt::format("{}.{}", nameSpace, name);
 
 		Ref<ScriptInstance> instance = ScriptEngine::CreateScriptInstance(entity);
-		return ScriptEngine::GetManagedInstance(entityID);
+		return instance->GetManagedObject();
 	}
 
 	static uint64_t Entity_FindChildByName(UUID entityID, MonoString* name)

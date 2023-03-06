@@ -6,7 +6,7 @@
 
 namespace Nebula {
 	EditorCamera::EditorCamera(float fov, float aspectRatio, float nearClip, float farClip) {
-
+		UpdateView();
 	}
 
 	void EditorCamera::UpdateProjection() {
