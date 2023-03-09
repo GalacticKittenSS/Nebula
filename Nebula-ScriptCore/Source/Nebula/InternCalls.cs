@@ -35,7 +35,13 @@ namespace Nebula
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static ulong Entity_FindChildByName(ulong entityID, string name);
-        
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static short Entity_GetLayer(ulong entityID);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void Entity_SetLayer(ulong entityID, short layer);
+
         // INPUT CLASS
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
@@ -189,6 +195,12 @@ namespace Nebula
         internal extern static void Rigidbody2DComponent_SetBodyType(ulong entityID, int type);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static short Rigidbody2DComponent_GetMask(ulong entityID);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void Rigidbody2DComponent_SetMask(ulong entityID, short mask);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static bool Rigidbody2DComponent_GetFixedRotation(ulong entityID);
         
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
@@ -222,18 +234,6 @@ namespace Nebula
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void BoxCollider2DComponent_SetOffset(ulong entityID, ref Vector2 offset);
-
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static int BoxCollider2DComponent_GetCategory(ulong entityID);
-
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static void BoxCollider2DComponent_SetCategory(ulong entityID, int category);
-
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static int BoxCollider2DComponent_GetMask(ulong entityID);
-
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static void BoxCollider2DComponent_SetMask(ulong entityID, int mask);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static float BoxCollider2DComponent_GetDensity(ulong entityID);
@@ -272,18 +272,6 @@ namespace Nebula
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void CircleCollider2DComponent_SetOffset(ulong entityID, ref Vector2 offset);
-
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static int CircleCollider2DComponent_GetCategory(ulong entityID);
-
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static void CircleCollider2DComponent_SetCategory(ulong entityID, int category);
-
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static int CircleCollider2DComponent_GetMask(ulong entityID);
-
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static void CircleCollider2DComponent_SetMask(ulong entityID, int mask);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static float CircleCollider2DComponent_GetDensity(ulong entityID);

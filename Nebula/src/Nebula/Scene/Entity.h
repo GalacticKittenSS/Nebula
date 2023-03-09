@@ -60,6 +60,9 @@ namespace Nebula {
 		
 		const std::string& GetName() { return GetComponent<TagComponent>().Tag; }
 		UUID GetUUID() { return GetComponent<IDComponent>().ID; }
+		Ref<SceneLayer> GetLayer() { return GetComponent<PropertiesComponent>().Layer; }
+		bool IsEnabled() { return GetComponent<PropertiesComponent>().Enabled; }
+
 		TransformComponent& GetTransform() { return GetComponent<TransformComponent>(); }
 		ParentChildComponent& GetParentChild() { return GetComponent<ParentChildComponent>(); }
 

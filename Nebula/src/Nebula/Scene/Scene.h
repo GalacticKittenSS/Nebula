@@ -2,8 +2,11 @@
 
 #include "entt.hpp"
 
+#include "Components.h"
 #include "Nebula/Renderer/Camera.h"
 #include "Nebula/Core/UUID.h"
+
+#include <map>
 
 class b2World;
 class b2Body;
@@ -62,6 +65,7 @@ namespace Nebula {
 		void Step(int frames = 1);
 
 		Array<UUID> m_SceneOrder;
+		std::map<uint16_t, Ref<SceneLayer>> m_Layers;
 	private:
 		void CreateBox2DBody(Entity entity);
 

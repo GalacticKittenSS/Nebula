@@ -64,6 +64,19 @@ namespace Nebula
             }
         }
 
+        // TODO: Set and Get Layer by name
+        public short Layer
+        {
+            get
+            {
+                return InternalCalls.Entity_GetLayer(ID);
+            }
+            set
+            {
+                InternalCalls.Entity_SetLayer(ID, value);
+            }
+        }
+
         public bool HasComponent<T>() where T : Component, new()
         {
             Type componentType = typeof(T);

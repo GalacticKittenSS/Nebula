@@ -12,6 +12,8 @@
 #include "Nebula/Renderer/Texture.h"
 #include "Nebula/Utils/Arrays.h"
 
+#include "Scene_Layer.h"
+
 namespace Nebula {
 	struct IDComponent {
 		UUID ID;
@@ -26,6 +28,14 @@ namespace Nebula {
 		TagComponent() = default;
 		TagComponent(const TagComponent&) = default;
 		TagComponent(const std::string& tag) : Tag(tag) { }
+	};
+
+	struct PropertiesComponent {
+		bool Enabled = true;
+		Ref<SceneLayer> Layer;
+		
+		PropertiesComponent() = default;
+		PropertiesComponent(const PropertiesComponent&) = default;
 	};
 
 	struct ParentChildComponent {
@@ -158,12 +168,7 @@ namespace Nebula {
 		bool FixedRotation = false;
 		bool Trigger = false;
 
-		enum Filters {
-			A = 0x0001, B = 0x0002, C = 0x0004, D = 0x0008,
-			E = 0x0010, F = 0x0020, G = 0x0040, H = 0x0080,
-			I = 0x0100, J = 0x0200, K = 0x0400, L = 0x0800,
-			M = 0x1000, N = 0x2000, O = 0x4000, P = 0x8000
-		};
+		uint16_t Mask = 0xFFFF;
 
 		void* RuntimeBody = nullptr;
 
@@ -184,9 +189,6 @@ namespace Nebula {
 		glm::vec2 Size = { 0.5f, 0.5f };
 		glm::vec2 Offset = { 0.0f, 0.0f };
 
-		Rigidbody2DComponent::Filters Category = Rigidbody2DComponent::Filters::A;
-		uint16_t Mask = 0xFFFF;
-
 		float Density = 1.0f;
 		float Friction = 0.5f;
 		float Restitution = 0.0f;
@@ -203,9 +205,6 @@ namespace Nebula {
 	struct CircleColliderComponent {
 		glm::vec2 Offset = { 0.0f, 0.0f };
 		float Radius = 0.5f;
-
-		uint16_t Category = Rigidbody2DComponent::Filters::A;
-		uint16_t Mask = 0xFFFF;
 
 		float Density = 1.0f;
 		float Friction = 0.5f;
@@ -226,7 +225,7 @@ namespace Nebula {
 
 	};
 	using AllComponents = ComponentGroup <
-		TransformComponent, WorldTransformComponent,
+		PropertiesComponent, TransformComponent, WorldTransformComponent,
 		CameraComponent, ScriptComponent, NativeScriptComponent,
 		SpriteRendererComponent, CircleRendererComponent, StringRendererComponent,
 		Rigidbody2DComponent, BoxCollider2DComponent, CircleColliderComponent

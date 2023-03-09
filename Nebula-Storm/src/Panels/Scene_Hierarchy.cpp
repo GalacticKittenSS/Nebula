@@ -9,6 +9,7 @@
 #include <filesystem>
 
 #include "../Modules/imgui/misc/cpp/imgui_stdlib.h"
+#include "../../Modules/Box2D/include/box2d/b2_body.h"
 
 namespace Nebula {
 	static float s_TextColumnWidth	= 100.0f;
@@ -650,6 +651,24 @@ namespace Nebula {
 		}
 	}
 
+	static void UpdateChildProperties(Entity entity, bool enabled)
+	{
+		if (entity.HasComponent<Rigidbody2DComponent>())
+		{
+			if (b2Body* body = (b2Body*)entity.GetComponent<Rigidbody2DComponent>().RuntimeBody)
+				body->SetEnabled(enabled);
+		}
+		
+		auto& pcc = entity.GetParentChild();
+		for (UUID id : pcc.ChildrenIDs)
+		{
+			Entity child = { id, entity };
+			auto& prop = child.GetComponent<PropertiesComponent>();
+			prop.Enabled = enabled;
+			UpdateChildProperties(child, enabled);
+		}
+	}
+
 	void SceneHierarchyPanel::DrawComponents(Entity entity) {
 		float buttonWidth = ImGui::CalcTextSize("Add Component").x + GImGui->Style.ItemSpacing.x * 2;
 
@@ -670,6 +689,33 @@ namespace Nebula {
 		
 		if (ImGui::Button("Add Component", ImVec2{ buttonWidth, 0.0f }))
 			ImGui::OpenPopup("Add Component");
+
+		if (entity.HasComponent<PropertiesComponent>())
+		{
+			auto& prop = entity.GetComponent<PropertiesComponent>();
+
+			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvailWidth() - 25.0f - GImGui->Style.ItemSpacing.x);
+			if (ImGui::BeginCombo("##V", prop.Layer->Name.c_str()))
+			{
+				for (auto [l, layer] : m_Context->m_Layers)
+				{
+					bool isSelected = prop.Layer == layer;
+					
+					if (ImGui::Selectable(layer->Name.c_str(), isSelected))
+						prop.Layer = m_Context->m_Layers[l];
+					
+					if (isSelected)
+						ImGui::SetItemDefaultFocus();
+				}
+
+				ImGui::EndCombo();
+			}
+
+			ImGui::SameLine();
+
+			if (ImGui::Checkbox("##Enabled", &prop.Enabled))
+				UpdateChildProperties(entity, prop.Enabled);
+		}
 
 		if (ImGui::BeginPopup("Add Component")) {
 			DisplayAddComponentEntry<CameraComponent>("Camera");
@@ -946,7 +992,7 @@ namespace Nebula {
 			DrawColourEdit("Colour", component.Colour);
 		}, true);
 
-		DrawComponent<Rigidbody2DComponent>("Rigidbody 2D", entity, [](auto& component) {
+		DrawComponent<Rigidbody2DComponent>("Rigidbody 2D", entity, [scene = m_Context](auto& component) {
 			int componentType = (int)component.Type;
 			const char* BodyTypeStrings[] = { "Static", "Dynamic", "Kinenmatic"};
 			const char* CurrentBodyTypeString = BodyTypeStrings[componentType];
@@ -954,6 +1000,36 @@ namespace Nebula {
 			if (DrawCombo("Body Type", BodyTypeStrings, 3, CurrentBodyTypeString, componentType))
 				component.Type = (Rigidbody2DComponent::BodyType)componentType;
 
+			ImGui::PushID("Mask");
+			float size = DrawLabel("Mask");
+			ImGui::SetNextItemWidth(size);
+
+			if (ImGui::BeginCombo("##V", "Collide With"))
+			{
+				for (auto& [l, info] : scene->m_Layers)
+				{
+					ImGui::PushID(info->Name.c_str());
+					ImGui::Text(info->Name.c_str());
+					ImGui::SameLine();
+
+					ImGui::SetCursorPosX(ImGui::GetWindowContentRegionWidth() - 25.0f);
+					bool canInteract = component.Mask & l;
+
+					if (ImGui::Checkbox("##V", &canInteract))
+					{
+						if (canInteract)
+							component.Mask = component.Mask |  l;
+						else
+							component.Mask = component.Mask & ~l;
+					}
+
+					ImGui::PopID();
+				}
+
+				ImGui::EndCombo();
+			}
+			ImGui::PopID();
+			
 			DrawBool("Fixed Rotation", component.FixedRotation);
 			DrawBool("Is Trigger", component.Trigger);
 		}, true);
@@ -961,22 +1037,6 @@ namespace Nebula {
 		DrawComponent<BoxCollider2DComponent>("Box Collider 2D", entity, [](auto& component) {
 			DrawVec2Control("Offset", component.Offset);
 			DrawVec2Control("Size",   component.Size);
-
-			static const char* filterTypeStrings[] = {
-				"A", "B", "C", "D",
-				"E", "F", "G", "H",
-				"I", "J", "K", "L",
-				"M", "N", "O", "P"
-			};
-			
-			int categoryIndex = RigidbodyFilterToIndex((int)component.Category);
-			const char* CurrentCategoryString = filterTypeStrings[categoryIndex];
-
-			if (DrawCombo("Category", filterTypeStrings, 16, CurrentCategoryString, categoryIndex)) {
-				int newCategory = pow(2, categoryIndex);
-				component.UpdateFilters(newCategory, newCategory);
-			}
-
 			DrawVec1Control("Density", component.Density, 0.01f, 0.0f, 1.0f);
 			DrawVec1Control("Friction", component.Friction, 0.01f, 0.0f, 1.0f);
 			DrawVec1Control("Restitution", component.Restitution, 0.01f, 0.0f, 1.0f);
@@ -986,22 +1046,6 @@ namespace Nebula {
 		DrawComponent<CircleColliderComponent>("Circle Collider", entity, [](auto& component) {
 			DrawVec2Control("Offset", component.Offset);
 			DrawVec1Control("Radius", component.Radius, 0.01f);
-
-			static const char* filterTypeStrings[] = {
-				"A", "B", "C", "D",
-				"E", "F", "G", "H",
-				"I", "J", "K", "L",
-				"M", "N", "O", "P"
-			};
-
-			int categoryIndex = RigidbodyFilterToIndex((int)component.Category);
-			const char* CurrentCategoryString = filterTypeStrings[categoryIndex];
-
-			if (DrawCombo("Layer", filterTypeStrings, 16, CurrentCategoryString, categoryIndex)) {
-				int newCategory = pow(2, categoryIndex);
-				component.UpdateFilters(newCategory, newCategory);
-			}
-
 			DrawVec1Control("Density", component.Density, 0.01f, 0.0f, 1.0f);
 			DrawVec1Control("Friction", component.Friction, 0.01f, 0.0f, 1.0f);
 			DrawVec1Control("Restitution", component.Restitution, 0.01f, 0.0f, 1.0f);

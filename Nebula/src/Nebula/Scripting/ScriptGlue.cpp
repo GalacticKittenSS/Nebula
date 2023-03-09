@@ -153,6 +153,28 @@ namespace Nebula {
 		return childID;
 	}
 
+	static uint16_t Entity_GetLayer(uint64_t entityID)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+		Entity entity = { entityID, scene };
+		NB_ASSERT(entity);
+
+		auto& comp = entity.GetComponent<PropertiesComponent>();
+		return comp.Layer->Identity;
+	}
+
+	static void Entity_SetLayer(uint64_t entityID, uint16_t layer)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+		Entity entity = { entityID, scene };
+		NB_ASSERT(entity);
+
+		auto& comp = entity.GetComponent<PropertiesComponent>();
+		comp.Layer->Identity = layer;
+	}
+
 	// INPUT CLASS
 
 	static bool Input_IsKeyDown(KeyCode keycode)
@@ -659,7 +681,29 @@ namespace Nebula {
 		body->SetType(Utils::Rigibody2DToBox2D(component.Type));
 	}
 
-	static bool Rigidbody2DComponent_GetFixedRotation(UUID entityID) 
+	static uint16_t Rigidbody2DComponent_GetMask(UUID entityID)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+		Entity entity = { entityID, scene };
+		NB_ASSERT(entity);
+
+		auto& component = entity.GetComponent<Rigidbody2DComponent>();
+		return component.Mask;
+	}
+
+	static void Rigidbody2DComponent_SetMask(UUID entityID, uint16_t mask)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+		Entity entity = { entityID, scene };
+		NB_ASSERT(entity);
+
+		auto& component = entity.GetComponent<Rigidbody2DComponent>();
+		component.Mask = mask;
+	}
+
+	static bool Rigidbody2DComponent_GetFixedRotation(UUID entityID)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
@@ -782,50 +826,6 @@ namespace Nebula {
 
 		auto& component = entity.GetComponent<BoxCollider2DComponent>();
 		component.Offset = *offset;
-	}
-
-	static int BoxCollider2DComponent_GetCategory(UUID entityID)
-	{
-		Scene* scene = ScriptEngine::GetSceneContext();
-		NB_ASSERT(scene);
-		Entity entity = { entityID, scene };
-		NB_ASSERT(entity);
-
-		auto& component = entity.GetComponent<BoxCollider2DComponent>();
-		return component.Category;
-	}
-
-	static void BoxCollider2DComponent_SetCategory(UUID entityID, int category)
-	{
-		Scene* scene = ScriptEngine::GetSceneContext();
-		NB_ASSERT(scene);
-		Entity entity = { entityID, scene };
-		NB_ASSERT(entity);
-
-		auto& component = entity.GetComponent<BoxCollider2DComponent>();
-		component.Category = (Rigidbody2DComponent::Filters)category;
-	}
-
-	static int BoxCollider2DComponent_GetMask(UUID entityID)
-	{
-		Scene* scene = ScriptEngine::GetSceneContext();
-		NB_ASSERT(scene);
-		Entity entity = { entityID, scene };
-		NB_ASSERT(entity);
-
-		auto& component = entity.GetComponent<BoxCollider2DComponent>();
-		return component.Mask;
-	}
-
-	static void BoxCollider2DComponent_SetMask(UUID entityID, int mask)
-	{
-		Scene* scene = ScriptEngine::GetSceneContext();
-		NB_ASSERT(scene);
-		Entity entity = { entityID, scene };
-		NB_ASSERT(entity);
-
-		auto& component = entity.GetComponent<BoxCollider2DComponent>();
-		component.Mask = mask;
 	}
 
 	static float BoxCollider2DComponent_GetDensity(UUID entityID)
@@ -960,50 +960,6 @@ namespace Nebula {
 
 		auto& component = entity.GetComponent<CircleColliderComponent>();
 		component.Offset = *offset;
-	}
-
-	static int CircleCollider2DComponent_GetCategory(UUID entityID)
-	{
-		Scene* scene = ScriptEngine::GetSceneContext();
-		NB_ASSERT(scene);
-		Entity entity = { entityID, scene };
-		NB_ASSERT(entity);
-
-		auto& component = entity.GetComponent<CircleColliderComponent>();
-		return component.Category;
-	}
-
-	static void CircleCollider2DComponent_SetCategory(UUID entityID, int category)
-	{
-		Scene* scene = ScriptEngine::GetSceneContext();
-		NB_ASSERT(scene);
-		Entity entity = { entityID, scene };
-		NB_ASSERT(entity);
-
-		auto& component = entity.GetComponent<CircleColliderComponent>();
-		component.Category = category;
-	}
-
-	static int CircleCollider2DComponent_GetMask(UUID entityID)
-	{
-		Scene* scene = ScriptEngine::GetSceneContext();
-		NB_ASSERT(scene);
-		Entity entity = { entityID, scene };
-		NB_ASSERT(entity);
-
-		auto& component = entity.GetComponent<CircleColliderComponent>();
-		return component.Mask;
-	}
-
-	static void CircleCollider2DComponent_SetMask(UUID entityID, int mask)
-	{
-		Scene* scene = ScriptEngine::GetSceneContext();
-		NB_ASSERT(scene);
-		Entity entity = { entityID, scene };
-		NB_ASSERT(entity);
-
-		auto& component = entity.GetComponent<CircleColliderComponent>();
-		component.Mask = mask;
 	}
 
 	static float CircleCollider2DComponent_GetDensity(UUID entityID)
@@ -1270,8 +1226,10 @@ namespace Nebula {
 		NB_ADD_INTERNAL_CALL(StringRendererComponent_SetText);
 		
 		NB_ADD_INTERNAL_CALL(Rigidbody2DComponent_GetBodyType);
+		NB_ADD_INTERNAL_CALL(Rigidbody2DComponent_GetMask);
 		NB_ADD_INTERNAL_CALL(Rigidbody2DComponent_GetFixedRotation);
 		NB_ADD_INTERNAL_CALL(Rigidbody2DComponent_SetBodyType);
+		NB_ADD_INTERNAL_CALL(Rigidbody2DComponent_SetMask);
 		NB_ADD_INTERNAL_CALL(Rigidbody2DComponent_SetFixedRotation);
 
 		NB_ADD_INTERNAL_CALL(Rigidbody2DComponent_ApplyForce);
@@ -1280,37 +1238,29 @@ namespace Nebula {
 		NB_ADD_INTERNAL_CALL(Rigidbody2DComponent_ApplyLinearImpulseToCenter);
 		NB_ADD_INTERNAL_CALL(Rigidbody2DComponent_GetLinearVelocity);
 
-		NB_ADD_INTERNAL_CALL(BoxCollider2DComponent_GetCategory);
 		NB_ADD_INTERNAL_CALL(BoxCollider2DComponent_GetDensity);
 		NB_ADD_INTERNAL_CALL(BoxCollider2DComponent_GetFriction);
-		NB_ADD_INTERNAL_CALL(BoxCollider2DComponent_GetMask);
 		NB_ADD_INTERNAL_CALL(BoxCollider2DComponent_GetOffset);
 		NB_ADD_INTERNAL_CALL(BoxCollider2DComponent_GetRestitution);
 		NB_ADD_INTERNAL_CALL(BoxCollider2DComponent_GetSize);
 		NB_ADD_INTERNAL_CALL(BoxCollider2DComponent_GetThreshold);
 		
-		NB_ADD_INTERNAL_CALL(BoxCollider2DComponent_SetCategory);
 		NB_ADD_INTERNAL_CALL(BoxCollider2DComponent_SetDensity);
 		NB_ADD_INTERNAL_CALL(BoxCollider2DComponent_SetFriction);
-		NB_ADD_INTERNAL_CALL(BoxCollider2DComponent_SetMask);
 		NB_ADD_INTERNAL_CALL(BoxCollider2DComponent_SetOffset);
 		NB_ADD_INTERNAL_CALL(BoxCollider2DComponent_SetRestitution);
 		NB_ADD_INTERNAL_CALL(BoxCollider2DComponent_SetSize);
 		NB_ADD_INTERNAL_CALL(BoxCollider2DComponent_SetThreshold);
 
-		NB_ADD_INTERNAL_CALL(CircleCollider2DComponent_GetCategory);
 		NB_ADD_INTERNAL_CALL(CircleCollider2DComponent_GetDensity);
 		NB_ADD_INTERNAL_CALL(CircleCollider2DComponent_GetFriction);
-		NB_ADD_INTERNAL_CALL(CircleCollider2DComponent_GetMask);
 		NB_ADD_INTERNAL_CALL(CircleCollider2DComponent_GetOffset);
 		NB_ADD_INTERNAL_CALL(CircleCollider2DComponent_GetRestitution);
 		NB_ADD_INTERNAL_CALL(CircleCollider2DComponent_GetRadius);
 		NB_ADD_INTERNAL_CALL(CircleCollider2DComponent_GetThreshold);
 
-		NB_ADD_INTERNAL_CALL(CircleCollider2DComponent_SetCategory);
 		NB_ADD_INTERNAL_CALL(CircleCollider2DComponent_SetDensity);
 		NB_ADD_INTERNAL_CALL(CircleCollider2DComponent_SetFriction);
-		NB_ADD_INTERNAL_CALL(CircleCollider2DComponent_SetMask);
 		NB_ADD_INTERNAL_CALL(CircleCollider2DComponent_SetOffset);
 		NB_ADD_INTERNAL_CALL(CircleCollider2DComponent_SetRestitution);
 		NB_ADD_INTERNAL_CALL(CircleCollider2DComponent_SetRadius);

@@ -175,6 +175,17 @@ namespace Nebula {
 			out << YAML::EndMap;
 		}
 
+		if (entity.HasComponent<PropertiesComponent>()) {
+			out << YAML::Key << "PropertiesComponent";
+			out << YAML::BeginMap; // TransformComponent
+
+			auto& component = entity.GetComponent<PropertiesComponent>();
+			out << YAML::Key << "IsEnabled" << YAML::Value << component.Enabled;
+			out << YAML::Key << "Layer" << YAML::Value << component.Layer->Identity;
+
+			out << YAML::EndMap; // TransformComponent
+		}
+
 		if (entity.HasComponent<ParentChildComponent>()) {
 			out << YAML::Key << "ParentChildComponent";
 			out << YAML::BeginMap; // ParentChildComponent
@@ -340,6 +351,7 @@ namespace Nebula {
 			out << YAML::Key << "BodyType" << YAML::Value << RigidBody2DBodyTypeToString(rb2dComponent.Type);
 			out << YAML::Key << "FixedRotation" << YAML::Value << rb2dComponent.FixedRotation;
 			out << YAML::Key << "IsTrigger" << YAML::Value << rb2dComponent.Trigger;
+			out << YAML::Key << "Mask" << YAML::Value << rb2dComponent.Mask;
 
 			out << YAML::EndMap; // Rigidbody2DComponent
 		}
@@ -351,9 +363,6 @@ namespace Nebula {
 			auto& bc2dComponent = entity.GetComponent<BoxCollider2DComponent>();
 			out << YAML::Key << "Offset" << YAML::Value << bc2dComponent.Offset;
 			out << YAML::Key << "Size" << YAML::Value << bc2dComponent.Size;
-			out << YAML::Key << "Category" << YAML::Value << (int)bc2dComponent.Category;
-			out << YAML::Key << "Mask" << YAML::Value << bc2dComponent.Mask;
-
 			out << YAML::Key << "Density" << YAML::Value << bc2dComponent.Density;
 			out << YAML::Key << "Friction" << YAML::Value << bc2dComponent.Friction;
 			out << YAML::Key << "Restitution" << YAML::Value << bc2dComponent.Restitution;
@@ -369,9 +378,6 @@ namespace Nebula {
 			auto& ccComponent = entity.GetComponent<CircleColliderComponent>();
 			out << YAML::Key << "Offset" << YAML::Value << ccComponent.Offset;
 			out << YAML::Key << "Radius" << YAML::Value << ccComponent.Radius;
-			out << YAML::Key << "Category" << YAML::Value << (int)ccComponent.Category;
-			out << YAML::Key << "Mask" << YAML::Value << ccComponent.Mask;
-
 			out << YAML::Key << "Density" << YAML::Value << ccComponent.Density;
 			out << YAML::Key << "Friction" << YAML::Value << ccComponent.Friction;
 			out << YAML::Key << "Restitution" << YAML::Value << ccComponent.Restitution;
@@ -399,6 +405,13 @@ namespace Nebula {
 		out << YAML::Key << "Data" << YAML::Value << order;
 		out << YAML::EndMap;
 
+		YAML::Node layers;
+		for (const auto& [id, layer] :m_Scene->m_Layers)
+			layers.push_back(layer->Name);
+		layers.SetStyle(YAML::EmitterStyle::Flow);
+
+		out << YAML::Key << "Layers" << YAML::Value << layers;
+		
 		out << YAML::Key << "Entities" << YAML::Value << YAML::BeginSeq;
 
 		auto view = m_Scene->GetAllEntitiesWith<IDComponent>();
@@ -471,6 +484,14 @@ namespace Nebula {
 			NB_TRACE("Deserialized Entity with ID = {0}, name = {1}", uuid, name);
 
 			Entity deserializedEntity = m_Scene->CreateEntity(uuid, name);
+
+			if (auto propComponent = entity["PropertiesComponent"]) {
+				auto& prop = deserializedEntity.GetComponent<PropertiesComponent>();
+				DeserializeValue(prop.Enabled, propComponent["IsEnabled"]);
+				
+				uint16_t layer = DeserializeValue(propComponent["Layer"], 1);
+				prop.Layer = m_Scene->m_Layers[layer];
+			}
 
 			if (auto parentComponent = entity["ParentChildComponent"]) {
 				auto& pcc = deserializedEntity.GetComponent<ParentChildComponent>();
@@ -599,6 +620,7 @@ namespace Nebula {
 				auto& rb2d = deserializedEntity.AddComponent<Rigidbody2DComponent>();
 				DeserializeValue(rb2d.FixedRotation, rigidbody2DComponent["FixedRotation"]);
 				DeserializeValue(rb2d.Trigger, rigidbody2DComponent["IsTrigger"]);
+				DeserializeValue(rb2d.Mask, rigidbody2DComponent["Mask"]);
 				
 				rb2d.Type = RigidBody2DBodyTypeFromString(
 					DeserializeValue<std::string>(rigidbody2DComponent["BodyType"], "Dynamic"));
@@ -609,9 +631,6 @@ namespace Nebula {
 				auto& bc2d = deserializedEntity.AddComponent<BoxCollider2DComponent>();
 				DeserializeValue(bc2d.Offset, box2DComponent["Offset"]);
 				DeserializeValue(bc2d.Size, box2DComponent["Size"]);
-				DeserializeValue(bc2d.Mask, box2DComponent["Mask"]);
-				bc2d.Category = (Rigidbody2DComponent::Filters)DeserializeValue<int>(box2DComponent["Category"], 1);
-
 				DeserializeValue(bc2d.Density, box2DComponent["Density"]);
 				DeserializeValue(bc2d.Friction, box2DComponent["Friction"]);
 				DeserializeValue(bc2d.Restitution, box2DComponent["Restitution"]);
@@ -622,9 +641,6 @@ namespace Nebula {
 				auto& cc = deserializedEntity.AddComponent<CircleColliderComponent>();
 				DeserializeValue(cc.Offset, circleColliderComponent["Offset"]);
 				DeserializeValue(cc.Radius, circleColliderComponent["Radius"]);
-				DeserializeValue(cc.Mask, circleColliderComponent["Mask"]);
-				cc.Category = (Rigidbody2DComponent::Filters)DeserializeValue<int>(circleColliderComponent["Category"], 1);
-
 				DeserializeValue(cc.Density, circleColliderComponent["Density"]);
 				DeserializeValue(cc.Friction, circleColliderComponent["Friction"]);
 				DeserializeValue(cc.Restitution, circleColliderComponent["Restitution"]);
@@ -640,6 +656,17 @@ namespace Nebula {
 			m_Scene->m_SceneOrder.clear();
 			for (uint32_t i = 0; i < count; i++)
 				m_Scene->m_SceneOrder.push_back(scene_order[i].as<uint64_t>());
+		}
+
+
+		if (auto layers = data["Layers"])
+		{
+			int i = 0;
+			for (auto& [id, layer] : m_Scene->m_Layers)
+			{
+				layer->Name = layers[i].as<std::string>();
+				i++;
+			}
 		}
 
 		for (auto entity : m_Scene->GetAllEntitiesWith<TransformComponent>())

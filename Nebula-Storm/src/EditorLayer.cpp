@@ -437,6 +437,9 @@ namespace Nebula {
 
 	void EditorLayer::RenderSelectionUI(Entity selectedEntity) 
 	{
+		if (!selectedEntity.IsEnabled())
+			return;
+
 		if (selectedEntity.HasComponent<SpriteRendererComponent>()
 			|| selectedEntity.HasComponent<CircleRendererComponent>())
 		{
