@@ -1,0 +1,64 @@
+TagComponent:
+  Tag: Player
+PropertiesComponent:
+  IsEnabled: true
+  Layer: 1
+TransformComponent:
+  Translation: [0, 0, 0]
+  Rotation: [0, 0, 0]
+  Scale: [1, 1, 1]
+ScriptComponent:
+  Class: Sandbox.Player
+  ScriptFields:
+    - Name: Camera
+      Type: Entity
+      Data: 0
+    - Name: Floor_Collider
+      Type: Entity
+      Data: 0
+    - Name: JumpImpulse
+      Type: Vector2
+      Data: [0, 50]
+    - Name: MoveSpeed
+      Type: Vector2
+      Data: [9, 0]
+    - Name: Spawn_Location
+      Type: Entity
+      Data: 0
+SpriteRendererComponent:
+  Colour: [1, 1, 1, 1]
+  Tiling: 1
+  Offset: [0, 0]
+  CellSize: [128, 128]
+  CellNum: [1, 1]
+Rigidbody2DComponent:
+  BodyType: Dynamic
+  FixedRotation: false
+  IsTrigger: false
+  Mask: 65535
+Children:
+  - TagComponent:
+      Tag: Floor Collider
+    PropertiesComponent:
+      IsEnabled: true
+      Layer: 1
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    ScriptComponent:
+      Class: Sandbox.Collision
+      ScriptFields:
+        - Name: CollisionCount
+          Type: float
+          Data: 0
+        - Name: Handled
+          Type: bool
+          Data: true
+    Rigidbody2DComponent:
+      BodyType: Dynamic
+      FixedRotation: false
+      IsTrigger: false
+      Mask: 65535
+    Children:
+      []

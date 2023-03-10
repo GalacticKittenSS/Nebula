@@ -729,6 +729,7 @@ namespace Nebula {
 		m_EditorScene = CreateRef<Scene>();
 		m_EditorScene->OnViewportResize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
 		m_SceneHierarchy.SetContext(m_EditorScene);
+		m_ContentBrowser.SetSceneContext(m_EditorScene);
 
 		m_ActiveScene = m_EditorScene;
 		
@@ -775,6 +776,7 @@ namespace Nebula {
 			m_EditorScene = empty;
 			m_ActiveScene->OnViewportResize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
 			m_SceneHierarchy.SetContext(m_EditorScene);
+			m_ContentBrowser.SetSceneContext(m_EditorScene);
 
 			m_ActiveScene = m_EditorScene;
 		}
@@ -796,6 +798,7 @@ namespace Nebula {
 		m_ActiveScene->OnViewportResize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
 		
 		m_SceneHierarchy.SetContext(m_ActiveScene);
+		m_ContentBrowser.SetSceneContext(m_ActiveScene);
 		m_SceneState = SceneState::Play;
 	}
 
@@ -811,6 +814,7 @@ namespace Nebula {
 		m_ActiveScene = m_EditorScene;
 
 		m_SceneHierarchy.SetContext(m_EditorScene);
+		m_ContentBrowser.SetSceneContext(m_EditorScene);
 		m_SceneState = SceneState::Edit;
 	}
 
@@ -827,6 +831,7 @@ namespace Nebula {
 		m_ActiveScene->OnViewportResize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
 
 		m_SceneHierarchy.SetContext(m_ActiveScene);
+		m_ContentBrowser.SetSceneContext(m_ActiveScene);
 		m_SceneState = SceneState::Simulate;
 	}
 

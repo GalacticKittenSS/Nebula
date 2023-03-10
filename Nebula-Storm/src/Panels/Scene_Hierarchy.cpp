@@ -3,6 +3,7 @@
 #include "Nebula/Maths/MinMax.h"
 #include "Nebula/Utils/UI.h"
 
+#include <Nebula/Scene/Prefab_Serializer.h>
 #include <imgui_internal.h>
 
 #include <cstring>
@@ -98,7 +99,21 @@ namespace Nebula {
 
 		m_HierarchyFocused = ImGui::IsWindowFocused();
 		m_HierarchyHovered = ImGui::IsWindowHovered();
+		
+		const ImGuiWindow* window = ImGui::GetCurrentWindow();
+		if (ImGui::BeginDragDropTargetCustom(window->ContentRegionRect, window->ID))
+		{
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
+			{
+				std::filesystem::path filepath = (const wchar_t*)payload->Data;
 
+				PrefabSerializer serializer(m_Context);
+				serializer.Deserialize(filepath.string());
+			}
+
+			ImGui::EndDragDropTarget();
+		}
+		
 		ImGui::End();
 
 

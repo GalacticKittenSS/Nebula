@@ -1,5 +1,7 @@
 #include "Content_Browser.h"
 
+#include <Nebula/Scene/Prefab_Serializer.h>
+
 #include <Nebula/Utils/UI.h>
 #include <imgui_internal.h>
 
@@ -10,6 +12,7 @@ namespace Nebula {
 	{
 		m_DirectoryIcon = Texture2D::Create("Resources/Icons/ContentBrowser/DirectoryIcon.png");
 		m_FileIcon = Texture2D::Create("Resources/Icons/ContentBrowser/FileIcon.png");
+		m_PrefabIcon = Texture2D::Create("Resources/Icons/ContentBrowser/PrefabIcon.png");
 	}
 
 	void ContentBrowserPanel::SetContext(const std::filesystem::path& assetsPath)
@@ -18,10 +21,32 @@ namespace Nebula {
 		m_CurrentDirectory = m_BaseDirectory;
 	}
 
+	void ContentBrowserPanel::SetSceneContext(const Ref<Scene>& scene)
+	{
+		m_Scene = scene;
+	}
+
 	void ContentBrowserPanel::OnImGuiRender() 
 	{
 		ImGui::Begin("Content Browser");
 		RenderBrowser();
+
+		ImGuiWindow* window = ImGui::GetCurrentWindow();
+
+		if (m_Scene && ImGui::BeginDragDropTargetCustom(window->ContentRegionRect, window->ID))
+		{
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENTITY"))
+			{
+				const UUID entityID = *(const UUID*)payload->Data;
+
+				Entity entity = { entityID, m_Scene.get() };
+				std::filesystem::path filepath = m_CurrentDirectory / (entity.GetName() + ".prefab");
+
+				PrefabSerializer serializer(m_Scene);
+				serializer.Serialize(entity, filepath.string());
+			}
+		}
+
 		ImGui::End();
 	}
 
@@ -72,6 +97,8 @@ namespace Nebula {
 			ImGui::PushID(filename.c_str());
 
 			Ref<Texture2D> icon = directoryEntry.is_directory() ? m_DirectoryIcon : m_FileIcon;
+			icon = path.extension() == ".prefab" ? m_PrefabIcon : icon;
+			
 			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
 			ImGui::ImageButton((ImTextureID)(uint64_t)icon->GetRendererID(), { thumbnailSize, thumbnailSize }, { 0, 1 }, { 1, 0 });
 			ImGui::PopStyleColor();
