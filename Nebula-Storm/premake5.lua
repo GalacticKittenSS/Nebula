@@ -27,6 +27,8 @@ project "Nebula Storm"
 		"Nebula"
 	}
 
+	linkoptions { "-IGNORE:4099" }
+
 	filter "system:windows"
 		systemversion "latest"
 

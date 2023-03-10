@@ -31,7 +31,7 @@ namespace Nebula
 		msdf_atlas::ImmediateAtlasGenerator<S, N, GenFunc, msdf_atlas::BitmapAtlasStorage<T, N>> generator(width, height);
 		generator.setAttributes(attributes);
 		generator.setThreadCount(8);
-		generator.generate(glyphs.data(), glyphs.size());
+		generator.generate(glyphs.data(), (int)glyphs.size());
 
 		msdfgen::BitmapConstRef<T, N> bitmap = (msdfgen::BitmapConstRef<T, N>)generator.atlasStorage();
 
@@ -109,7 +109,7 @@ namespace Nebula
 				unsigned long long glyphSeed = (LCG_MULTIPLIER * (coloringSeed ^ i) + LCG_INCREMENT) * !!coloringSeed;
 				glyphs[i].edgeColoring(msdfgen::edgeColoringInkTrap, DEFAULT_ANGLE_THRESHOLD, glyphSeed);
 				return true;
-			}, m_Data->Glyphs.size()).finish(THREAD_COUNT);
+			}, (int)m_Data->Glyphs.size()).finish(THREAD_COUNT);
 		}
 		else 
 		{

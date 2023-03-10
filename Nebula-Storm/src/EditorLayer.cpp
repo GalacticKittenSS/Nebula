@@ -612,7 +612,7 @@ namespace Nebula {
 	}
 
 	bool EditorLayer::OnKeyPressed(KeyPressedEvent& e) {
-		if (e.IsRepeat() > 0 || m_SceneState == SceneState::Play || !m_GameViewFocus)
+		if (e.IsRepeat() || m_SceneState == SceneState::Play || !m_GameViewFocus)
 			return false;
 
 		bool control = Input::IsKeyPressed(KeyCode::LeftControl) || Input::IsKeyPressed(KeyCode::RightControl);

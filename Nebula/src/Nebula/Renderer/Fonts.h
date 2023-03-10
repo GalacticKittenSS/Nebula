@@ -16,7 +16,7 @@ namespace Nebula {
 		const MSDFData* GetMSDFData() const { return m_Data.get(); }
 		inline const Ref<Texture2D> GetAtlasTexture() const { return m_AtlasTexture; }
 		inline const std::filesystem::path& GetFilename() const { return m_Filename; }
-		inline const std::filesystem::path& GetName() const { return m_Name; }
+		inline const std::string& GetName() const { return m_Name; }
 
 		static Ref<Font> GetDefault();
 	private:

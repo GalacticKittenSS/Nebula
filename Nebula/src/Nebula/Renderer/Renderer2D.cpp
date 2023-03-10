@@ -352,10 +352,10 @@ namespace Nebula {
 		float texelWidth = 1.0f / fontAtlas->GetWidth();
 		float texelHeight = 1.0f / fontAtlas->GetHeight();
 
-		float x = 0.0f, y = 0.0f;
-		float fsScale = 1.0f / (metrics.ascenderY - metrics.descenderY);
+		double x = 0.0f, y = 0.0f;
+		double fsScale = 1.0f / (metrics.ascenderY - metrics.descenderY);
 
-		const float spaceGlyphAdvance = fontGeometry.getGlyph(' ')->getAdvance();
+		const double spaceGlyphAdvance = fontGeometry.getGlyph(' ')->getAdvance();
 		
 		for (uint32_t i = 0; i < text.length(); i++)
 		{
@@ -372,13 +372,13 @@ namespace Nebula {
 
 			if (character == ' ')
 			{
-				float advance = spaceGlyphAdvance;
+				double advance = spaceGlyphAdvance;
 				if (i < text.size() - 1)
 				{
 					char nextChar = text[i + 1];
 					double dAdvance;
 					fontGeometry.getAdvance(dAdvance, character, nextChar);
-					advance = (float)dAdvance;
+					advance = dAdvance;
 				}
 
 				x += fsScale * advance;
@@ -405,15 +405,15 @@ namespace Nebula {
 			double pl, pb, pr, pt;
 			glyph->getQuadPlaneBounds(pl, pb, pr, pt);
 
-			float x0 = x + pl * fsScale;
-			float y0 = y + pb * fsScale;
-			float x1 = x + pr * fsScale;
-			float y1 = y + pt * fsScale;
+			double x0 = x + pl * fsScale;
+			double y0 = y + pb * fsScale;
+			double x1 = x + pr * fsScale;
+			double y1 = y + pt * fsScale;
 
-			float u0 = al * texelWidth;
-			float v0 = ab * texelHeight;
-			float u1 = ar * texelWidth;
-			float v1 = at * texelHeight;
+			double u0 = al * texelWidth;
+			double v0 = ab * texelHeight;
+			double u1 = ar * texelWidth;
+			double v1 = at * texelHeight;
 
 			s_Data.TextVBPtr->Position = transform * glm::vec4(x0, y0, 0.0f, 1.0f);
 			s_Data.TextVBPtr->TexCoord = glm::vec2(u0, v0);

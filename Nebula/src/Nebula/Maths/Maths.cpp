@@ -24,7 +24,7 @@ namespace Nebula::Maths {
 		translation = glm::vec3(LocalMatrix[3]);
 		LocalMatrix[3] = glm::vec4(0, 0, 0, LocalMatrix[3].w);
 
-		glm::vec3 Row[3], Pdum3;
+		glm::vec3 Row[3];
 
 		// Now get scale and shear.
 		for (glm::length_t i = 0; i < 3; ++i)

@@ -86,8 +86,10 @@ namespace Nebula {
 	}
 
 	void SceneHierarchyPanel::SetContext(const Ref<Scene>& context) {
+		if (m_SelectionContext)
+			m_SelectionContext = { m_SelectionContext.GetUUID(), context.get() };
+		
 		m_Context = context;
-		m_SelectionContext = {};
 	}
 
 	void SceneHierarchyPanel::OnImGuiRender() {
