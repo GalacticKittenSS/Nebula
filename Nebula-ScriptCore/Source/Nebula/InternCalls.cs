@@ -12,6 +12,11 @@ namespace Nebula
         
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static bool Application_GetWindowSize(out Vector2 size);
+        
+        // PREFAB CLASS
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static ulong Prefab_Create(string path);
 
         // ENTITY CLASS
 

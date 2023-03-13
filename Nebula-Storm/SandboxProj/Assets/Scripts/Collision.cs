@@ -4,13 +4,11 @@ namespace Sandbox
 {
     public class Collision : Entity
     {
-		public float CollisionCount = 0;
+		public int CollisionCount = 0;
 		public bool Handled = true;
 		
 		void OnCollisionEnter(Entity other)
 		{
-			Debug.Log($"{other.ID}");
-			
 			if (other.Name == "Player")
 				return;
 			

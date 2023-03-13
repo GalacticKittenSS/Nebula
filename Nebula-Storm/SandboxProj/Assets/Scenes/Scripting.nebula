@@ -2,92 +2,14 @@ Scene: Untitled
 Order:
   Size: 4
   Data: [5354795815195642397, 14893174671831111502, 10433741447867120391, 10596639639892002622]
+Layers: [Layer 0, Layer 1, Layer 2, Layer 3, Layer 4, Layer 5, Layer 6, Layer 7, Layer 8, Layer 9, Layer 10, Layer 11, Layer 12, Layer 13, Layer 14, Layer 15]
 Entities:
-  - Entity: 7772064114241021311
-    TagComponent:
-      Tag: Floor Collider
-    ParentChildComponent:
-      PrimaryParent: 14893174671831111502
-      Children: ~
-      ChildCount: 0
-    TransformComponent:
-      Translation: [0, 0, 0]
-      Rotation: [0, 0, 0]
-      Scale: [1, 1, 1]
-    ScriptComponent:
-      Class: Sandbox.Collision
-    Rigidbody2DComponent:
-      BodyType: Dynamic
-      FixedRotation: false
-      IsTrigger: false
-  - Entity: 10596639639892002622
-    TagComponent:
-      Tag: Sprite
-    ParentChildComponent:
-      PrimaryParent: 0
-      Children: ~
-      ChildCount: 0
-    TransformComponent:
-      Translation: [0, -4.77309418, 0]
-      Rotation: [0, 0, 0]
-      Scale: [12.2438126, 1, 1]
-    SpriteRendererComponent:
-      Colour: [1, 1, 1, 1]
-      Tiling: 1
-      Offset: [0, 0]
-      CellSize: [128, 128]
-      CellNum: [1, 1]
-    Rigidbody2DComponent:
-      BodyType: Static
-      FixedRotation: false
-      IsTrigger: false
-  - Entity: 10433741447867120391
-    TagComponent:
-      Tag: Sprite
-    ParentChildComponent:
-      PrimaryParent: 0
-      Children: ~
-      ChildCount: 0
-    TransformComponent:
-      Translation: [0, 4.64733791, 0]
-      Rotation: [0, 0, 0]
-      Scale: [12.2438126, 1, 1]
-    SpriteRendererComponent:
-      Colour: [1, 1, 1, 1]
-      Tiling: 1
-      Offset: [0, 0]
-      CellSize: [128, 128]
-      CellNum: [1, 1]
-    Rigidbody2DComponent:
-      BodyType: Static
-      FixedRotation: false
-      IsTrigger: false
-  - Entity: 14893174671831111502
-    TagComponent:
-      Tag: Player
-    ParentChildComponent:
-      PrimaryParent: 0
-      Children: [7772064114241021311]
-      ChildCount: 1
-    TransformComponent:
-      Translation: [0, 0, 0]
-      Rotation: [0, 0, 0]
-      Scale: [1, 1, 1]
-    ScriptComponent:
-      Class: Sandbox.Player
-    SpriteRendererComponent:
-      Colour: [1, 1, 1, 1]
-      Tiling: 1
-      Offset: [0, 0]
-      CellSize: [128, 128]
-      CellNum: [1, 1]
-    Rigidbody2DComponent:
-      BodyType: Dynamic
-      FixedRotation: false
-      IsTrigger: false
   - Entity: 5354795815195642397
     TagComponent:
       Tag: Camera
+    PropertiesComponent:
+      IsEnabled: true
+      Layer: 1
     ParentChildComponent:
       PrimaryParent: 0
       Children: ~
@@ -109,3 +31,156 @@ Entities:
       FixedAspectRatio: false
     ScriptComponent:
       Class: Sandbox.Camera
+      ScriptFields:
+        - Name: DistanceFromPlayer
+          Type: float
+          Data: 100
+        - Name: Offset
+          Type: Vector2
+          Data: [0, 0]
+  - Entity: 14893174671831111502
+    TagComponent:
+      Tag: Player
+    PropertiesComponent:
+      IsEnabled: true
+      Layer: 1
+    ParentChildComponent:
+      PrimaryParent: 0
+      Children: [7772064114241021311]
+      ChildCount: 1
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    ScriptComponent:
+      Class: Sandbox.Player
+      ScriptFields:
+        - Name: Camera
+          Type: Entity
+          Data: 0
+        - Name: Floor_Collider
+          Type: Entity
+          Data: 0
+        - Name: JumpImpulse
+          Type: Vector2
+          Data: [0, 8]
+        - Name: MoveSpeed
+          Type: Vector2
+          Data: [9, 0]
+    SpriteRendererComponent:
+      Colour: [1, 1, 1, 1]
+      Tiling: 1
+      Offset: [0, 0]
+      CellSize: [128, 128]
+      CellNum: [1, 1]
+    Rigidbody2DComponent:
+      BodyType: Dynamic
+      FixedRotation: true
+      IsTrigger: false
+      Mask: 65535
+    BoxCollider2DComponent:
+      Offset: [0, 0]
+      Size: [0.5, 0.5]
+      Density: 1
+      Friction: 0.5
+      Restitution: 0
+      RestitutionThreshold: 0.5
+  - Entity: 10433741447867120391
+    TagComponent:
+      Tag: Sprite
+    PropertiesComponent:
+      IsEnabled: true
+      Layer: 1
+    ParentChildComponent:
+      PrimaryParent: 0
+      Children: ~
+      ChildCount: 0
+    TransformComponent:
+      Translation: [0, 4.64733791, 0]
+      Rotation: [0, 0, 0]
+      Scale: [12.2438126, 1, 1]
+    SpriteRendererComponent:
+      Colour: [1, 1, 1, 1]
+      Tiling: 1
+      Offset: [0, 0]
+      CellSize: [128, 128]
+      CellNum: [1, 1]
+    Rigidbody2DComponent:
+      BodyType: Static
+      FixedRotation: false
+      IsTrigger: false
+      Mask: 65535
+    BoxCollider2DComponent:
+      Offset: [0, 0]
+      Size: [0.5, 0.5]
+      Density: 1
+      Friction: 0.5
+      Restitution: 0
+      RestitutionThreshold: 0.5
+  - Entity: 10596639639892002622
+    TagComponent:
+      Tag: Sprite
+    PropertiesComponent:
+      IsEnabled: true
+      Layer: 1
+    ParentChildComponent:
+      PrimaryParent: 0
+      Children: ~
+      ChildCount: 0
+    TransformComponent:
+      Translation: [0, -4.77309418, 0]
+      Rotation: [0, 0, 0]
+      Scale: [12.2438126, 1, 1]
+    SpriteRendererComponent:
+      Colour: [1, 1, 1, 1]
+      Tiling: 1
+      Offset: [0, 0]
+      CellSize: [128, 128]
+      CellNum: [1, 1]
+    Rigidbody2DComponent:
+      BodyType: Static
+      FixedRotation: false
+      IsTrigger: false
+      Mask: 65535
+    BoxCollider2DComponent:
+      Offset: [0, 0]
+      Size: [0.5, 0.5]
+      Density: 1
+      Friction: 0.5
+      Restitution: 0
+      RestitutionThreshold: 0.5
+  - Entity: 7772064114241021311
+    TagComponent:
+      Tag: Floor Collider
+    PropertiesComponent:
+      IsEnabled: true
+      Layer: 1
+    ParentChildComponent:
+      PrimaryParent: 14893174671831111502
+      Children: ~
+      ChildCount: 0
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    ScriptComponent:
+      Class: Sandbox.Collision
+      ScriptFields:
+        - Name: CollisionCount
+          Type: float
+          Data: 0
+        - Name: Handled
+          Type: bool
+          Data: true
+    Rigidbody2DComponent:
+      BodyType: Dynamic
+      FixedRotation: true
+      IsTrigger: false
+      Mask: 65535
+    BoxCollider2DComponent:
+      Offset: [0, 0]
+      Size: [0.5, 0.5]
+      Density: 1
+      Friction: 0.5
+      Restitution: 0
+      RestitutionThreshold: 0.5

@@ -42,7 +42,7 @@ namespace Nebula {
 				Entity entity = { entityID, m_Scene.get() };
 				std::filesystem::path filepath = m_CurrentDirectory / (entity.GetName() + ".prefab");
 
-				PrefabSerializer serializer(m_Scene);
+				PrefabSerializer serializer(m_Scene.get());
 				serializer.Serialize(entity, filepath.string());
 			}
 		}

@@ -109,7 +109,7 @@ namespace Nebula {
 			{
 				std::filesystem::path filepath = (const wchar_t*)payload->Data;
 
-				PrefabSerializer serializer(m_Context);
+				PrefabSerializer serializer(m_Context.get());
 				serializer.Deserialize(filepath.string());
 			}
 

@@ -6,6 +6,8 @@
 #include "Nebula/Core/Input.h"
 #include "Nebula/Core/Application.h"
 #include "Nebula/Scene/Scene.h"
+#include "Nebula/Scene/Prefab_Serializer.h"
+#include "Nebula/Project/Project.h"
 #include "Nebula/Utils/Time.h"
 #include "Nebula/Utils/Physics2D.h"
 
@@ -42,6 +44,24 @@ namespace Nebula {
 		}
 		
 		mono_free(cStr);
+	}
+
+	// PREFAB CLASS
+
+	static uint64_t Prefab_Create(MonoString* path)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+		
+		std::filesystem::path filepath = GetStringFromMono(path);
+		
+		PrefabSerializer serializer(scene);
+		Entity entity = serializer.Deserialize(Project::GetAssetFileSystemPath(filepath).string());
+		
+		if (!entity)
+			return NULL;
+
+		return entity.GetUUID();
 	}
 
 	// APPLICATION CLASS
@@ -1161,6 +1181,8 @@ namespace Nebula {
 
 	void ScriptGlue::RegisterFunctions() {
 		NB_ADD_INTERNAL_CALL(Native_Log);
+
+		NB_ADD_INTERNAL_CALL(Prefab_Create);
 
 		NB_ADD_INTERNAL_CALL(Application_GetWindowSize);
 

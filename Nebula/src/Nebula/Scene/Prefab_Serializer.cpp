@@ -20,7 +20,7 @@ namespace Nebula
 		break; \
 	}
 
-	PrefabSerializer::PrefabSerializer(const Ref<Scene>& scene) : m_Scene(scene) { }
+	PrefabSerializer::PrefabSerializer(Scene* scene) : m_Scene(scene) { }
 
 	static void SerializeEntity(YAML::Emitter& out, Entity entity)
 	{
@@ -273,7 +273,7 @@ namespace Nebula
 		return val.as<T>();
 	}
 
-	static void DeserializeEntity(const YAML::Node& entity, Ref<Scene> scene, Entity parent)
+	static Entity DeserializeEntity(const YAML::Node& entity, Scene* scene, Entity parent)
 	{
 		std::string name;
 		if (auto tagComponent = entity["TagComponent"])
@@ -448,9 +448,11 @@ namespace Nebula
 
 		for (auto child : entity["Children"])
 			DeserializeEntity(child, scene, deserializedEntity);
+
+		return deserializedEntity;
 	}
 
-	bool PrefabSerializer::Deserialize(const std::string & filepath)
+	Entity PrefabSerializer::Deserialize(const std::string & filepath)
 	{
 		YAML::Node data;
 		try {
@@ -458,11 +460,9 @@ namespace Nebula
 		}
 		catch (YAML::Exception e) {
 			NB_ERROR("[Prefab Serializer] Failed to load file '{0}'\n     {1}", filepath, e.what());
-			return false;
+			return {};
 		}
 
-		DeserializeEntity(data, m_Scene, {});
-		
-		return true;
+		return DeserializeEntity(data, m_Scene, {});
 	}
 }
