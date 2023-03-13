@@ -122,6 +122,8 @@ namespace Nebula {
 		component.ClassName = fmt::format("{}.{}", nameSpace, name);
 
 		Ref<ScriptInstance> instance = ScriptEngine::CreateScriptInstance(entity);
+		ScriptEngine::OnCreateEntity(entity);
+
 		return instance->GetManagedObject();
 	}
 

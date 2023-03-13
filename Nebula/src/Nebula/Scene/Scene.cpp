@@ -167,6 +167,7 @@ namespace Nebula {
 		if (entity.HasComponent<ScriptComponent>())
 		{
 			ScriptEngine::CreateScriptInstance(duplicated);
+			ScriptEngine::OnCreateEntity(duplicated);
 			ScriptEngine::CopyScriptFields(entity, duplicated);
 
 			if (m_IsRunning)
