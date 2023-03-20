@@ -490,8 +490,8 @@ namespace Nebula {
 		return s_Data->CoreAssemblyImage;
 	}
 
-	MonoDomain* ScriptEngine::GetAppDomain() {
-		return s_Data->AppDomain;
+	MonoString* ScriptEngine::CreateMonoString(const char* string) {
+		return mono_string_new(s_Data->AppDomain, string);
 	}
 
 	MonoObject* ScriptEngine::GetManagedInstance(UUID uuid)

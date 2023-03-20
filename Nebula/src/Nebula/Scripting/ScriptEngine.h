@@ -10,7 +10,7 @@ extern "C" {
 	typedef struct _MonoObject MonoObject;
 	typedef struct _MonoMethod MonoMethod;
 	typedef struct _MonoImage MonoImage;
-	typedef struct _MonoDomain MonoDomain;
+	typedef struct _MonoString MonoString;
 	typedef struct _MonoClassField MonoClassField;
 }
 
@@ -141,7 +141,7 @@ namespace Nebula {
 		static void CopyScriptFields(Entity from, Entity to);
 
 		static MonoImage* GetCoreAssemblyImage();
-		static MonoDomain* GetAppDomain();
+		static MonoString* CreateMonoString(const char* string);
 
 		static MonoObject* GetManagedInstance(UUID entityID);
 	private:

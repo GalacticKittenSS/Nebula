@@ -19,19 +19,20 @@
 namespace Nebula {
 
 #define NB_ADD_INTERNAL_CALL(Name) mono_add_internal_call("Nebula.InternalCalls::" #Name, Name);
-
 	static std::unordered_map<MonoType*, std::function<bool(Entity)>> s_EntityHasComponentFuncs;
 	static std::unordered_map<MonoType*, std::function<void(Entity)>> s_EntityAddComponentFuncs;
 
-	static std::string GetStringFromMono(MonoString* text)
-	{
-		char* cStr = mono_string_to_utf8(text);
-		std::string str(cStr);
-		mono_free(cStr);
+	namespace Utils {
+		static std::string GetStringFromMono(MonoString* text)
+		{
+			char* cStr = mono_string_to_utf8(text);
+			std::string str(cStr);
+			mono_free(cStr);
 
-		return str;
+			return str;
+		}
 	}
-
+	
 	static void Native_Log(int level, MonoString* text)
 	{
 		char* cStr = mono_string_to_utf8(text);
@@ -46,14 +47,22 @@ namespace Nebula {
 		mono_free(cStr);
 	}
 
-	// PREFAB CLASS
 
+#pragma region Application
+	static void Application_GetWindowSize(glm::vec2* size)
+	{
+		Window& window = Application::Get().GetWindow();
+		*size = { (float)window.GetHeight(), (float)window.GetHeight() };
+	}
+#pragma endregion
+
+#pragma region Prefab
 	static uint64_t Prefab_Create(MonoString* path)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
 		
-		std::filesystem::path filepath = GetStringFromMono(path);
+		std::filesystem::path filepath = Utils::GetStringFromMono(path);
 		
 		PrefabSerializer serializer(scene);
 		Entity entity = serializer.Deserialize(Project::GetAssetFileSystemPath(filepath).string());
@@ -63,17 +72,9 @@ namespace Nebula {
 
 		return entity.GetUUID();
 	}
+#pragma endregion
 
-	// APPLICATION CLASS
-
-	static void Application_GetWindowSize(glm::vec2* size)
-	{
-		Window& window = Application::Get().GetWindow();
-		*size = { (float)window.GetHeight(), (float)window.GetHeight() };
-	}
-
-	// ENTITY CLASS
-
+#pragma region Entity
 	static bool Entity_HasComponent(UUID entityID, MonoReflectionType* componentType)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
@@ -108,7 +109,7 @@ namespace Nebula {
 		NB_ASSERT(entity);
 
 		std::string name = entity.GetName();
-		return mono_string_new(ScriptEngine::GetAppDomain(), name.c_str());
+		return ScriptEngine::CreateMonoString(name.c_str());
 	}
 
 	static void Entity_SetName(UUID entityID, MonoString* name)
@@ -119,7 +120,7 @@ namespace Nebula {
 		NB_ASSERT(entity);
 
 		auto& component = entity.GetComponent<TagComponent>();
-		component.Tag = GetStringFromMono(name);
+		component.Tag = Utils::GetStringFromMono(name);
 	}
 	
 	static MonoObject* Entity_GetScriptInstance(UUID entityID)
@@ -196,9 +197,9 @@ namespace Nebula {
 		auto& comp = entity.GetComponent<PropertiesComponent>();
 		comp.Layer->Identity = layer;
 	}
+#pragma endregion
 
-	// INPUT CLASS
-
+#pragma region Input
 	static bool Input_IsKeyDown(KeyCode keycode)
 	{
 		return Input::IsKeyPressed(keycode);
@@ -213,9 +214,9 @@ namespace Nebula {
 	{
 		*out = { Input::GetMouseX(), Input::GetMouseY() };
 	}
+#pragma endregion
 
-	// TRANSFORM COMPONENT
-
+#pragma region TransformComponent
 	static void TransformComponent_GetTranslation(UUID entityID, glm::vec3* out)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
@@ -313,9 +314,9 @@ namespace Nebula {
 		WorldTransformComponent& world = entity.GetComponent<WorldTransformComponent>();
 		Maths::DecomposeTransform(world.Transform, translation, rotation, *out);
 	}
+#pragma endregion
 
-	// CAMERA COMPONENTS
-
+#pragma region CameraComponent
 	static bool CameraComponent_GetPrimary(UUID entityID) 
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
@@ -359,9 +360,9 @@ namespace Nebula {
 		auto& component = entity.GetComponent<CameraComponent>();
 		component.FixedAspectRatio = fixedRatio;
 	}
+#pragma endregion
 
-	// SCRIPT COMPONENT
-
+#pragma region ScriptComponent
 	static MonoString* ScriptComponent_GetClass(UUID entityID)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
@@ -370,7 +371,7 @@ namespace Nebula {
 		NB_ASSERT(entity);
 
 		std::string name = entity.GetComponent<ScriptComponent>().ClassName;
-		return mono_string_new(ScriptEngine::GetAppDomain(), name.c_str());
+		return ScriptEngine::CreateMonoString(name.c_str());
 	}
 
 	static void ScriptComponent_SetClass(UUID entityID, MonoString* name)
@@ -381,11 +382,11 @@ namespace Nebula {
 		NB_ASSERT(entity);
 
 		auto& component = entity.GetComponent<ScriptComponent>();
-		component.ClassName = GetStringFromMono(name);
+		component.ClassName = Utils::GetStringFromMono(name);
 	}
+#pragma endregion
 
-	// SPRITE RENDERER COMPONENT
-
+#pragma region SpriteRendererComponent
 	static void SpriteRendererComponent_SetColour(UUID entityID, glm::vec4* colour)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
@@ -485,9 +486,9 @@ namespace Nebula {
 
 		return entity.GetComponent<SpriteRendererComponent>().Tiling;
 	}
+#pragma endregion
 
-	// CIRCLE RENDERER COMPONENT
-
+#pragma region CircleRendererComponent
 	static void CircleRendererComponent_SetColour(UUID entityID, glm::vec4* colour)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
@@ -567,9 +568,9 @@ namespace Nebula {
 
 		return entity.GetComponent<CircleRendererComponent>().Fade;
 	}
+#pragma endregion
 
-	// STRING RENDERER COMPONENT
-
+#pragma region StringRendererComponent
 	static void StringRendererComponent_SetText(UUID entityID, MonoString* text)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
@@ -578,7 +579,7 @@ namespace Nebula {
 		NB_ASSERT(entity);
 
 		auto& component = entity.GetComponent<StringRendererComponent>();
-		component.Text = GetStringFromMono(text);
+		component.Text = Utils::GetStringFromMono(text);
 	}
 
 	static MonoString* StringRendererComponent_GetText(UUID entityID)
@@ -589,7 +590,7 @@ namespace Nebula {
 		NB_ASSERT(entity);
 
 		std::string text = entity.GetComponent<StringRendererComponent>().Text;
-		return mono_string_new(ScriptEngine::GetAppDomain(), text.c_str());
+		return ScriptEngine::CreateMonoString(text.c_str());
 	}
 
 	static void StringRendererComponent_SetColour(UUID entityID, glm::vec4* colour)
@@ -663,7 +664,7 @@ namespace Nebula {
 		NB_ASSERT(entity);
 
 		auto& component = entity.GetComponent<StringRendererComponent>();
-		return mono_string_new(ScriptEngine::GetAppDomain(), component.FamilyName.c_str());
+		return ScriptEngine::CreateMonoString(component.FamilyName.c_str());
 	}
 
 	static void StringRendererComponent_SetFontName(UUID entityID, MonoString* name)
@@ -674,11 +675,55 @@ namespace Nebula {
 		NB_ASSERT(entity);
 
 		auto& component = entity.GetComponent<StringRendererComponent>();
-		component.FamilyName = GetStringFromMono(name);
+		component.FamilyName = Utils::GetStringFromMono(name);
 	}
 
-	// RIGIDBODY 2D COMPONENT
+	static float StringRendererComponent_GetKerning(UUID entityID)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+		Entity entity = { entityID, scene };
+		NB_ASSERT(entity);
 
+		auto& component = entity.GetComponent<StringRendererComponent>();
+		return component.Kerning;
+	}
+	
+	static void StringRendererComponent_SetKerning(UUID entityID, float kerning)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+		Entity entity = { entityID, scene };
+		NB_ASSERT(entity);
+
+		auto& component = entity.GetComponent<StringRendererComponent>();
+		component.Kerning = kerning;
+	}
+
+	static float StringRendererComponent_GetLineSpacing(UUID entityID)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+		Entity entity = { entityID, scene };
+		NB_ASSERT(entity);
+
+		auto& component = entity.GetComponent<StringRendererComponent>();
+		return component.LineSpacing;
+	}
+
+	static void StringRendererComponent_SetLineSpacing(UUID entityID, float lineSpacing)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+		Entity entity = { entityID, scene };
+		NB_ASSERT(entity);
+
+		auto& component = entity.GetComponent<StringRendererComponent>();
+		component.LineSpacing = lineSpacing;
+	}
+#pragma endregion
+
+#pragma region Rigidbody2DComponent
 	static int Rigidbody2DComponent_GetBodyType(UUID entityID) {
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
@@ -803,9 +848,9 @@ namespace Nebula {
 		auto& rigidbody = entity.GetComponent<Rigidbody2DComponent>();
 		rigidbody.ApplyForceToCenter(*force);
 	}
+#pragma endregion
 
-	// BOX COLLIDER 2D COMPONENT
-
+#pragma region BoxCollider2DComponent
 	static void BoxCollider2DComponent_GetSize(UUID entityID, glm::vec2* size)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
@@ -937,9 +982,9 @@ namespace Nebula {
 		auto& component = entity.GetComponent<BoxCollider2DComponent>();
 		component.RestitutionThreshold = threshold;
 	}
+#pragma endregion
 
-	// CIRCLE COLLIDER COMPONENT
-
+#pragma region CircleCollider2DComponent
 	static float CircleCollider2DComponent_GetRadius(UUID entityID)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
@@ -1071,7 +1116,9 @@ namespace Nebula {
 		auto& component = entity.GetComponent<CircleColliderComponent>();
 		component.RestitutionThreshold = threshold;
 	}
+#pragma endregion
 	
+#pragma region Scene
 	static uint64_t Scene_FindEntityByName(MonoString* name)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
@@ -1124,9 +1171,9 @@ namespace Nebula {
 			scene->DestroyEntity(entity);
 		}
 	}
+#pragma endregion
 
-	// MATHF
-
+#pragma region Mathf
 	static float Mathf_ToDegrees(float radians)
 	{
 		return glm::degrees(radians);
@@ -1171,13 +1218,14 @@ namespace Nebula {
 	{
 		return sqrt(value);
 	}
+#pragma endregion
 
-	// TIME
-
+#pragma region Time
 	static float Time_DeltaTime()
 	{
 		return Time::DeltaTime();
 	}
+#pragma endregion
 
 	void ScriptGlue::RegisterFunctions() {
 		NB_ADD_INTERNAL_CALL(Native_Log);
@@ -1242,12 +1290,16 @@ namespace Nebula {
 		NB_ADD_INTERNAL_CALL(StringRendererComponent_GetFontName);
 		NB_ADD_INTERNAL_CALL(StringRendererComponent_GetItalic);
 		NB_ADD_INTERNAL_CALL(StringRendererComponent_GetText);
+		NB_ADD_INTERNAL_CALL(StringRendererComponent_GetKerning);
+		NB_ADD_INTERNAL_CALL(StringRendererComponent_GetLineSpacing);
 		
 		NB_ADD_INTERNAL_CALL(StringRendererComponent_SetBold);
 		NB_ADD_INTERNAL_CALL(StringRendererComponent_SetColour);
 		NB_ADD_INTERNAL_CALL(StringRendererComponent_SetFontName);
 		NB_ADD_INTERNAL_CALL(StringRendererComponent_SetItalic);
 		NB_ADD_INTERNAL_CALL(StringRendererComponent_SetText);
+		NB_ADD_INTERNAL_CALL(StringRendererComponent_SetKerning);
+		NB_ADD_INTERNAL_CALL(StringRendererComponent_SetLineSpacing);
 		
 		NB_ADD_INTERNAL_CALL(Rigidbody2DComponent_GetBodyType);
 		NB_ADD_INTERNAL_CALL(Rigidbody2DComponent_GetMask);

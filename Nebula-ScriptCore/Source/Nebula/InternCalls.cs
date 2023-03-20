@@ -8,18 +8,17 @@ namespace Nebula
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void Native_Log(int level, string text);
 
-        // APPLICATION CLASS
-        
+        #region Application
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static bool Application_GetWindowSize(out Vector2 size);
-        
-        // PREFAB CLASS
+        #endregion
 
+        #region Prefab
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static ulong Prefab_Create(string path);
+        #endregion
 
-        // ENTITY CLASS
-
+        #region Entity
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static bool Entity_HasComponent(ulong entityID, Type component);
 
@@ -46,9 +45,9 @@ namespace Nebula
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void Entity_SetLayer(ulong entityID, short layer);
+        #endregion
 
-        // INPUT CLASS
-
+        #region Input
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static bool Input_IsKeyDown(KeyCode keyCode);
 
@@ -57,9 +56,9 @@ namespace Nebula
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void Input_GetMousePos(out Vector2 pos);
+        #endregion
 
-        // TRANSFORM COMPONENT
-
+        #region TransformComponent
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void TransformComponent_GetTranslation(ulong entityID, out Vector3 translation);
 
@@ -86,9 +85,9 @@ namespace Nebula
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void TransformComponent_GetWorldScale(ulong entityID, out Vector3 scale);
+        #endregion
 
-        // CAMERA COMPONENT
-
+        #region CameraComponent
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static bool CameraComponent_GetPrimary(ulong entityID);
 
@@ -100,9 +99,9 @@ namespace Nebula
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void CameraComponent_SetFixedRatio(ulong entityID, bool fixedRatio);
+        #endregion
 
-        // SPRITE RENDERER COMPONENT
-
+        #region SpriteRendererComponent
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void SpriteRendererComponent_GetColour(ulong entityID, out Vector4 colour);
 
@@ -132,9 +131,9 @@ namespace Nebula
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void SpriteRendererComponent_SetTiling(ulong entityID, float tiling);
+        #endregion
 
-        // CIRCLE RENDERER COMPONENT
-
+        #region CircleRendererComponent
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void CircleRendererComponent_GetColour(ulong entityID, out Vector4 colour);
 
@@ -158,9 +157,9 @@ namespace Nebula
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void CircleRendererComponent_SetFade(ulong entityID, float fade);
+        #endregion
 
-        // STRING RENDERER COMPONENT
-
+        #region StringRendererComponent
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static string StringRendererComponent_GetText(ulong entityID);
 
@@ -191,8 +190,20 @@ namespace Nebula
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void StringRendererComponent_SetFontName(ulong entityID, string name);
 
-        // RIGIDBODY 2D COMPONENT
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static float StringRendererComponent_GetKerning(ulong entityID);
 
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void StringRendererComponent_SetKerning(ulong entityID, float kerning);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static float StringRendererComponent_GetLineSpacing(ulong entityID);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void StringRendererComponent_SetLineSpacing(ulong entityID, float lineSpacing);
+        #endregion
+
+        #region Rigidbody2DComponent
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static int Rigidbody2DComponent_GetBodyType(ulong entityID);
         
@@ -225,9 +236,9 @@ namespace Nebula
         
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void Rigidbody2DComponent_ApplyForceToCenter(ulong entityID, ref Vector2 force);
-        
-        // BOX COLLIDER 2D COMPONENT
+        #endregion
 
+        #region BoxCollider2DComponent
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void BoxCollider2DComponent_GetSize(ulong entityID, out Vector2 size);
 
@@ -263,9 +274,9 @@ namespace Nebula
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void BoxCollider2DComponent_SetThreshold(ulong entityID, float threshold);
-        
-        // CIRCLE COLLIDER COMPONENT
+        #endregion
 
+        #region CircleCollider2DComponent
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static float CircleCollider2DComponent_GetRadius(ulong entityID);
 
@@ -301,9 +312,9 @@ namespace Nebula
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void CircleCollider2DComponent_SetThreshold(ulong entityID, float threshold);
+        #endregion
 
-        // SCENE
-
+        #region Scene
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static ulong Scene_FindEntityByName(string name);
 
@@ -315,9 +326,9 @@ namespace Nebula
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void Scene_DestroyEntity(ulong entityID);
+        #endregion
 
-        // MATHF
-
+        #region Mathf
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static float Mathf_ToDegrees(float radians);
         
@@ -344,10 +355,11 @@ namespace Nebula
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static float Mathf_Sqrt(float value);
+        #endregion
 
-        // TIME
-
+        #region Time
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static float Time_DeltaTime();
+        #endregion
     }
 }
