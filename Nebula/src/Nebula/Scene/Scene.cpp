@@ -167,7 +167,6 @@ namespace Nebula {
 		if (entity.HasComponent<ScriptComponent>())
 		{
 			ScriptEngine::CreateScriptInstance(duplicated);
-			ScriptEngine::OnCreateEntity(duplicated);
 			ScriptEngine::CopyScriptFields(entity, duplicated);
 
 			if (m_IsRunning)
@@ -405,14 +404,19 @@ namespace Nebula {
 		for (auto e : view)
 		{
 			Entity entity = { e, this };
-			ScriptEngine::OnCreateEntity(entity);
+			if (entity.IsEnabled())
+				ScriptEngine::OnCreateEntity(entity);
 		}
 	}
 
 	void Scene::UpdateScripts() {
 		auto scriptView = m_Registry.view<ScriptComponent>();
 		for (auto e : scriptView)
-			ScriptEngine::OnUpdateEntity({ e, this }, Time::DeltaTime());
+		{
+			Entity entity = { e, this };
+			if (entity.IsEnabled())
+				ScriptEngine::OnUpdateEntity(entity, Time::DeltaTime());
+		}
 		
 		auto nativeScriptView = m_Registry.view<NativeScriptComponent>();
 		for (auto e : nativeScriptView)

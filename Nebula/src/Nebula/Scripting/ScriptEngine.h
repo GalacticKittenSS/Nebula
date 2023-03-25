@@ -63,6 +63,8 @@ namespace Nebula {
 	public:
 		ScriptInstance(Ref<ScriptClass> scriptClass, Entity entity);
 
+		inline bool OnCreateCalled() { return m_OnCreateCalled; }
+
 		void InvokeOnCreate();
 		void InvokeOnUpdate(float ts);
 		void InvokeOnCollisionEnter(Entity other);
@@ -97,6 +99,7 @@ namespace Nebula {
 
 		Entity m_Entity = {};
 
+		bool m_OnCreateCalled = false;
 		MonoObject* m_Instance = nullptr;
 		MonoMethod* m_Constructor = nullptr;
 		MonoMethod* m_OnCreateMethod = nullptr;

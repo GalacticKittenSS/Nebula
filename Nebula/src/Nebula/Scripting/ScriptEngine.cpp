@@ -351,10 +351,10 @@ namespace Nebula {
 
 	void ScriptEngine::OnUpdateEntity(Entity entity, float ts)
 	{
-		bool instanceFound = s_Data->EntityRuntimeInstances.find(entity.GetUUID()) != 
-			s_Data->EntityRuntimeInstances.end();
-
-		if (!instanceFound)
+		auto it = s_Data->EntityRuntimeInstances.find(entity.GetUUID());
+		bool instanceFound = it != s_Data->EntityRuntimeInstances.end();
+		
+		if (!instanceFound || !it->second->OnCreateCalled())
 		{
 			if (!OnCreateEntity(entity))
 				return;
@@ -696,7 +696,10 @@ namespace Nebula {
 	void ScriptInstance::InvokeOnCreate() 
 	{
 		if (m_OnCreateMethod)
+		{
 			m_ScriptClass->InvokeMethod(m_Instance, m_OnCreateMethod);
+			m_OnCreateCalled = true;
+		}
 	}
 
 	void ScriptInstance::InvokeOnUpdate(float ts) 
