@@ -24,6 +24,7 @@ namespace Nebula {
 	private:
 		bool OnKeyPressed(KeyPressedEvent& e);
 		bool OnMouseReleased(MouseButtonReleasedEvent& e);
+		bool OnWindowDrop(WindowDropEvent& e);
 
 		void RenderSelectionUI(Entity selectedEntity);
 		void RenderColliders();

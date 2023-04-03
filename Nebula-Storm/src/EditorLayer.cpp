@@ -609,6 +609,7 @@ namespace Nebula {
 		Dispatcher d(e);
 		d.Dispatch<KeyPressedEvent>(BIND_EVENT(EditorLayer::OnKeyPressed));
 		d.Dispatch<MouseButtonReleasedEvent>(BIND_EVENT(EditorLayer::OnMouseReleased));
+		d.Dispatch<WindowDropEvent>(BIND_EVENT(EditorLayer::OnWindowDrop));
 	}
 
 	bool EditorLayer::OnKeyPressed(KeyPressedEvent& e) {
@@ -685,6 +686,24 @@ namespace Nebula {
 			m_SceneHierarchy.SetSelectedEntity(m_HoveredEntity);
 
 		m_TimeCameraMoved = 0.0f;
+
+		return false;
+	}
+
+	bool EditorLayer::OnWindowDrop(WindowDropEvent& e)
+	{
+		const auto& filepaths = e.GetPaths();
+		
+		if (e.GetPaths().size() == 1)
+		{
+			const std::filesystem::path& path = filepaths[0];
+			
+			if (path.extension().string() == ".nproj" || path.filename().string() == ".nproj")
+			{
+				OpenProject(path);
+				return true;
+			}
+		}
 
 		return false;
 	}

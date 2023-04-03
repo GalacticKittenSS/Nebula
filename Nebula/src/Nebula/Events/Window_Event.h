@@ -29,4 +29,20 @@ namespace Nebula {
 		EVENT_TYPE(WindowClose)
 		EVENT_CATEGORY(ApplicationCat)
 	};
+	
+	class WindowDropEvent : public Event 
+	{
+	public:
+		WindowDropEvent(const std::vector<std::filesystem::path>& paths)
+			: m_Paths(paths) { }
+		WindowDropEvent(std::vector<std::filesystem::path>&& paths)
+			: m_Paths(std::move(paths)) { }
+
+		const std::vector<std::filesystem::path>& GetPaths() const { return m_Paths; }
+
+		EVENT_TYPE(WindowDrop)
+		EVENT_CATEGORY(ApplicationCat);
+	private:
+		std::vector<std::filesystem::path> m_Paths;
+	};
 }

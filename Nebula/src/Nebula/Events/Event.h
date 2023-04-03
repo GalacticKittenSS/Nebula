@@ -16,7 +16,7 @@ namespace Nebula {
 	enum class EventType {
 		None = 0,
 		//Window Events
-		WindowClose, WindowResize, WindowFocus, WindowNoFocus, WindowMoved,
+		WindowClose, WindowResize, WindowFocus, WindowNoFocus, WindowMoved, WindowDrop,
 		//Key Updates
 		KeyPressed, KeyReleased, KeyTyped,
 		//Mouse Updates
