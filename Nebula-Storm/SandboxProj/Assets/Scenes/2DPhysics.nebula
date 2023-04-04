@@ -109,7 +109,7 @@ Entities:
       Scale: [2.56315613, 1.00000072, 1]
     SpriteRendererComponent:
       Colour: [1, 1, 1, 1]
-      Texture: E:\Projects\Visual Studio\Nebula\Nebula-Storm\SandboxProj\Assets\assets\textures\Checkerboard.png
+      Texture: Textures\Checkerboard.png
       Tiling: 1
       Offset: [0, 0]
       CellSize: [10, 10]

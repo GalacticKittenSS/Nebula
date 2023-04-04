@@ -1,6 +1,7 @@
 #include "EditorLayer.h"
 
 #include <Nebula/Utils/UI.h>
+#include <Nebula/AssetManager/AssetManager.h>
 
 #include <imgui.h>
 #include <ImGuizmo.h>
@@ -704,6 +705,22 @@ namespace Nebula {
 				return true;
 			}
 		}
+
+		for (const auto& path : filepaths)
+		{
+			Project::GetAssetManager()->ImportAsset(path);
+		}
+
+		// DEBUG
+
+		Ref<AssetManager> manager = Project::GetAssetManager();
+		for (auto& handle : manager->GetAllAssetsWithType(AssetType::Texture))
+		{
+			const auto& asset = manager->GetAssetData<TextureAsset>(handle);
+			NB_INFO(asset.Texture->GetPath());
+		}
+
+		// -------
 
 		return false;
 	}

@@ -18,6 +18,7 @@ namespace Nebula {
 		if (serializer.Deserialize(path))
 		{
 			project->m_ProjectDirectory = path.parent_path();
+			project->m_AssetManager = CreateRef<AssetManager>();
 			s_ActiveProject = project;
 			return s_ActiveProject;
 		}

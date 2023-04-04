@@ -7,6 +7,8 @@
 #include "Render_Command.h"
 #include "UniformBuffer.h"
 
+#include "Nebula/Project/Project.h"
+
 #include "Nebula/Scene/Components.h"
 
 #include "MSDFData.h"
@@ -573,11 +575,13 @@ namespace Nebula {
 		case NB_QUAD: {
 			auto& spriteRenderer = entity.GetComponent<SpriteRendererComponent>();
 
-			if (spriteRenderer.Texture && spriteRenderer.Texture->IsLoaded()) {
-				Ref<SubTexture2D> SubT = SubTexture2D::CreateFromCoords(spriteRenderer.Texture,
+			Ref<Texture2D> texture = Project::GetAssetManager()->GetAssetData<TextureAsset>(spriteRenderer.Texture).Texture;
+
+			if (texture && texture->IsLoaded()) {
+				Ref<SubTexture2D> SubT = SubTexture2D::CreateFromCoords(texture,
 					spriteRenderer.SubTextureOffset, spriteRenderer.SubTextureCellSize, spriteRenderer.SubTextureCellNum);
 				DrawQuad(4, s_Data.QuadVertexPos, SubT->GetTextureCoords(), transform,
-					spriteRenderer.Colour, spriteRenderer.Texture, spriteRenderer.Tiling, entity);
+					spriteRenderer.Colour, texture, spriteRenderer.Tiling, entity);
 			}
 			else
 				DrawQuad(4, s_Data.QuadVertexPos, s_Data.QuadTexCoords, transform, 

@@ -389,7 +389,7 @@ namespace filewatch {
 						convert_wstring(changed_file_w, changed_file);
 						if (pass_filter(changed_file))
 						{
-							parsed_information.emplace_back(T{ changed_file }, _event_type_mapping.at(file_information->Action));
+							parsed_information.emplace_back(T{ _path }, _event_type_mapping.at(file_information->Action));
 						}
 
 						if (file_information->NextEntryOffset == 0) {

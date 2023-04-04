@@ -9,6 +9,8 @@
 
 #include "Nebula/Core/UUID.h"
 
+#include "Nebula/AssetManager/AssetManager.h"
+
 #include "Nebula/Renderer/Texture.h"
 #include "Nebula/Utils/Arrays.h"
 
@@ -110,7 +112,7 @@ namespace Nebula {
 
 	struct SpriteRendererComponent {
 		glm::vec4 Colour{ 1.0f, 1.0f, 1.0f, 1.0f };
-		Ref<Texture2D> Texture = nullptr;
+		AssetHandle Texture = NULL;
 		glm::vec2 SubTextureOffset = { 0.0f, 0.0f };
 		glm::vec2 SubTextureCellSize = { 128.0f, 128.0f };
 		glm::vec2 SubTextureCellNum = { 1, 1 };

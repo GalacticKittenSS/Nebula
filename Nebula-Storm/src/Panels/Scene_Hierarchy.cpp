@@ -912,7 +912,8 @@ namespace Nebula {
 			std::string text = "Drop File to Add Texture";
 			if (component.Texture)
 			{
-				std::filesystem::path path = component.Texture->GetPath();
+				Ref<Texture2D> texture = Project::GetAssetManager()->GetAssetData<TextureAsset>(component.Texture).Texture;
+				std::filesystem::path path = texture->GetPath();
 				text = std::filesystem::relative(path, Project::GetAssetDirectory()).string();
 
 				width -= 40.0f - GImGui->Style.FrameRounding;
@@ -926,12 +927,17 @@ namespace Nebula {
 			if (ImGui::BeginDragDropTarget()) {
 				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
 					const wchar_t* path = (const wchar_t*)payload->Data;
+					
 					std::filesystem::path texturePath = path;
-					Ref<Texture2D> texture = Texture2D::Create(texturePath.string());
-					if (texture->IsLoaded()) {
-						component.Texture = texture;
+
+					AssetHandle handle = Project::GetAssetManager()->ImportAsset(texturePath);
+					Ref<Asset> asset = Project::GetAssetManager()->GetAsset(handle);
+					if (asset && asset->IsLoaded) 
+					{
+						TextureAsset texture = asset->GetData<TextureAsset>();
+						component.Texture = handle;
 						component.SubTextureCellSize = glm::min(component.SubTextureCellSize, 
-							{ (float)texture->GetWidth(), (float)texture->GetHeight() });
+							{ (float)texture.Texture->GetWidth(), (float)texture.Texture->GetHeight() });
 					}
 					else
 						NB_WARN("Could not load texture {0}", texturePath.filename().string());
@@ -948,7 +954,10 @@ namespace Nebula {
 				
 				DrawVec1Control("Tiling Factor", component.Tiling, 0.1f, 0.0f, 100.0f);
 
-				glm::vec2 textureSize = { (float)component.Texture->GetWidth(), (float)component.Texture->GetHeight() };
+				Ref<Asset> asset = Project::GetAssetManager()->GetAsset(component.Texture);
+				TextureAsset texture = asset->GetData<TextureAsset>();
+
+				glm::vec2 textureSize = { (float)texture.Texture->GetWidth(), (float)texture.Texture->GetHeight() };
 				glm::vec2 maxOffset = textureSize - component.SubTextureCellSize * component.SubTextureCellNum;
 				component.SubTextureOffset = glm::min(glm::max(component.SubTextureOffset, glm::vec2(0.0f)), maxOffset);
 
@@ -961,7 +970,7 @@ namespace Nebula {
 			}
 
 			if (remove)
-				component.Texture = nullptr;
+				component.Texture = 0;
 		}, true);
 
 		DrawComponent<CircleRendererComponent>("Circle Renderer", entity, [](auto& component) {

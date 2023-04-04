@@ -148,7 +148,10 @@ namespace Nebula
 			out << YAML::Key << "Colour" << YAML::Value << component.Colour;
 
 			if (component.Texture)
-				out << YAML::Key << "Texture" << YAML::Value << component.Texture->GetPath();
+			{
+				Ref<Texture2D> texture = Project::GetAssetManager()->GetAssetData<TextureAsset>(component.Texture).Texture;
+				out << YAML::Key << "Texture" << YAML::Value << texture->GetPath();
+			}
 
 			out << YAML::Key << "Tiling" << YAML::Value << component.Tiling;
 			out << YAML::Key << "Offset" << YAML::Value << component.SubTextureOffset;
@@ -388,7 +391,7 @@ namespace Nebula
 			{
 				std::string texturePath = spriteRendererComponent["Texture"].as<std::string>();
 				auto path = Project::GetAssetFileSystemPath(texturePath);
-				src.Texture = Texture2D::Create(path.string());
+				src.Texture = Project::GetAssetManager()->ImportAsset(path);
 			}
 		}
 
