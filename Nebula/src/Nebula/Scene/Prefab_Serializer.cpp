@@ -180,7 +180,16 @@ namespace Nebula
 			auto& component = entity.GetComponent<StringRendererComponent>();
 			out << YAML::Key << "Text" << YAML::Value << component.Text;
 			out << YAML::Key << "Colour" << YAML::Value << component.Colour;
-			out << YAML::Key << "FamilyName" << YAML::Value << component.FamilyName;
+			
+			if (!component.FontHandle && component.FamilyName == "")
+				out << YAML::Key << "Font" << YAML::Value << component.FamilyName;
+			else
+			{
+				Ref<Font> font = component.GetFont();
+				if (font)
+					out << YAML::Key << "Font" << YAML::Value << font->GetName();
+			}
+			
 			out << YAML::Key << "Bold" << YAML::Value << component.Bold;
 			out << YAML::Key << "Italic" << YAML::Value << component.Italic;
 			out << YAML::Key << "Kerning" << YAML::Value << component.Kerning;
@@ -408,7 +417,38 @@ namespace Nebula
 			auto& src = deserializedEntity.AddComponent<StringRendererComponent>();
 			DeserializeValue(src.Text, stringRendererComponent["Text"]);
 			DeserializeValue(src.Colour, stringRendererComponent["Colour"]);
-			DeserializeValue(src.FamilyName, stringRendererComponent["FamilyName"]);
+			
+			if (auto font = stringRendererComponent["Font"])
+			{
+				std::string fontName = font.as<std::string>();
+				FontFamily family = FontManager::GetFamily(fontName);
+
+				if (family.Name == "Unknown")
+				{
+					auto handles = Project::GetAssetManager()->GetAllAssetsWithType(AssetType::Font);
+					for (AssetHandle handle : handles)
+					{
+						FontAsset asset = Project::GetAssetManager()->GetAssetData<FontAsset>(handle);
+						if (!asset.IsLoaded ||
+							asset.Data->GetName() != fontName)
+							continue;
+
+						src.FontHandle = handle;
+						break;
+					}
+
+					if (!src.FontHandle)
+					{
+						std::filesystem::path fontPath = Project::GetAssetFileSystemPath(fontName).string();
+						src.FontHandle = Project::GetAssetManager()->ImportAsset(fontPath);
+					}
+				}
+				else
+				{
+					src.FamilyName = family.Name;
+				}
+			}
+
 			DeserializeValue(src.Bold, stringRendererComponent["Bold"]);
 			DeserializeValue(src.Italic, stringRendererComponent["Italic"]);
 			DeserializeValue(src.Kerning, stringRendererComponent["Kerning"]);

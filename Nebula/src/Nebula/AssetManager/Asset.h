@@ -2,6 +2,7 @@
 
 #include "Nebula/Core/UUID.h"
 #include "Nebula/Renderer/Texture.h"
+#include "Nebula/Renderer/Fonts.h"
 
 #include "../filewatch/FileWatch.hpp"
 
@@ -40,6 +41,26 @@ namespace Nebula
 		Ref<Texture2D> Texture;
 	};
 
+	struct FontAsset : AssetTypeData
+	{
+		FontAsset() = default;
+
+		FontAsset(const std::filesystem::path& path)
+			: FontAsset(path.string(), path)
+		{
+		}
+
+		FontAsset(const std::string& name, const std::filesystem::path& path)
+		{
+			Data = CreateRef<Font>(name, path);
+			FontManager::Add(Data);
+
+			IsLoaded = Data->GetAtlasTexture() != nullptr;
+		}
+
+		Ref<Font> Data;
+	};
+
 	class Asset
 	{
 	public:
@@ -48,6 +69,7 @@ namespace Nebula
 		AssetType Type;
 		AssetHandle Handle;
 		std::filesystem::path Path;
+		std::filesystem::path RelativePath;
 
 		bool IsLoaded = false;
 

@@ -14,9 +14,10 @@ namespace Nebula
 		AssetManager() = default;
 
 		AssetHandle ImportAsset(const std::filesystem::path& path);
+		AssetHandle ImportFont(const std::string& name, const std::filesystem::path& path);
 		AssetHandle GetHandleFromPath(const std::filesystem::path& path);
 
-		Ref<Asset> GetAsset(AssetHandle handle);
+		Ref<Asset> GetAsset(AssetHandle handle, bool load = true);
 		AssetType GetAssetType(AssetHandle handle);
 		
 		template <typename T>

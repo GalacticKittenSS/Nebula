@@ -970,7 +970,7 @@ namespace Nebula {
 			}
 
 			if (remove)
-				component.Texture = 0;
+				component.Texture = NULL;
 		}, true);
 
 		DrawComponent<CircleRendererComponent>("Circle Renderer", entity, [](auto& component) {
@@ -984,34 +984,79 @@ namespace Nebula {
 			ImGui::SetNextItemWidth(size);
 			ImGui::InputTextMultiline("##Text", &component.Text);
 			
+			size = DrawLabel("Font");
+			ImGui::SetNextItemWidth(size);
+
+			std::string currentName = "Default";
+				
+			bool isFamily = !component.FontHandle && component.FamilyName != "";
+			if (isFamily)
+				currentName = component.FamilyName;
+			else
 			{
-				float size = DrawLabel("Font");
-				ImGui::SetNextItemWidth(size);
+				FontAsset asset = Project::GetAssetManager()->GetAssetData<FontAsset>(component.FontHandle);
+				if (asset.IsLoaded)
+					currentName = asset.Data->GetName();
+			}
 
-				UI::ScopedStyleColor(ImGuiCol_Button, ImVec4{ 0.1f, 0.105f, 0.11f, 1.0f });
-
-				if (ImGui::BeginCombo("##Font", component.FamilyName.c_str()))
+			if (ImGui::BeginCombo("##Font", currentName.c_str()))
+			{
+				if (ImGui::Selectable("Default", currentName == "Default"))
 				{
-					const Array<FontFamily> families = FontManager::GetFamilies();
+					component.FontHandle = NULL;
+					component.FamilyName = "";
+				}
 
-					for (uint32_t i = 0; i < families.size(); i++)
+				const Array<FontFamily>& families = FontManager::GetFamilies();
+				for (uint32_t i = 0; i < families.size(); i++)
+				{
+					FontFamily family = families[i];
+					bool isSelected = component.FamilyName == family.Name;
+
+					if (ImGui::Selectable(family.Name.c_str(), isSelected))
 					{
-						bool isSelected = component.FamilyName == families[i].Name;
-
-						if (ImGui::Selectable(families[i].Name.c_str(), isSelected))
-							component.FamilyName = families[i].Name;
-
-						if (isSelected)
-							ImGui::SetItemDefaultFocus();
+						component.FamilyName = family.Name;
+						component.FontHandle = NULL;
 					}
 
-					ImGui::EndCombo();
+					if (isSelected)
+						ImGui::SetItemDefaultFocus();
 				}
+
+				const Array<AssetHandle>& handles = Project::GetAssetManager()->GetAllAssetsWithType(AssetType::Font);
+				for (uint32_t i = 0; i < handles.size(); i++)
+				{
+					Ref<Asset> asset = Project::GetAssetManager()->GetAsset(handles[i], false);
+
+					std::string name = asset->RelativePath.string();
+					if (asset->IsLoaded)
+					{
+						FontAsset font = asset->GetData<FontAsset>();
+						if (font.Data->GetName() != asset->Path)
+							name = font.Data->GetName();
+					}
+
+					bool isSelected = currentName == name;
+
+					if (ImGui::Selectable(name.c_str(), isSelected))
+					{
+						component.FontHandle = Project::GetAssetManager()->ImportAsset(asset->Path);
+						component.FamilyName = "";
+					}
+						
+					if (isSelected)
+						ImGui::SetItemDefaultFocus();
+				}
+
+				ImGui::EndCombo();
 			}
 			
-			DrawBool("Italic", component.Italic);
-			DrawBool("Bold", component.Bold);
-
+			if (isFamily)
+			{
+				DrawBool("Italic", component.Italic);
+				DrawBool("Bold", component.Bold);
+			}
+			
 			DrawVec1Control("Kerning", component.Kerning);
 			DrawVec1Control("Line Spacing", component.LineSpacing);
 

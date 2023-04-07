@@ -13,10 +13,31 @@ namespace Nebula
 			if (extension == ".nebula")			return AssetType::Scene;
 			else if (extension == ".prefab")	return AssetType::Prefab;
 			else if (extension == ".cs")		return AssetType::Script;
-			else if (extension == ".ttf")		return AssetType::Font;
+			else if (extension == ".ttf" || extension == ".TTF")  return AssetType::Font;
 			else if (extension == ".png" || extension == ".jpeg") return AssetType::Texture;
 
 			return AssetType::None;
+		}
+
+		template <typename T>
+		static T* Load(Ref<Asset> asset)
+		{
+			T* data = new T(asset->Path);
+			if (!data->IsLoaded)
+				delete data;
+
+			asset->IsLoaded = data->IsLoaded;
+			return data;
+		}
+
+		static FontAsset* LoadFont(Ref<Asset> asset, const std::string& name)
+		{
+			FontAsset* data = new FontAsset(name, asset->Path);
+			if (!data->IsLoaded)
+				delete data;
+
+			asset->IsLoaded = data->IsLoaded;
+			return data;
 		}
 	}
 
@@ -34,6 +55,29 @@ namespace Nebula
 		});
 	}
 
+	AssetHandle AssetManager::ImportFont(const std::string& name, const std::filesystem::path& path)
+	{
+		// Return asset if already loaded
+		if (AssetHandle handle = GetHandleFromPath(path))
+			return handle;
+
+		AssetType type = Utils::GetTypeFromExtension(path.extension().string());
+		if (type != AssetType::Font)
+			return 0;
+
+		std::filesystem::path relativePath = std::filesystem::relative(path, Project::GetAssetDirectory());
+
+		Ref<Asset> asset = CreateRef<Asset>();
+		asset->Handle = AssetHandle();
+		asset->Path = path;
+		asset->RelativePath = relativePath;
+		asset->Type = type;
+		asset->Data = Utils::LoadFont(asset, name);
+
+		m_Assets[asset->Handle] = asset;
+		return asset->Handle;
+	}
+
 	AssetHandle AssetManager::ImportAsset(const std::filesystem::path& path)
 	{
 		// Return asset if already loaded
@@ -44,11 +88,16 @@ namespace Nebula
 		if (type == AssetType::None)
 			return 0;
 
+		std::filesystem::path relativePath = std::filesystem::relative(path, Project::GetAssetDirectory());
+
 		Ref<Asset> asset = CreateRef<Asset>();
 		asset->Handle = AssetHandle();
 		asset->Path = path;
+		asset->RelativePath = relativePath;
 		asset->Type = type;
-		asset->Watcher = CreateScope<filewatch::FileWatch<std::string>>(path.string(), AssetManager::OnAssetChange);
+		
+		if (type == AssetType::Font)
+			asset->Data = Utils::LoadFont(asset, relativePath.string());
 
 		m_Assets[asset->Handle] = asset;
 		return asset->Handle;
@@ -70,31 +119,27 @@ namespace Nebula
 		switch (asset->Type)
 		{
 		case AssetType::Texture:
-			TextureAsset* data = new TextureAsset(asset->Path);
-			if (data->Texture->IsLoaded())
-			{
-				asset->Data = data;
-				asset->IsLoaded = true;
-			}
-			else
-			{
-				delete data;
-			}
-
+			asset->Data = Utils::Load<TextureAsset>(asset);
+			break;
+		case AssetType::Font:
+			asset->Data = Utils::Load<FontAsset>(asset);
 			break;
 		}
 
+		if (asset->IsLoaded)
+			asset->Watcher = CreateScope<filewatch::FileWatch<std::string>>(asset->Path.string(), AssetManager::OnAssetChange);
+		
 		return asset->IsLoaded;
 	}
 
-	Ref<Asset> AssetManager::GetAsset(AssetHandle handle)
+	Ref<Asset> AssetManager::GetAsset(AssetHandle handle, bool load)
 	{
 		auto it = m_Assets.find(handle);
 		if (it == m_Assets.end())
 			return nullptr;
 
 		Ref<Asset> asset = it->second;
-		if (!asset->IsLoaded)
+		if (load && !asset->IsLoaded)
 		{
 			if (!LoadAsset(asset))
 				return nullptr;

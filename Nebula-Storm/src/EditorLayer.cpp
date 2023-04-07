@@ -704,24 +704,16 @@ namespace Nebula {
 				OpenProject(path);
 				return true;
 			}
+			else if (path.extension().string() == ".nebula" || path.filename().string() == ".nebula")
+			{
+				LoadScene(path);
+				return true;
+			}
 		}
 
 		for (const auto& path : filepaths)
-		{
 			Project::GetAssetManager()->ImportAsset(path);
-		}
-
-		// DEBUG
-
-		Ref<AssetManager> manager = Project::GetAssetManager();
-		for (auto& handle : manager->GetAllAssetsWithType(AssetType::Texture))
-		{
-			const auto& asset = manager->GetAssetData<TextureAsset>(handle);
-			NB_INFO(asset.Texture->GetPath());
-		}
-
-		// -------
-
+		
 		return false;
 	}
 

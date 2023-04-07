@@ -10,17 +10,16 @@
 
 #include "MSDFData.h"
 
+#include "Nebula/Project/Project.h"
+
 namespace Nebula 
 {
 	template<typename T, typename S, int N, msdf_atlas::GeneratorFunction<S, N> GenFunc>
 	static Ref<Texture2D> CreateAndCacheAtlas(const std::string& fontName, float fontSize, const std::vector<msdf_atlas::GlyphGeometry>& glyphs, 
 		msdf_atlas::FontGeometry fontGeometry, uint32_t width, uint32_t height)
 	{
-		if (!std::filesystem::is_directory("Resources/cache/font"))
-			std::filesystem::create_directory("Resources/cache/font");
-
-		std::string cachePath = "Resources/cache/font/" + fontName + ".png";
-		Ref<Texture2D> texture = Texture2D::Create(cachePath);
+		std::filesystem::path cachePath = "Resources/cache/font/" + fontName + ".png";
+		Ref<Texture2D> texture = Texture2D::Create(cachePath.string());
 		if (texture->IsLoaded())
 			return texture;
 
@@ -35,8 +34,11 @@ namespace Nebula
 
 		msdfgen::BitmapConstRef<T, N> bitmap = (msdfgen::BitmapConstRef<T, N>)generator.atlasStorage();
 
+		if (!std::filesystem::exists(cachePath.parent_path()))
+			std::filesystem::create_directory(cachePath.parent_path());
+
 		stbi_flip_vertically_on_write(1);
-		stbi_write_png(cachePath.c_str(), bitmap.width, bitmap.height, N, (void*)bitmap.pixels, 0);
+		stbi_write_png(cachePath.string().c_str(), bitmap.width, bitmap.height, N, (void*)bitmap.pixels, 0);
 
 		TextureSpecification spec;
 		spec.Width = bitmap.width;
@@ -135,7 +137,7 @@ namespace Nebula
 	{
 		static Ref<Font> DefaultFont;
 		if (!DefaultFont)
-			DefaultFont = CreateRef<Font>("OpenSans_Regular", "Resources/font/OpenSans/Regular.ttf");
+			DefaultFont = CreateRef<Font>("OpenSans_Regular", "Resources/fonts/OpenSans/Regular.ttf");
 
 		return DefaultFont;
 	}

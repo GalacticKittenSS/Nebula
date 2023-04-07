@@ -10,6 +10,7 @@
 #include "Nebula/Core/UUID.h"
 
 #include "Nebula/AssetManager/AssetManager.h"
+#include "Nebula/Project/Project.h"
 
 #include "Nebula/Renderer/Texture.h"
 #include "Nebula/Utils/Arrays.h"
@@ -136,7 +137,10 @@ namespace Nebula {
 		std::string Text;
 		glm::vec4 Colour{ 1.0f, 1.0f, 1.0f, 1.0f };
 
-		std::string FamilyName = "OpenSans";
+		AssetHandle FontHandle = NULL;
+		
+		// For FontFamily
+		std::string FamilyName = "";
 		bool Bold = false;
 		bool Italic = false;
 
@@ -148,18 +152,30 @@ namespace Nebula {
 
 		Ref<Font> GetFont() 
 		{
-			FontFamily family = FontManager::GetFamily(FamilyName);
+			if (FontHandle == NULL)
+			{
+				FontFamily family = FontManager::GetFamily(FamilyName);
 
-			if (Bold && Italic)
-				return family.BoldItalic;
+				if (Bold && Italic && family.BoldItalic)
+					return family.BoldItalic;
 
-			if (Bold)
-				return family.Bold;
+				if (Bold && family.Bold)
+					return family.Bold;
 
-			if (Italic)
-				return family.Italic;
+				if (Italic && family.Italic)
+					return family.Italic;
 
-			return family.Regular;
+				if (family.Regular)
+					return family.Regular;
+
+				return Font::GetDefault();
+			}
+
+			FontAsset asset = Project::GetAssetManager()->GetAssetData<FontAsset>(FontHandle);
+			if (!asset.IsLoaded)
+				return Font::GetDefault();
+
+			return asset.Data;
 		}
 	};
 

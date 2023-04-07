@@ -2,10 +2,14 @@ Scene: Untitled
 Order:
   Size: 3
   Data: [2037538169663784225, 9286249198329823575, 14961826949240870393]
+Layers: [Layer 0, Layer 1, Layer 2, Layer 3, Layer 4, Layer 5, Layer 6, Layer 7, Layer 8, Layer 9, Layer 10, Layer 11, Layer 12, Layer 13, Layer 14, Layer 15]
 Entities:
   - Entity: 2037538169663784225
     TagComponent:
       Tag: Enviroment
+    PropertiesComponent:
+      IsEnabled: true
+      Layer: 1
     ParentChildComponent:
       PrimaryParent: 0
       Children: [1734186555264958028, 16434448802742922228, 11691747497498017467, 2555061558569917065, 8525815086722917192, 6961276783589167595, 4238392629824766104, 17924338926232536196, 17945224244753102173, 12392182606285594567, 11531482172220784666]
@@ -17,6 +21,9 @@ Entities:
   - Entity: 9286249198329823575
     TagComponent:
       Tag: In World - UI
+    PropertiesComponent:
+      IsEnabled: true
+      Layer: 1
     ParentChildComponent:
       PrimaryParent: 0
       Children: [5685040638041467009]
@@ -28,6 +35,9 @@ Entities:
   - Entity: 14961826949240870393
     TagComponent:
       Tag: Camera
+    PropertiesComponent:
+      IsEnabled: true
+      Layer: 1
     ParentChildComponent:
       PrimaryParent: 0
       Children: ~
@@ -50,18 +60,21 @@ Entities:
   - Entity: 5685040638041467009
     TagComponent:
       Tag: String
+    PropertiesComponent:
+      IsEnabled: true
+      Layer: 1
     ParentChildComponent:
       PrimaryParent: 9286249198329823575
       Children: ~
       ChildCount: 0
     TransformComponent:
-      Translation: [-6.77313232, 8.19124699, 0.00999999978]
+      Translation: [-7.76139784, 8.19124699, 0.00999999978]
       Rotation: [0, 0, 0]
       Scale: [2, 2, 1]
     StringRendererComponent:
       Text: This is a String
       Colour: [0.126861542, 0.843947768, 0.888030887, 1]
-      FamilyName: Roboto
+      Font: Roboto
       Bold: false
       Italic: false
       Kerning: 0.100000001
@@ -69,6 +82,9 @@ Entities:
   - Entity: 11531482172220784666
     TagComponent:
       Tag: Sprite
+    PropertiesComponent:
+      IsEnabled: true
+      Layer: 1
     ParentChildComponent:
       PrimaryParent: 2037538169663784225
       Children: ~
@@ -87,11 +103,10 @@ Entities:
       BodyType: Dynamic
       FixedRotation: false
       IsTrigger: false
+      Mask: 65535
     BoxCollider2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
-      Category: 1
-      Mask: 65535
       Density: 1
       Friction: 0.5
       Restitution: 0
@@ -99,6 +114,9 @@ Entities:
   - Entity: 1734186555264958028
     TagComponent:
       Tag: Sprite
+    PropertiesComponent:
+      IsEnabled: true
+      Layer: 1
     ParentChildComponent:
       PrimaryParent: 2037538169663784225
       Children: ~
@@ -118,11 +136,10 @@ Entities:
       BodyType: Dynamic
       FixedRotation: false
       IsTrigger: false
+      Mask: 65535
     BoxCollider2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
-      Category: 1
-      Mask: 65535
       Density: 1
       Friction: 0.5
       Restitution: 0
@@ -130,6 +147,9 @@ Entities:
   - Entity: 16434448802742922228
     TagComponent:
       Tag: Circle
+    PropertiesComponent:
+      IsEnabled: true
+      Layer: 1
     ParentChildComponent:
       PrimaryParent: 2037538169663784225
       Children: ~
@@ -146,11 +166,10 @@ Entities:
       BodyType: Static
       FixedRotation: false
       IsTrigger: true
+      Mask: 65535
     CircleColliderComponent:
       Offset: [0, 0]
       Radius: 0.5
-      Category: 1
-      Mask: 65535
       Density: 1
       Friction: 0.5
       Restitution: 0.75999999
@@ -158,6 +177,9 @@ Entities:
   - Entity: 11691747497498017467
     TagComponent:
       Tag: Sprite
+    PropertiesComponent:
+      IsEnabled: true
+      Layer: 1
     ParentChildComponent:
       PrimaryParent: 2037538169663784225
       Children: ~
@@ -176,11 +198,10 @@ Entities:
       BodyType: Dynamic
       FixedRotation: false
       IsTrigger: false
+      Mask: 65535
     BoxCollider2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
-      Category: 1
-      Mask: 65535
       Density: 1
       Friction: 0.5
       Restitution: 0
@@ -188,6 +209,9 @@ Entities:
   - Entity: 2555061558569917065
     TagComponent:
       Tag: Sprite
+    PropertiesComponent:
+      IsEnabled: true
+      Layer: 1
     ParentChildComponent:
       PrimaryParent: 2037538169663784225
       Children: ~
@@ -206,11 +230,10 @@ Entities:
       BodyType: Static
       FixedRotation: false
       IsTrigger: false
+      Mask: 65535
     BoxCollider2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
-      Category: 1
-      Mask: 65535
       Density: 1
       Friction: 1
       Restitution: 0.0900000036
@@ -218,6 +241,9 @@ Entities:
   - Entity: 8525815086722917192
     TagComponent:
       Tag: Dynamic
+    PropertiesComponent:
+      IsEnabled: true
+      Layer: 1
     ParentChildComponent:
       PrimaryParent: 2037538169663784225
       Children: ~
@@ -236,11 +262,10 @@ Entities:
       BodyType: Dynamic
       FixedRotation: false
       IsTrigger: false
+      Mask: 65535
     BoxCollider2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
-      Category: 1
-      Mask: 65535
       Density: 1
       Friction: 0.5
       Restitution: 0.150000006
@@ -248,6 +273,9 @@ Entities:
   - Entity: 6961276783589167595
     TagComponent:
       Tag: Static
+    PropertiesComponent:
+      IsEnabled: true
+      Layer: 1
     ParentChildComponent:
       PrimaryParent: 2037538169663784225
       Children: ~
@@ -266,11 +294,10 @@ Entities:
       BodyType: Static
       FixedRotation: false
       IsTrigger: false
+      Mask: 65535
     BoxCollider2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
-      Category: 1
-      Mask: 65535
       Density: 1
       Friction: 0
       Restitution: 0.810000002
@@ -278,6 +305,9 @@ Entities:
   - Entity: 4238392629824766104
     TagComponent:
       Tag: Sprite
+    PropertiesComponent:
+      IsEnabled: true
+      Layer: 1
     ParentChildComponent:
       PrimaryParent: 2037538169663784225
       Children: ~
@@ -296,11 +326,10 @@ Entities:
       BodyType: Static
       FixedRotation: false
       IsTrigger: false
+      Mask: 65535
     BoxCollider2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
-      Category: 1
-      Mask: 1
       Density: 1
       Friction: 0.5
       Restitution: 0.219999999
@@ -308,6 +337,9 @@ Entities:
   - Entity: 17924338926232536196
     TagComponent:
       Tag: Sprite
+    PropertiesComponent:
+      IsEnabled: true
+      Layer: 1
     ParentChildComponent:
       PrimaryParent: 2037538169663784225
       Children: ~
@@ -326,11 +358,10 @@ Entities:
       BodyType: Static
       FixedRotation: false
       IsTrigger: false
+      Mask: 65535
     BoxCollider2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
-      Category: 1
-      Mask: 65535
       Density: 1
       Friction: 1
       Restitution: 0.0900000036
@@ -338,6 +369,9 @@ Entities:
   - Entity: 17945224244753102173
     TagComponent:
       Tag: Sprite
+    PropertiesComponent:
+      IsEnabled: true
+      Layer: 1
     ParentChildComponent:
       PrimaryParent: 2037538169663784225
       Children: ~
@@ -356,11 +390,10 @@ Entities:
       BodyType: Dynamic
       FixedRotation: false
       IsTrigger: false
+      Mask: 65535
     BoxCollider2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
-      Category: 1
-      Mask: 65535
       Density: 1
       Friction: 0.5
       Restitution: 0
@@ -368,6 +401,9 @@ Entities:
   - Entity: 12392182606285594567
     TagComponent:
       Tag: Sprite
+    PropertiesComponent:
+      IsEnabled: true
+      Layer: 1
     ParentChildComponent:
       PrimaryParent: 2037538169663784225
       Children: ~
@@ -386,11 +422,10 @@ Entities:
       BodyType: Dynamic
       FixedRotation: false
       IsTrigger: false
+      Mask: 65535
     BoxCollider2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
-      Category: 1
-      Mask: 65535
       Density: 1
       Friction: 0.5
       Restitution: 0

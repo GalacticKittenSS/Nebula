@@ -664,7 +664,7 @@ namespace Nebula {
 		NB_ASSERT(entity);
 
 		auto& component = entity.GetComponent<StringRendererComponent>();
-		return ScriptEngine::CreateMonoString(component.FamilyName.c_str());
+		return nullptr;// ScriptEngine::CreateMonoString(component.FamilyName.c_str());
 	}
 
 	static void StringRendererComponent_SetFontName(UUID entityID, MonoString* name)
@@ -675,7 +675,7 @@ namespace Nebula {
 		NB_ASSERT(entity);
 
 		auto& component = entity.GetComponent<StringRendererComponent>();
-		component.FamilyName = Utils::GetStringFromMono(name);
+		//component.FamilyName = Utils::GetStringFromMono(name);
 	}
 
 	static float StringRendererComponent_GetKerning(UUID entityID)
