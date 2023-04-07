@@ -912,7 +912,7 @@ namespace Nebula {
 			std::string text = "Drop File to Add Texture";
 			if (component.Texture)
 			{
-				Ref<Texture2D> texture = Project::GetAssetManager()->GetAssetData<TextureAsset>(component.Texture).Texture;
+				Ref<Texture2D> texture = Project::GetAssetManager()->GetAssetData<Texture2D>(component.Texture);
 				std::filesystem::path path = texture->GetPath();
 				text = std::filesystem::relative(path, Project::GetAssetDirectory()).string();
 
@@ -934,10 +934,10 @@ namespace Nebula {
 					Ref<Asset> asset = Project::GetAssetManager()->GetAsset(handle);
 					if (asset && asset->IsLoaded) 
 					{
-						TextureAsset texture = asset->GetData<TextureAsset>();
+						Ref<Texture2D> texture = asset->GetData<Texture2D>();
 						component.Texture = handle;
 						component.SubTextureCellSize = glm::min(component.SubTextureCellSize, 
-							{ (float)texture.Texture->GetWidth(), (float)texture.Texture->GetHeight() });
+							{ (float)texture->GetWidth(), (float)texture->GetHeight() });
 					}
 					else
 						NB_WARN("Could not load texture {0}", texturePath.filename().string());
@@ -955,9 +955,9 @@ namespace Nebula {
 				DrawVec1Control("Tiling Factor", component.Tiling, 0.1f, 0.0f, 100.0f);
 
 				Ref<Asset> asset = Project::GetAssetManager()->GetAsset(component.Texture);
-				TextureAsset texture = asset->GetData<TextureAsset>();
+				Ref<Texture2D> texture = asset->GetData<Texture2D>();
 
-				glm::vec2 textureSize = { (float)texture.Texture->GetWidth(), (float)texture.Texture->GetHeight() };
+				glm::vec2 textureSize = { (float)texture->GetWidth(), (float)texture->GetHeight() };
 				glm::vec2 maxOffset = textureSize - component.SubTextureCellSize * component.SubTextureCellNum;
 				component.SubTextureOffset = glm::min(glm::max(component.SubTextureOffset, glm::vec2(0.0f)), maxOffset);
 
@@ -994,9 +994,9 @@ namespace Nebula {
 				currentName = component.FamilyName;
 			else
 			{
-				FontAsset asset = Project::GetAssetManager()->GetAssetData<FontAsset>(component.FontHandle);
-				if (asset.IsLoaded)
-					currentName = asset.Data->GetName();
+				Ref<Font> asset = Project::GetAssetManager()->GetAssetData<Font>(component.FontHandle);
+				if (asset)
+					currentName = asset->GetName();
 			}
 
 			if (ImGui::BeginCombo("##Font", currentName.c_str()))
@@ -1031,9 +1031,9 @@ namespace Nebula {
 					std::string name = asset->RelativePath.string();
 					if (asset->IsLoaded)
 					{
-						FontAsset font = asset->GetData<FontAsset>();
-						if (font.Data->GetName() != asset->Path)
-							name = font.Data->GetName();
+						Ref<Font> font = asset->GetData<Font>();
+						if (font->GetName() != asset->Path)
+							name = font->GetName();
 					}
 
 					bool isSelected = currentName == name;

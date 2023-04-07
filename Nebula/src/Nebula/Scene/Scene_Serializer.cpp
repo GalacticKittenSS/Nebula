@@ -170,7 +170,7 @@ namespace Nebula {
 
 			if (component.Texture)
 			{
-				Ref<Texture2D> texture = Project::GetAssetManager()->GetAssetData<TextureAsset>(component.Texture).Texture;
+				Ref<Texture2D> texture = Project::GetAssetManager()->GetAssetData<Texture2D>(component.Texture);
 				std::string relativePath = std::filesystem::relative(texture->GetPath(), Project::GetAssetDirectory()).string();
 				out << YAML::Key << "Texture" << YAML::Value << relativePath;
 			}
@@ -496,9 +496,9 @@ namespace Nebula {
 						auto handles = Project::GetAssetManager()->GetAllAssetsWithType(AssetType::Font);
 						for (AssetHandle handle : handles)
 						{
-							FontAsset asset = Project::GetAssetManager()->GetAssetData<FontAsset>(handle);
-							if (!asset.IsLoaded ||
-								asset.Data->GetName() != fontName)
+							Ref<Font> asset = Project::GetAssetManager()->GetAssetData<Font>(handle);
+							if (!asset ||
+								asset->GetName() != fontName)
 								continue;
 
 							src.FontHandle = handle;

@@ -21,11 +21,11 @@ namespace Nebula
 		AssetType GetAssetType(AssetHandle handle);
 		
 		template <typename T>
-		T GetAssetData(AssetHandle handle)
+		Ref<T> GetAssetData(AssetHandle handle)
 		{
 			Ref<Asset> asset = GetAsset(handle);
 			if (!asset)
-				return {};
+				return nullptr;
 
 			return asset->GetData<T>();
 		}

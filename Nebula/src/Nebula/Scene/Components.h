@@ -171,11 +171,11 @@ namespace Nebula {
 				return Font::GetDefault();
 			}
 
-			FontAsset asset = Project::GetAssetManager()->GetAssetData<FontAsset>(FontHandle);
-			if (!asset.IsLoaded)
+			Ref<Font> asset = Project::GetAssetManager()->GetAssetData<Font>(FontHandle);
+			if (!asset)
 				return Font::GetDefault();
 
-			return asset.Data;
+			return asset;
 		}
 	};
 

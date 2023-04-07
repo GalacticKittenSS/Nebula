@@ -11,6 +11,7 @@
 namespace Nebula 
 {
 	typedef UUID AssetHandle;
+	struct AssetData;
 
 	enum class AssetType : uint16_t
 	{
@@ -21,44 +22,6 @@ namespace Nebula
 		Font,
 		Script,
 		MemoryAsset
-	};
-
-	struct AssetTypeData 
-	{
-		bool IsLoaded = false;
-	};
-
-	struct TextureAsset : AssetTypeData
-	{
-		TextureAsset() = default;
-			
-		TextureAsset(const std::filesystem::path& path)
-		{
-			Texture = Texture2D::Create(path.string());
-			IsLoaded = Texture->IsLoaded();
-		}
-
-		Ref<Texture2D> Texture;
-	};
-
-	struct FontAsset : AssetTypeData
-	{
-		FontAsset() = default;
-
-		FontAsset(const std::filesystem::path& path)
-			: FontAsset(path.string(), path)
-		{
-		}
-
-		FontAsset(const std::string& name, const std::filesystem::path& path)
-		{
-			Data = CreateRef<Font>(name, path);
-			FontManager::Add(Data);
-
-			IsLoaded = Data->GetAtlasTexture() != nullptr;
-		}
-
-		Ref<Font> Data;
 	};
 
 	class Asset
@@ -74,10 +37,10 @@ namespace Nebula
 		bool IsLoaded = false;
 
 		template <typename T>
-		const T& GetData() { return *(T*)Data; }
+		Ref<T> GetData();
 	private:
 		Scope<filewatch::FileWatch<std::string>> Watcher;
-		AssetTypeData* Data;
+		AssetData* Data = nullptr;
 		
 		friend class AssetManager;
 	};
