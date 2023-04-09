@@ -725,7 +725,7 @@ namespace Nebula {
 	void EditorLayer::SaveProject()
 	{
 		if (Project::GetActive())
-			Project::SaveActive(Project::GetProjectDirectory());
+			Project::SaveActive(Project::GetProjectFile());
 	}
 
 	void EditorLayer::OpenProject()

@@ -1,6 +1,14 @@
 Project:
   Name: Sandbox
-  StartScene: "Scenes/Scripting.nebula"
-  AssetDirectory: "Assets"
-  ScriptModulePath: "Binaries/Sandbox.dll"
-  FontResolution: 256
+  StartScene: Scenes/Scripting.nebula
+  AssetDirectory: Assets
+  ScriptModulePath: Binaries/Sandbox.dll
+Assets:
+  - Handle: 10465062411550986415
+    Path: Fonts\arialbi.ttf
+  - Handle: 3871083381578152467
+    Path: Fonts\ariali.ttf
+  - Handle: 10672057491365945081
+    Path: Fonts\arial.ttf
+  - Handle: 3235123935084672078
+    Path: Fonts\arialbd.ttf

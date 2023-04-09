@@ -1,6 +1,8 @@
 #include "nbpch.h"
 #include "AssetManager.h"
 
+#include "AssetData.h"
+
 #include "Nebula/Project/Project.h"
 #include "Nebula/Core/Application.h"
 
@@ -41,7 +43,6 @@ namespace Nebula
 		}
 	}
 
-
 	void AssetManager::OnAssetChange(const std::string& path, const filewatch::Event change_type)
 	{
 		if (change_type != filewatch::Event::modified)
@@ -53,6 +54,27 @@ namespace Nebula
 		Application::Get().SubmitToMainThread([asset]() {
 			Project::GetAssetManager()->LoadAsset(asset);
 		});
+	}
+
+	void AssetManager::ImportAsset(AssetHandle handle, const std::filesystem::path& path, const std::filesystem::path& relativePath)
+	{
+		if (m_Assets.find(handle) != m_Assets.end())
+			return;
+
+		AssetType type = Utils::GetTypeFromExtension(path.extension().string());
+		if (type == AssetType::None)
+			return;
+
+		Ref<Asset> asset = CreateRef<Asset>();
+		asset->Handle = handle;
+		asset->Path = path;
+		asset->RelativePath = relativePath;
+		asset->Type = type;
+
+		if (type == AssetType::Font)
+			asset->Data = Utils::LoadFont(asset, relativePath.string());
+
+		m_Assets[handle] = asset;
 	}
 
 	AssetHandle AssetManager::ImportFont(const std::string& name, const std::filesystem::path& path)

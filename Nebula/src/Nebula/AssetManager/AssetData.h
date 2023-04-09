@@ -1,5 +1,8 @@
 #pragma once
 
+#include "Nebula/Renderer/Texture.h"
+#include "Nebula/Renderer/Fonts.h"
+
 namespace Nebula
 {
 	struct AssetData

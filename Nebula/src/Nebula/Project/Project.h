@@ -40,6 +40,11 @@ namespace Nebula {
 			return GetAssetDirectory() / path;
 		}
 
+		static std::filesystem::path GetProjectFile() {
+			NB_ASSERT(s_ActiveProject);
+			return s_ActiveProject->m_ProjectFile;
+		}
+
 		static const Ref<AssetManager>& GetAssetManager() { return s_ActiveProject->m_AssetManager; }
 
 		ProjectConfig& GetConfig() { return m_Config; }
@@ -52,8 +57,10 @@ namespace Nebula {
 	private:
 		ProjectConfig m_Config;
 		std::filesystem::path m_ProjectDirectory;
+		std::filesystem::path m_ProjectFile;
 		Ref<AssetManager> m_AssetManager;
 
 		inline static Ref<Project> s_ActiveProject;
+		friend class ProjectSerializer;
 	};
 }

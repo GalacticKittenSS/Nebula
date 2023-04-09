@@ -169,11 +169,7 @@ namespace Nebula {
 			out << YAML::Key << "Colour" << YAML::Value << component.Colour;
 
 			if (component.Texture)
-			{
-				Ref<Texture2D> texture = Project::GetAssetManager()->GetAssetData<Texture2D>(component.Texture);
-				std::string relativePath = std::filesystem::relative(texture->GetPath(), Project::GetAssetDirectory()).string();
-				out << YAML::Key << "Texture" << YAML::Value << relativePath;
-			}
+				out << YAML::Key << "Texture" << YAML::Value << component.Texture;
 			
 			out << YAML::Key << "Tiling" << YAML::Value << component.Tiling;
 			out << YAML::Key << "Offset" << YAML::Value << component.SubTextureOffset;
@@ -204,13 +200,9 @@ namespace Nebula {
 			out << YAML::Key << "Colour" << YAML::Value << component.Colour;
 			
 			if (!component.FontHandle && component.FamilyName == "")
-				out << YAML::Key << "Font" << YAML::Value << component.FamilyName;
+				out << YAML::Key << "Family" << YAML::Value << component.FamilyName;
 			else
-			{
-				Ref<Font> font = component.GetFont();
-				if (font)
-					out << YAML::Key << "Font" << YAML::Value << font->GetName();
-			}
+				out << YAML::Key << "Font" << YAML::Value << component.FontHandle;
 			
 			out << YAML::Key << "Bold" << YAML::Value << component.Bold;
 			out << YAML::Key << "Italic" << YAML::Value << component.Italic;
@@ -463,13 +455,7 @@ namespace Nebula {
 				DeserializeValue(src.SubTextureOffset, spriteRendererComponent["Offset"]);
 				DeserializeValue(src.SubTextureCellSize, spriteRendererComponent["CellSize"]);
 				DeserializeValue(src.SubTextureCellNum, spriteRendererComponent["CellNum"]);
-
-				if (spriteRendererComponent["Texture"])
-				{
-					std::string texturePath = spriteRendererComponent["Texture"].as<std::string>();
-					auto path = Project::GetAssetFileSystemPath(texturePath);
-					src.Texture = Project::GetAssetManager()->ImportAsset(path);
-				}
+				src.Texture = DeserializeValue<uint64_t>(spriteRendererComponent["Texture"]);
 			}
 
 			if (auto circleRendererComponent = entity["CircleRendererComponent"])
@@ -485,42 +471,12 @@ namespace Nebula {
 				auto& src = deserializedEntity.AddComponent<StringRendererComponent>();
 				DeserializeValue(src.Text, stringRendererComponent["Text"]);
 				DeserializeValue(src.Colour, stringRendererComponent["Colour"]);
-				
-				if (auto font = stringRendererComponent["Font"])
-				{
-					std::string fontName = font.as<std::string>();
-					FontFamily family = FontManager::GetFamily(fontName);
-					
-					if (family.Name == "Unknown")
-					{
-						auto handles = Project::GetAssetManager()->GetAllAssetsWithType(AssetType::Font);
-						for (AssetHandle handle : handles)
-						{
-							Ref<Font> asset = Project::GetAssetManager()->GetAssetData<Font>(handle);
-							if (!asset ||
-								asset->GetName() != fontName)
-								continue;
-
-							src.FontHandle = handle;
-							break;
-						}
-
-						if (!src.FontHandle)
-						{
-							std::filesystem::path fontPath = Project::GetAssetFileSystemPath(fontName).string();
-							src.FontHandle = Project::GetAssetManager()->ImportAsset(fontPath);
-						}
-					}
-					else
-					{
-						src.FamilyName = family.Name;
-					}
-				}
-				
+				DeserializeValue(src.FamilyName, stringRendererComponent["Family"]);
 				DeserializeValue(src.Bold, stringRendererComponent["Bold"]);
 				DeserializeValue(src.Italic, stringRendererComponent["Italic"]);
 				DeserializeValue(src.Kerning, stringRendererComponent["Kerning"]);
 				DeserializeValue(src.LineSpacing, stringRendererComponent["LineSpacing"]);
+				src.FontHandle = DeserializeValue<uint64_t>(stringRendererComponent["Font"]);
 			}
 
 			if (auto rigidbody2DComponent = entity["Rigidbody2DComponent"])

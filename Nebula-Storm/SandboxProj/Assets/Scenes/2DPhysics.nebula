@@ -74,7 +74,7 @@ Entities:
     StringRendererComponent:
       Text: This is a String
       Colour: [0.126861542, 0.843947768, 0.888030887, 1]
-      Font: Roboto
+      Font: 3871083381578152467
       Bold: false
       Italic: false
       Kerning: 0.100000001
@@ -127,7 +127,6 @@ Entities:
       Scale: [2.56315613, 1.00000072, 1]
     SpriteRendererComponent:
       Colour: [1, 1, 1, 1]
-      Texture: Textures\Checkerboard.png
       Tiling: 1
       Offset: [0, 0]
       CellSize: [10, 10]

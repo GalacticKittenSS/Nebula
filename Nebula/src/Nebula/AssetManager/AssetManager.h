@@ -14,6 +14,7 @@ namespace Nebula
 		AssetManager() = default;
 
 		AssetHandle ImportAsset(const std::filesystem::path& path);
+		void ImportAsset(AssetHandle handle, const std::filesystem::path& path, const std::filesystem::path& relativePath);
 		AssetHandle ImportFont(const std::string& name, const std::filesystem::path& path);
 		AssetHandle GetHandleFromPath(const std::filesystem::path& path);
 
@@ -31,6 +32,7 @@ namespace Nebula
 		}
 
 		Array<AssetHandle> GetAllAssetsWithType(AssetType type);
+		const std::unordered_map<AssetHandle, Ref<Asset>>& GetAssets() const { return m_Assets; }
 	private:
 		bool LoadAsset(Ref<Asset> asset);
 		static void OnAssetChange(const std::string& path, const filewatch::Event change_type);

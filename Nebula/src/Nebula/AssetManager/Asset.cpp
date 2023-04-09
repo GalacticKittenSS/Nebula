@@ -1,6 +1,7 @@
 #include "nbpch.h"
-#include "AssetData.h"
 #include "Asset.h"
+
+#include "AssetData.h"
 
 namespace Nebula
 {

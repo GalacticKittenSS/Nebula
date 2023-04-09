@@ -1,12 +1,10 @@
 #pragma once
 
 #include "Nebula/Core/UUID.h"
-#include "Nebula/Renderer/Texture.h"
-#include "Nebula/Renderer/Fonts.h"
-
-#include "../filewatch/FileWatch.hpp"
 
 #include <filesystem>
+
+#include "../filewatch/FileWatch.hpp"
 
 namespace Nebula 
 {

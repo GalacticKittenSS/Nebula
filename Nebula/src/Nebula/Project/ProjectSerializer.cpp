@@ -28,6 +28,20 @@ namespace Nebula {
 		out << YAML::Key << "ScriptModulePath" << YAML::Value << config.ScriptModulePath.string();
 		out << YAML::EndMap; // Project
 		
+		out << YAML::Key << "Assets" << YAML::Value;
+		out << YAML::BeginSeq; // Assets
+
+		const auto& assets = m_Project->GetAssetManager()->GetAssets();
+		for (const auto& [handle, asset] : assets)
+		{
+			out << YAML::BeginMap;
+			out << YAML::Key << "Handle" << handle;
+			out << YAML::Key << "Path" << asset->RelativePath.string();
+			out << YAML::EndMap;
+		}
+
+		out << YAML::EndSeq; // Assets
+
 		out << YAML::EndMap; // Root
 
 		std::ofstream fout(filepath);
@@ -59,6 +73,16 @@ namespace Nebula {
 		config.StartScene = projectNode["StartScene"].as<std::string>();
 		config.AssetDirectory = projectNode["AssetDirectory"].as<std::string>();
 		config.ScriptModulePath = projectNode["ScriptModulePath"].as<std::string>();
+
+		for (auto asset : data["Assets"])
+		{
+			uint64_t handle = asset["Handle"].as<uint64_t>();
+			std::string relativePath = asset["Path"].as<std::string>();
+
+			std::filesystem::path path = filepath.parent_path() / config.AssetDirectory / relativePath;
+				
+			m_Project->m_AssetManager->ImportAsset(handle, path, relativePath);
+		}
 
 		return true;
 	}
