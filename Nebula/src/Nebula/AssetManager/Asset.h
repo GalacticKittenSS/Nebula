@@ -40,6 +40,6 @@ namespace Nebula
 		Scope<filewatch::FileWatch<std::string>> Watcher;
 		AssetData* Data = nullptr;
 		
-		friend class AssetManager;
+		friend class AssetManagerBase;
 	};
 }

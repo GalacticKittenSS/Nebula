@@ -13,7 +13,7 @@ namespace Nebula {
 	Ref<Project> Project::Load(const std::filesystem::path& path) 
 	{
 		Ref<Project> project = CreateRef<Project>();
-		project->m_AssetManager = CreateRef<AssetManager>();
+		project->m_AssetManager = CreateRef<AssetManagerBase>();
 		
 		ProjectSerializer serializer(project);
 		if (serializer.Deserialize(path))

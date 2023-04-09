@@ -912,7 +912,7 @@ namespace Nebula {
 			std::string text = "Drop File to Add Texture";
 			if (component.Texture)
 			{
-				Ref<Texture2D> texture = Project::GetAssetManager()->GetAssetData<Texture2D>(component.Texture);
+				Ref<Texture2D> texture = AssetManager::GetAssetData<Texture2D>(component.Texture);
 				std::filesystem::path path = texture->GetPath();
 				text = std::filesystem::relative(path, Project::GetAssetDirectory()).string();
 
@@ -930,8 +930,8 @@ namespace Nebula {
 					
 					std::filesystem::path texturePath = path;
 
-					AssetHandle handle = Project::GetAssetManager()->ImportAsset(texturePath);
-					Ref<Asset> asset = Project::GetAssetManager()->GetAsset(handle);
+					AssetHandle handle = AssetManager::ImportAsset(texturePath);
+					Ref<Asset> asset = AssetManager::GetAsset(handle);
 					if (asset && asset->IsLoaded) 
 					{
 						Ref<Texture2D> texture = asset->GetData<Texture2D>();
@@ -954,7 +954,7 @@ namespace Nebula {
 				
 				DrawVec1Control("Tiling Factor", component.Tiling, 0.1f, 0.0f, 100.0f);
 
-				Ref<Asset> asset = Project::GetAssetManager()->GetAsset(component.Texture);
+				Ref<Asset> asset = AssetManager::GetAsset(component.Texture);
 				Ref<Texture2D> texture = asset->GetData<Texture2D>();
 
 				glm::vec2 textureSize = { (float)texture->GetWidth(), (float)texture->GetHeight() };
@@ -994,7 +994,7 @@ namespace Nebula {
 				currentName = component.FamilyName;
 			else
 			{
-				Ref<Font> asset = Project::GetAssetManager()->GetAssetData<Font>(component.FontHandle);
+				Ref<Font> asset = AssetManager::GetAssetData<Font>(component.FontHandle);
 				if (asset)
 					currentName = asset->GetName();
 			}
@@ -1023,10 +1023,10 @@ namespace Nebula {
 						ImGui::SetItemDefaultFocus();
 				}
 
-				const Array<AssetHandle>& handles = Project::GetAssetManager()->GetAllAssetsWithType(AssetType::Font);
+				const Array<AssetHandle>& handles = AssetManager::GetAllAssetsWithType(AssetType::Font);
 				for (uint32_t i = 0; i < handles.size(); i++)
 				{
-					Ref<Asset> asset = Project::GetAssetManager()->GetAsset(handles[i], false);
+					Ref<Asset> asset = AssetManager::GetAsset(handles[i], false);
 
 					std::string name = asset->RelativePath.string();
 					if (asset->IsLoaded)
@@ -1040,7 +1040,7 @@ namespace Nebula {
 
 					if (ImGui::Selectable(name.c_str(), isSelected))
 					{
-						component.FontHandle = Project::GetAssetManager()->ImportAsset(asset->Path);
+						component.FontHandle = AssetManager::ImportAsset(asset->Path);
 						component.FamilyName = "";
 					}
 						

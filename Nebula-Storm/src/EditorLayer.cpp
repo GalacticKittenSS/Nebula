@@ -712,7 +712,7 @@ namespace Nebula {
 		}
 
 		for (const auto& path : filepaths)
-			Project::GetAssetManager()->ImportAsset(path);
+			AssetManager::ImportAsset(path);
 		
 		return false;
 	}

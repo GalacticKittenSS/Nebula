@@ -171,7 +171,7 @@ namespace Nebula {
 				return Font::GetDefault();
 			}
 
-			Ref<Font> asset = Project::GetAssetManager()->GetAssetData<Font>(FontHandle);
+			Ref<Font> asset = AssetManager::GetAssetData<Font>(FontHandle);
 			if (!asset)
 				return Font::GetDefault();
 

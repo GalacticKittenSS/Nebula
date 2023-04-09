@@ -50,6 +50,10 @@
 #include "Nebula/Project/Project.h"
 //--------------------
 
+//----AssetManager----
+#include "Nebula/AssetManager/AssetManager.h"
+//--------------------
+
 //----SCENES----------
 #include "Nebula/Scene/Scene.h"
 #include "Nebula/Scene/Entity.h"

@@ -1,42 +1,47 @@
 #pragma once
 
-#include "Nebula/Core/API.h"
-#include "Nebula/Utils/Arrays.h"
-#include "Asset.h"
-
-#include <unordered_map>
+#include "Nebula/Project/Project.h"
 
 namespace Nebula
 {
 	class AssetManager
 	{
 	public:
-		AssetManager() = default;
-
-		AssetHandle ImportAsset(const std::filesystem::path& path);
-		void ImportAsset(AssetHandle handle, const std::filesystem::path& path, const std::filesystem::path& relativePath);
-		AssetHandle ImportFont(const std::string& name, const std::filesystem::path& path);
-		AssetHandle GetHandleFromPath(const std::filesystem::path& path);
-
-		Ref<Asset> GetAsset(AssetHandle handle, bool load = true);
-		AssetType GetAssetType(AssetHandle handle);
-		
-		template <typename T>
-		Ref<T> GetAssetData(AssetHandle handle)
+		static AssetHandle ImportAsset(const std::filesystem::path& path)
 		{
-			Ref<Asset> asset = GetAsset(handle);
-			if (!asset)
-				return nullptr;
-
-			return asset->GetData<T>();
+			NB_ASSERT(Project::GetAssetManager());
+			return Project::GetAssetManager()->ImportAsset(path);
 		}
 
-		Array<AssetHandle> GetAllAssetsWithType(AssetType type);
-		const std::unordered_map<AssetHandle, Ref<Asset>>& GetAssets() const { return m_Assets; }
-	private:
-		bool LoadAsset(Ref<Asset> asset);
-		static void OnAssetChange(const std::string& path, const filewatch::Event change_type);
-	private:
-		std::unordered_map<AssetHandle, Ref<Asset>> m_Assets;
+		static AssetHandle GetHandleFromPath(const std::filesystem::path& path)
+		{
+			NB_ASSERT(Project::GetAssetManager());
+			return Project::GetAssetManager()->GetHandleFromPath(path);
+		}
+
+		static Ref<Asset> GetAsset(AssetHandle handle, bool load = true)
+		{
+			NB_ASSERT(Project::GetAssetManager());
+			return Project::GetAssetManager()->GetAsset(handle, load);
+		}
+
+		static AssetType GetAssetType(AssetHandle handle)
+		{
+			NB_ASSERT(Project::GetAssetManager());
+			return Project::GetAssetManager()->GetAssetType(handle);
+		}
+
+		template <typename T>
+		static Ref<T> GetAssetData(AssetHandle handle)
+		{
+			NB_ASSERT(Project::GetAssetManager());
+			return Project::GetAssetManager()->GetAssetData<T>(handle);
+		}
+
+		static Array<AssetHandle> GetAllAssetsWithType(AssetType type)
+		{
+			NB_ASSERT(Project::GetAssetManager());
+			return Project::GetAssetManager()->GetAllAssetsWithType(type);
+		}
 	};
 }

@@ -7,8 +7,7 @@
 #include "Render_Command.h"
 #include "UniformBuffer.h"
 
-#include "Nebula/Project/Project.h"
-
+#include "Nebula/AssetManager/AssetManager.h"
 #include "Nebula/Scene/Components.h"
 
 #include "MSDFData.h"
@@ -575,7 +574,7 @@ namespace Nebula {
 		case NB_QUAD: {
 			auto& spriteRenderer = entity.GetComponent<SpriteRendererComponent>();
 
-			Ref<Texture2D> texture = Project::GetAssetManager()->GetAssetData<Texture2D>(spriteRenderer.Texture);
+			Ref<Texture2D> texture = AssetManager::GetAssetData<Texture2D>(spriteRenderer.Texture);
 
 			if (texture && texture->IsLoaded()) {
 				Ref<SubTexture2D> SubT = SubTexture2D::CreateFromCoords(texture,

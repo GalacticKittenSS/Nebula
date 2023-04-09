@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Nebula/AssetManager/AssetManager.h"
+#include "Nebula/AssetManager/AssetManagerBase.h"
 
 namespace Nebula {
 	struct ProjectConfig
@@ -45,7 +45,7 @@ namespace Nebula {
 			return s_ActiveProject->m_ProjectFile;
 		}
 
-		static const Ref<AssetManager>& GetAssetManager() { return s_ActiveProject->m_AssetManager; }
+		static const Ref<AssetManagerBase>& GetAssetManager() { return s_ActiveProject->m_AssetManager; }
 
 		ProjectConfig& GetConfig() { return m_Config; }
 
@@ -58,7 +58,7 @@ namespace Nebula {
 		ProjectConfig m_Config;
 		std::filesystem::path m_ProjectDirectory;
 		std::filesystem::path m_ProjectFile;
-		Ref<AssetManager> m_AssetManager;
+		Ref<AssetManagerBase> m_AssetManager;
 
 		inline static Ref<Project> s_ActiveProject;
 		friend class ProjectSerializer;

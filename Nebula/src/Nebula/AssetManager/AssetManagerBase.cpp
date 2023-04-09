@@ -1,5 +1,5 @@
 #include "nbpch.h"
-#include "AssetManager.h"
+#include "AssetManagerBase.h"
 
 #include "AssetData.h"
 
@@ -43,7 +43,7 @@ namespace Nebula
 		}
 	}
 
-	void AssetManager::OnAssetChange(const std::string& path, const filewatch::Event change_type)
+	void AssetManagerBase::OnAssetChange(const std::string& path, const filewatch::Event change_type)
 	{
 		if (change_type != filewatch::Event::modified)
 			return;
@@ -56,7 +56,7 @@ namespace Nebula
 		});
 	}
 
-	void AssetManager::ImportAsset(AssetHandle handle, const std::filesystem::path& path, const std::filesystem::path& relativePath)
+	void AssetManagerBase::ImportAsset(AssetHandle handle, const std::filesystem::path& path, const std::filesystem::path& relativePath)
 	{
 		if (m_Assets.find(handle) != m_Assets.end())
 			return;
@@ -77,30 +77,7 @@ namespace Nebula
 		m_Assets[handle] = asset;
 	}
 
-	AssetHandle AssetManager::ImportFont(const std::string& name, const std::filesystem::path& path)
-	{
-		// Return asset if already loaded
-		if (AssetHandle handle = GetHandleFromPath(path))
-			return handle;
-
-		AssetType type = Utils::GetTypeFromExtension(path.extension().string());
-		if (type != AssetType::Font)
-			return 0;
-
-		std::filesystem::path relativePath = std::filesystem::relative(path, Project::GetAssetDirectory());
-
-		Ref<Asset> asset = CreateRef<Asset>();
-		asset->Handle = AssetHandle();
-		asset->Path = path;
-		asset->RelativePath = relativePath;
-		asset->Type = type;
-		asset->Data = Utils::LoadFont(asset, name);
-
-		m_Assets[asset->Handle] = asset;
-		return asset->Handle;
-	}
-
-	AssetHandle AssetManager::ImportAsset(const std::filesystem::path& path)
+	AssetHandle AssetManagerBase::ImportAsset(const std::filesystem::path& path)
 	{
 		// Return asset if already loaded
 		if (AssetHandle handle = GetHandleFromPath(path))
@@ -125,7 +102,7 @@ namespace Nebula
 		return asset->Handle;
 	}
 
-	AssetHandle AssetManager::GetHandleFromPath(const std::filesystem::path& path)
+	AssetHandle AssetManagerBase::GetHandleFromPath(const std::filesystem::path& path)
 	{
 		for (const auto& [handle, asset] : m_Assets)
 		{
@@ -136,7 +113,7 @@ namespace Nebula
 		return NULL;
 	}
 
-	bool AssetManager::LoadAsset(Ref<Asset> asset)
+	bool AssetManagerBase::LoadAsset(Ref<Asset> asset)
 	{
 		switch (asset->Type)
 		{
@@ -149,12 +126,12 @@ namespace Nebula
 		}
 
 		if (asset->IsLoaded)
-			asset->Watcher = CreateScope<filewatch::FileWatch<std::string>>(asset->Path.string(), AssetManager::OnAssetChange);
+			asset->Watcher = CreateScope<filewatch::FileWatch<std::string>>(asset->Path.string(), AssetManagerBase::OnAssetChange);
 		
 		return asset->IsLoaded;
 	}
 
-	Ref<Asset> AssetManager::GetAsset(AssetHandle handle, bool load)
+	Ref<Asset> AssetManagerBase::GetAsset(AssetHandle handle, bool load)
 	{
 		auto it = m_Assets.find(handle);
 		if (it == m_Assets.end())
@@ -170,7 +147,7 @@ namespace Nebula
 		return asset;
 	}
 
-	AssetType AssetManager::GetAssetType(AssetHandle handle)
+	AssetType AssetManagerBase::GetAssetType(AssetHandle handle)
 	{
 		auto it = m_Assets.find(handle);
 		if (it == m_Assets.end())
@@ -179,7 +156,7 @@ namespace Nebula
 		return it->second->Type;
 	}
 
-	Array<AssetHandle> AssetManager::GetAllAssetsWithType(AssetType type)
+	Array<AssetHandle> AssetManagerBase::GetAllAssetsWithType(AssetType type)
 	{
 		Array<AssetHandle> handles;
 
