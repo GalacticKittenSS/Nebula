@@ -25,20 +25,28 @@ namespace Nebula
 		static T* Load(Ref<Asset> asset)
 		{
 			T* data = new T(asset->Path);
-			if (!data->IsLoaded)
-				delete data;
-
 			asset->IsLoaded = data->IsLoaded;
+#
+			if (!data->IsLoaded)
+			{
+				delete data;
+				return nullptr;
+			}
+
 			return data;
 		}
 
 		static FontAsset* LoadFont(Ref<Asset> asset, const std::string& name)
 		{
 			FontAsset* data = new FontAsset(name, asset->Path);
-			if (!data->IsLoaded)
-				delete data;
-
 			asset->IsLoaded = data->IsLoaded;
+			
+			if (!data->IsLoaded)
+			{
+				delete data;
+				return nullptr;
+			}
+
 			return data;
 		}
 	}

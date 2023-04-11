@@ -1,16 +1,16 @@
 #pragma once
 
+#include "AssetData.h"
+
 #include "Nebula/Core/UUID.h"
 
 #include <filesystem>
-
 #include "../filewatch/FileWatch.hpp"
 
 namespace Nebula 
 {
 	typedef UUID AssetHandle;
-	struct AssetData;
-
+	
 	enum class AssetType : uint16_t
 	{
 		None = 0,

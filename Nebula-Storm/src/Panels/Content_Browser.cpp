@@ -115,6 +115,21 @@ namespace Nebula {
 					m_CurrentDirectory /= path.filename();
 			}
 
+			if (!AssetManager::GetHandleFromPath(path) &&
+				AssetManager::GetTypeFromExtension(path.extension().string()) != AssetType::None)
+			{
+				UI::ScopedStyleVar rounding(ImGuiStyleVar_FrameRounding, 0.0f);
+				UI::ScopedStyleVar padding(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+				UI::ScopedStyleColor colour(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_WindowBg));
+
+				if (ImGui::BeginPopupContextItem())
+				{
+					if (ImGui::Button("Import Asset"))
+						AssetManager::ImportAsset(path);
+
+					ImGui::EndPopup();
+				}
+			}
 			float text_width = ImGui::CalcTextSize(filename.c_str()).x;
 			float text_indentation = (cellSize - text_width) * 0.5f;
 			

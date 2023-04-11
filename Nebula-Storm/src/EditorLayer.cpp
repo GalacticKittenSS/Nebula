@@ -111,9 +111,13 @@ namespace Nebula {
 		NewScene();
 
 		//Open Project on Startup
-		auto commandLineArgs = Application::Get().GetSpecification().CommandLineArgs;
+		/*auto commandLineArgs = Application::Get().GetSpecification().CommandLineArgs;
 		if (commandLineArgs.Count > 1)
-			OpenProject(commandLineArgs[1]);
+			OpenProject(commandLineArgs[1]);*/
+
+		OpenProject();
+		if (!Project::GetActive())
+			Application::Get().Close();
 	}
 
 	void EditorLayer::Detach() 

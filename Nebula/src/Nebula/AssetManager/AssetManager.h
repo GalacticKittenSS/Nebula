@@ -43,5 +43,16 @@ namespace Nebula
 			NB_ASSERT(Project::GetAssetManager());
 			return Project::GetAssetManager()->GetAllAssetsWithType(type);
 		}
+
+		static AssetType GetTypeFromExtension(const std::string& extension)
+		{
+			if (extension == ".nebula")			return AssetType::Scene;
+			else if (extension == ".prefab")	return AssetType::Prefab;
+			else if (extension == ".cs")		return AssetType::Script;
+			else if (extension == ".ttf" || extension == ".TTF")  return AssetType::Font;
+			else if (extension == ".png" || extension == ".jpeg") return AssetType::Texture;
+
+			return AssetType::None;
+		}
 	};
 }
