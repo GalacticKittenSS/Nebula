@@ -198,12 +198,7 @@ namespace Nebula {
 			auto& component = entity.GetComponent<StringRendererComponent>();
 			out << YAML::Key << "Text" << YAML::Value << component.Text;
 			out << YAML::Key << "Colour" << YAML::Value << component.Colour;
-			
-			if (!component.FontHandle && component.FamilyName == "")
-				out << YAML::Key << "Family" << YAML::Value << component.FamilyName;
-			else
-				out << YAML::Key << "Font" << YAML::Value << component.FontHandle;
-			
+			out << YAML::Key << "Font" << YAML::Value << component.FontHandle;
 			out << YAML::Key << "Bold" << YAML::Value << component.Bold;
 			out << YAML::Key << "Italic" << YAML::Value << component.Italic;
 			out << YAML::Key << "Kerning" << YAML::Value << component.Kerning;
@@ -471,7 +466,6 @@ namespace Nebula {
 				auto& src = deserializedEntity.AddComponent<StringRendererComponent>();
 				DeserializeValue(src.Text, stringRendererComponent["Text"]);
 				DeserializeValue(src.Colour, stringRendererComponent["Colour"]);
-				DeserializeValue(src.FamilyName, stringRendererComponent["Family"]);
 				DeserializeValue(src.Bold, stringRendererComponent["Bold"]);
 				DeserializeValue(src.Italic, stringRendererComponent["Italic"]);
 				DeserializeValue(src.Kerning, stringRendererComponent["Kerning"]);

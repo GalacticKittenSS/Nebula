@@ -140,7 +140,6 @@ namespace Nebula {
 		AssetHandle FontHandle = NULL;
 		
 		// For FontFamily
-		std::string FamilyName = "";
 		bool Bold = false;
 		bool Italic = false;
 
@@ -152,30 +151,14 @@ namespace Nebula {
 
 		Ref<Font> GetFont() 
 		{
-			if (FontHandle == NULL)
-			{
-				FontFamily family = FontManager::GetFamily(FamilyName);
-
-				if (Bold && Italic && family.BoldItalic)
-					return family.BoldItalic;
-
-				if (Bold && family.Bold)
-					return family.Bold;
-
-				if (Italic && family.Italic)
-					return family.Italic;
-
-				if (family.Regular)
-					return family.Regular;
-
-				return Font::GetDefault();
-			}
-
-			Ref<Font> asset = AssetManager::GetAssetData<Font>(FontHandle);
+			Ref<Asset> asset = AssetManager::GetAsset(FontHandle);
 			if (!asset)
 				return Font::GetDefault();
 
-			return asset;
+			if (asset->Type == AssetType::FontFamily)
+				return asset->GetData<Font>(Bold, Italic);
+			
+			return asset->GetData<Font>();
 		}
 	};
 

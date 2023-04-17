@@ -96,10 +96,10 @@ namespace Nebula {
 
 		RenderCommand::SetClearColour({ 0.1f, 0.1f, 0.1f, 1.0f });
 		RenderCommand::SetLineWidth(4.0f);
-
-		FontManager::Add(FontFamily("Resources/fonts", "OpenSans"));
-		FontManager::Add(FontFamily("Resources/fonts", "Roboto"));
 		
+		AssetManagerBase::ImportFontFamily("Resources/fonts", "OpenSans");
+		AssetManagerBase::ImportFontFamily("Resources/fonts", "Roboto");
+
 		//Initialize Frame Buffer
 		FrameBufferSpecification fbSpec;
 		fbSpec.Attachments = { FramebufferTextureFormat::RGBA8, FramebufferTextureFormat::RED_INT, FramebufferTextureFormat::Depth };

@@ -51,6 +51,8 @@ namespace Nebula
 		}
 	}
 
+	std::unordered_map<AssetHandle, Ref<Asset>> AssetManagerBase::m_GlobalAssets = {};
+
 	void AssetManagerBase::OnAssetChange(const std::string& path, const filewatch::Event change_type)
 	{
 		if (change_type != filewatch::Event::modified)
@@ -110,9 +112,61 @@ namespace Nebula
 		return asset->Handle;
 	}
 
+	AssetHandle AssetManagerBase::ImportFont(const std::string& name, const std::filesystem::path path, bool bold, bool italic)
+	{
+		if (!std::filesystem::exists(path))
+			return NULL;
+
+		AssetType type = Utils::GetTypeFromExtension(path.extension().string());
+		if (type != AssetType::Font)
+			return NULL;
+
+		Ref<Asset> asset = CreateRef<Asset>();
+		asset->Handle = AssetHandle();
+		asset->Path = path;
+		asset->RelativePath = path;
+		asset->Type = type;
+
+		FontAsset* data = Utils::LoadFont(asset, name + "_" + path.stem().string());
+		data->Bold = bold;
+		data->Italic = italic;
+		asset->Data = data;
+
+		m_GlobalAssets[asset->Handle] = asset;
+		return asset->Handle;
+	}
+
+	void AssetManagerBase::ImportFontFamily(const std::filesystem::path& directory, std::string name)
+	{
+		std::filesystem::path path = directory / name;
+
+		FontFamilyAsset* data = new FontFamilyAsset();
+		data->Name = name;
+		data->Regular = ImportFont(name, path / "Regular.ttf");
+		data->Bold = ImportFont(name, path / "Bold.ttf");
+		data->BoldItalic = ImportFont(name, path / "BoldItalic.ttf");
+		data->Italic = ImportFont(name, path / "Italic.ttf");
+		data->IsLoaded = true;
+
+		Ref<Asset> asset = CreateRef<Asset>();
+		asset->Handle = AssetHandle();
+		asset->Path = directory;
+		asset->Type = AssetType::FontFamily;
+		asset->Data = data;
+		asset->IsLoaded = true;
+
+		m_GlobalAssets[asset->Handle] = asset;
+	}
+
 	AssetHandle AssetManagerBase::GetHandleFromPath(const std::filesystem::path& path)
 	{
 		for (const auto& [handle, asset] : m_Assets)
+		{
+			if (asset->Path == path)
+				return handle;
+		}
+
+		for (const auto& [handle, asset] : m_GlobalAssets)
 		{
 			if (asset->Path == path)
 				return handle;
@@ -139,13 +193,34 @@ namespace Nebula
 		return asset->IsLoaded;
 	}
 
-	Ref<Asset> AssetManagerBase::GetAsset(AssetHandle handle, bool load)
+	Ref<Asset> AssetManagerBase::FindAsset(AssetHandle handle)
 	{
 		auto it = m_Assets.find(handle);
 		if (it == m_Assets.end())
 			return nullptr;
 
-		Ref<Asset> asset = it->second;
+		return it->second;
+	}
+
+	Ref<Asset> AssetManagerBase::FindGlobalAsset(AssetHandle handle)
+	{
+		auto it = m_GlobalAssets.find(handle);
+		if (it == m_GlobalAssets.end())
+			return nullptr;
+
+		return it->second;
+	}
+
+	Ref<Asset> AssetManagerBase::GetAsset(AssetHandle handle, bool load)
+	{
+		Ref<Asset> asset = FindAsset(handle);
+		
+		if (!asset)
+			asset = FindGlobalAsset(handle);
+
+		if (!asset)
+			return nullptr;
+
 		if (load && !asset->IsLoaded)
 		{
 			if (!LoadAsset(asset))
@@ -164,18 +239,32 @@ namespace Nebula
 		return it->second->Type;
 	}
 
-	Array<AssetHandle> AssetManagerBase::GetAllAssetsWithType(AssetType type)
+	Array<AssetHandle> AssetManagerBase::GetAllAssetsWithType(AssetType type, bool global)
 	{
 		Array<AssetHandle> handles;
+		GetAllAssetsWithType(handles, type, global);
+		return handles;
+	}
 
+	void AssetManagerBase::GetAllAssetsWithType(Array<AssetHandle>& handlesArray, AssetType type, bool global)
+	{
 		for (const auto& [handle, asset] : m_Assets)
 		{
 			if (asset->Type != type)
 				continue;
-			
-			handles.push_back(handle);
+
+			handlesArray.push_back(handle);
 		}
 
-		return handles;
+		if (!global)
+			return;
+
+		for (const auto& [handle, asset] : m_GlobalAssets)
+		{
+			if (asset->Type != type)
+				continue;
+
+			handlesArray.push_back(handle);
+		}
 	}
 }

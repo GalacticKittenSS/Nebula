@@ -1,10 +1,14 @@
 #pragma once
 
+#include "Nebula/Core/UUID.h"
+
 #include "Nebula/Renderer/Texture.h"
 #include "Nebula/Renderer/Fonts.h"
 
 namespace Nebula
 {
+	typedef UUID AssetHandle;
+
 	struct AssetData
 	{
 		bool IsLoaded = false;
@@ -35,11 +39,23 @@ namespace Nebula
 		FontAsset(const std::string& name, const std::filesystem::path& path)
 		{
 			Data = CreateRef<Font>(name, path);
-			FontManager::Add(Data);
-
 			IsLoaded = Data->GetAtlasTexture() != nullptr;
 		}
 
 		Ref<Font> Data;
+		bool Bold = false;
+		bool Italic = false;
+	};
+
+	struct FontFamilyAsset : AssetData
+	{
+		FontFamilyAsset() = default;
+		
+		std::string Name = "Unknown";
+
+		AssetHandle Regular = NULL;
+		AssetHandle Bold = NULL;
+		AssetHandle BoldItalic = NULL;
+		AssetHandle Italic = NULL;
 	};
 }

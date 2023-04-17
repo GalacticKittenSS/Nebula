@@ -308,8 +308,6 @@ namespace Nebula {
 
 		delete[] s_Data.QuadTexCoords;
 		delete[] s_Data.TriTexCoords;
-
-		FontManager::Clean();
 	}
 	
 	void Renderer2D::BeginScene(const Camera& camera, const glm::mat4& transform) {

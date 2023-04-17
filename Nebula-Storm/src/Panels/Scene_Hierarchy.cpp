@@ -987,63 +987,51 @@ namespace Nebula {
 			size = DrawLabel("Font");
 			ImGui::SetNextItemWidth(size);
 
+			Ref<Asset> currentAsset = AssetManager::GetAsset(component.FontHandle);
 			std::string currentName = "Default";
-				
-			bool isFamily = !component.FontHandle && component.FamilyName != "";
-			if (isFamily)
-				currentName = component.FamilyName;
-			else
-			{
-				Ref<Font> asset = AssetManager::GetAssetData<Font>(component.FontHandle);
-				if (asset)
-					currentName = asset->GetName();
-			}
+			bool isFamily = false;
 
+			if (currentAsset)
+			{
+				isFamily = currentAsset->Type == AssetType::FontFamily;
+
+				if (isFamily)
+					currentName = ((FontFamilyAsset*)currentAsset->Data)->Name;
+				else
+				{
+					Ref<Font> font = component.GetFont();
+					if (font)
+						currentName = font->GetName();
+				}
+			}
+			
 			if (ImGui::BeginCombo("##Font", currentName.c_str()))
 			{
 				if (ImGui::Selectable("Default", currentName == "Default"))
-				{
 					component.FontHandle = NULL;
-					component.FamilyName = "";
-				}
+				
+				Array<AssetHandle> handles = AssetManager::GetAllAssetsWithType(AssetType::FontFamily, true);
+				AssetManager::GetAllAssetsWithType(handles, AssetType::Font);
 
-				const Array<FontFamily>& families = FontManager::GetFamilies();
-				for (uint32_t i = 0; i < families.size(); i++)
-				{
-					FontFamily family = families[i];
-					bool isSelected = component.FamilyName == family.Name;
-
-					if (ImGui::Selectable(family.Name.c_str(), isSelected))
-					{
-						component.FamilyName = family.Name;
-						component.FontHandle = NULL;
-					}
-
-					if (isSelected)
-						ImGui::SetItemDefaultFocus();
-				}
-
-				const Array<AssetHandle>& handles = AssetManager::GetAllAssetsWithType(AssetType::Font);
 				for (uint32_t i = 0; i < handles.size(); i++)
 				{
 					Ref<Asset> asset = AssetManager::GetAsset(handles[i], false);
-
 					std::string name = asset->RelativePath.string();
-					if (asset->IsLoaded)
+
+					if (asset->Type == AssetType::FontFamily)
+						name = ((FontFamilyAsset*)asset->Data)->Name;
+					else
 					{
 						Ref<Font> font = asset->GetData<Font>();
 						if (font->GetName() != asset->Path)
 							name = font->GetName();
 					}
 
-					bool isSelected = currentName == name;
+					bool isSelected = component.FontHandle == asset->Handle;
 
 					if (ImGui::Selectable(name.c_str(), isSelected))
-					{
-						component.FontHandle = AssetManager::ImportAsset(asset->Path);
-						component.FamilyName = "";
-					}
-						
+						component.FontHandle = asset->Handle;
+					
 					if (isSelected)
 						ImGui::SetItemDefaultFocus();
 				}

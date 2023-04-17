@@ -30,12 +30,21 @@ namespace Nebula
 			return asset->GetData<T>();
 		}
 
-		Array<AssetHandle> GetAllAssetsWithType(AssetType type);
+		Array<AssetHandle> GetAllAssetsWithType(AssetType type, bool global = false);
+		void GetAllAssetsWithType(Array<AssetHandle>& handlesArray, AssetType type, bool global = false);
 		const std::unordered_map<AssetHandle, Ref<Asset>>& GetAssets() const { return m_Assets; }
+
+		static void ImportFontFamily(const std::filesystem::path& directory, std::string name);
 	private:
 		bool LoadAsset(Ref<Asset> asset);
-		static void OnAssetChange(const std::string& path, const filewatch::Event change_type);
+		static AssetHandle ImportFont(const std::string& name, const std::filesystem::path path, bool bold = false, bool italic = false);
+		
+		static void OnAssetChange(const std::string& path, const filewatch::Event change_type); 
+		
+		Ref<Asset> FindAsset(AssetHandle handle);
+		static Ref<Asset> FindGlobalAsset(AssetHandle handle);
 	private:
 		std::unordered_map<AssetHandle, Ref<Asset>> m_Assets;
+		static std::unordered_map<AssetHandle, Ref<Asset>> m_GlobalAssets;
 	};
 }

@@ -2,15 +2,11 @@
 
 #include "AssetData.h"
 
-#include "Nebula/Core/UUID.h"
-
 #include <filesystem>
 #include "../filewatch/FileWatch.hpp"
 
 namespace Nebula 
 {
-	typedef UUID AssetHandle;
-	
 	enum class AssetType : uint16_t
 	{
 		None = 0,
@@ -18,6 +14,7 @@ namespace Nebula
 		Prefab,
 		Texture,
 		Font,
+		FontFamily,
 		Script,
 		MemoryAsset
 	};
@@ -36,9 +33,13 @@ namespace Nebula
 
 		template <typename T>
 		Ref<T> GetData();
+		
+		template <typename T>
+		Ref<T> GetData(bool bold, bool italic);
+
+		AssetData* Data = nullptr;
 	private:
 		Scope<filewatch::FileWatch<std::string>> Watcher;
-		AssetData* Data = nullptr;
 		
 		friend class AssetManagerBase;
 	};
