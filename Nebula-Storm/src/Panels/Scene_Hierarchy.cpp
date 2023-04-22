@@ -263,7 +263,7 @@ namespace Nebula {
 
 		bool opened = ImGui::TreeNodeEx((void*)(uint32_t)entity, flags, tag.c_str());
 
-		if (ImGui::IsItemClicked())
+		if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(0))
 			m_SelectionContext = entity;
 
 		if (ImGui::BeginDragDropSource()) {
@@ -894,6 +894,66 @@ namespace Nebula {
 						{
 							scriptInstance->SetFieldValue(name, data);
 						}
+						break;
+					}
+					case Nebula::ScriptFieldType::Entity:
+					{
+						auto data = scriptInstance->GetFieldValue<MonoObject*>(name);
+						UUID id = ScriptEngine::GetIDFromObject(data);
+						std::string text = "None";
+						
+						if (id)
+						{
+							Entity ent = { id, scene.get() };
+							text = ent.GetName();
+						}
+
+						DrawLabel(name);
+						if (ImGui::Button(text.c_str(), ImVec2{ ImGui::GetContentRegionAvailWidth(), 0 }))
+							ScriptEngine::SetIDForObject(data, NULL);
+
+						if (ImGui::BeginDragDropTarget())
+						{
+							if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENTITY"))
+							{
+								const UUID payloadID = *(const UUID*)payload->Data;
+								ScriptEngine::SetIDForObject(data, payloadID);
+							}
+						}
+
+						break;
+					}
+					case ScriptFieldType::Prefab:
+					case ScriptFieldType::Font:
+					case ScriptFieldType::Texture:
+					case ScriptFieldType::Asset:
+					{
+						auto data = scriptInstance->GetFieldValue<MonoObject*>(name);
+						AssetHandle handle = ScriptEngine::GetIDFromObject(data);
+						std::string text = "None";
+
+						if (handle)
+						{
+							Ref<Asset> asset = AssetManager::GetAsset(handle);
+							text = asset->RelativePath.string();
+						}
+
+						DrawLabel(name);
+						if (ImGui::Button(text.c_str(), ImVec2{ ImGui::GetContentRegionAvailWidth(), 0 }))
+							ScriptEngine::SetIDForObject(data, NULL);
+
+						if (ImGui::BeginDragDropTarget()) 
+						{
+							if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) 
+							{
+								const wchar_t* payloadPath = (const wchar_t*)payload->Data;
+								std::filesystem::path path = payloadPath;
+
+								AssetHandle handle = AssetManager::ImportAsset(path);
+								ScriptEngine::SetIDForObject(data, handle);
+							}
+						}
+						
 						break;
 					}
 					}

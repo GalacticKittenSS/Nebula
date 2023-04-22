@@ -13,9 +13,82 @@ namespace Nebula
         internal extern static bool Application_GetWindowSize(out Vector2 size);
         #endregion
 
-        #region Prefab
+        #region Mathf
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static ulong Prefab_Create(string path);
+        internal extern static float Mathf_ToDegrees(float radians);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static float Mathf_ToRadians(float degrees);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static float Mathf_Tan(float value);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static float Mathf_Atan(float value);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static float Mathf_Cos(float value);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static float Mathf_Acos(float value);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static float Mathf_Sin(float value);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static float Mathf_Asin(float value);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static float Mathf_Sqrt(float value);
+        #endregion
+
+        #region Time
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static float Time_DeltaTime();
+        #endregion
+
+        #region Input
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static bool Input_IsKeyDown(KeyCode keyCode);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static bool Input_IsMouseButtonDown(MouseCode mouseCode);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void Input_GetMousePos(out Vector2 pos);
+        #endregion
+
+        #region Asset
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static ulong Asset_GetHandleFromPath(string path);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static ulong Asset_GetOrCreateHandle(string path);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static string Asset_GetPathFromHandle(ulong handle);
+        #endregion
+
+        #region Font
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static bool Font_GetBold(ulong handle);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static bool Font_GetItalic(ulong handle);
+        #endregion
+
+        #region Scene
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static ulong Scene_FindEntityByName(string name);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static ulong Scene_CreateNewEntity(string name);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static ulong Scene_DuplicateEntity(ulong entityID);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void Scene_DestroyEntity(ulong entityID);
         #endregion
 
         #region Entity
@@ -47,15 +120,9 @@ namespace Nebula
         internal extern static void Entity_SetLayer(ulong entityID, short layer);
         #endregion
 
-        #region Input
+        #region Prefab
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static bool Input_IsKeyDown(KeyCode keyCode);
-
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static bool Input_IsMouseButtonDown(MouseCode mouseCode);
-
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static void Input_GetMousePos(out Vector2 pos);
+        internal extern static ulong Prefab_Create(ulong handle);
         #endregion
 
         #region TransformComponent
@@ -173,6 +240,12 @@ namespace Nebula
         internal extern static void StringRendererComponent_SetColour(ulong entityID, ref Vector4 colour);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static ulong StringRendererComponent_GetFontHandle(ulong entityID);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void StringRendererComponent_SetFontHandle(ulong entityID, ulong handle);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static bool StringRendererComponent_GetBold(ulong entityID);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
@@ -183,12 +256,6 @@ namespace Nebula
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void StringRendererComponent_SetItalic(ulong entityID, bool italic);
-
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static string StringRendererComponent_GetFontName(ulong entityID);
-
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static void StringRendererComponent_SetFontName(ulong entityID, string name);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static float StringRendererComponent_GetKerning(ulong entityID);
@@ -312,54 +379,6 @@ namespace Nebula
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void CircleCollider2DComponent_SetThreshold(ulong entityID, float threshold);
-        #endregion
-
-        #region Scene
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static ulong Scene_FindEntityByName(string name);
-
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static ulong Scene_CreateNewEntity(string name);
-
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static ulong Scene_DuplicateEntity(ulong entityID);
-
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static void Scene_DestroyEntity(ulong entityID);
-        #endregion
-
-        #region Mathf
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static float Mathf_ToDegrees(float radians);
-        
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static float Mathf_ToRadians(float degrees);
-
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static float Mathf_Tan(float value);
-
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static float Mathf_Atan(float value);
-
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static float Mathf_Cos(float value);
-
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static float Mathf_Acos(float value);
-
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static float Mathf_Sin(float value);
-
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static float Mathf_Asin(float value);
-
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static float Mathf_Sqrt(float value);
-        #endregion
-
-        #region Time
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static float Time_DeltaTime();
         #endregion
     }
 }

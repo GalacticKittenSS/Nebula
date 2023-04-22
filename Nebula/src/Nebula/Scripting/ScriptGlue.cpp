@@ -56,21 +56,183 @@ namespace Nebula {
 	}
 #pragma endregion
 
-#pragma region Prefab
-	static uint64_t Prefab_Create(MonoString* path)
+#pragma region Mathf
+	static float Mathf_ToDegrees(float radians)
+	{
+		return glm::degrees(radians);
+	}
+
+	static float Mathf_ToRadians(float degrees)
+	{
+		return glm::radians(degrees);
+	}
+
+	static float Mathf_Tan(float value)
+	{
+		return tan(value);
+	}
+
+	static float Mathf_Atan(float value)
+	{
+		return atan(value);
+	}
+
+	static float Mathf_Cos(float value)
+	{
+		return cos(value);
+	}
+
+	static float Mathf_Acos(float value)
+	{
+		return acos(value);
+	}
+
+	static float Mathf_Sin(float value)
+	{
+		return sin(value);
+	}
+
+	static float Mathf_Asin(float value)
+	{
+		return asin(value);
+	}
+
+	static float Mathf_Sqrt(float value)
+	{
+		return sqrt(value);
+	}
+#pragma endregion
+
+#pragma region Time
+	static float Time_DeltaTime()
+	{
+		return Time::DeltaTime();
+	}
+#pragma endregion
+
+#pragma region Input
+	static bool Input_IsKeyDown(KeyCode keycode)
+	{
+		return Input::IsKeyPressed(keycode);
+	}
+
+	static bool Input_IsMouseButtonDown(MouseCode mouseCode)
+	{
+		return Input::IsMouseButtonPressed(mouseCode);
+	}
+
+	static void Input_GetMousePos(glm::vec2* out)
+	{
+		*out = { Input::GetMouseX(), Input::GetMouseY() };
+	}
+#pragma endregion
+
+#pragma region Asset
+	static uint64_t Asset_GetOrCreateHandle(MonoString* path)
+	{
+		std::string pathString = Utils::GetStringFromMono(path);
+		AssetHandle handle = AssetManager::ImportAsset(Project::GetAssetFileSystemPath(pathString));
+		return handle;
+	}
+	
+	static uint64_t Asset_GetHandleFromPath(MonoString* path)
+	{
+		std::string pathString = Utils::GetStringFromMono(path);
+		AssetHandle handle = AssetManager::GetHandleFromPath(Project::GetAssetFileSystemPath(pathString));
+		return handle;
+	}
+
+	static MonoString* Asset_GetPathFromHandle(AssetHandle handle)
+	{
+		Ref<Asset> asset = AssetManager::GetAsset(handle);
+		if (!asset)
+			return nullptr;
+
+		std::string path = asset->Path.string();
+		return ScriptEngine::CreateMonoString(path.c_str());
+	}
+#pragma endregion
+
+#pragma region Font
+	static bool Font_GetBold(AssetHandle handle)
+	{
+		if (!handle)
+			return NULL;
+
+		Ref<Asset> asset = AssetManager::GetAsset(handle);
+		NB_ASSERT(asset);
+		FontAsset* data = (FontAsset*)asset->Data;
+		NB_ASSERT(data);
+
+		return data->Bold;
+	}
+
+	static bool Font_GetItalic(AssetHandle handle)
+	{
+		if (!handle)
+			return NULL;
+
+		Ref<Asset> asset = AssetManager::GetAsset(handle);
+		NB_ASSERT(asset);
+		FontAsset* data = (FontAsset*)asset->Data;
+		NB_ASSERT(data);
+
+		return data->Bold;
+	}
+#pragma endregion
+
+#pragma region Scene
+	static uint64_t Scene_FindEntityByName(MonoString* name)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
-		
-		std::filesystem::path filepath = Utils::GetStringFromMono(path);
-		
-		PrefabSerializer serializer(scene);
-		Entity entity = serializer.Deserialize(Project::GetAssetFileSystemPath(filepath).string());
-		
+
+		char* cName = mono_string_to_utf8(name);
+		Entity entity = scene->GetEntityWithTag(cName);
+		mono_free(cName);
+
 		if (!entity)
-			return NULL;
+			return 0;
 
 		return entity.GetUUID();
+	}
+
+	static uint64_t Scene_CreateNewEntity(MonoString* name)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+
+		char* cName = mono_string_to_utf8(name);
+		Entity entity = scene->CreateEntity(cName);
+		mono_free(cName);
+
+		if (!entity)
+			return 0;
+
+		return entity.GetUUID();
+	}
+
+	static uint64_t Scene_DuplicateEntity(UUID entityID)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+		Entity entity = { entityID, scene };
+		NB_ASSERT(entity);
+
+		Entity duplicate = scene->DuplicateEntity(entity);
+		return duplicate.GetUUID();
+	}
+
+	static void Scene_DestroyEntity(UUID entityID)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+		Entity entity = { entityID, scene };
+
+		if (entity)
+		{
+			scene->DestroyEntity(entity);
+		}
 	}
 #pragma endregion
 
@@ -122,7 +284,7 @@ namespace Nebula {
 		auto& component = entity.GetComponent<TagComponent>();
 		component.Tag = Utils::GetStringFromMono(name);
 	}
-	
+
 	static MonoObject* Entity_GetScriptInstance(UUID entityID)
 	{
 		return ScriptEngine::GetManagedInstance(entityID);
@@ -157,11 +319,11 @@ namespace Nebula {
 
 		UUID childID = 0;
 		char* cName = mono_string_to_utf8(name);
-		
+
 		const auto& children = entity.GetParentChild().ChildrenIDs;
 		for (const auto& id : children) {
 			Entity ent = { id, scene };
-			
+
 			if (ent.GetName() == cName)
 			{
 				childID = ent.GetUUID();
@@ -199,20 +361,24 @@ namespace Nebula {
 	}
 #pragma endregion
 
-#pragma region Input
-	static bool Input_IsKeyDown(KeyCode keycode)
+#pragma region Prefab
+	static uint64_t Prefab_Create(AssetHandle handle)
 	{
-		return Input::IsKeyPressed(keycode);
-	}
+		if (!handle)
+			return NULL;
 
-	static bool Input_IsMouseButtonDown(MouseCode mouseCode)
-	{
-		return Input::IsMouseButtonPressed(mouseCode);
-	}
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+		Ref<Asset> asset = AssetManager::GetAsset(handle);
+		NB_ASSERT(asset);
 
-	static void Input_GetMousePos(glm::vec2* out)
-	{
-		*out = { Input::GetMouseX(), Input::GetMouseY() };
+		PrefabSerializer serializer(scene);
+		Entity entity = serializer.Deserialize(Project::GetAssetFileSystemPath(asset->Path).string());
+		
+		if (!entity)
+			return NULL;
+
+		return entity.GetUUID();
 	}
 #pragma endregion
 
@@ -614,6 +780,28 @@ namespace Nebula {
 		*colour = entity.GetComponent<StringRendererComponent>().Colour;
 	}
 
+	static void StringRendererComponent_SetFontHandle(UUID entityID, AssetHandle handle)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+		Entity entity = { entityID, scene };
+		NB_ASSERT(entity);
+
+		auto& component = entity.GetComponent<StringRendererComponent>();
+		component.FontHandle = handle;
+	}
+
+	static uint64_t StringRendererComponent_GetFontHandle(UUID entityID)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+		Entity entity = { entityID, scene };
+		NB_ASSERT(entity);
+
+		auto& component = entity.GetComponent<StringRendererComponent>();
+		return component.FontHandle;
+	}
+
 	static void StringRendererComponent_SetBold(UUID entityID, bool bold)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
@@ -656,7 +844,7 @@ namespace Nebula {
 		return entity.GetComponent<StringRendererComponent>().Italic;
 	}
 
-	static MonoString* StringRendererComponent_GetFontName(UUID entityID)
+	static void StringRendererComponent_SetKerning(UUID entityID, float kerning)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
@@ -664,18 +852,7 @@ namespace Nebula {
 		NB_ASSERT(entity);
 
 		auto& component = entity.GetComponent<StringRendererComponent>();
-		return nullptr;// ScriptEngine::CreateMonoString(component.FamilyName.c_str());
-	}
-
-	static void StringRendererComponent_SetFontName(UUID entityID, MonoString* name)
-	{
-		Scene* scene = ScriptEngine::GetSceneContext();
-		NB_ASSERT(scene);
-		Entity entity = { entityID, scene };
-		NB_ASSERT(entity);
-
-		auto& component = entity.GetComponent<StringRendererComponent>();
-		//component.FamilyName = Utils::GetStringFromMono(name);
+		component.Kerning = kerning;
 	}
 
 	static float StringRendererComponent_GetKerning(UUID entityID)
@@ -689,28 +866,6 @@ namespace Nebula {
 		return component.Kerning;
 	}
 	
-	static void StringRendererComponent_SetKerning(UUID entityID, float kerning)
-	{
-		Scene* scene = ScriptEngine::GetSceneContext();
-		NB_ASSERT(scene);
-		Entity entity = { entityID, scene };
-		NB_ASSERT(entity);
-
-		auto& component = entity.GetComponent<StringRendererComponent>();
-		component.Kerning = kerning;
-	}
-
-	static float StringRendererComponent_GetLineSpacing(UUID entityID)
-	{
-		Scene* scene = ScriptEngine::GetSceneContext();
-		NB_ASSERT(scene);
-		Entity entity = { entityID, scene };
-		NB_ASSERT(entity);
-
-		auto& component = entity.GetComponent<StringRendererComponent>();
-		return component.LineSpacing;
-	}
-
 	static void StringRendererComponent_SetLineSpacing(UUID entityID, float lineSpacing)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
@@ -720,6 +875,17 @@ namespace Nebula {
 
 		auto& component = entity.GetComponent<StringRendererComponent>();
 		component.LineSpacing = lineSpacing;
+	}
+	
+	static float StringRendererComponent_GetLineSpacing(UUID entityID)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+		Entity entity = { entityID, scene };
+		NB_ASSERT(entity);
+
+		auto& component = entity.GetComponent<StringRendererComponent>();
+		return component.LineSpacing;
 	}
 #pragma endregion
 
@@ -1117,122 +1283,41 @@ namespace Nebula {
 		component.RestitutionThreshold = threshold;
 	}
 #pragma endregion
-	
-#pragma region Scene
-	static uint64_t Scene_FindEntityByName(MonoString* name)
-	{
-		Scene* scene = ScriptEngine::GetSceneContext();
-		NB_ASSERT(scene);
-		
-		char* cName = mono_string_to_utf8(name);
-		Entity entity = scene->GetEntityWithTag(cName);
-		mono_free(cName);
-
-		if (!entity)
-			return 0;
-		
-		return entity.GetUUID();
-	}
-
-	static uint64_t Scene_CreateNewEntity(MonoString* name)
-	{
-		Scene* scene = ScriptEngine::GetSceneContext();
-		NB_ASSERT(scene);
-
-		char* cName = mono_string_to_utf8(name);
-		Entity entity = scene->CreateEntity(cName);
-		mono_free(cName);
-		
-		if (!entity)
-			return 0;
-
-		return entity.GetUUID();
-	}
-
-	static uint64_t Scene_DuplicateEntity(UUID entityID)
-	{
-		Scene* scene = ScriptEngine::GetSceneContext();
-		NB_ASSERT(scene);
-		Entity entity = { entityID, scene };
-		NB_ASSERT(entity);
-
-		Entity duplicate = scene->DuplicateEntity(entity);
-		return duplicate.GetUUID();
-	}
-
-	static void Scene_DestroyEntity(UUID entityID)
-	{
-		Scene* scene = ScriptEngine::GetSceneContext();
-		NB_ASSERT(scene);
-		Entity entity = { entityID, scene };
-		
-		if (entity)
-		{
-			scene->DestroyEntity(entity);
-		}
-	}
-#pragma endregion
-
-#pragma region Mathf
-	static float Mathf_ToDegrees(float radians)
-	{
-		return glm::degrees(radians);
-	}
-
-	static float Mathf_ToRadians(float degrees)
-	{
-		return glm::radians(degrees);
-	}
-
-	static float Mathf_Tan(float value)
-	{
-		return tan(value);
-	}
-
-	static float Mathf_Atan(float value)
-	{
-		return atan(value);
-	}
-
-	static float Mathf_Cos(float value)
-	{
-		return cos(value);
-	}
-
-	static float Mathf_Acos(float value)
-	{
-		return acos(value);
-	}
-
-	static float Mathf_Sin(float value)
-	{
-		return sin(value);
-	}
-
-	static float Mathf_Asin(float value)
-	{
-		return asin(value);
-	}
-
-	static float Mathf_Sqrt(float value)
-	{
-		return sqrt(value);
-	}
-#pragma endregion
-
-#pragma region Time
-	static float Time_DeltaTime()
-	{
-		return Time::DeltaTime();
-	}
-#pragma endregion
 
 	void ScriptGlue::RegisterFunctions() {
 		NB_ADD_INTERNAL_CALL(Native_Log);
 
-		NB_ADD_INTERNAL_CALL(Prefab_Create);
-
 		NB_ADD_INTERNAL_CALL(Application_GetWindowSize);
+
+		NB_ADD_INTERNAL_CALL(Mathf_ToDegrees);
+		NB_ADD_INTERNAL_CALL(Mathf_ToRadians);
+		NB_ADD_INTERNAL_CALL(Mathf_Tan);
+		NB_ADD_INTERNAL_CALL(Mathf_Atan);
+		NB_ADD_INTERNAL_CALL(Mathf_Cos);
+		NB_ADD_INTERNAL_CALL(Mathf_Acos);
+		NB_ADD_INTERNAL_CALL(Mathf_Sin);
+		NB_ADD_INTERNAL_CALL(Mathf_Asin);
+		NB_ADD_INTERNAL_CALL(Mathf_Sqrt);
+
+		NB_ADD_INTERNAL_CALL(Time_DeltaTime);
+
+		NB_ADD_INTERNAL_CALL(Input_IsKeyDown);
+		NB_ADD_INTERNAL_CALL(Input_IsMouseButtonDown);
+		NB_ADD_INTERNAL_CALL(Input_GetMousePos);
+
+		NB_ADD_INTERNAL_CALL(Asset_GetHandleFromPath);
+		NB_ADD_INTERNAL_CALL(Asset_GetPathFromHandle);
+		NB_ADD_INTERNAL_CALL(Asset_GetOrCreateHandle);
+
+		NB_ADD_INTERNAL_CALL(Font_GetBold);
+		NB_ADD_INTERNAL_CALL(Font_GetItalic);
+
+		NB_ADD_INTERNAL_CALL(Scene_FindEntityByName);
+		NB_ADD_INTERNAL_CALL(Scene_CreateNewEntity);
+		NB_ADD_INTERNAL_CALL(Scene_DuplicateEntity);
+		NB_ADD_INTERNAL_CALL(Scene_DestroyEntity);
+
+		NB_ADD_INTERNAL_CALL(Prefab_Create);
 
 		NB_ADD_INTERNAL_CALL(Entity_HasComponent);
 		NB_ADD_INTERNAL_CALL(Entity_AddComponent);
@@ -1249,14 +1334,12 @@ namespace Nebula {
 		NB_ADD_INTERNAL_CALL(TransformComponent_GetWorldTranslation);
 		NB_ADD_INTERNAL_CALL(TransformComponent_GetWorldRotation);
 		NB_ADD_INTERNAL_CALL(TransformComponent_GetWorldScale);
-
 		NB_ADD_INTERNAL_CALL(TransformComponent_SetTranslation);
 		NB_ADD_INTERNAL_CALL(TransformComponent_SetRotation);
 		NB_ADD_INTERNAL_CALL(TransformComponent_SetScale);
 
 		NB_ADD_INTERNAL_CALL(CameraComponent_GetFixedRatio);
 		NB_ADD_INTERNAL_CALL(CameraComponent_GetPrimary);
-
 		NB_ADD_INTERNAL_CALL(CameraComponent_SetFixedRatio);
 		NB_ADD_INTERNAL_CALL(CameraComponent_SetPrimary);
 
@@ -1287,7 +1370,7 @@ namespace Nebula {
 
 		NB_ADD_INTERNAL_CALL(StringRendererComponent_GetBold);
 		NB_ADD_INTERNAL_CALL(StringRendererComponent_GetColour);
-		NB_ADD_INTERNAL_CALL(StringRendererComponent_GetFontName);
+		NB_ADD_INTERNAL_CALL(StringRendererComponent_GetFontHandle);
 		NB_ADD_INTERNAL_CALL(StringRendererComponent_GetItalic);
 		NB_ADD_INTERNAL_CALL(StringRendererComponent_GetText);
 		NB_ADD_INTERNAL_CALL(StringRendererComponent_GetKerning);
@@ -1295,7 +1378,7 @@ namespace Nebula {
 		
 		NB_ADD_INTERNAL_CALL(StringRendererComponent_SetBold);
 		NB_ADD_INTERNAL_CALL(StringRendererComponent_SetColour);
-		NB_ADD_INTERNAL_CALL(StringRendererComponent_SetFontName);
+		NB_ADD_INTERNAL_CALL(StringRendererComponent_SetFontHandle);
 		NB_ADD_INTERNAL_CALL(StringRendererComponent_SetItalic);
 		NB_ADD_INTERNAL_CALL(StringRendererComponent_SetText);
 		NB_ADD_INTERNAL_CALL(StringRendererComponent_SetKerning);
@@ -1341,27 +1424,6 @@ namespace Nebula {
 		NB_ADD_INTERNAL_CALL(CircleCollider2DComponent_SetRestitution);
 		NB_ADD_INTERNAL_CALL(CircleCollider2DComponent_SetRadius);
 		NB_ADD_INTERNAL_CALL(CircleCollider2DComponent_SetThreshold);
-
-		NB_ADD_INTERNAL_CALL(Input_IsKeyDown);
-		NB_ADD_INTERNAL_CALL(Input_IsMouseButtonDown);
-		NB_ADD_INTERNAL_CALL(Input_GetMousePos);
-
-		NB_ADD_INTERNAL_CALL(Scene_FindEntityByName);
-		NB_ADD_INTERNAL_CALL(Scene_CreateNewEntity);
-		NB_ADD_INTERNAL_CALL(Scene_DuplicateEntity);
-		NB_ADD_INTERNAL_CALL(Scene_DestroyEntity);
-
-		NB_ADD_INTERNAL_CALL(Mathf_ToDegrees);
-		NB_ADD_INTERNAL_CALL(Mathf_ToRadians);
-		NB_ADD_INTERNAL_CALL(Mathf_Tan);
-		NB_ADD_INTERNAL_CALL(Mathf_Atan);
-		NB_ADD_INTERNAL_CALL(Mathf_Cos);
-		NB_ADD_INTERNAL_CALL(Mathf_Acos);
-		NB_ADD_INTERNAL_CALL(Mathf_Sin);
-		NB_ADD_INTERNAL_CALL(Mathf_Asin);
-		NB_ADD_INTERNAL_CALL(Mathf_Sqrt);
-		
-		NB_ADD_INTERNAL_CALL(Time_DeltaTime);
 	}
 
 	template<typename ... Component>

@@ -1,14 +1,25 @@
 ﻿namespace Nebula
 {
-    public class Prefab
+    public class Prefab : Asset
     {
-        public readonly string FilePath;
+        protected Prefab()
+            : base()
+        {
+        }
 
-        public Prefab(string path) { FilePath = path; }
+        internal Prefab(ulong handle)
+            : base(handle)
+        {
+        }
 
+        public Prefab(string path)
+            : base(path)
+        {
+        }
+        
         public Entity Create()
         {
-            ulong entityID = InternalCalls.Prefab_Create(FilePath);
+            ulong entityID = InternalCalls.Prefab_Create(AssetHandle);
             if (entityID == 0)
                 return null;
 

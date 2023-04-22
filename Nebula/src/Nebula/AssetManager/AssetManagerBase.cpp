@@ -185,6 +185,9 @@ namespace Nebula
 		case AssetType::Font:
 			asset->Data = Utils::Load<FontAsset>(asset);
 			break;
+		default:
+			asset->Data = nullptr;
+			asset->IsLoaded = true;
 		}
 
 		if (asset->IsLoaded)

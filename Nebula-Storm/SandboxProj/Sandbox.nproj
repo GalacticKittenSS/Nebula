@@ -8,7 +8,13 @@ Assets:
     Path: Fonts\arialbi.ttf
   - Handle: 3871083381578152467
     Path: Fonts\ariali.ttf
+  - Handle: 7660240480337578553
+    Path: Prefabs\Player.prefab
   - Handle: 10672057491365945081
     Path: Fonts\arial.ttf
   - Handle: 3235123935084672078
     Path: Fonts\arialbd.ttf
+  - Handle: 16617440293131663672
+    Path: Prefabs\Enviroment.prefab
+  - Handle: 4191882832426820370
+    Path: Textures\Checkerboard.png

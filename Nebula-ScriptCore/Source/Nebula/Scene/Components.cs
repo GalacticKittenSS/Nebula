@@ -215,6 +215,20 @@
             }
         }
 
+        public Font Font
+        {
+            get
+            {
+                ulong handle = InternalCalls.StringRendererComponent_GetFontHandle(Entity.ID);
+                if (handle == 0)
+                    return null;
+
+                return new Font(handle);
+            }
+
+            set => InternalCalls.StringRendererComponent_SetFontHandle(Entity.ID, value.AssetHandle);
+        }
+
         public bool Bold
         {
             get => InternalCalls.StringRendererComponent_GetBold(Entity.ID);
@@ -225,12 +239,6 @@
         {
             get => InternalCalls.StringRendererComponent_GetItalic(Entity.ID);
             set => InternalCalls.StringRendererComponent_SetItalic(Entity.ID, value);
-        }
-
-        public string FontName
-        {
-            get => InternalCalls.StringRendererComponent_GetFontName(Entity.ID);
-            set => InternalCalls.StringRendererComponent_SetFontName(Entity.ID, value);
         }
 
         public float Kerning

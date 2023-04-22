@@ -34,7 +34,11 @@ namespace Nebula {
 		{ "Nebula.Vector2", ScriptFieldType::Vector2 },
 		{ "Nebula.Vector3", ScriptFieldType::Vector3 },
 		{ "Nebula.Vector4", ScriptFieldType::Vector4 },
-		{ "Nebula.Entity", ScriptFieldType::Entity }
+		{ "Nebula.Entity", ScriptFieldType::Entity },
+		{ "Nebula.Asset", ScriptFieldType::Asset },
+		{ "Nebula.Prefab", ScriptFieldType::Prefab },
+		{ "Nebula.Font", ScriptFieldType::Font },
+		{ "Nebula.Texture", ScriptFieldType::Texture }
 	};
 
 	namespace Utils {
@@ -149,6 +153,7 @@ namespace Nebula {
 		std::filesystem::path AppAssemblyFilePath; 
 
 		ScriptClass EntityClass;
+		ScriptClass AssetClass;
 		std::unordered_map<std::string, Ref<ScriptClass>> EntityClasses;
 		std::unordered_map<UUID, Ref<ScriptInstance>> EntityEditorInstances;
 		
@@ -198,6 +203,7 @@ namespace Nebula {
 		}
 		
 		s_Data->EntityClass = ScriptClass("Nebula", "Entity", true);
+		s_Data->AssetClass = ScriptClass("Nebula", "Asset", true);
 		ScriptGlue::RegisterComponents();
 
 		// Only load if active project
@@ -270,6 +276,7 @@ namespace Nebula {
 		}
 
 		s_Data->EntityClass = ScriptClass("Nebula", "Entity", true);
+		s_Data->AssetClass = ScriptClass("Nebula", "Asset", true);
 		ScriptGlue::RegisterComponents();
 
 		status = Project::GetActive() && LoadAppAssembly(Project::GetScriptModulePath());
@@ -317,20 +324,11 @@ namespace Nebula {
 		if (it != s_Data->EntityEditorInstances.end())
 			editorInstance = it->second;
 
-		Ref<ScriptInstance> runtimeInstance = CreateRef<ScriptInstance>(s_Data->EntityClasses[sc.ClassName], entity);
+		Ref<ScriptInstance> runtimeInstance = editorInstance ? 
+			CreateRef<ScriptInstance>(editorInstance, entity) :
+			CreateRef<ScriptInstance>(s_Data->EntityClasses[sc.ClassName], entity);
+
 		s_Data->EntityRuntimeInstances[entityID] = runtimeInstance;
-
-		if (editorInstance)
-		{
-			const auto& fields = editorInstance->GetScriptClass()->GetFields();
-			for (const auto& [name, field] : fields)
-			{
-				static char buffer[16];
-				editorInstance->GetFieldValueInternal(field.Name, buffer);
-				runtimeInstance->SetFieldValueInternal(field.Name, buffer);
-			}
-		}
-
 		return true;
 	}
 
@@ -492,6 +490,73 @@ namespace Nebula {
 
 	MonoString* ScriptEngine::CreateMonoString(const char* string) {
 		return mono_string_new(s_Data->AppDomain, string);
+	}
+
+	MonoObject* ScriptEngine::CreateEntityClass(UUID entityID)
+	{
+		MonoObject* instance = s_Data->EntityClass.Instanciate();
+		MonoMethod* constructor = s_Data->EntityClass.GetMethod(".ctor", 1);
+
+		void* param = &entityID;
+		s_Data->EntityClass.InvokeMethod(instance, constructor, &param);
+		return instance;
+	}
+
+	MonoObject* ScriptEngine::CreateAssetClass(const std::string& name, uint64_t handle)
+	{
+		Ref<ScriptClass> scriptClass = CreateRef<ScriptClass>("Nebula", name, true);
+		MonoObject* instance = scriptClass->Instanciate();
+		MonoMethod* constructor = scriptClass->GetMethod(".ctor", 1);
+
+		void* param = &handle;
+		scriptClass->InvokeMethod(instance, constructor, &param);
+		return instance;
+	}
+
+	uint64_t ScriptEngine::GetIDFromObject(MonoObject* object)
+	{
+		if (!object || !object->vtable)
+			return NULL;
+
+		MonoClass* entityClass = s_Data->EntityClass.GetMonoClass();
+		MonoClass* assetClass = s_Data->AssetClass.GetMonoClass();
+
+		bool isEntity = mono_object_isinst(object, entityClass);
+		bool isAsset = mono_object_isinst(object, assetClass);
+
+		if (!isEntity && !isAsset)
+			return NULL;
+
+		MonoClassField* field = nullptr;
+		
+		if (isEntity)
+			field = mono_class_get_field_from_name(entityClass, "ID");
+		
+		if (isAsset)
+			field = mono_class_get_field_from_name(assetClass, "AssetHandle");
+
+		NB_ASSERT(field);
+		
+		char buffer[16];
+		mono_field_get_value(object, field, buffer);
+		return *(uint64_t*)buffer;
+	}
+
+	void ScriptEngine::SetIDForObject(MonoObject* object, uint64_t entityID)
+	{
+		if (!object || !object->vtable)
+			return;
+
+		MonoClass* monoClass = mono_object_get_class(object);
+		NB_ASSERT(monoClass);
+
+		bool isEntityClass = monoClass == s_Data->EntityClass.GetMonoClass();
+		std::string fieldName = isEntityClass ? "ID" : "AssetHandle";
+
+		MonoClassField* field = mono_class_get_field_from_name(monoClass, fieldName.c_str());
+		NB_ASSERT(field);
+
+		mono_field_set_value(object, field, &entityID);
 	}
 
 	MonoObject* ScriptEngine::GetManagedInstance(UUID uuid)
@@ -678,6 +743,20 @@ namespace Nebula {
 		return mono_runtime_invoke(method, instance, parameters, &exception);
 	}
 
+	ScriptInstance::ScriptInstance(Ref<ScriptInstance> instance, Entity entity)
+	{
+		m_ScriptClass = instance->m_ScriptClass;
+		m_Entity = entity;
+
+		m_Constructor = instance->m_Constructor;
+		m_OnCreateMethod = instance->m_OnCreateMethod;
+		m_OnUpdateMethod = instance->m_OnUpdateMethod;
+		m_OnCollisionEnterMethod = instance->m_OnCollisionEnterMethod;
+		m_OnCollisionExitMethod = instance->m_OnCollisionExitMethod;
+
+		m_Instance = mono_object_clone(instance->m_Instance);
+	}
+
 	ScriptInstance::ScriptInstance(Ref<ScriptClass> scriptClass, Entity entity) 
 		: m_ScriptClass(scriptClass), m_Entity(entity)
 	{
@@ -715,12 +794,7 @@ namespace Nebula {
 	{
 		if (m_OnCollisionEnterMethod)
 		{
-			MonoObject* object = s_Data->EntityClass.Instanciate();
-			
-			void* param = &other.GetUUID();
-			s_Data->EntityClass.InvokeMethod(object, m_Constructor, &param);
-
-			param = object;
+			void* param = ScriptEngine::CreateEntityClass(other.GetUUID());
 			m_ScriptClass->InvokeMethod(m_Instance, m_OnCollisionEnterMethod, &param);
 		}
 	}
@@ -729,12 +803,7 @@ namespace Nebula {
 	{
 		if (m_OnCollisionExitMethod)
 		{
-			MonoObject* object = s_Data->EntityClass.Instanciate();
-
-			void* param = &other.GetUUID();
-			s_Data->EntityClass.InvokeMethod(object, m_Constructor, &param);
-
-			param = object;
+			void* param = ScriptEngine::CreateEntityClass(other.GetUUID());
 			m_ScriptClass->InvokeMethod(m_Instance, m_OnCollisionExitMethod, &param);
 		}
 	}

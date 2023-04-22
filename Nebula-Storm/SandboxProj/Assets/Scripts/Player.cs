@@ -25,43 +25,50 @@ namespace Sandbox
 
     public class Player : Entity
     {
+        public Entity Camera = null, Floor_Collider = null;
+
+        public Prefab m_Prefab = "Prefabs/Enviroment.prefab";
+        public Font m_Font = "Fonts/arial.ttf";
+        public Texture m_Texture;
+
+        public Asset asset;
+
         private Rigidbody2DComponent Rigidbody;
         private TransformComponent Transform;
 
-        public Entity Camera, Floor_Collider;
-        
         private KeyCode LastPressed;
         private bool[] KeyCodesHeld = new bool[70];
         
         private bool IsOnFloor = false, JumpForceApplied = false;
         public Vector2 JumpImpulse = new Vector2(0.0f, 50.0f);
         public Vector2 MoveSpeed = new Vector2(9.0f, 0.0f);
-
-        private Vector2 Direction = new Vector2(0.0f); 
-        private Vector2 DirectionMult = new Vector2(0.25f);
         private Vector2 Force, ForceMult;
-
-        public string[] BulletTemplates = { "", "" };
         
         public void OnCreate()
         {
+            Debug.Log($"Player.OnCreate - {ID}, {Name}");
+            Debug.Log($"Bold: {m_Font.Bold}, Italic: {m_Font.Italic}");
+            Debug.Log(m_Font.FilePath);
+
+            m_Texture = "Textures/Checkerboard.png";
+
             Camera = Scene.FindEntityByName("Camera");
             Floor_Collider = FindChildByName("Floor Collider");
-            
-            Rigidbody2DComponent rigidbody = GetComponent<Rigidbody2DComponent>();
-            rigidbody.Mask = Rigidbody2DComponent.Filters.A;
-            
+
             //Layer = (int)Rigidbody2DComponent.Filters.D;
             
-            Debug.Log($"Player.OnCreate - {ID}, {Name}");
-            Rigidbody = GetComponent<Rigidbody2DComponent>();
             Transform = GetComponent<TransformComponent>();
-        
+            Rigidbody = GetComponent<Rigidbody2DComponent>();
+            Rigidbody.Mask = Rigidbody2DComponent.Filters.A;
+
             SpriteRendererComponent SpriteRenderer = GetComponent<SpriteRendererComponent>();
             SpriteRenderer.Colour = new Vector4(0.0f, 0.5f, 1.0f, 1.0f);
 
-            Prefab prefab = "Prefabs/Enviroment.prefab";
-            Entity entity = prefab.Create();
+            StringRendererComponent stringRenderer = AddComponent<StringRendererComponent>();
+            stringRenderer.Text = "This is a String";
+            stringRenderer.Font = m_Font;
+
+            Entity entity = m_Prefab.Create();
             entity.Name = "Prefab";
             entity.SetAs<Camera>();
         }

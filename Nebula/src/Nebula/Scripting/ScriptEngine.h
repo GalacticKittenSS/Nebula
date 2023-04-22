@@ -25,7 +25,8 @@ namespace Nebula {
 		SByte, UShort, UInt, ULong,
 
 		Vector2, Vector3, Vector4,
-		Entity
+		Entity, 
+		Asset, Prefab, Font, Texture
 	};
 
 	struct ScriptField
@@ -62,6 +63,7 @@ namespace Nebula {
 	{
 	public:
 		ScriptInstance(Ref<ScriptClass> scriptClass, Entity entity);
+		ScriptInstance(Ref<ScriptInstance> instance, Entity entity);
 
 		inline bool OnCreateCalled() { return m_OnCreateCalled; }
 
@@ -147,17 +149,23 @@ namespace Nebula {
 		static MonoString* CreateMonoString(const char* string);
 
 		static MonoObject* GetManagedInstance(UUID entityID);
+		static MonoObject* CreateAssetClass(const std::string& name, uint64_t handle);
+		static uint64_t GetIDFromObject(MonoObject* object);
+		static void SetIDForObject(MonoObject* object, uint64_t entityID);
 	private:
 		static void InitMono();
 		static void ShutdownMono();
 
 		static void LoadAssemblyClasses();
+		
 		static MonoObject* InstanciateClass(MonoClass* monoClass);
+		static MonoObject* CreateEntityClass(UUID entityID);
 
 		static bool CreateRuntimeScript(Entity entity);
 
 		friend class ScriptClass;
 		friend class ScriptGlue;
+		friend class ScriptInstance;
 	
 		using fieldMap = std::unordered_map<UUID, std::unordered_map<std::string, char*>>;
 		using signatureMap = std::unordered_map<UUID, std::string>;
@@ -190,6 +198,10 @@ namespace Nebula {
 			case Nebula::ScriptFieldType::Vector3:	return "Vector3";
 			case Nebula::ScriptFieldType::Vector4:	return "Vector4";
 			case Nebula::ScriptFieldType::Entity:	return "Entity";
+			case Nebula::ScriptFieldType::Prefab:	return "Prefab";
+			case Nebula::ScriptFieldType::Font:		return "Font";
+			case Nebula::ScriptFieldType::Texture:	return "Texture";
+			case Nebula::ScriptFieldType::Asset:	return "Asset";
 			}
 
 			NB_ASSERT(false);
@@ -215,6 +227,10 @@ namespace Nebula {
 			if (fieldType == "Vector3") return ScriptFieldType::Vector3;
 			if (fieldType == "Vector4") return ScriptFieldType::Vector4;
 			if (fieldType == "Entity")	return ScriptFieldType::Entity;
+			if (fieldType == "Prefab")	return ScriptFieldType::Prefab;
+			if (fieldType == "Font")	return ScriptFieldType::Font;
+			if (fieldType == "Texture")	return ScriptFieldType::Texture;
+			if (fieldType == "Asset")	return ScriptFieldType::Asset;
 
 			NB_ASSERT(false);
 			return ScriptFieldType::None;
