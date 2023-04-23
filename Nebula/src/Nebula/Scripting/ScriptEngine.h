@@ -93,9 +93,10 @@ namespace Nebula {
 			static_assert(sizeof(T) <= 16, "Type too large");
 			SetFieldValueInternal(name, &value);
 		}
+
+		bool SetFieldValueInternal(const std::string& name, const void* value);
 	private:
 		bool GetFieldValueInternal(const std::string& name, void* buffer);
-		bool SetFieldValueInternal(const std::string& name, const void* value);
 	private:
 		Ref<ScriptClass> m_ScriptClass;
 
@@ -133,25 +134,24 @@ namespace Nebula {
 		static void OnCollisionExit(Entity entity, Entity other);
 		static void DeleteScriptInstance(UUID entityID);
 
-		static bool EntityClassExists(const std::string& signature);
-		static Scene* GetSceneContext();
+		static void CopyScriptFields(Entity from, Entity to);
 
+		static Scene* GetSceneContext();
 		static const std::unordered_map<std::string, Ref<ScriptClass>> GetEntityClasses();
 		static Ref<ScriptClass> GetEntityClass(std::string name);
-		
+		static bool EntityClassExists(const std::string& signature);
+
 		static void ClearScriptInstances();
 		static Ref<ScriptInstance> CreateScriptInstance(Entity entity);
 		static Ref<ScriptInstance> GetScriptInstance(Entity entity);
-		
-		static void CopyScriptFields(Entity from, Entity to);
 
-		static MonoImage* GetCoreAssemblyImage();
-		static MonoString* CreateMonoString(const char* string);
+		static MonoObject* CreateAssetClass(AssetHandle handle);
+		static MonoObject* CreateEntityClass(UUID entityID);
 
 		static MonoObject* GetManagedInstance(UUID entityID);
-		static MonoObject* CreateAssetClass(const std::string& name, uint64_t handle);
+		static MonoImage* GetCoreAssemblyImage();
+		static MonoString* CreateMonoString(const char* string);
 		static uint64_t GetIDFromObject(MonoObject* object);
-		static void SetIDForObject(MonoObject* object, uint64_t entityID);
 	private:
 		static void InitMono();
 		static void ShutdownMono();
@@ -159,8 +159,6 @@ namespace Nebula {
 		static void LoadAssemblyClasses();
 		
 		static MonoObject* InstanciateClass(MonoClass* monoClass);
-		static MonoObject* CreateEntityClass(UUID entityID);
-
 		static bool CreateRuntimeScript(Entity entity);
 
 		friend class ScriptClass;

@@ -34,7 +34,7 @@ Entities:
       ScriptFields:
         - Name: DistanceFromPlayer
           Type: float
-          Data: 100
+          Data: 10
         - Name: Offset
           Type: Vector2
           Data: [0, 0]
@@ -67,6 +67,18 @@ Entities:
         - Name: MoveSpeed
           Type: Vector2
           Data: [9, 0]
+        - Name: asset
+          Type: Asset
+          Data: 0
+        - Name: m_Font
+          Type: Font
+          Data: 10672057491365945081
+        - Name: m_Prefab
+          Type: Prefab
+          Data: 16617440293131663672
+        - Name: m_Texture
+          Type: Texture
+          Data: 0
     SpriteRendererComponent:
       Colour: [1, 1, 1, 1]
       Tiling: 1
@@ -167,7 +179,7 @@ Entities:
       Class: Sandbox.Collision
       ScriptFields:
         - Name: CollisionCount
-          Type: float
+          Type: int
           Data: 0
         - Name: Handled
           Type: bool
@@ -175,12 +187,12 @@ Entities:
     Rigidbody2DComponent:
       BodyType: Dynamic
       FixedRotation: true
-      IsTrigger: false
+      IsTrigger: true
       Mask: 65535
     BoxCollider2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
-      Density: 1
+      Density: 0
       Friction: 0.5
       Restitution: 0
       RestitutionThreshold: 0.5

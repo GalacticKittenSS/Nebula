@@ -147,8 +147,15 @@ namespace Nebula {
 							WRITE_SCRIPT_FIELD(ULong,	uint64_t);
 							WRITE_SCRIPT_FIELD(Vector2, glm::vec2);
 							WRITE_SCRIPT_FIELD(Vector3, glm::vec3);
-							WRITE_SCRIPT_FIELD(Vector4, glm::vec4);
-							WRITE_SCRIPT_FIELD(Entity,	UUID);
+							WRITE_SCRIPT_FIELD(Vector4, glm::vec4); 
+						case ScriptFieldType::Entity:
+						case ScriptFieldType::Prefab:
+						case ScriptFieldType::Font:
+						case ScriptFieldType::Texture:
+						case ScriptFieldType::Asset:
+							auto data = scriptInstance->GetFieldValue<MonoObject*>(name);
+							out << ScriptEngine::GetIDFromObject(data);
+							break;
 						}
 
 						out << YAML::EndMap;
@@ -435,7 +442,23 @@ namespace Nebula {
 								READ_SCRIPT_FIELD(Vector2,	glm::vec2);
 								READ_SCRIPT_FIELD(Vector3,	glm::vec3);
 								READ_SCRIPT_FIELD(Vector4,	glm::vec4);
-								READ_SCRIPT_FIELD(Entity,	UUID);
+							case ScriptFieldType::Entity:
+							{
+								AssetHandle data = scriptField["Data"].as<uint64_t>();
+								MonoObject* object = ScriptEngine::CreateEntityClass(data);
+								scriptInstance->SetFieldValueInternal(name, object);
+								break;
+							}
+							case ScriptFieldType::Prefab:
+							case ScriptFieldType::Font:
+							case ScriptFieldType::Texture:
+							case ScriptFieldType::Asset: 
+							{
+								AssetHandle data = scriptField["Data"].as<uint64_t>();
+								MonoObject* object = ScriptEngine::CreateAssetClass(data);
+								scriptInstance->SetFieldValueInternal(name, object);
+								break;
+							}
 							}
 						}
 					}

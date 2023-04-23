@@ -910,14 +910,15 @@ namespace Nebula {
 
 						DrawLabel(name);
 						if (ImGui::Button(text.c_str(), ImVec2{ ImGui::GetContentRegionAvailWidth(), 0 }))
-							ScriptEngine::SetIDForObject(data, NULL);
+							scriptInstance->SetFieldValueInternal(name, nullptr);
 
 						if (ImGui::BeginDragDropTarget())
 						{
 							if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENTITY"))
 							{
 								const UUID payloadID = *(const UUID*)payload->Data;
-								ScriptEngine::SetIDForObject(data, payloadID);
+								MonoObject* object = ScriptEngine::CreateEntityClass(payloadID);
+								scriptInstance->SetFieldValueInternal(name, object);
 							}
 						}
 
@@ -940,7 +941,7 @@ namespace Nebula {
 
 						DrawLabel(name);
 						if (ImGui::Button(text.c_str(), ImVec2{ ImGui::GetContentRegionAvailWidth(), 0 }))
-							ScriptEngine::SetIDForObject(data, NULL);
+							scriptInstance->SetFieldValueInternal(name, nullptr);
 
 						if (ImGui::BeginDragDropTarget()) 
 						{
@@ -950,7 +951,8 @@ namespace Nebula {
 								std::filesystem::path path = payloadPath;
 
 								AssetHandle handle = AssetManager::ImportAsset(path);
-								ScriptEngine::SetIDForObject(data, handle);
+								MonoObject* object = ScriptEngine::CreateAssetClass(handle);
+								scriptInstance->SetFieldValueInternal(name, object);
 							}
 						}
 						
@@ -992,7 +994,7 @@ namespace Nebula {
 
 					AssetHandle handle = AssetManager::ImportAsset(texturePath);
 					Ref<Asset> asset = AssetManager::GetAsset(handle);
-					if (asset && asset->IsLoaded) 
+					if (asset && asset->IsLoaded && asset->Type == AssetType::Texture) 
 					{
 						Ref<Texture2D> texture = asset->GetData<Texture2D>();
 						component.Texture = handle;

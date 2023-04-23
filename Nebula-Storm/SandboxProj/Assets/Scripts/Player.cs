@@ -25,13 +25,11 @@ namespace Sandbox
 
     public class Player : Entity
     {
-        public Entity Camera = null, Floor_Collider = null;
+        public Entity Camera, Floor_Collider;
 
         public Prefab m_Prefab = "Prefabs/Enviroment.prefab";
         public Font m_Font = "Fonts/arial.ttf";
         public Texture m_Texture;
-
-        public Asset asset;
 
         private Rigidbody2DComponent Rigidbody;
         private TransformComponent Transform;
@@ -51,9 +49,6 @@ namespace Sandbox
             Debug.Log(m_Font.FilePath);
 
             m_Texture = "Textures/Checkerboard.png";
-
-            Camera = Scene.FindEntityByName("Camera");
-            Floor_Collider = FindChildByName("Floor Collider");
 
             //Layer = (int)Rigidbody2DComponent.Filters.D;
             
