@@ -131,14 +131,14 @@ namespace Nebula {
 	static uint64_t Asset_GetOrCreateHandle(MonoString* path)
 	{
 		std::string pathString = Utils::GetStringFromMono(path);
-		AssetHandle handle = AssetManager::ImportAsset(Project::GetAssetFileSystemPath(pathString));
+		AssetHandle handle = AssetManager::ImportAsset(pathString);
 		return handle;
 	}
 	
 	static uint64_t Asset_GetHandleFromPath(MonoString* path)
 	{
 		std::string pathString = Utils::GetStringFromMono(path);
-		AssetHandle handle = AssetManager::GetHandleFromPath(Project::GetAssetFileSystemPath(pathString));
+		AssetHandle handle = AssetManager::GetHandleFromPath(pathString);
 		return handle;
 	}
 

@@ -45,6 +45,7 @@ namespace Nebula
 		static Ref<Asset> FindGlobalAsset(AssetHandle handle);
 	private:
 		std::unordered_map<AssetHandle, Ref<Asset>> m_Assets;
-		static std::unordered_map<AssetHandle, Ref<Asset>> m_GlobalAssets;
+		static std::unordered_map<AssetHandle, Ref<Asset>> s_GlobalAssets;
+		static uint16_t s_NextGlobalIndex;
 	};
 }

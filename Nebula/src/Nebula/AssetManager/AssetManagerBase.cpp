@@ -51,7 +51,9 @@ namespace Nebula
 		}
 	}
 
-	std::unordered_map<AssetHandle, Ref<Asset>> AssetManagerBase::m_GlobalAssets = {};
+	// Note: Changing a global asset's index may mess up scenes and prefabs
+	std::unordered_map<AssetHandle, Ref<Asset>> AssetManagerBase::s_GlobalAssets = {};
+	uint16_t AssetManagerBase::s_NextGlobalIndex = 1;
 
 	void AssetManagerBase::OnAssetChange(const std::string& path, const filewatch::Event change_type)
 	{
@@ -122,7 +124,7 @@ namespace Nebula
 			return NULL;
 
 		Ref<Asset> asset = CreateRef<Asset>();
-		asset->Handle = AssetHandle();
+		asset->Handle = s_NextGlobalIndex;
 		asset->Path = path;
 		asset->RelativePath = path;
 		asset->Type = type;
@@ -132,7 +134,8 @@ namespace Nebula
 		data->Italic = italic;
 		asset->Data = data;
 
-		m_GlobalAssets[asset->Handle] = asset;
+		s_GlobalAssets[asset->Handle] = asset;
+		s_NextGlobalIndex++;
 		return asset->Handle;
 	}
 
@@ -149,26 +152,28 @@ namespace Nebula
 		data->IsLoaded = true;
 
 		Ref<Asset> asset = CreateRef<Asset>();
-		asset->Handle = AssetHandle();
+		asset->Handle = s_NextGlobalIndex;
 		asset->Path = directory;
+		asset->RelativePath = name;
 		asset->Type = AssetType::FontFamily;
 		asset->Data = data;
 		asset->IsLoaded = true;
 
-		m_GlobalAssets[asset->Handle] = asset;
+		s_GlobalAssets[asset->Handle] = asset;
+		s_NextGlobalIndex++;
 	}
 
 	AssetHandle AssetManagerBase::GetHandleFromPath(const std::filesystem::path& path)
 	{
 		for (const auto& [handle, asset] : m_Assets)
 		{
-			if (asset->Path == path)
+			if (asset->Path == path || asset->RelativePath == path)
 				return handle;
 		}
 
-		for (const auto& [handle, asset] : m_GlobalAssets)
+		for (const auto& [handle, asset] : s_GlobalAssets)
 		{
-			if (asset->Path == path)
+			if (asset->Path == path || asset->RelativePath == path)
 				return handle;
 		}
 
@@ -207,8 +212,8 @@ namespace Nebula
 
 	Ref<Asset> AssetManagerBase::FindGlobalAsset(AssetHandle handle)
 	{
-		auto it = m_GlobalAssets.find(handle);
-		if (it == m_GlobalAssets.end())
+		auto it = s_GlobalAssets.find(handle);
+		if (it == s_GlobalAssets.end())
 			return nullptr;
 
 		return it->second;
@@ -262,7 +267,7 @@ namespace Nebula
 		if (!global)
 			return;
 
-		for (const auto& [handle, asset] : m_GlobalAssets)
+		for (const auto& [handle, asset] : s_GlobalAssets)
 		{
 			if (asset->Type != type)
 				continue;
