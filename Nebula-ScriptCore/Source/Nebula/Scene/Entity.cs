@@ -77,6 +77,11 @@ namespace Nebula
             }
         }
 
+        public uint ChildCount
+        {
+            get => InternalCalls.Entity_GetChildCount(ID);
+        }
+
         public bool HasComponent<T>() where T : Component, new()
         {
             Type componentType = typeof(T);
@@ -117,6 +122,15 @@ namespace Nebula
         public Entity FindChildByName(string name)
         {
             ulong id = InternalCalls.Entity_FindChildByName(ID, name);
+            if (id == 0)
+                return null;
+
+            return new Entity(id);
+        }
+        
+        public Entity GetChildAtIndex(uint index)
+        {
+            ulong id = InternalCalls.Entity_GetChild(ID, index);
             if (id == 0)
                 return null;
 

@@ -111,13 +111,15 @@ namespace Nebula {
 		NewScene();
 
 		//Open Project on Startup
-		/*auto commandLineArgs = Application::Get().GetSpecification().CommandLineArgs;
+#if false
+		auto commandLineArgs = Application::Get().GetSpecification().CommandLineArgs;
 		if (commandLineArgs.Count > 1)
-			OpenProject(commandLineArgs[1]);*/
-
+			OpenProject(commandLineArgs[1]);
+#else
 		OpenProject();
 		if (!Project::GetActive())
 			Application::Get().Close();
+#endif
 	}
 
 	void EditorLayer::Detach() 
@@ -332,6 +334,11 @@ namespace Nebula {
 			}
 
 			if (ImGui::BeginMenu("Scene")) {
+				ProjectConfig& pConfig = Project::GetActive()->GetConfig();
+				ImGui::Text("Gravity");
+				ImGui::SameLine();
+				ImGui::DragFloat2("##Gravity", value_ptr(pConfig.Gravity), 0.01f);
+
 				if (ImGui::BeginMenu("Create Entity")) {
 					if (ImGui::MenuItem("Empty"))
 						auto& sprite = m_ActiveScene->CreateEntity("Entity");
@@ -509,9 +516,7 @@ namespace Nebula {
 			Entity selectedEntity = m_SceneHierarchy.GetSelectedEntity();
 			if (selectedEntity && m_GizmoType != -1) 
 			{
-				auto& tc = selectedEntity.GetComponent<TransformComponent>();
 				auto& wc = selectedEntity.GetComponent<WorldTransformComponent>();
-				glm::mat4 transform = wc.Transform;
 				
 				bool snap = Input::IsKeyPressed(Key::LeftControl);
 				float snapValue = 0.25f;
@@ -521,19 +526,21 @@ namespace Nebula {
 				float snapValues[3] = { snapValue, snapValue, snapValue };
 
 				ImGuizmo::Manipulate(value_ptr(cameraView), value_ptr(cameraProj),
-					(ImGuizmo::OPERATION)m_GizmoType, ImGuizmo::LOCAL, value_ptr(transform), nullptr, snap ? snapValues : nullptr);
+					(ImGuizmo::OPERATION)m_GizmoType, ImGuizmo::LOCAL, value_ptr(wc.Transform), nullptr, snap ? snapValues : nullptr);
 
 				if (ImGuizmo::IsUsing()) 
 				{
-					glm::vec3 translation, rotation, scale;
-					Maths::DecomposeTransform(transform, translation, rotation, scale);
+					glm::mat4 transform = wc.Transform;
 					
-					glm::vec3 wTranslation, wRotation, wScale;
-					Maths::DecomposeTransform(wc.Transform, wTranslation, wRotation, wScale);
-
-					tc.Translation += translation - wTranslation;
-					tc.Rotation += rotation - wRotation;
-					tc.Scale += scale - wScale;
+					if (UUID pid = selectedEntity.GetParentChild().Parent)
+					{
+						Entity parent = { pid, m_ActiveScene.get() };
+						auto& pwc = parent.GetComponent<WorldTransformComponent>();
+						transform = glm::inverse(pwc.Transform) * wc.Transform;
+					}
+					
+					auto& tc = selectedEntity.GetComponent<TransformComponent>();
+					Maths::DecomposeTransform(transform, tc.Translation, tc.Rotation, tc.Scale);
 
 					selectedEntity.UpdateTransform();
 				}
@@ -779,6 +786,8 @@ namespace Nebula {
 	}
 
 	void EditorLayer::SaveScene() {
+		NB_TRACE("Saving Current Scene");
+		
 		if (!m_ScenePath.empty())
 			SceneSerializer(m_ActiveScene).Serialize(m_ScenePath);
 		else

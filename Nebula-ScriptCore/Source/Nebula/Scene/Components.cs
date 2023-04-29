@@ -95,6 +95,18 @@
                 InternalCalls.CameraComponent_SetFixedRatio(Entity.ID, value);
             }
         }
+
+        public Vector3 ToWorld(Vector2 input)
+        {
+            InternalCalls.CameraComponent_ScreenToWorld(Entity.ID, input, out Vector3 value);
+            return value;
+        }
+        
+        public Vector2 ToScreen(Vector3 point)
+        {
+            InternalCalls.CameraComponent_WorldToScreen(Entity.ID, point, out Vector2 value);
+            return value;
+        }
     }
 
     public class SpriteRendererComponent : Component

@@ -359,6 +359,31 @@ namespace Nebula {
 		auto& comp = entity.GetComponent<PropertiesComponent>();
 		comp.Layer->Identity = layer;
 	}
+
+	static uint64_t Entity_GetChild(UUID entityID, uint32_t index)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+		Entity entity = { entityID, scene };
+		NB_ASSERT(entity);
+
+		auto& comp = entity.GetComponent<ParentChildComponent>();
+		if (index > comp.ChildrenIDs.size())
+			return NULL;
+
+		return comp.ChildrenIDs[index];
+	}
+
+	static uint32_t Entity_GetChildCount(UUID entityID)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+		Entity entity = { entityID, scene };
+		NB_ASSERT(entity);
+
+		auto& comp = entity.GetComponent<ParentChildComponent>();
+		return (uint32_t)comp.ChildrenIDs.size();
+	}
 #pragma endregion
 
 #pragma region Prefab
@@ -525,6 +550,37 @@ namespace Nebula {
 
 		auto& component = entity.GetComponent<CameraComponent>();
 		component.FixedAspectRatio = fixedRatio;
+	}
+
+	static void CameraComponent_ScreenToWorld(UUID entityID, glm::vec2 input, glm::vec3* out)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+		Entity entity = { entityID, scene };
+		NB_ASSERT(entity);
+
+		auto& camComp = entity.GetComponent<CameraComponent>();
+		auto& transform = entity.GetComponent<WorldTransformComponent>();
+
+		float z = transform.Transform[3].z;
+
+		glm::mat4 iProj = glm::inverse(camComp.Camera.GetProjection());
+		*out = iProj * glm::vec4(input, 0.0f, 1.0f) * z;
+		*out = transform.Transform * glm::vec4(*out, 1.0f);
+	}
+
+	static void CameraComponent_WorldToScreen(UUID entityID, glm::vec3 point, glm::vec2* out)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+		Entity entity = { entityID, scene };
+		NB_ASSERT(entity);
+
+		auto& camComp = entity.GetComponent<CameraComponent>();
+		auto& transform = entity.GetComponent<WorldTransformComponent>();
+
+		glm::mat4 iProj = camComp.Camera.GetProjection() * glm::inverse(transform.Transform);
+		*out = iProj * glm::vec4(point, 1.0f);
 	}
 #pragma endregion
 
@@ -1305,6 +1361,9 @@ namespace Nebula {
 		NB_ADD_INTERNAL_CALL(Input_IsMouseButtonDown);
 		NB_ADD_INTERNAL_CALL(Input_GetMousePos);
 
+		NB_ADD_INTERNAL_CALL(CameraComponent_ScreenToWorld);
+		NB_ADD_INTERNAL_CALL(CameraComponent_WorldToScreen);
+		
 		NB_ADD_INTERNAL_CALL(Asset_GetHandleFromPath);
 		NB_ADD_INTERNAL_CALL(Asset_GetPathFromHandle);
 		NB_ADD_INTERNAL_CALL(Asset_GetOrCreateHandle);
@@ -1326,6 +1385,8 @@ namespace Nebula {
 		NB_ADD_INTERNAL_CALL(Entity_GetScriptInstance);
 		NB_ADD_INTERNAL_CALL(Entity_SetScriptInstance);
 		NB_ADD_INTERNAL_CALL(Entity_FindChildByName);
+		NB_ADD_INTERNAL_CALL(Entity_GetChild);
+		NB_ADD_INTERNAL_CALL(Entity_GetChildCount);
 
 		NB_ADD_INTERNAL_CALL(TransformComponent_GetTranslation);
 		NB_ADD_INTERNAL_CALL(TransformComponent_GetRotation);

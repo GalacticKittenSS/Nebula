@@ -2,9 +2,9 @@
 #include "ProjectSerializer.h"
 
 #include "Nebula/Renderer/Fonts.h"
+#include "Nebula/Utils/YAML.h"
 
 #include <fstream>
-#include <yaml-cpp/yaml.h>
 
 namespace Nebula {
 
@@ -27,7 +27,12 @@ namespace Nebula {
 		out << YAML::Key << "AssetDirectory" << YAML::Value << config.AssetDirectory.string();
 		out << YAML::Key << "ScriptModulePath" << YAML::Value << config.ScriptModulePath.string();
 		out << YAML::EndMap; // Project
-		
+
+		out << YAML::Key << "Physics" << YAML::Value;
+		out << YAML::BeginMap;// Physics
+		out << YAML::Key << "Gravity" << YAML::Value << config.Gravity;
+		out << YAML::EndMap; // Physics
+
 		out << YAML::Key << "Assets" << YAML::Value;
 		out << YAML::BeginSeq; // Assets
 
@@ -74,6 +79,11 @@ namespace Nebula {
 		config.AssetDirectory = projectNode["AssetDirectory"].as<std::string>();
 		config.ScriptModulePath = projectNode["ScriptModulePath"].as<std::string>();
 
+		if (auto physicsNode = data["Physics"])
+		{
+			config.Gravity = physicsNode["Gravity"].as<glm::vec2>();
+		}
+		
 		for (auto asset : data["Assets"])
 		{
 			uint64_t handle = asset["Handle"].as<uint64_t>();

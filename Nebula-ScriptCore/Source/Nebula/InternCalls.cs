@@ -118,6 +118,12 @@ namespace Nebula
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void Entity_SetLayer(ulong entityID, short layer);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static ulong Entity_GetChild(ulong entityID, uint index);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static uint Entity_GetChildCount(ulong entityID);
         #endregion
 
         #region Prefab
@@ -166,6 +172,12 @@ namespace Nebula
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void CameraComponent_SetFixedRatio(ulong entityID, bool fixedRatio);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void CameraComponent_ScreenToWorld(ulong entityID, Vector2 input, out Vector3 value);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void CameraComponent_WorldToScreen(ulong entityID, Vector3 point, out Vector2 value);
         #endregion
 
         #region SpriteRendererComponent

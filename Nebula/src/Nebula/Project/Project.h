@@ -11,6 +11,8 @@ namespace Nebula {
 		std::filesystem::path ScriptModulePath;
 
 		std::filesystem::path StartScene;
+
+		glm::vec2 Gravity = { 0.0f, -9.81f };
 	};
 
 	class Project

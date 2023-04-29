@@ -5,6 +5,7 @@
 #include "Nebula/Scripting/ScriptEngine.h"
 #include "Nebula/Utils/Time.h"
 #include "Nebula/Utils/Physics2D.h"
+#include "Nebula/Project/Project.h"
 
 #include "Components.h"
 #include "Entity.h"
@@ -328,7 +329,9 @@ namespace Nebula {
 	void Scene::InitPhysics() {
 		m_ContactListener = new ContactListener(this);
 
-		m_PhysicsWorld = new b2World({ 0.0f, -9.81f });
+		glm::vec2 gravity = Project::GetActive()->GetConfig().Gravity;
+		
+		m_PhysicsWorld = new b2World({ gravity.x, gravity.y });
 		m_PhysicsWorld->SetAllowSleeping(false);
 		m_PhysicsWorld->SetContactListener(m_ContactListener);
 
