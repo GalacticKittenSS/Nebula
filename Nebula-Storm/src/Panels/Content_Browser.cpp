@@ -30,10 +30,10 @@ namespace Nebula {
 	{
 		ImGui::Begin("Content Browser");
 		RenderBrowser();
+		CreateFilePopup();
 
 		ImGuiWindow* window = ImGui::GetCurrentWindow();
-
-		if (m_Scene && ImGui::BeginDragDropTargetCustom(window->ContentRegionRect, window->ID))
+		if (m_Scene && !m_DragDrop && ImGui::BeginDragDropTargetCustom(window->ContentRegionRect, window->ID))
 		{
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENTITY"))
 			{
@@ -47,6 +47,7 @@ namespace Nebula {
 			}
 		}
 
+		m_DragDrop = false;
 		ImGui::End();
 	}
 
@@ -77,11 +78,21 @@ namespace Nebula {
 			if (ImGui::Button("<", ImVec2{ buttonSize, buttonSize }))
 				m_CurrentDirectory = m_CurrentDirectory.parent_path();
 			ImGui::PopFont();
+
+			if (ImGui::BeginDragDropTarget())
+			{
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
+				{
+					std::filesystem::path filepath = (const wchar_t*)payload->Data;
+					std::filesystem::rename(filepath, m_CurrentDirectory.parent_path() / filepath.filename());
+				}
+			}
+
 			boldFont->Scale = 1;
 		}
 
 		float thumbnailSize = (size + 1) * 128.0f;
-		float cellSize = thumbnailSize + 16.0f;
+		float cellSize = thumbnailSize + 20.0f;
 
 		float panelWidth = ImGui::GetContentRegionAvail().x;
 		int columCount = (int)(panelWidth / cellSize);
@@ -110,29 +121,63 @@ namespace Nebula {
 				ImGui::EndDragDropSource();
 			}
 
-			if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
-				if (directoryEntry.is_directory())
+			if (directoryEntry.is_directory())
+			{
+				if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
 					m_CurrentDirectory /= path.filename();
+
+				if (ImGui::BeginDragDropTarget())
+				{
+					m_DragDrop = true;
+
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
+					{
+						std::filesystem::path filepath = (const wchar_t*)payload->Data;
+						std::filesystem::rename(filepath, directoryEntry / filepath.filename());
+					}
+
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENTITY"))
+					{
+						const UUID entityID = *(const UUID*)payload->Data;
+
+						Entity entity = { entityID, m_Scene.get() };
+						std::filesystem::path filepath = directoryEntry / (entity.GetName() + ".prefab");
+
+						PrefabSerializer serializer(m_Scene.get());
+						serializer.Serialize(entity, filepath.string());
+					}
+				}
 			}
 
-			if (!AssetManager::GetHandleFromPath(path) &&
-				AssetManager::GetTypeFromExtension(path.extension().string()) != AssetType::None)
-			{
-				UI::ScopedStyleVar rounding(ImGuiStyleVar_FrameRounding, 0.0f);
-				UI::ScopedStyleVar padding(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-				UI::ScopedStyleColor colour(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_WindowBg));
+			UI::ScopedStyleVar rounding(ImGuiStyleVar_FrameRounding, 0.0f);
+			UI::ScopedStyleColor colour(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_WindowBg));
 
-				if (ImGui::BeginPopupContextItem())
+			if (ImGui::BeginPopupContextItem())
+			{
+				if (!AssetManager::GetHandleFromPath(path) &&
+					AssetManager::GetTypeFromExtension(path.extension().string()) != AssetType::None)
 				{
 					if (ImGui::Button("Import Asset"))
 						AssetManager::ImportAsset(path);
-
-					ImGui::EndPopup();
 				}
+
+				if (directoryEntry.is_directory())
+				{
+					if (ImGui::Button("Delete Directory"))
+						std::filesystem::remove_all(path.string().c_str());
+				}
+				else
+				{
+					if (ImGui::Button("Delete File"))
+						std::filesystem::remove(path.string().c_str());
+				}
+
+				ImGui::EndPopup();
 			}
+
 			float text_width = ImGui::CalcTextSize(filename.c_str()).x;
 			float text_indentation = (cellSize - text_width) * 0.5f;
-			
+
 			if (text_width > cellSize)
 			{
 				ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + cellSize - GImGui->Style.ItemSpacing.x);
@@ -151,5 +196,87 @@ namespace Nebula {
 		}
 
 		ImGui::Columns(1);
+	}
+
+	void ContentBrowserPanel::CreateFilePopup()
+	{
+		bool open_popup = false;
+		if (ImGui::BeginPopupContextWindow(0, 1, false))
+		{
+			if (ImGui::BeginMenu("Create New..."))
+			{
+				ImVec2 buttonSize = { 80.0f, 0.0f };
+
+				if (ImGui::Button("Blank", buttonSize))
+				{
+					m_CreateFileName = "NewFile.txt";
+					open_popup = true;
+				}
+
+				if (ImGui::Button("Directory", buttonSize))
+				{
+					m_CreateFileName = "NewDirectory";
+					m_CreateDirectory = true;
+					open_popup = true;
+				}
+
+				if (ImGui::Button("Scene", buttonSize))
+				{
+					m_CreateFileName = "NewScene.nebula";
+					open_popup = true;
+				}
+
+				if (ImGui::Button("Script", buttonSize))
+				{
+					m_CreateFileName = "NewScript.cs";
+					open_popup = true;
+				}
+
+				ImGui::EndMenu();
+			}
+
+			ImGui::EndPopup();
+		}
+
+		if (open_popup)
+			ImGui::OpenPopup("Create File");
+
+		if (ImGui::BeginPopup("Create File")) {
+			ImGui::Text("Filename: ");
+			ImGui::SameLine();
+
+			char buffer[256];
+			strncpy_s(buffer, sizeof(buffer), m_CreateFileName.c_str(), sizeof(buffer));
+
+			if (ImGui::InputText("##Name", buffer, sizeof(buffer)))
+				m_CreateFileName = std::string(buffer);
+
+			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvailWidth());
+
+			if (ImGui::Button("Create File"))
+			{
+				if (m_CreateDirectory)
+				{
+					std::filesystem::path directory = m_CurrentDirectory / std::filesystem::path(m_CreateFileName).replace_extension();
+					std::filesystem::create_directory(directory);
+				}
+				else
+				{
+					std::string extension = m_CreateFileName.substr(m_CreateFileName.find("."));
+					std::filesystem::path templateFile = "Resources/Templates/" + extension;
+					std::filesystem::path newFile = m_CurrentDirectory / m_CreateFileName;
+
+					if (std::filesystem::exists(templateFile))
+						std::filesystem::copy(templateFile, newFile);
+					else
+						std::ofstream fstream(newFile);
+				}
+
+				m_CreateDirectory = false;
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndPopup();
+		}
 	}
 }

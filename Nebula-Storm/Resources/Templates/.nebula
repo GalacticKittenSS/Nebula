@@ -1,0 +1,90 @@
+Scene: Untitled
+Order:
+  Size: 4
+  Data: [17712876097499229639, 16488335348570608940, 17844181762378858642, 7049102109933353579]
+Entities:
+  - Entity: 7049102109933353579
+    TagComponent:
+      Tag: Sprite
+    PropertiesComponent:
+      IsEnabled: true
+      Layer: 1
+    ParentChildComponent:
+      PrimaryParent: 0
+      Children: ~
+      ChildCount: 0
+    TransformComponent:
+      Translation: [0, 0.500033498, -0.5]
+      Rotation: [-1.57079637, 4.54747351e-12, 1.68626975e-05]
+      Scale: [0.99998951, 0.999999583, 0.999980986]
+    SpriteRendererComponent:
+      Colour: [1, 1, 1, 1]
+      Tiling: 1
+      Offset: [0, 0]
+      CellSize: [128, 128]
+      CellNum: [1, 1]
+  - Entity: 17844181762378858642
+    TagComponent:
+      Tag: Sprite
+    PropertiesComponent:
+      IsEnabled: true
+      Layer: 1
+    ParentChildComponent:
+      PrimaryParent: 0
+      Children: ~
+      ChildCount: 0
+    TransformComponent:
+      Translation: [-0.5, 0, -0.5]
+      Rotation: [0, -1.57079637, 0]
+      Scale: [0.999988496, 1, 0.999988496]
+    SpriteRendererComponent:
+      Colour: [0.571428537, 0.571428537, 0.571428537, 1]
+      Tiling: 1
+      Offset: [0, 0]
+      CellSize: [128, 128]
+      CellNum: [1, 1]
+  - Entity: 16488335348570608940
+    TagComponent:
+      Tag: Sprite
+    PropertiesComponent:
+      IsEnabled: true
+      Layer: 1
+    ParentChildComponent:
+      PrimaryParent: 0
+      Children: ~
+      ChildCount: 0
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    SpriteRendererComponent:
+      Colour: [0.752895772, 0.752895772, 0.752895772, 1]
+      Tiling: 1
+      Offset: [0, 0]
+      CellSize: [128, 128]
+      CellNum: [1, 1]
+  - Entity: 17712876097499229639
+    TagComponent:
+      Tag: Camera
+    PropertiesComponent:
+      IsEnabled: true
+      Layer: 1
+    ParentChildComponent:
+      PrimaryParent: 0
+      Children: ~
+      ChildCount: 0
+    TransformComponent:
+      Translation: [-2.5, 2.5, 2]
+      Rotation: [-0.610865235, -0.785398185, 0]
+      Scale: [1, 1, 1]
+    CameraComponent:
+      Camera:
+        ProjectionType: 0
+        PerspectiveFOV: 0.785398185
+        PerspectiveNear: 0.00999999978
+        PerspectiveFar: 1000
+        OrthographicSize: 10
+        OrthographicNear: -1
+        OrthographicFar: 1
+      Primary: true
+      FixedAspectRatio: false
