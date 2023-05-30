@@ -2,7 +2,7 @@
 
 namespace Nebula
 {
-	struct SceneLayer
+	struct ProjectLayer
 	{
 		std::string Name;
 		uint16_t Identity;

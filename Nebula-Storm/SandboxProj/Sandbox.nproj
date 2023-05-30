@@ -3,11 +3,16 @@ Project:
   StartScene: Scenes/Scripting.nebula
   AssetDirectory: Assets
   ScriptModulePath: Binaries/Sandbox.dll
+Scene:
+  Gravity: [0, -9.81000042]
+  Layers: [Layer 0, Layer 1, Layer 2, Layer 3, Layer 4, Layer 5, Layer 6, Layer 7, Layer 8, Layer 9, Layer 10, Layer 11, Layer 12, Layer 13, Layer 14, Layer 15]
 Assets:
   - Handle: 10465062411550986415
     Path: Fonts\arialbi.ttf
   - Handle: 3871083381578152467
     Path: Fonts\ariali.ttf
+  - Handle: 199469299191224083
+    Path: Textures\Checkerboard.png
   - Handle: 7660240480337578553
     Path: Prefabs\Player.prefab
   - Handle: 10672057491365945081

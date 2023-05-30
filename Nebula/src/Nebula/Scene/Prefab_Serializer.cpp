@@ -306,8 +306,6 @@ namespace Nebula
 			auto& prop = deserializedEntity.GetComponent<PropertiesComponent>();
 			DeserializeValue(prop.Enabled, propComponent["IsEnabled"]);
 
-			uint16_t layer = DeserializeValue(propComponent["Layer"], 1);
-			prop.Layer = scene->m_Layers[layer];
 		}
 
 		if (auto transformComponent = entity["TransformComponent"]) {

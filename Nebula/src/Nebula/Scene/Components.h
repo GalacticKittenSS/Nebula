@@ -11,11 +11,11 @@
 
 #include "Nebula/AssetManager/AssetManager.h"
 #include "Nebula/Project/Project.h"
+#include "Nebula/Project/ProjectLayer.h"
 
 #include "Nebula/Renderer/Texture.h"
 #include "Nebula/Utils/Arrays.h"
 
-#include "Scene_Layer.h"
 
 namespace Nebula {
 	struct IDComponent {
@@ -35,7 +35,7 @@ namespace Nebula {
 
 	struct PropertiesComponent {
 		bool Enabled = true;
-		Ref<SceneLayer> Layer;
+		Ref<ProjectLayer> Layer;
 		
 		PropertiesComponent() = default;
 		PropertiesComponent(const PropertiesComponent&) = default;

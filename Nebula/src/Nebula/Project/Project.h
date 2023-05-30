@@ -1,6 +1,10 @@
 #pragma once
 
+#include "ProjectLayer.h"
+
 #include "Nebula/AssetManager/AssetManagerBase.h"
+
+#include <map>
 
 namespace Nebula {
 	struct ProjectConfig
@@ -12,12 +16,16 @@ namespace Nebula {
 
 		std::filesystem::path StartScene;
 
+		// Scene
 		glm::vec2 Gravity = { 0.0f, -9.81f };
+		std::map<uint16_t, Ref<ProjectLayer>> Layers;
 	};
 
 	class Project
 	{
 	public:
+		Project();
+
 		static const std::filesystem::path& GetProjectDirectory()
 		{
 			NB_ASSERT(s_ActiveProject);

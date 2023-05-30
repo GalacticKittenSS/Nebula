@@ -276,13 +276,6 @@ namespace Nebula {
 		out << YAML::Key << "Data" << YAML::Value << order;
 		out << YAML::EndMap;
 
-		YAML::Node layers;
-		for (const auto& [id, layer] :m_Scene->m_Layers)
-			layers.push_back(layer->Name);
-		layers.SetStyle(YAML::EmitterStyle::Flow);
-
-		out << YAML::Key << "Layers" << YAML::Value << layers;
-		
 		out << YAML::Key << "Entities" << YAML::Value << YAML::BeginSeq;
 
 		auto view = m_Scene->GetAllEntitiesWith<IDComponent>();
@@ -361,7 +354,7 @@ namespace Nebula {
 				DeserializeValue(prop.Enabled, propComponent["IsEnabled"]);
 				
 				uint16_t layer = DeserializeValue(propComponent["Layer"], 1);
-				prop.Layer = m_Scene->m_Layers[layer];
+				prop.Layer = Project::GetActive()->GetConfig().Layers[layer];
 			}
 
 			if (auto parentComponent = entity["ParentChildComponent"]) {
@@ -537,17 +530,6 @@ namespace Nebula {
 			m_Scene->m_SceneOrder.clear();
 			for (uint32_t i = 0; i < count; i++)
 				m_Scene->m_SceneOrder.push_back(scene_order[i].as<uint64_t>());
-		}
-
-
-		if (auto layers = data["Layers"])
-		{
-			int i = 0;
-			for (auto& [id, layer] : m_Scene->m_Layers)
-			{
-				layer->Name = layers[i].as<std::string>();
-				i++;
-			}
 		}
 
 		for (auto entity : m_Scene->GetAllEntitiesWith<TransformComponent>())

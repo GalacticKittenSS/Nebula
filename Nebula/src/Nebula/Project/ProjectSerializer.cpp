@@ -28,10 +28,17 @@ namespace Nebula {
 		out << YAML::Key << "ScriptModulePath" << YAML::Value << config.ScriptModulePath.string();
 		out << YAML::EndMap; // Project
 
-		out << YAML::Key << "Physics" << YAML::Value;
-		out << YAML::BeginMap;// Physics
+		out << YAML::Key << "Scene" << YAML::Value;
+		out << YAML::BeginMap;// Scene
+
+		YAML::Node layers;
+		for (const auto& [id, layer] : config.Layers)
+			layers.push_back(layer->Name);
+		layers.SetStyle(YAML::EmitterStyle::Flow);
+
 		out << YAML::Key << "Gravity" << YAML::Value << config.Gravity;
-		out << YAML::EndMap; // Physics
+		out << YAML::Key << "Layers" << YAML::Value << layers;
+		out << YAML::EndMap; // Scene
 
 		out << YAML::Key << "Assets" << YAML::Value;
 		out << YAML::BeginSeq; // Assets
@@ -79,9 +86,19 @@ namespace Nebula {
 		config.AssetDirectory = projectNode["AssetDirectory"].as<std::string>();
 		config.ScriptModulePath = projectNode["ScriptModulePath"].as<std::string>();
 
-		if (auto physicsNode = data["Physics"])
+		if (auto sceneNode = data["Scene"])
 		{
-			config.Gravity = physicsNode["Gravity"].as<glm::vec2>();
+			config.Gravity = sceneNode["Gravity"].as<glm::vec2>();
+
+			if (auto layers = sceneNode["Layers"])
+			{
+				int i = 0;
+				for (auto& [id, layer] : config.Layers)
+				{
+					layer->Name = layers[i].as<std::string>();
+					i++;
+				}
+			}
 		}
 		
 		for (auto asset : data["Assets"])

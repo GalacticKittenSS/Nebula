@@ -786,10 +786,11 @@ namespace Nebula {
 	}
 
 	void EditorLayer::SaveScene() {
-		NB_TRACE("Saving Current Scene");
-		
 		if (!m_ScenePath.empty())
+		{
+			NB_TRACE("Saving Scene {}...", m_ScenePath);
 			SceneSerializer(m_ActiveScene).Serialize(m_ScenePath);
+		}
 		else
 			SaveSceneAs();
 	}

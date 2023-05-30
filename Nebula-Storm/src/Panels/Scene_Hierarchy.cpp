@@ -81,6 +81,9 @@ namespace Nebula {
 			Entity{ parentsParent, currentScene }.GetParentChild().AddChild(Ent.GetUUID());
 	}
 
+	static bool DrawVec2Control(const std::string& label, glm::vec2& values, const glm::vec2& min = glm::vec2(0.0f), const glm::vec2& max = glm::vec2(0.0f),
+		const glm::vec2& resetvalue = glm::vec2(0.0f));
+
 	SceneHierarchyPanel::SceneHierarchyPanel(const Ref<Scene>& scene) {
 		SetContext(scene);
 	}
@@ -118,6 +121,37 @@ namespace Nebula {
 		
 		ImGui::End();
 
+
+		ImGui::Begin("Project Settings");
+
+		ProjectConfig& pConfig = Project::GetActive()->GetConfig();
+		DrawVec2Control("Gravity", pConfig.Gravity, glm::vec2(0.0f), glm::vec2(0.0f), glm::vec2(0.0f, -9.81f));
+
+		ImGui::Separator();
+		
+		const ImGuiTreeNodeFlags treeFlags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_Framed;
+		
+		if (ImGui::TreeNodeEx("Labels", treeFlags))
+		{
+			for (auto& [index, layer] : pConfig.Layers)
+			{
+				ImGui::PushID(index);
+
+				char buffer[256];
+				strncpy_s(buffer, sizeof(buffer), layer->Name.c_str(), sizeof(buffer));
+
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvailWidth());
+
+				if (ImGui::InputText("##Name", buffer, sizeof(buffer)))
+					layer->Name = std::string(buffer);
+
+				ImGui::PopID();
+			}
+
+			ImGui::TreePop();
+		}
+
+		ImGui::End();
 
 		ImGui::Begin("Properties");
 
@@ -451,8 +485,8 @@ namespace Nebula {
 		return x || xb || y || yb || z || zb;
 	}
 
-	static bool DrawVec2Control(const std::string& label, glm::vec2& values, const glm::vec2& min = glm::vec2(0.0f), const glm::vec2& max = glm::vec2(0.0f),
-		const glm::vec2& resetvalue = glm::vec2(0.0f)) {
+	static bool DrawVec2Control(const std::string& label, glm::vec2& values, const glm::vec2& min, const glm::vec2& max,
+		const glm::vec2& resetvalue) {
 		ImGuiIO& io = ImGui::GetIO();
 		auto boldFont = io.Fonts->Fonts[0];
 
@@ -702,12 +736,14 @@ namespace Nebula {
 			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvailWidth() - 25.0f - GImGui->Style.ItemSpacing.x);
 			if (ImGui::BeginCombo("##V", prop.Layer->Name.c_str()))
 			{
-				for (auto [l, layer] : m_Context->m_Layers)
+				const ProjectConfig& pConfig = Project::GetActive()->GetConfig();
+
+				for (auto [l, layer] : pConfig.Layers)
 				{
 					bool isSelected = prop.Layer == layer;
 					
 					if (ImGui::Selectable(layer->Name.c_str(), isSelected))
-						prop.Layer = m_Context->m_Layers[l];
+						prop.Layer = pConfig.Layers.at(l);
 					
 					if (isSelected)
 						ImGui::SetItemDefaultFocus();
@@ -1112,7 +1148,9 @@ namespace Nebula {
 
 			if (ImGui::BeginCombo("##V", "Collide With"))
 			{
-				for (auto& [l, info] : scene->m_Layers)
+				const ProjectConfig& pConfig = Project::GetActive()->GetConfig();
+
+				for (auto& [l, info] : pConfig.Layers)
 				{
 					ImGui::PushID(info->Name.c_str());
 					ImGui::Text(info->Name.c_str());

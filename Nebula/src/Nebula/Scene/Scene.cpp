@@ -53,25 +53,7 @@ namespace Nebula {
 		CopyComponent<Component...>(dst, src);
 	}
 
-	Scene::Scene() {
-		SceneLayer::Options layers[] = {
-			SceneLayer::A, SceneLayer::B, SceneLayer::C, SceneLayer::D,
-			SceneLayer::E, SceneLayer::F, SceneLayer::G, SceneLayer::H,
-			SceneLayer::I, SceneLayer::J, SceneLayer::K, SceneLayer::L,
-			SceneLayer::M, SceneLayer::N, SceneLayer::O, SceneLayer::P
-		};
-
-		uint32_t i = 0;
-		for (SceneLayer::Options l : layers)
-		{
-			Ref<SceneLayer> Layer = CreateRef<SceneLayer>();
-			Layer->Identity = l;
-			Layer->Name = "Layer " + std::to_string(i);
-			
-			m_Layers[l] = Layer;
-			i++;
-		}
-	}
+	Scene::Scene() { }
 
 	Scene::~Scene() {
 		DestroyPhysics();
@@ -124,8 +106,10 @@ namespace Nebula {
 		auto& idc = entity.AddComponent<IDComponent>();
 		idc.ID = uuid;
 		
+		const ProjectConfig& pConfig = Project::GetActive()->GetConfig();
+
 		auto& prop = entity.AddComponent<PropertiesComponent>();
-		prop.Layer = m_Layers.at(1);
+		prop.Layer = pConfig.Layers.at(1);
 
 		auto& tag = entity.AddComponent<TagComponent>();
 		tag.Tag = name.empty() ? "Entity" : name;
