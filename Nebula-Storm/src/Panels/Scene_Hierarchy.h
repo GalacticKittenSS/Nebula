@@ -18,6 +18,8 @@ namespace Nebula {
 		Entity GetSelectedEntity() { return m_SelectionContext; }
 		void SetSelectedEntity(Entity entity) { m_SelectionContext = entity; }
 
+		void DisplayCreateEntity(Entity parent = {});
+
 		bool IsFocused() { return m_HierarchyFocused; }
 		bool IsHovered() { return m_HierarchyHovered; }
 	private:

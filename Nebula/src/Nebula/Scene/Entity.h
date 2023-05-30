@@ -72,7 +72,13 @@ namespace Nebula {
 
 		bool IsValid() const { return m_Scene->m_Registry.valid(m_EntityHandle); }
 
-		operator bool() const { return m_EntityHandle != entt::null && IsValid(); }
+		operator bool() const 
+		{
+			if (!m_Scene)
+				return false;
+			return IsValid(); 
+		}
+
 		operator uint32_t() const { return (uint32_t)m_EntityHandle; }
 		operator int() const { return (int)m_EntityHandle; }
 		operator entt::entity() const { return m_EntityHandle; }

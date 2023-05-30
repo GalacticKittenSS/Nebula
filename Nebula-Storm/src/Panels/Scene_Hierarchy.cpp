@@ -230,37 +230,59 @@ namespace Nebula {
 			m_SelectionContext = {};
 
 		if (ImGui::BeginPopupContextWindow(0, 1, false)) {
-			if (ImGui::BeginMenu("Create Entity")) {
-				if (ImGui::MenuItem("Empty"))
-					auto& entity = m_Context->CreateEntity("Entity");
-
-				if (ImGui::MenuItem("Sprite")) {
-					auto& sprite = m_Context->CreateEntity("Sprite");
-					sprite.AddComponent<SpriteRendererComponent>();
-					sprite.AddComponent<Rigidbody2DComponent>();
-					sprite.AddComponent<BoxCollider2DComponent>();
-				}
-
-				if (ImGui::MenuItem("Circle")) {
-					auto& sprite = m_Context->CreateEntity("Circle");
-					sprite.AddComponent<CircleRendererComponent>();
-					sprite.AddComponent<Rigidbody2DComponent>();
-					sprite.AddComponent<CircleColliderComponent>();
-				}
-
-				if (ImGui::MenuItem("Camera")) {
-					auto& cam = m_Context->CreateEntity("Camera");
-					cam.AddComponent<CameraComponent>();
-				}
-
-				ImGui::EndMenu();
-			}
-
+			DisplayCreateEntity();
 			ImGui::EndPopup();
 		}
 
 		if (ImGui::IsMouseReleased(0) && ImGui::IsWindowHovered() && !ImGui::IsDragDropPayloadBeingAccepted())
 			EntityPayload(m_Context.get());
+	}
+
+	void SceneHierarchyPanel::DisplayCreateEntity(Entity parent)
+	{
+		if (ImGui::BeginMenu("Create Entity")) 
+		{
+			if (ImGui::MenuItem("Empty"))
+			{
+				auto& entity = m_Context->CreateEntity("Entity");
+
+				if (parent)
+					AddParent(entity.GetUUID(), parent, m_Context.get());
+			}
+
+			if (ImGui::MenuItem("Sprite")) 
+			{
+				auto& sprite = m_Context->CreateEntity("Sprite");
+				sprite.AddComponent<SpriteRendererComponent>();
+				sprite.AddComponent<Rigidbody2DComponent>();
+				sprite.AddComponent<BoxCollider2DComponent>();
+				
+				if (parent)
+					AddParent(sprite.GetUUID(), parent, m_Context.get());
+			}
+
+			if (ImGui::MenuItem("Circle")) 
+			{
+				auto& sprite = m_Context->CreateEntity("Circle");
+				sprite.AddComponent<CircleRendererComponent>();
+				sprite.AddComponent<Rigidbody2DComponent>();
+				sprite.AddComponent<CircleColliderComponent>();
+
+				if (parent)
+					AddParent(sprite.GetUUID(), parent, m_Context.get());
+			}
+
+			if (ImGui::MenuItem("Camera")) 
+			{
+				auto& cam = m_Context->CreateEntity("Camera");
+				cam.AddComponent<CameraComponent>();
+
+				if (parent)
+					AddParent(cam.GetUUID(), parent, m_Context.get());
+			}
+
+			ImGui::EndMenu();
+		}
 	}
 
 	void SceneHierarchyPanel::DrawArray(Array<UUID>& entities) {
@@ -316,27 +338,8 @@ namespace Nebula {
 
 		bool entityDeleted = false;
 		if (ImGui::BeginPopupContextItem()) {
-			if (ImGui::BeginMenu("Create Entity")) {
-				if (ImGui::MenuItem("Empty")) {
-					auto& newEnt = m_Context->CreateEntity("Entity");
-					AddParent(newEnt.GetUUID(), entity, m_Context.get());
-				}
+			DisplayCreateEntity(entity);
 
-				if (ImGui::MenuItem("Sprite")) {
-					auto& sprite = m_Context->CreateEntity("Sprite");
-					sprite.AddComponent<SpriteRendererComponent>();
-					AddParent(sprite.GetUUID(), entity, m_Context.get());
-				}
-
-				if (ImGui::MenuItem("Camera")) {
-					auto& cam = m_Context->CreateEntity("Camera");
-					cam.AddComponent<CameraComponent>();
-					AddParent(cam.GetUUID(), entity, m_Context.get());
-				}
-
-				ImGui::EndMenu();
-			}
-			
 			if (ImGui::MenuItem("Duplicate Entity"))
 				m_Context->DuplicateEntity(entity);
 
@@ -926,8 +929,12 @@ namespace Nebula {
 						UUID id = ScriptEngine::GetIDFromObject(data);
 						std::string text = "None";
 						
-						if (Entity ent = { id, scene.get() })
-							text = ent.GetName();
+						if (id)
+						{
+							text = "Invalid Entity";
+							if (Entity ent = { id, scene.get() })
+								text = ent.GetName();
+						}
 						
 						DrawLabel(name);
 						if (ImGui::Button(text.c_str(), ImVec2{ ImGui::GetContentRegionAvailWidth(), 0 }))

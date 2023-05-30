@@ -334,28 +334,7 @@ namespace Nebula {
 			}
 
 			if (ImGui::BeginMenu("Scene")) {
-				ProjectConfig& pConfig = Project::GetActive()->GetConfig();
-				ImGui::Text("Gravity");
-				ImGui::SameLine();
-				ImGui::DragFloat2("##Gravity", value_ptr(pConfig.Gravity), 0.01f);
-
-				if (ImGui::BeginMenu("Create Entity")) {
-					if (ImGui::MenuItem("Empty"))
-						auto& sprite = m_ActiveScene->CreateEntity("Entity");
-
-					if (ImGui::MenuItem("Sprite")) {
-						auto& sprite = m_ActiveScene->CreateEntity("Sprite");
-						sprite.AddComponent<SpriteRendererComponent>();
-					}
-
-					if (ImGui::MenuItem("Camera")) {
-						auto& sprite = m_ActiveScene->CreateEntity("Camera");
-						sprite.AddComponent<CameraComponent>();
-					}
-
-					ImGui::EndMenu();
-				}
-
+				m_SceneHierarchy.DisplayCreateEntity();
 				ImGui::EndMenu();
 			}
 
