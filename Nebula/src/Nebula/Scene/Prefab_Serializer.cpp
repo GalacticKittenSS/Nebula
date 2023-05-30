@@ -25,7 +25,9 @@ namespace Nebula
 	static void SerializeEntity(YAML::Emitter& out, Entity entity)
 	{
 		out << YAML::BeginMap;
-		
+		out << YAML::Key << "Entity";
+		out << YAML::Value << entity.GetUUID();
+
 		if (entity.HasComponent<TagComponent>()) {
 			out << YAML::Key << "TagComponent";
 			out << YAML::BeginMap;
@@ -45,6 +47,24 @@ namespace Nebula
 			out << YAML::Key << "Layer" << YAML::Value << component.Layer->Identity;
 
 			out << YAML::EndMap; // TransformComponent
+		}
+
+		if (entity.HasComponent<ParentChildComponent>()) {
+			out << YAML::Key << "ParentChildComponent";
+			out << YAML::BeginMap; // ParentChildComponent
+
+			auto& component = entity.GetComponent<ParentChildComponent>();
+
+			YAML::Node children;
+			for (uint32_t i = 0; i < component.ChildrenIDs.size(); i++)
+				children.push_back((uint64_t)component[i]);
+			children.SetStyle(YAML::EmitterStyle::Flow);
+
+			out << YAML::Key << "PrimaryParent" << YAML::Value << component.Parent;
+			out << YAML::Key << "Children" << YAML::Value << children;
+			out << YAML::Key << "ChildCount" << YAML::Value << component.ChildrenIDs.size();
+
+			out << YAML::EndMap; // ParentChildComponent
 		}
 
 		if (entity.HasComponent<TransformComponent>()) {
@@ -236,28 +256,38 @@ namespace Nebula
 			out << YAML::EndMap; // CircleColliderComponent
 		}
 
-		out << YAML::Key << "Children" << YAML::BeginSeq;
-
-		auto& pcc = entity.GetParentChild();
-		for (UUID id : pcc.ChildrenIDs) 
-		{
-			Entity e = { id, entity };
-			if (!e)
-				return;
-
-			SerializeEntity(out, e);
-		}
-
-		out << YAML::EndSeq;
 		out << YAML::EndMap;
+	}
+
+	static void SerializeOrder(YAML::Emitter& out, Entity entity, Array<UUID>& entities)
+	{
+		out << entity.GetUUID();
+		entities.push_back(entity.GetUUID());
+		
+		const auto& children = entity.GetParentChild().ChildrenIDs;
+		for (const auto& child : children)
+			SerializeOrder(out, { child, entity }, entities);
 	}
 
 	void PrefabSerializer::Serialize(Entity entity, const std::string& filepath)
 	{
 		YAML::Emitter out;
+		out << YAML::BeginMap;
+
+		Array<UUID> entities;
 		
-		SerializeEntity(out, entity);
+		out << YAML::Key << "Order" << YAML::Value << YAML::BeginSeq;
+		SerializeOrder(out, entity, entities);
+		out << YAML::EndSeq;
+
+		out << YAML::Key << "Prefab" << YAML::Value << YAML::BeginSeq;
 		
+		for (auto& id : entities)
+			SerializeEntity(out, { id, m_Scene });
+
+		out << YAML::EndSeq;
+		out << YAML::EndMap;
+
 		std::ofstream fout(filepath);
 		fout << out.c_str();
 	}
@@ -280,191 +310,15 @@ namespace Nebula
 		return val.as<T>();
 	}
 
-	static Entity DeserializeEntity(const YAML::Node& entity, Scene* scene, Entity parent)
+	static UUID DeserializeID(std::unordered_map<UUID, UUID>& idMap, const YAML::Node& node)
 	{
-		std::string name;
-		if (auto tagComponent = entity["TagComponent"])
-			name = DeserializeValue<std::string>(tagComponent["Tag"], "Entity");
+		UUID id = DeserializeValue<uint64_t>(node);
 
-		NB_TRACE("Deserialized Prefab with name = {0}", name);
-		Entity deserializedEntity = scene->CreateEntity(name);
+		auto it = idMap.find(id);
+		if (it == idMap.end())
+			return id;
 
-		if (parent)
-		{
-			UUID id = deserializedEntity.GetUUID();
-			
-			auto& parent_pcc = parent.GetParentChild();
-			parent_pcc.AddChild(id);
-			
-			auto& pcc = deserializedEntity.GetParentChild();
-			pcc.Parent = parent.GetUUID();
-
-			scene->m_SceneOrder.remove(id);
-		}
-
-		if (auto propComponent = entity["PropertiesComponent"]) {
-			auto& prop = deserializedEntity.GetComponent<PropertiesComponent>();
-			DeserializeValue(prop.Enabled, propComponent["IsEnabled"]);
-
-		}
-
-		if (auto transformComponent = entity["TransformComponent"]) {
-			auto& tc = deserializedEntity.GetComponent<TransformComponent>();
-			DeserializeValue(tc.Translation, transformComponent["Translation"]);
-			DeserializeValue(tc.Rotation, transformComponent["Rotation"]);
-			DeserializeValue(tc.Scale, transformComponent["Scale"]);
-		}
-
-		if (auto cameraComponent = entity["CameraComponent"])
-		{
-			auto& cc = deserializedEntity.AddComponent<CameraComponent>();
-			DeserializeValue(cc.Primary, cameraComponent["Primary"]);
-			DeserializeValue(cc.FixedAspectRatio, cameraComponent["FixedAspectRatio"]);
-
-			if (auto cameraProps = cameraComponent["Camera"])
-			{
-				cc.Camera.SetProjectionType((SceneCamera::ProjectionType)cameraProps["ProjectionType"].as<int>());
-
-				cc.Camera.SetPerspectiveFOV(cameraProps["PerspectiveFOV"].as<float>());
-				cc.Camera.SetPerspectiveNearClip(cameraProps["PerspectiveNear"].as<float>());
-				cc.Camera.SetPerspectiveFarClip(cameraProps["PerspectiveFar"].as<float>());
-
-				cc.Camera.SetOrthographicSize(cameraProps["OrthographicSize"].as<float>());
-				cc.Camera.SetOrthoNearClip(cameraProps["OrthographicNear"].as<float>());
-				cc.Camera.SetOrthoFarClip(cameraProps["OrthographicFar"].as<float>());
-			}
-		}
-
-		if (auto scriptComponent = entity["ScriptComponent"])
-		{
-			auto& sc = deserializedEntity.AddComponent<ScriptComponent>();
-			DeserializeValue(sc.ClassName, scriptComponent["Class"]);
-
-			Ref<ScriptInstance> scriptInstance = ScriptEngine::CreateScriptInstance(deserializedEntity);
-			if (auto scriptFields = scriptComponent["ScriptFields"])
-			{
-				if (Ref<ScriptClass> entityClass = ScriptEngine::GetEntityClass(sc.ClassName))
-				{
-					const auto& fields = entityClass->GetFields();
-					for (auto scriptField : scriptFields)
-					{
-						std::string name = scriptField["Name"].as<std::string>();
-						std::string typeString = scriptField["Type"].as<std::string>();
-						ScriptFieldType type = Utils::ScriptFieldTypeFromString(typeString);
-
-						auto it = fields.find(name);
-						if (it == fields.end())
-							continue;
-
-						switch (type)
-						{
-							READ_SCRIPT_FIELD(Float, float);
-							READ_SCRIPT_FIELD(Double, double);
-							READ_SCRIPT_FIELD(Bool, bool);
-							READ_SCRIPT_FIELD(Char, char);
-							READ_SCRIPT_FIELD(Byte, int8_t);
-							READ_SCRIPT_FIELD(Short, int16_t);
-							READ_SCRIPT_FIELD(Int, int32_t);
-							READ_SCRIPT_FIELD(Long, int64_t);
-							READ_SCRIPT_FIELD(SByte, uint8_t);
-							READ_SCRIPT_FIELD(UShort, uint16_t);
-							READ_SCRIPT_FIELD(UInt, uint32_t);
-							READ_SCRIPT_FIELD(ULong, uint64_t);
-							READ_SCRIPT_FIELD(Vector2, glm::vec2);
-							READ_SCRIPT_FIELD(Vector3, glm::vec3);
-							READ_SCRIPT_FIELD(Vector4, glm::vec4);
-						case ScriptFieldType::Entity:
-						{
-							AssetHandle data = scriptField["Data"].as<uint64_t>();
-							MonoObject* object = ScriptEngine::CreateEntityClass(data);
-							scriptInstance->SetFieldValueInternal(name, object);
-							break;
-						}
-						case ScriptFieldType::Prefab:
-						case ScriptFieldType::Font:
-						case ScriptFieldType::Texture:
-						case ScriptFieldType::Asset:
-						{
-							AssetHandle data = scriptField["Data"].as<uint64_t>();
-							MonoObject* object = ScriptEngine::CreateAssetClass(data);
-							scriptInstance->SetFieldValueInternal(name, object);
-							break;
-						}
-						}
-					}
-				}
-			}
-		}
-
-		if (auto spriteRendererComponent = entity["SpriteRendererComponent"])
-		{
-			auto& src = deserializedEntity.AddComponent<SpriteRendererComponent>();
-			DeserializeValue(src.Colour, spriteRendererComponent["Colour"]);
-			DeserializeValue(src.Tiling, spriteRendererComponent["Tiling"]);
-			DeserializeValue(src.SubTextureOffset, spriteRendererComponent["Offset"]);
-			DeserializeValue(src.SubTextureCellSize, spriteRendererComponent["CellSize"]);
-			DeserializeValue(src.SubTextureCellNum, spriteRendererComponent["CellNum"]);
-			src.Texture = DeserializeValue<uint64_t>(spriteRendererComponent["Texture"]);
-		}
-
-		if (auto circleRendererComponent = entity["CircleRendererComponent"])
-		{
-			auto& crc = deserializedEntity.AddComponent<CircleRendererComponent>();
-			DeserializeValue(crc.Colour, circleRendererComponent["Colour"]);
-			DeserializeValue(crc.Thickness, circleRendererComponent["Thickness"]);
-			DeserializeValue(crc.Fade, circleRendererComponent["Fade"]);
-		}
-
-		if (auto stringRendererComponent = entity["StringRendererComponent"])
-		{
-			auto& src = deserializedEntity.AddComponent<StringRendererComponent>();
-			DeserializeValue(src.Text, stringRendererComponent["Text"]);
-			DeserializeValue(src.Colour, stringRendererComponent["Colour"]);
-			DeserializeValue(src.Bold, stringRendererComponent["Bold"]);
-			DeserializeValue(src.Italic, stringRendererComponent["Italic"]);
-			DeserializeValue(src.Kerning, stringRendererComponent["Kerning"]);
-			DeserializeValue(src.LineSpacing, stringRendererComponent["LineSpacing"]);
-			src.FontHandle = DeserializeValue<uint64_t>(stringRendererComponent["Font"]);
-		}
-
-		if (auto rigidbody2DComponent = entity["Rigidbody2DComponent"])
-		{
-			auto& rb2d = deserializedEntity.AddComponent<Rigidbody2DComponent>();
-			DeserializeValue(rb2d.FixedRotation, rigidbody2DComponent["FixedRotation"]);
-			DeserializeValue(rb2d.Trigger, rigidbody2DComponent["IsTrigger"]);
-			DeserializeValue(rb2d.Mask, rigidbody2DComponent["Mask"]);
-
-			rb2d.Type = RigidBody2DBodyTypeFromString(
-				DeserializeValue<std::string>(rigidbody2DComponent["BodyType"], "Dynamic"));
-		}
-
-		if (auto box2DComponent = entity["BoxCollider2DComponent"])
-		{
-			auto& bc2d = deserializedEntity.AddComponent<BoxCollider2DComponent>();
-			DeserializeValue(bc2d.Offset, box2DComponent["Offset"]);
-			DeserializeValue(bc2d.Size, box2DComponent["Size"]);
-			DeserializeValue(bc2d.Density, box2DComponent["Density"]);
-			DeserializeValue(bc2d.Friction, box2DComponent["Friction"]);
-			DeserializeValue(bc2d.Restitution, box2DComponent["Restitution"]);
-			DeserializeValue(bc2d.RestitutionThreshold, box2DComponent["RestitutionThreshold"]);
-		}
-
-		if (auto circleColliderComponent = entity["CircleColliderComponent"]) {
-			auto& cc = deserializedEntity.AddComponent<CircleColliderComponent>();
-			DeserializeValue(cc.Offset, circleColliderComponent["Offset"]);
-			DeserializeValue(cc.Radius, circleColliderComponent["Radius"]);
-			DeserializeValue(cc.Density, circleColliderComponent["Density"]);
-			DeserializeValue(cc.Friction, circleColliderComponent["Friction"]);
-			DeserializeValue(cc.Restitution, circleColliderComponent["Restitution"]);
-			DeserializeValue(cc.RestitutionThreshold, circleColliderComponent["RestitutionThreshold"]);
-		}
-
-		deserializedEntity.CalculateTransform();
-
-		for (auto child : entity["Children"])
-			DeserializeEntity(child, scene, deserializedEntity);
-
-		return deserializedEntity;
+		return it->second;
 	}
 
 	Entity PrefabSerializer::Deserialize(const std::string & filepath)
@@ -477,7 +331,206 @@ namespace Nebula
 			NB_ERROR("[Prefab Serializer] Failed to load file '{0}'\n     {1}", filepath, e.what());
 			return {};
 		}
+		
+		std::unordered_map<UUID, UUID> idMap;
 
-		return DeserializeEntity(data, m_Scene, {});
+		for (auto& node : data["Order"])
+		{
+			UUID id = node.as<uint64_t>();
+			idMap[id] = UUID();
+		}
+
+		Entity returnEntity = {};
+
+		for (auto& entity : data["Prefab"])
+		{
+			uint64_t uuid = DeserializeID(idMap, entity["Entity"]);
+
+			std::string name;
+			if (auto tagComponent = entity["TagComponent"])
+				name = DeserializeValue<std::string>(tagComponent["Tag"], "Entity");
+
+			NB_TRACE("Deserialized Prefab with name = {0}", name);
+			Entity deserializedEntity = m_Scene->CreateEntity(uuid, name);
+
+			if (!returnEntity)
+				returnEntity = deserializedEntity;
+#
+			if (auto propComponent = entity["PropertiesComponent"]) {
+				auto& prop = deserializedEntity.GetComponent<PropertiesComponent>();
+				DeserializeValue(prop.Enabled, propComponent["IsEnabled"]);
+
+				uint16_t layer = DeserializeValue(propComponent["Layer"], 1);
+				prop.Layer = Project::GetActive()->GetConfig().Layers[layer];
+			}
+
+			if (auto parentComponent = entity["ParentChildComponent"]) {
+				auto& pcc = deserializedEntity.GetComponent<ParentChildComponent>();
+
+				pcc.Parent = DeserializeID(idMap, parentComponent["PrimaryParent"]);
+				if (pcc.Parent)
+					m_Scene->m_SceneOrder.remove(uuid);
+
+				uint32_t count = DeserializeValue<uint32_t>(parentComponent["ChildCount"]);
+				auto children = parentComponent["Children"];
+				for (uint32_t i = 0; i < count; i++)
+					pcc.AddChild(DeserializeID(idMap, children[i]));
+			}
+
+			if (auto transformComponent = entity["TransformComponent"]) {
+				auto& tc = deserializedEntity.GetComponent<TransformComponent>();
+				DeserializeValue(tc.Translation, transformComponent["Translation"]);
+				DeserializeValue(tc.Rotation, transformComponent["Rotation"]);
+				DeserializeValue(tc.Scale, transformComponent["Scale"]);
+			}
+
+			if (auto cameraComponent = entity["CameraComponent"])
+			{
+				auto& cc = deserializedEntity.AddComponent<CameraComponent>();
+				DeserializeValue(cc.Primary, cameraComponent["Primary"]);
+				DeserializeValue(cc.FixedAspectRatio, cameraComponent["FixedAspectRatio"]);
+
+				if (auto cameraProps = cameraComponent["Camera"])
+				{
+					cc.Camera.SetProjectionType((SceneCamera::ProjectionType)cameraProps["ProjectionType"].as<int>());
+
+					cc.Camera.SetPerspectiveFOV(cameraProps["PerspectiveFOV"].as<float>());
+					cc.Camera.SetPerspectiveNearClip(cameraProps["PerspectiveNear"].as<float>());
+					cc.Camera.SetPerspectiveFarClip(cameraProps["PerspectiveFar"].as<float>());
+
+					cc.Camera.SetOrthographicSize(cameraProps["OrthographicSize"].as<float>());
+					cc.Camera.SetOrthoNearClip(cameraProps["OrthographicNear"].as<float>());
+					cc.Camera.SetOrthoFarClip(cameraProps["OrthographicFar"].as<float>());
+				}
+			}
+
+			if (auto scriptComponent = entity["ScriptComponent"])
+			{
+				auto& sc = deserializedEntity.AddComponent<ScriptComponent>();
+				DeserializeValue(sc.ClassName, scriptComponent["Class"]);
+
+				Ref<ScriptInstance> scriptInstance = ScriptEngine::CreateScriptInstance(deserializedEntity);
+				if (auto scriptFields = scriptComponent["ScriptFields"])
+				{
+					if (Ref<ScriptClass> entityClass = ScriptEngine::GetEntityClass(sc.ClassName))
+					{
+						const auto& fields = entityClass->GetFields();
+						for (auto scriptField : scriptFields)
+						{
+							std::string name = scriptField["Name"].as<std::string>();
+							std::string typeString = scriptField["Type"].as<std::string>();
+							ScriptFieldType type = Utils::ScriptFieldTypeFromString(typeString);
+
+							auto it = fields.find(name);
+							if (it == fields.end())
+								continue;
+
+							switch (type)
+							{
+								READ_SCRIPT_FIELD(Float, float);
+								READ_SCRIPT_FIELD(Double, double);
+								READ_SCRIPT_FIELD(Bool, bool);
+								READ_SCRIPT_FIELD(Char, char);
+								READ_SCRIPT_FIELD(Byte, int8_t);
+								READ_SCRIPT_FIELD(Short, int16_t);
+								READ_SCRIPT_FIELD(Int, int32_t);
+								READ_SCRIPT_FIELD(Long, int64_t);
+								READ_SCRIPT_FIELD(SByte, uint8_t);
+								READ_SCRIPT_FIELD(UShort, uint16_t);
+								READ_SCRIPT_FIELD(UInt, uint32_t);
+								READ_SCRIPT_FIELD(ULong, uint64_t);
+								READ_SCRIPT_FIELD(Vector2, glm::vec2);
+								READ_SCRIPT_FIELD(Vector3, glm::vec3);
+								READ_SCRIPT_FIELD(Vector4, glm::vec4);
+							case ScriptFieldType::Entity:
+							{
+								UUID data = DeserializeID(idMap, scriptField["Data"]);
+								MonoObject* object = ScriptEngine::CreateEntityClass(data);
+								scriptInstance->SetFieldValueInternal(name, object);
+								break;
+							}
+							case ScriptFieldType::Prefab:
+							case ScriptFieldType::Font:
+							case ScriptFieldType::Texture:
+							case ScriptFieldType::Asset:
+							{
+								AssetHandle data = scriptField["Data"].as<uint64_t>();
+								MonoObject* object = ScriptEngine::CreateAssetClass(data);
+								scriptInstance->SetFieldValueInternal(name, object);
+								break;
+							}
+							}
+						}
+					}
+				}
+			}
+
+			if (auto spriteRendererComponent = entity["SpriteRendererComponent"])
+			{
+				auto& src = deserializedEntity.AddComponent<SpriteRendererComponent>();
+				DeserializeValue(src.Colour, spriteRendererComponent["Colour"]);
+				DeserializeValue(src.Tiling, spriteRendererComponent["Tiling"]);
+				DeserializeValue(src.SubTextureOffset, spriteRendererComponent["Offset"]);
+				DeserializeValue(src.SubTextureCellSize, spriteRendererComponent["CellSize"]);
+				DeserializeValue(src.SubTextureCellNum, spriteRendererComponent["CellNum"]);
+				src.Texture = DeserializeValue<uint64_t>(spriteRendererComponent["Texture"]);
+			}
+
+			if (auto circleRendererComponent = entity["CircleRendererComponent"])
+			{
+				auto& crc = deserializedEntity.AddComponent<CircleRendererComponent>();
+				DeserializeValue(crc.Colour, circleRendererComponent["Colour"]);
+				DeserializeValue(crc.Thickness, circleRendererComponent["Thickness"]);
+				DeserializeValue(crc.Fade, circleRendererComponent["Fade"]);
+			}
+
+			if (auto stringRendererComponent = entity["StringRendererComponent"])
+			{
+				auto& src = deserializedEntity.AddComponent<StringRendererComponent>();
+				DeserializeValue(src.Text, stringRendererComponent["Text"]);
+				DeserializeValue(src.Colour, stringRendererComponent["Colour"]);
+				DeserializeValue(src.Bold, stringRendererComponent["Bold"]);
+				DeserializeValue(src.Italic, stringRendererComponent["Italic"]);
+				DeserializeValue(src.Kerning, stringRendererComponent["Kerning"]);
+				DeserializeValue(src.LineSpacing, stringRendererComponent["LineSpacing"]);
+				src.FontHandle = DeserializeValue<uint64_t>(stringRendererComponent["Font"]);
+			}
+
+			if (auto rigidbody2DComponent = entity["Rigidbody2DComponent"])
+			{
+				auto& rb2d = deserializedEntity.AddComponent<Rigidbody2DComponent>();
+				DeserializeValue(rb2d.FixedRotation, rigidbody2DComponent["FixedRotation"]);
+				DeserializeValue(rb2d.Trigger, rigidbody2DComponent["IsTrigger"]);
+				
+				rb2d.Type = RigidBody2DBodyTypeFromString(
+					DeserializeValue<std::string>(rigidbody2DComponent["BodyType"], "Dynamic"));
+			}
+
+			if (auto box2DComponent = entity["BoxCollider2DComponent"])
+			{
+				auto& bc2d = deserializedEntity.AddComponent<BoxCollider2DComponent>();
+				DeserializeValue(bc2d.Offset, box2DComponent["Offset"]);
+				DeserializeValue(bc2d.Size, box2DComponent["Size"]);
+				DeserializeValue(bc2d.Density, box2DComponent["Density"]);
+				DeserializeValue(bc2d.Friction, box2DComponent["Friction"]);
+				DeserializeValue(bc2d.Restitution, box2DComponent["Restitution"]);
+				DeserializeValue(bc2d.RestitutionThreshold, box2DComponent["RestitutionThreshold"]);
+			}
+
+			if (auto circleColliderComponent = entity["CircleColliderComponent"]) 
+			{
+				auto& cc = deserializedEntity.AddComponent<CircleColliderComponent>();
+				DeserializeValue(cc.Offset, circleColliderComponent["Offset"]);
+				DeserializeValue(cc.Radius, circleColliderComponent["Radius"]);
+				DeserializeValue(cc.Density, circleColliderComponent["Density"]);
+				DeserializeValue(cc.Friction, circleColliderComponent["Friction"]);
+				DeserializeValue(cc.Restitution, circleColliderComponent["Restitution"]);
+				DeserializeValue(cc.RestitutionThreshold, circleColliderComponent["RestitutionThreshold"]);
+			}
+
+			deserializedEntity.CalculateTransform();
+		}
+
+		return returnEntity;
 	}
 }
