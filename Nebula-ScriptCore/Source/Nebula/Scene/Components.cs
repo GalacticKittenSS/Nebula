@@ -305,18 +305,6 @@
             M = 0x1000, N = 0x2000, O = 0x4000, P = 0x8000
         };
 
-        public Rigidbody2DComponent.Filters Mask
-        {
-            get
-            {
-                return (Rigidbody2DComponent.Filters)InternalCalls.Rigidbody2DComponent_GetMask(Entity.ID);
-            }
-            set
-            {
-                InternalCalls.Rigidbody2DComponent_SetMask(Entity.ID, (short)value);
-            }
-        }
-
         public void ApplyLinearImpulse(Vector2 impulse)
         {
             InternalCalls.Rigidbody2DComponent_ApplyLinearImpulseToCenter(Entity.ID, ref impulse);
@@ -389,6 +377,18 @@
             get => InternalCalls.BoxCollider2DComponent_GetThreshold(Entity.ID); 
             set => InternalCalls.BoxCollider2DComponent_SetThreshold(Entity.ID, value);
         }
+
+        public Rigidbody2DComponent.Filters Mask
+        {
+            get
+            {
+                return (Rigidbody2DComponent.Filters)InternalCalls.BoxCollider2DComponent_GetMask(Entity.ID);
+            }
+            set
+            {
+                InternalCalls.BoxCollider2DComponent_SetMask(Entity.ID, (short)value);
+            }
+        }
     }
 
     public class CircleColliderComponent : Component
@@ -434,6 +434,18 @@
         {
             get => InternalCalls.CircleCollider2DComponent_GetThreshold(Entity.ID); 
             set => InternalCalls.CircleCollider2DComponent_SetThreshold(Entity.ID, value);
+        }
+
+        public Rigidbody2DComponent.Filters Mask
+        {
+            get
+            {
+                return (Rigidbody2DComponent.Filters)InternalCalls.CircleCollider2DComponent_GetMask(Entity.ID);
+            }
+            set
+            {
+                InternalCalls.CircleCollider2DComponent_SetMask(Entity.ID, (short)value);
+            }
         }
     }
 }

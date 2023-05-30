@@ -1142,6 +1142,18 @@ namespace Nebula {
 			if (DrawCombo("Body Type", BodyTypeStrings, 3, CurrentBodyTypeString, componentType))
 				component.Type = (Rigidbody2DComponent::BodyType)componentType;
 
+			DrawBool("Fixed Rotation", component.FixedRotation);
+			DrawBool("Is Trigger", component.Trigger);
+		}, true);
+
+		DrawComponent<BoxCollider2DComponent>("Box Collider 2D", entity, [](auto& component) {
+			DrawVec2Control("Offset", component.Offset);
+			DrawVec2Control("Size",   component.Size);
+			DrawVec1Control("Density", component.Density, 0.01f, 0.0f, 1.0f);
+			DrawVec1Control("Friction", component.Friction, 0.01f, 0.0f, 1.0f);
+			DrawVec1Control("Restitution", component.Restitution, 0.01f, 0.0f, 1.0f);
+			DrawVec1Control("Restitution Threshold", component.RestitutionThreshold, 0.01f, 0.0f);
+			
 			ImGui::PushID("Mask");
 			float size = DrawLabel("Mask");
 			ImGui::SetNextItemWidth(size);
@@ -1162,7 +1174,7 @@ namespace Nebula {
 					if (ImGui::Checkbox("##V", &canInteract))
 					{
 						if (canInteract)
-							component.Mask = component.Mask |  l;
+							component.Mask = component.Mask | l;
 						else
 							component.Mask = component.Mask & ~l;
 					}
@@ -1173,18 +1185,6 @@ namespace Nebula {
 				ImGui::EndCombo();
 			}
 			ImGui::PopID();
-			
-			DrawBool("Fixed Rotation", component.FixedRotation);
-			DrawBool("Is Trigger", component.Trigger);
-		}, true);
-
-		DrawComponent<BoxCollider2DComponent>("Box Collider 2D", entity, [](auto& component) {
-			DrawVec2Control("Offset", component.Offset);
-			DrawVec2Control("Size",   component.Size);
-			DrawVec1Control("Density", component.Density, 0.01f, 0.0f, 1.0f);
-			DrawVec1Control("Friction", component.Friction, 0.01f, 0.0f, 1.0f);
-			DrawVec1Control("Restitution", component.Restitution, 0.01f, 0.0f, 1.0f);
-			DrawVec1Control("Restitution Threshold", component.RestitutionThreshold, 0.01f, 0.0f);
 		}, true);
 
 		DrawComponent<CircleColliderComponent>("Circle Collider", entity, [](auto& component) {
@@ -1194,6 +1194,38 @@ namespace Nebula {
 			DrawVec1Control("Friction", component.Friction, 0.01f, 0.0f, 1.0f);
 			DrawVec1Control("Restitution", component.Restitution, 0.01f, 0.0f, 1.0f);
 			DrawVec1Control("Restitution Threshold", component.RestitutionThreshold, 0.01f, 0.0f);
+			
+			ImGui::PushID("Mask");
+			float size = DrawLabel("Mask");
+			ImGui::SetNextItemWidth(size);
+
+			if (ImGui::BeginCombo("##V", "Collide With"))
+			{
+				const ProjectConfig& pConfig = Project::GetActive()->GetConfig();
+
+				for (auto& [l, info] : pConfig.Layers)
+				{
+					ImGui::PushID(info->Name.c_str());
+					ImGui::Text(info->Name.c_str());
+					ImGui::SameLine();
+
+					ImGui::SetCursorPosX(ImGui::GetWindowContentRegionWidth() - 25.0f);
+					bool canInteract = component.Mask & l;
+
+					if (ImGui::Checkbox("##V", &canInteract))
+					{
+						if (canInteract)
+							component.Mask = component.Mask | l;
+						else
+							component.Mask = component.Mask & ~l;
+					}
+
+					ImGui::PopID();
+				}
+
+				ImGui::EndCombo();
+			}
+			ImGui::PopID();
 		}, true);
 	}
 }

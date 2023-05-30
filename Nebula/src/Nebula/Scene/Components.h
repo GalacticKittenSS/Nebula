@@ -169,8 +169,6 @@ namespace Nebula {
 		bool FixedRotation = false;
 		bool Trigger = false;
 
-		uint16_t Mask = 0xFFFF;
-
 		void* RuntimeBody = nullptr;
 
 		Rigidbody2DComponent() = default;
@@ -195,6 +193,8 @@ namespace Nebula {
 		float Restitution = 0.0f;
 		float RestitutionThreshold = 0.5f;
 
+		uint16_t Mask = 0xFFFF;
+
 		void* RuntimeFixture = nullptr;
 
 		BoxCollider2DComponent() = default;
@@ -211,6 +211,8 @@ namespace Nebula {
 		float Friction = 0.5f;
 		float Restitution = 0.0f;
 		float RestitutionThreshold = 0.5f;
+
+		uint16_t Mask = 0xFFFF;
 
 		void* RuntimeFixture = nullptr;
 

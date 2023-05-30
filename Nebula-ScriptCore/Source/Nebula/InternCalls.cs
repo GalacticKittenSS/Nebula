@@ -290,12 +290,6 @@ namespace Nebula
         internal extern static void Rigidbody2DComponent_SetBodyType(ulong entityID, int type);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static short Rigidbody2DComponent_GetMask(ulong entityID);
-
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static void Rigidbody2DComponent_SetMask(ulong entityID, short mask);
-
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static bool Rigidbody2DComponent_GetFixedRotation(ulong entityID);
         
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
@@ -353,6 +347,12 @@ namespace Nebula
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void BoxCollider2DComponent_SetThreshold(ulong entityID, float threshold);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static short BoxCollider2DComponent_GetMask(ulong entityID);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void BoxCollider2DComponent_SetMask(ulong entityID, short mask);
         #endregion
 
         #region CircleCollider2DComponent
@@ -391,6 +391,12 @@ namespace Nebula
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void CircleCollider2DComponent_SetThreshold(ulong entityID, float threshold);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static short CircleCollider2DComponent_GetMask(ulong entityID);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void CircleCollider2DComponent_SetMask(ulong entityID, short mask);
         #endregion
     }
 }

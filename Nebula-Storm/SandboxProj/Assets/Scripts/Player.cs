@@ -54,7 +54,9 @@ namespace Sandbox
             
             Transform = GetComponent<TransformComponent>();
             Rigidbody = GetComponent<Rigidbody2DComponent>();
-            Rigidbody.Mask = Rigidbody2DComponent.Filters.A;
+            
+            BoxCollider2DComponent boxCollider2D = GetComponent<BoxCollider2DComponent>();
+            boxCollider2D.Mask = Rigidbody2DComponent.Filters.A;
 
             SpriteRendererComponent SpriteRenderer = GetComponent<SpriteRendererComponent>();
             SpriteRenderer.Colour = new Vector4(0.0f, 0.5f, 1.0f, 1.0f);

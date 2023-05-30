@@ -247,7 +247,6 @@ namespace Nebula {
 
 	void Scene::CreateBox2DBody(Entity entity) {
 		auto& world = entity.GetComponent<WorldTransformComponent>();
-		auto& transform = entity.GetComponent<TransformComponent>();
 		auto& rb2d = entity.GetComponent<Rigidbody2DComponent>();
 		auto& prop = entity.GetComponent<PropertiesComponent>();
 
@@ -283,7 +282,7 @@ namespace Nebula {
 
 			fixtureDef.isSensor = rb2d.Trigger;
 			fixtureDef.filter.categoryBits = prop.Layer->Identity;
-			fixtureDef.filter.maskBits = rb2d.Mask;
+			fixtureDef.filter.maskBits = bc2d.Mask;
 			
 			bc2d.RuntimeFixture = body->CreateFixture(&fixtureDef);
 		}
@@ -304,10 +303,93 @@ namespace Nebula {
 
 			fixtureDef.isSensor = rb2d.Trigger;
 			fixtureDef.filter.categoryBits = prop.Layer->Identity;
-			fixtureDef.filter.maskBits = rb2d.Mask;
+			fixtureDef.filter.maskBits = cc.Mask;
 
 			cc.RuntimeFixture = body->CreateFixture(&fixtureDef);
 		}
+	}
+
+	void Scene::UpdateBox2DBody(Entity entity)
+	{
+		if (!m_IsRunning)
+			return;
+
+		auto& world = entity.GetComponent<WorldTransformComponent>();
+		auto& rb2d = entity.GetComponent<Rigidbody2DComponent>();
+		auto& prop = entity.GetComponent<PropertiesComponent>();
+
+		glm::vec3 translation, rotation, scale;
+		Maths::DecomposeTransform(world.Transform, translation, rotation, scale);
+
+		b2Body* body = (b2Body*)rb2d.RuntimeBody;
+		body->SetEnabled(prop.Enabled);
+		body->SetType(Utils::Rigibody2DToBox2D(rb2d.Type));
+		body->SetTransform({ translation.x, translation.y }, rotation.z);
+		body->SetFixedRotation(rb2d.FixedRotation);
+
+		if (entity.HasComponent<BoxCollider2DComponent>()) {
+			auto& bc2d = entity.GetComponent<BoxCollider2DComponent>();
+
+			if (!bc2d.RuntimeFixture)
+			{
+				b2PolygonShape polygonShape;
+				polygonShape.SetAsBox(scale.x * bc2d.Size.x, scale.y * bc2d.Size.y, b2Vec2(bc2d.Offset.x, bc2d.Offset.y), 0.0f);
+
+				b2FixtureDef fixtureDef;
+				fixtureDef.shape = &polygonShape;
+
+				bc2d.RuntimeFixture = body->CreateFixture(&fixtureDef);
+			}
+
+			b2Fixture* fixture = (b2Fixture*)bc2d.RuntimeFixture;
+			fixture->SetDensity(bc2d.Density);
+			fixture->SetFriction(bc2d.Friction);
+			fixture->SetRestitution(bc2d.Restitution);
+			fixture->SetRestitutionThreshold(bc2d.RestitutionThreshold);
+			fixture->SetSensor(rb2d.Trigger);
+			
+			b2PolygonShape* polygonShape = (b2PolygonShape*)fixture->GetShape();;
+			polygonShape->SetAsBox(scale.x * bc2d.Size.x, scale.y * bc2d.Size.y, b2Vec2(bc2d.Offset.x, bc2d.Offset.y), 0.0f);
+
+			b2Filter filter;
+			filter.categoryBits = prop.Layer->Identity;
+			filter.maskBits = bc2d.Mask;
+			fixture->SetFilterData(filter);
+		}
+
+		if (entity.HasComponent<CircleColliderComponent>()) {
+			auto& cc = entity.GetComponent<CircleColliderComponent>();
+
+			if (!cc.RuntimeFixture)
+			{
+				b2CircleShape circle;
+				circle.m_p.Set(cc.Offset.x, cc.Offset.y);
+				circle.m_radius = cc.Radius * scale.x;
+
+				b2FixtureDef fixtureDef;
+				fixtureDef.shape = &circle;
+
+				cc.RuntimeFixture = body->CreateFixture(&fixtureDef);
+			}
+
+			b2Fixture* fixture = (b2Fixture*)cc.RuntimeFixture;
+			fixture->SetDensity(cc.Density);
+			fixture->SetFriction(cc.Friction);
+			fixture->SetRestitution(cc.Restitution);
+			fixture->SetRestitutionThreshold(cc.RestitutionThreshold);
+			fixture->SetSensor(rb2d.Trigger);
+
+			b2CircleShape* circle = (b2CircleShape*)fixture->GetShape();
+			circle->m_p.Set(cc.Offset.x, cc.Offset.y);
+			circle->m_radius = cc.Radius * scale.x;
+
+			b2Filter filter;
+			filter.categoryBits = prop.Layer->Identity;
+			filter.maskBits = cc.Mask;
+			fixture->SetFilterData(filter);
+		}
+
+		body->ResetMassData();
 	}
 
 	void Scene::InitPhysics() {
@@ -635,10 +717,6 @@ namespace Nebula {
 	void Scene::OnComponentAdded<Rigidbody2DComponent>(Entity entity, Rigidbody2DComponent& component) {
 		if (!m_IsRunning)
 			return;
-		
-		//Future: Update Body
-		if (b2Body* body = (b2Body*)entity.GetComponent<Rigidbody2DComponent>().RuntimeBody)
-			m_PhysicsWorld->DestroyBody(body);
 
 		CreateBox2DBody(entity);
 	}
@@ -647,12 +725,8 @@ namespace Nebula {
 	void Scene::OnComponentAdded<BoxCollider2DComponent>(Entity entity, BoxCollider2DComponent& component) {
 		if (!m_IsRunning || !entity.HasComponent<Rigidbody2DComponent>())
 			return;
-	
-		//Future: Update Body
-		if (b2Body* body = (b2Body*)entity.GetComponent<Rigidbody2DComponent>().RuntimeBody)
-			m_PhysicsWorld->DestroyBody(body);
-		
-		CreateBox2DBody(entity);
+
+		UpdateBox2DBody(entity);
 	}
 
 	template<>
@@ -660,10 +734,6 @@ namespace Nebula {
 		if (!m_IsRunning || !entity.HasComponent<Rigidbody2DComponent>())
 			return;
 
-		//Future: Update Body
-		if (b2Body* body = (b2Body*)entity.GetComponent<Rigidbody2DComponent>().RuntimeBody)
-			m_PhysicsWorld->DestroyBody(body);
-
-		CreateBox2DBody(entity);
+		UpdateBox2DBody(entity);
 	}
 }

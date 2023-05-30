@@ -67,6 +67,7 @@ namespace Nebula {
 		Array<UUID> m_SceneOrder;
 	private:
 		void CreateBox2DBody(Entity entity);
+		void UpdateBox2DBody(Entity entity);
 
 		void InitPhysics();
 		void UpdatePhysics();
@@ -96,6 +97,7 @@ namespace Nebula {
 		friend class Entity;
 		friend class SceneHierarchyPanel;
 		friend class SceneSerializer;
+		friend class PrefabSerializer;
 		friend class ScriptEngine;
 	};
 }

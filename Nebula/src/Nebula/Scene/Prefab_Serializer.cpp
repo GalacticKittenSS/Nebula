@@ -221,8 +221,7 @@ namespace Nebula
 			out << YAML::Key << "BodyType" << YAML::Value << RigidBody2DBodyTypeToString(rb2dComponent.Type);
 			out << YAML::Key << "FixedRotation" << YAML::Value << rb2dComponent.FixedRotation;
 			out << YAML::Key << "IsTrigger" << YAML::Value << rb2dComponent.Trigger;
-			out << YAML::Key << "Mask" << YAML::Value << rb2dComponent.Mask;
-
+			
 			out << YAML::EndMap; // Rigidbody2DComponent
 		}
 
@@ -237,6 +236,7 @@ namespace Nebula
 			out << YAML::Key << "Friction" << YAML::Value << bc2dComponent.Friction;
 			out << YAML::Key << "Restitution" << YAML::Value << bc2dComponent.Restitution;
 			out << YAML::Key << "RestitutionThreshold" << YAML::Value << bc2dComponent.RestitutionThreshold;
+			out << YAML::Key << "Mask" << YAML::Value << bc2dComponent.Mask;
 
 			out << YAML::EndMap; // BoxCollider2DComponent
 		}
@@ -252,6 +252,7 @@ namespace Nebula
 			out << YAML::Key << "Friction" << YAML::Value << ccComponent.Friction;
 			out << YAML::Key << "Restitution" << YAML::Value << ccComponent.Restitution;
 			out << YAML::Key << "RestitutionThreshold" << YAML::Value << ccComponent.RestitutionThreshold;
+			out << YAML::Key << "Mask" << YAML::Value << ccComponent.Mask;
 
 			out << YAML::EndMap; // CircleColliderComponent
 		}
@@ -515,6 +516,7 @@ namespace Nebula
 				DeserializeValue(bc2d.Friction, box2DComponent["Friction"]);
 				DeserializeValue(bc2d.Restitution, box2DComponent["Restitution"]);
 				DeserializeValue(bc2d.RestitutionThreshold, box2DComponent["RestitutionThreshold"]);
+				DeserializeValue(bc2d.Mask, box2DComponent["Mask"]);
 			}
 
 			if (auto circleColliderComponent = entity["CircleColliderComponent"]) 
@@ -526,9 +528,13 @@ namespace Nebula
 				DeserializeValue(cc.Friction, circleColliderComponent["Friction"]);
 				DeserializeValue(cc.Restitution, circleColliderComponent["Restitution"]);
 				DeserializeValue(cc.RestitutionThreshold, circleColliderComponent["RestitutionThreshold"]);
+				DeserializeValue(cc.Mask, circleColliderComponent["Mask"]);
 			}
 
 			deserializedEntity.CalculateTransform();
+
+			if (deserializedEntity.HasComponent<Rigidbody2DComponent>())
+				m_Scene->UpdateBox2DBody(deserializedEntity);
 		}
 
 		return returnEntity;
