@@ -13,20 +13,19 @@ namespace Nebula
 			return Project::GetAssetManager()->CreateAsset(path);
 		}
 		
-		static AssetHandle CreateFontFamily(const std::filesystem::path& path)
+		static AssetHandle CreateGlobalFamily(const std::filesystem::path& path)
 		{
 			std::string pathString = path.string();
 			size_t lastSlash = pathString.find_last_of("/");
 			std::string relativePath = pathString.substr(lastSlash + 1);
 
 			AssetMetadata data;
-			data.Handle = AssetHandle();
 			data.Type = AssetType::FontFamily;
 			data.Path = path;
-			data.RelativePath = relativePath;
+			data.RelativePath = relativePath; // family name
+			data.isGlobal = true;
 
-			NB_ASSERT(Project::GetAssetManager());
-			if (!Project::GetAssetManager()->CreateAsset(data))
+			if (!AssetManagerBase::CreateGlobalAsset(data))
 				return NULL;
 
 			return data.Handle;
@@ -52,13 +51,13 @@ namespace Nebula
 			return Project::GetAssetManager()->GetAssetMetadata(handle);
 		}
 
-		static inline Array<AssetHandle> GetAllAssetsWithType(AssetType type, bool global = false)
+		static inline Array<AssetHandle> GetAllAssetsWithType(AssetType type, bool global = true)
 		{
 			NB_ASSERT(Project::GetAssetManager());
 			return Project::GetAssetManager()->GetAllAssetsWithType(type, global);
 		}
 
-		static inline void GetAllAssetsWithType(Array<AssetHandle>& handlesArray, AssetType type, bool global = false)
+		static inline void GetAllAssetsWithType(Array<AssetHandle>& handlesArray, AssetType type, bool global = true)
 		{
 			NB_ASSERT(Project::GetAssetManager());
 			Project::GetAssetManager()->GetAllAssetsWithType(handlesArray, type, global);

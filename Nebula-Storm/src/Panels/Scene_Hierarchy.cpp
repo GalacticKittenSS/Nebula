@@ -1087,8 +1087,8 @@ namespace Nebula {
 				if (ImGui::Selectable("Default", currentName == "Default"))
 					component.FontHandle = NULL;
 				
-				Array<AssetHandle> handles = AssetManager::GetAllAssetsWithType(AssetType::FontFamily, true);
-				AssetManager::GetAllAssetsWithType(handles, AssetType::Font);
+				Array<AssetHandle> handles = AssetManager::GetAllAssetsWithType(AssetType::FontFamily);
+				AssetManager::GetAllAssetsWithType(handles, AssetType::Font, false);
 
 				for (uint32_t i = 0; i < handles.size(); i++)
 				{

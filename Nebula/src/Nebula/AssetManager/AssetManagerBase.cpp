@@ -56,8 +56,8 @@ namespace Nebula
 	}
 
 	// Note: Changing a global asset's index may mess up scenes and prefabs
-	AssetMap AssetManagerBase::s_GlobalAssets = {};
-	uint16_t AssetManagerBase::s_NextGlobalIndex = 1;
+	AssetRegistry AssetManagerBase::s_GlobalRegistry = {};
+	uint16_t AssetManagerBase::s_GlobalIndex = 1;
 
 	/*void AssetManagerBase::OnAssetChange(const std::string& path, const filewatch::Event change_type)
 	{
@@ -74,7 +74,8 @@ namespace Nebula
 
 	bool AssetManagerBase::IsHandleValid(AssetHandle handle)
 	{
-		return handle != 0 && m_AssetRegistry.find(handle) != m_AssetRegistry.end();
+		return handle != 0 && (m_AssetRegistry.find(handle) != m_AssetRegistry.end() 
+			|| s_GlobalRegistry.find(handle) != s_GlobalRegistry.end());
 	}
 
 	bool AssetManagerBase::IsAssetLoaded(AssetHandle handle)
@@ -118,7 +119,7 @@ namespace Nebula
 
 		m_AssetRegistry[handle] = data;
 	}
-
+	
 	bool AssetManagerBase::CreateAsset(AssetMetadata& metadata)
 	{
 		if (!metadata || IsHandleValid(metadata.Handle)
@@ -128,9 +129,50 @@ namespace Nebula
 		m_AssetRegistry[metadata.Handle] = metadata;
 	}
 
+	bool AssetManagerBase::CreateGlobalAsset(AssetMetadata& metadata)
+	{
+		if (!metadata || !std::filesystem::exists(metadata.Path))
+			return false;
+
+		metadata.Handle = s_GlobalIndex;
+
+		s_GlobalRegistry[s_GlobalIndex] = metadata;
+		s_GlobalIndex++;
+	}
+	
+	AssetHandle AssetManagerBase::CreateGlobalAsset(const std::filesystem::path& path, const std::filesystem::path& relativePath)
+	{
+		NB_PROFILE_FUNCTION();
+
+		if (!std::filesystem::exists(path))
+			return NULL;
+
+		AssetType type = Utils::GetTypeFromExtension(path.extension().string());
+		if (type == AssetType::None)
+			return NULL;
+
+		AssetMetadata data;
+		data.Handle = s_GlobalIndex;
+		data.Type = type;
+		data.Path = path;
+		data.RelativePath = relativePath;
+		data.isGlobal = true;
+
+		s_GlobalRegistry[s_GlobalIndex] = data;
+		s_GlobalIndex++;
+
+		return data.Handle;
+	}
+
 	AssetHandle AssetManagerBase::GetHandleFromPath(const std::filesystem::path& path)
 	{
 		for (const auto& [handle, asset] : m_AssetRegistry)
+		{
+			if (asset.Path == path || asset.RelativePath == path.string())
+				return handle;
+		}
+		
+		for (const auto& [handle, asset] : s_GlobalRegistry)
 		{
 			if (asset.Path == path || asset.RelativePath == path.string())
 				return handle;
@@ -173,10 +215,14 @@ namespace Nebula
 		static AssetMetadata s_NullMetadata;
 
 		auto it = m_AssetRegistry.find(handle);
-		if (it == m_AssetRegistry.end())
-			return s_NullMetadata;
+		if (it != m_AssetRegistry.end())
+			return it->second;
 
-		return it->second;
+		it = s_GlobalRegistry.find(handle);
+		if (it != s_GlobalRegistry.end())
+			return it->second;
+
+		return s_NullMetadata;
 	}
 
 	const AssetMetadata& AssetManagerBase::GetAssetMetadata(const std::filesystem::path& path) const
@@ -185,6 +231,12 @@ namespace Nebula
 		static AssetMetadata s_NullMetadata;
 
 		for (auto [handle, metadata] : m_AssetRegistry)
+		{
+			if (metadata.Path == path)
+				return metadata;
+		}
+		
+		for (auto [handle, metadata] : s_GlobalRegistry)
 		{
 			if (metadata.Path == path)
 				return metadata;
@@ -205,6 +257,17 @@ namespace Nebula
 		NB_PROFILE_FUNCTION();
 
 		for (const auto& [handle, metadata] : m_AssetRegistry)
+		{
+			if (metadata.Type != type)
+				continue;
+
+			handlesArray.push_back(handle);
+		}
+		
+		if (!global)
+			return;
+
+		for (const auto& [handle, metadata] : s_GlobalRegistry)
 		{
 			if (metadata.Type != type)
 				continue;

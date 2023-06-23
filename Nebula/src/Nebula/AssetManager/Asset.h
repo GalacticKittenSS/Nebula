@@ -27,6 +27,7 @@ namespace Nebula
 		AssetType Type;
 		std::filesystem::path Path;
 		std::filesystem::path RelativePath;
+		bool isGlobal = false;
 
 		operator bool() const { return Type != AssetType::None; }
 	};

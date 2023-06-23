@@ -97,6 +97,9 @@ namespace Nebula {
 
 		RenderCommand::SetClearColour({ 0.1f, 0.1f, 0.1f, 1.0f });
 		RenderCommand::SetLineWidth(4.0f);
+
+		AssetManager::CreateGlobalFamily("Resources/fonts/OpenSans");
+		AssetManager::CreateGlobalFamily("Resources/fonts/Roboto");
 		
 		//Initialize Frame Buffer
 		FrameBufferSpecification fbSpec;

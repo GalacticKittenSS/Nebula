@@ -19,7 +19,10 @@ namespace Nebula
 		AssetHandle CreateAsset(const std::filesystem::path& path);
 		bool CreateAsset(AssetMetadata& metadata);
 		bool CreateAsset(AssetHandle handle, const std::filesystem::path& path, const std::filesystem::path& relativePath);
-
+		
+		static bool CreateGlobalAsset(AssetMetadata& metadata);
+		static AssetHandle CreateGlobalAsset(const std::filesystem::path& path, const std::filesystem::path& relativePath);
+		
 		Ref<Asset> GetAsset(AssetHandle handle, bool load = true);
 		const AssetMetadata& GetAssetMetadata(AssetHandle handle) const;
 		const AssetMetadata& GetAssetMetadata(const std::filesystem::path& path) const;
@@ -28,8 +31,8 @@ namespace Nebula
 		bool IsHandleValid(AssetHandle handle);
 		bool IsAssetLoaded(AssetHandle handle);
 
-		Array<AssetHandle> GetAllAssetsWithType(AssetType type, bool global = false);
-		void GetAllAssetsWithType(Array<AssetHandle>& handlesArray, AssetType type, bool global = false);
+		Array<AssetHandle> GetAllAssetsWithType(AssetType type, bool global = true);
+		void GetAllAssetsWithType(Array<AssetHandle>& handlesArray, AssetType type, bool global = true);
 		const AssetRegistry& GetAssetRegistry() const { return m_AssetRegistry; }
 
 		void SerializeRegistry(const std::filesystem::path& path);
@@ -43,7 +46,7 @@ namespace Nebula
 		AssetRegistry m_AssetRegistry;
 		AssetMap m_Assets;
 
-		static AssetMap s_GlobalAssets;
-		static uint16_t s_NextGlobalIndex;
+		static AssetRegistry s_GlobalRegistry;
+		static uint16_t s_GlobalIndex;
 	};
 }

@@ -12,15 +12,18 @@ namespace Nebula
 	Ref<Font> FontImporter::ImportFont(AssetHandle handle, const AssetMetadata& metadata)
 	{
 		std::filesystem::path path = metadata.Path;
-		
 		std::filesystem::path filename = metadata.RelativePath;
 		filename = filename.replace_extension();
-		
-		std::filesystem::path cachePath =
-			Project::GetActive()->GetProjectDirectory() /
-			"Cache" / 
-			(filename.string() + ".png");
 
+		std::filesystem::path cachePath;
+		if (metadata.isGlobal)
+			cachePath = "Resources/cache/font/" + filename.string() + ".png";
+		else
+		{
+			cachePath = Project::GetActive()->GetProjectDirectory() / "Cache" /
+				(filename.string() + ".png");
+		}
+		
 		return CreateRef<Font>(path, cachePath);
 	}
 	
@@ -54,12 +57,18 @@ namespace Nebula
 			}
 
 			std::filesystem::path relativePath = name + "_" + fonts[i].Name;
-			AssetHandle handle = AssetHandle();
 
-			if (!Project::GetAssetManager()->CreateAsset(handle, fontPath, relativePath))
-				continue;
+			if (metadata.isGlobal)
+				fonts[i].Handle = AssetManagerBase::CreateGlobalAsset(fontPath, relativePath);
+			else
+			{
+				AssetHandle handle = AssetHandle();
+				if (Project::GetAssetManager()->CreateAsset(handle, fontPath, relativePath))
+					continue;
 
-			fonts[i].Handle = handle;
+				fonts[i].Handle = handle;
+			}
+			
 		}
 		
 		Ref<FontFamily> family = CreateRef<FontFamily>();

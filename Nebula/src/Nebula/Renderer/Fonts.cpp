@@ -130,7 +130,6 @@ namespace Nebula
 		{
 			std::filesystem::path filename = filepath.filename();
 			cachePath = "Resources/cache/font/" + filename.replace_extension().string() + ".png";
-			NB_INFO(cachePath.string());
 		}
 		
 		m_AtlasTexture = CreateAndCacheAtlas<uint8_t, float, 3, msdf_atlas::msdfGenerator>(cachePath, (float)emSize, m_Data->Glyphs, m_Data->FontGeometry, width, height);
