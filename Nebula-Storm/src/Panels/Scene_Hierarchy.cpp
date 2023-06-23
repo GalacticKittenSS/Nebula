@@ -959,14 +959,12 @@ namespace Nebula {
 					{
 						auto data = scriptInstance->GetFieldValue<MonoObject*>(name);
 						AssetHandle handle = ScriptEngine::GetIDFromObject(data);
+						const AssetMetadata& metadata = AssetManager::GetAssetMetadata(handle);
+						
 						std::string text = "None";
-
-						if (handle)
-						{
-							Ref<Asset> asset = AssetManager::GetAsset(handle);
-							text = asset->RelativePath.string();
-						}
-
+						if (metadata)
+							text = metadata.RelativePath.string();
+						
 						DrawLabel(name);
 						if (ImGui::Button(text.c_str(), ImVec2{ ImGui::GetContentRegionAvailWidth(), 0 }))
 							scriptInstance->SetFieldValueInternal(name, nullptr);
@@ -978,7 +976,7 @@ namespace Nebula {
 								const wchar_t* payloadPath = (const wchar_t*)payload->Data;
 								std::filesystem::path path = payloadPath;
 
-								AssetHandle handle = AssetManager::ImportAsset(path);
+								AssetHandle handle = AssetManager::CreateAsset(path);
 								MonoObject* object = ScriptEngine::CreateAssetClass(handle);
 								scriptInstance->SetFieldValueInternal(name, object);
 							}
@@ -1002,10 +1000,9 @@ namespace Nebula {
 			std::string text = "Drop File to Add Texture";
 			if (component.Texture)
 			{
-				Ref<Texture2D> texture = AssetManager::GetAssetData<Texture2D>(component.Texture);
-				std::filesystem::path path = texture->GetPath();
-				text = std::filesystem::relative(path, Project::GetAssetDirectory()).string();
-
+				const AssetMetadata& metadata = AssetManager::GetAssetMetadata(component.Texture);
+				text = metadata.RelativePath.string();
+				
 				width -= 40.0f - GImGui->Style.FrameRounding;
 			}
 
@@ -1020,11 +1017,10 @@ namespace Nebula {
 					
 					std::filesystem::path texturePath = path;
 
-					AssetHandle handle = AssetManager::ImportAsset(texturePath);
-					Ref<Asset> asset = AssetManager::GetAsset(handle);
-					if (asset && asset->IsLoaded && asset->Type == AssetType::Texture) 
+					AssetHandle handle = AssetManager::CreateAsset(texturePath);
+					Ref<Texture2D> texture = AssetManager::GetAsset<Texture2D>(handle);
+					if (texture)
 					{
-						Ref<Texture2D> texture = asset->GetData<Texture2D>();
 						component.Texture = handle;
 						component.SubTextureCellSize = glm::min(component.SubTextureCellSize, 
 							{ (float)texture->GetWidth(), (float)texture->GetHeight() });
@@ -1044,8 +1040,7 @@ namespace Nebula {
 				
 				DrawVec1Control("Tiling Factor", component.Tiling, 0.1f, 0.0f, 100.0f);
 
-				Ref<Asset> asset = AssetManager::GetAsset(component.Texture);
-				Ref<Texture2D> texture = asset->GetData<Texture2D>();
+				Ref<Texture2D> texture = AssetManager::GetAsset<Texture2D>(component.Texture);
 
 				glm::vec2 textureSize = { (float)texture->GetWidth(), (float)texture->GetHeight() };
 				glm::vec2 maxOffset = textureSize - component.SubTextureCellSize * component.SubTextureCellNum;
@@ -1077,22 +1072,14 @@ namespace Nebula {
 			size = DrawLabel("Font");
 			ImGui::SetNextItemWidth(size);
 
-			Ref<Asset> currentAsset = AssetManager::GetAsset(component.FontHandle);
+			const AssetMetadata& metadata = AssetManager::GetAssetMetadata(component.FontHandle);
 			std::string currentName = "Default";
 			bool isFamily = false;
 
-			if (currentAsset)
+			if (metadata)
 			{
-				isFamily = currentAsset->Type == AssetType::FontFamily;
-
-				if (isFamily)
-					currentName = ((FontFamilyAsset*)currentAsset->Data)->Name;
-				else
-				{
-					Ref<Font> font = component.GetFont();
-					if (font)
-						currentName = font->GetName();
-				}
+				isFamily = metadata.Type == AssetType::FontFamily;
+				currentName = metadata.RelativePath.string();
 			}
 			
 			if (ImGui::BeginCombo("##Font", currentName.c_str()))
@@ -1105,22 +1092,13 @@ namespace Nebula {
 
 				for (uint32_t i = 0; i < handles.size(); i++)
 				{
-					Ref<Asset> asset = AssetManager::GetAsset(handles[i], false);
-					std::string name = asset->RelativePath.string();
+					const AssetMetadata& asset = AssetManager::GetAssetMetadata(handles[i]);
+					std::string name = asset.RelativePath.string();
 
-					if (asset->Type == AssetType::FontFamily)
-						name = ((FontFamilyAsset*)asset->Data)->Name;
-					else
-					{
-						Ref<Font> font = asset->GetData<Font>();
-						if (font->GetName() != asset->Path)
-							name = font->GetName();
-					}
-
-					bool isSelected = component.FontHandle == asset->Handle;
+					bool isSelected = component.FontHandle == asset.Handle;
 
 					if (ImGui::Selectable(name.c_str(), isSelected))
-						component.FontHandle = asset->Handle;
+						component.FontHandle = asset.Handle;
 					
 					if (isSelected)
 						ImGui::SetItemDefaultFocus();

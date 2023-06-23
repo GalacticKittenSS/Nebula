@@ -18,6 +18,11 @@ namespace Nebula {
 		{
 			Allocate(size);
 		}
+		
+		Buffer(const void* data, uint64_t size)
+			: Data((uint8_t*)data), Size(size)
+		{
+		}
 
 		static Buffer Copy(Buffer other)
 		{
@@ -30,13 +35,13 @@ namespace Nebula {
 		{
 			Release();
 
-			Data = new uint8_t[size];
+			Data = (uint8_t*)malloc(size);
 			Size = size;
 		}
 
 		void Release()
 		{
-			delete[] Data;
+			delete Data;
 			Data = nullptr;
 			Size = 0;
 		}

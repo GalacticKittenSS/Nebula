@@ -10,19 +10,23 @@
 
 #include "MSDFData.h"
 
+#include "Nebula/AssetManager/TextureImporter.h"
+
 #include "Nebula/Project/Project.h"
+#include "Nebula/AssetManager/AssetManager.h"
 
 namespace Nebula 
 {
 	template<typename T, typename S, int N, msdf_atlas::GeneratorFunction<S, N> GenFunc>
-	static Ref<Texture2D> CreateAndCacheAtlas(const std::string& fontName, float fontSize, const std::vector<msdf_atlas::GlyphGeometry>& glyphs, 
+	static Ref<Texture2D> CreateAndCacheAtlas(const std::filesystem::path& cachePath, float fontSize, const std::vector<msdf_atlas::GlyphGeometry>& glyphs, 
 		msdf_atlas::FontGeometry fontGeometry, uint32_t width, uint32_t height)
 	{
-		std::filesystem::path cachePath = "Resources/cache/font/" + fontName + ".png";
-		Ref<Texture2D> texture = Texture2D::Create(cachePath.string());
-		if (texture->IsLoaded())
-			return texture;
+		NB_PROFILE_FUNCTION();
 
+		Ref<Texture2D> texture = TextureImporter::CreateTexture2D(cachePath.string());
+		if (texture && texture->IsLoaded())
+			return texture;
+	
 		msdf_atlas::GeneratorAttributes attributes;
 		attributes.config.overlapSupport = true;
 		attributes.scanlinePass = true;
@@ -47,22 +51,22 @@ namespace Nebula
 		spec.GenerateMips = false;
 
 		texture = Texture2D::Create(spec);
-		texture->SetData((void*)bitmap.pixels, bitmap.width * bitmap.height * 3);
+		texture->SetData(Buffer((void*)bitmap.pixels, bitmap.width * bitmap.height * 3));
 		return texture;
 	}
 
-	Font::Font(const std::string& name, const std::filesystem::path& filename)
-		: m_Data(CreateScope<MSDFData>()), m_Name(name), m_Filename(filename)
+	Font::Font(const std::filesystem::path& filepath, std::filesystem::path cachePath)
+		: m_Data(CreateScope<MSDFData>()), m_Filename(filepath)
 	{
 		msdfgen::FreetypeHandle* ft = msdfgen::initializeFreetype();
 		NB_ASSERT(ft);
 
-		std::string fileString = filename.string();
+		std::string fileString = filepath.string();
 		msdfgen::FontHandle* font = msdfgen::loadFont(ft, fileString.c_str());
 
 		if (!font)
 		{
-			NB_ERROR("Failed to load font: {}", fileString);
+			NB_ERROR("[Font] Failed to load font: {}", fileString);
 			return;
 		}
 
@@ -96,8 +100,7 @@ namespace Nebula
 
 		int width, height;
 		atlasPacker.getDimensions(width, height);
-		emSize = atlasPacker.getScale();
-
+		
 #define DEFAULT_ANGLE_THRESHOLD 3.0
 #define LCG_MULTIPLIER 6364136223846793005ull
 #define LCG_INCREMENT 1442695040888963407ull
@@ -123,7 +126,14 @@ namespace Nebula
 			}
 		}
 
-		m_AtlasTexture = CreateAndCacheAtlas<uint8_t, float, 3, msdf_atlas::msdfGenerator>(name, (float)emSize, m_Data->Glyphs, m_Data->FontGeometry, width, height);
+		if (cachePath.empty())
+		{
+			std::filesystem::path filename = filepath.filename();
+			cachePath = "Resources/cache/font/" + filename.replace_extension().string() + ".png";
+			NB_INFO(cachePath.string());
+		}
+		
+		m_AtlasTexture = CreateAndCacheAtlas<uint8_t, float, 3, msdf_atlas::msdfGenerator>(cachePath, (float)emSize, m_Data->Glyphs, m_Data->FontGeometry, width, height);
 
 		msdfgen::destroyFont(font);
 		msdfgen::deinitializeFreetype(ft);
@@ -137,7 +147,7 @@ namespace Nebula
 	{
 		static Ref<Font> DefaultFont;
 		if (!DefaultFont)
-			DefaultFont = CreateRef<Font>("OpenSans_Regular", "Resources/fonts/OpenSans/Regular.ttf");
+			DefaultFont = CreateRef<Font>("Resources/fonts/OpenSans/Regular.ttf", "Resources/cache/font/OpenSans_Regular.png");
 
 		return DefaultFont;
 	}

@@ -25,6 +25,7 @@ namespace Nebula {
 		out << YAML::Key << "Name" << YAML::Value << config.Name;
 		out << YAML::Key << "StartScene" << YAML::Value << config.StartScene.string();
 		out << YAML::Key << "AssetDirectory" << YAML::Value << config.AssetDirectory.string();
+		out << YAML::Key << "AssetRegistryPath" << YAML::Value << config.AssetRegistryPath.string();
 		out << YAML::Key << "ScriptModulePath" << YAML::Value << config.ScriptModulePath.string();
 		out << YAML::EndMap; // Project
 
@@ -40,24 +41,13 @@ namespace Nebula {
 		out << YAML::Key << "Layers" << YAML::Value << layers;
 		out << YAML::EndMap; // Scene
 
-		out << YAML::Key << "Assets" << YAML::Value;
-		out << YAML::BeginSeq; // Assets
-
-		const auto& assets = m_Project->GetAssetManager()->GetAssets();
-		for (const auto& [handle, asset] : assets)
-		{
-			out << YAML::BeginMap;
-			out << YAML::Key << "Handle" << handle;
-			out << YAML::Key << "Path" << asset->RelativePath.string();
-			out << YAML::EndMap;
-		}
-
-		out << YAML::EndSeq; // Assets
-
 		out << YAML::EndMap; // Root
 
 		std::ofstream fout(filepath);
 		fout << out.c_str();
+
+		m_Project->m_AssetManager->SerializeRegistry(
+			m_Project->m_ProjectDirectory / config.AssetRegistryPath);
 
 		return true;
 	}
@@ -84,6 +74,7 @@ namespace Nebula {
 		config.Name = projectNode["Name"].as<std::string>();
 		config.StartScene = projectNode["StartScene"].as<std::string>();
 		config.AssetDirectory = projectNode["AssetDirectory"].as<std::string>();
+		config.AssetRegistryPath = projectNode["AssetRegistryPath"].as<std::string>();
 		config.ScriptModulePath = projectNode["ScriptModulePath"].as<std::string>();
 
 		if (auto sceneNode = data["Scene"])
@@ -101,15 +92,8 @@ namespace Nebula {
 			}
 		}
 		
-		for (auto asset : data["Assets"])
-		{
-			uint64_t handle = asset["Handle"].as<uint64_t>();
-			std::string relativePath = asset["Path"].as<std::string>();
-
-			std::filesystem::path path = filepath.parent_path() / config.AssetDirectory / relativePath;
-				
-			m_Project->m_AssetManager->ImportAsset(handle, path, relativePath);
-		}
+		m_Project->m_AssetManager->DeserializeRegistry(
+			m_Project->m_ProjectDirectory / config.AssetRegistryPath);
 
 		return true;
 	}

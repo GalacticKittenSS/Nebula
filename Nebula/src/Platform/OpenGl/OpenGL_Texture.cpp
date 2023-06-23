@@ -2,7 +2,6 @@
 #include "OpenGL_Texture.h"
 
 #include <glad/glad.h>
-#include <stb_image.h>
 
 namespace Nebula {
 	namespace Utils {
@@ -43,7 +42,7 @@ namespace Nebula {
 		}
 	}
 
-	OpenGL_Texture2D::OpenGL_Texture2D(const TextureSpecification& specification)
+	OpenGL_Texture2D::OpenGL_Texture2D(const TextureSpecification& specification, Buffer data)
 		: m_Specification(specification), m_Width(specification.Width), m_Height(specification.Height)
 	{
 		NB_PROFILE_FUNCTION();
@@ -59,51 +58,12 @@ namespace Nebula {
 
 		glTextureParameteri(m_RendererID, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTextureParameteri(m_RendererID, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	}
 
-	OpenGL_Texture2D::OpenGL_Texture2D(const std::string& path): m_Path(path) {
-		NB_PROFILE_FUNCTION();
-
-		int width, height, channels;
-		stbi_set_flip_vertically_on_load(1);
-		stbi_uc* data = stbi_load(path.c_str(), &width, &height, &channels, 0);
-		
-		if (!data) return;
-
-		m_IsLoaded = true;
-
-		m_Width = width;
-		m_Height = height;
-
-		GLenum internalFormat = 0, dataFormat = 0;
-		if (channels == 4)
+		if (data)
 		{
-			internalFormat = GL_RGBA8;
-			dataFormat = GL_RGBA;
+			SetData(data);
+			m_IsLoaded = true;
 		}
-		else if (channels == 3)
-		{
-			internalFormat = GL_RGB8;
-			dataFormat = GL_RGB;
-		}
-
-		m_InternalFormat = internalFormat;
-		m_Format = dataFormat;
-
-		NB_ASSERT(internalFormat & dataFormat, "[Texture] Format Not Supported!");
-
-		glCreateTextures(GL_TEXTURE_2D, 1, &m_RendererID);
-		glTextureStorage2D(m_RendererID, 1, internalFormat, m_Width, m_Height);
-
-		glTextureParameteri(m_RendererID, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTextureParameteri(m_RendererID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-		glTextureParameteri(m_RendererID, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTextureParameteri(m_RendererID, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-		glTextureSubImage2D(m_RendererID, 0, 0, 0, m_Width, m_Height, dataFormat, GL_UNSIGNED_BYTE, data);
-
-		stbi_image_free(data);
 	}
 
 	OpenGL_Texture2D::~OpenGL_Texture2D() {
@@ -112,12 +72,12 @@ namespace Nebula {
 		glDeleteTextures(1, &m_RendererID);
 	}
 	
-	void OpenGL_Texture2D::SetData(void* data, uint32_t size) {
+	void OpenGL_Texture2D::SetData(Buffer data) {
 		NB_PROFILE_FUNCTION();
 
 		uint32_t bpp = Utils::OpenGLtoBPP(m_Format);
-		NB_ASSERT(size == m_Width * m_Height * bpp, "Data must be Entire Texture");
-		glTextureSubImage2D(m_RendererID, 0, 0, 0, m_Width, m_Height, m_Format, GL_UNSIGNED_BYTE, data);
+		NB_ASSERT(data.Size == m_Width * m_Height * bpp, "Data must be Entire Texture");
+		glTextureSubImage2D(m_RendererID, 0, 0, 0, m_Width, m_Height, m_Format, GL_UNSIGNED_BYTE, data.Data);
 	}
 
 	void OpenGL_Texture2D::SetFilterNearest(bool nearest) {

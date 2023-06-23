@@ -13,7 +13,7 @@ namespace Nebula {
 
 		std::filesystem::path AssetDirectory;
 		std::filesystem::path ScriptModulePath;
-
+		std::filesystem::path AssetRegistryPath;
 		std::filesystem::path StartScene;
 
 		// Scene
@@ -25,6 +25,7 @@ namespace Nebula {
 	{
 	public:
 		Project();
+		ProjectConfig& GetConfig() { return m_Config; }
 
 		static const std::filesystem::path& GetProjectDirectory()
 		{
@@ -43,6 +44,12 @@ namespace Nebula {
 			NB_ASSERT(s_ActiveProject);
 			return GetProjectDirectory() / s_ActiveProject->m_Config.ScriptModulePath;
 		}
+		
+		static std::filesystem::path GetAssetRegistryPath()
+		{
+			NB_ASSERT(s_ActiveProject);
+			return GetProjectDirectory() / s_ActiveProject->m_Config.AssetRegistryPath;
+		}
 
 		static std::filesystem::path GetAssetFileSystemPath(const std::filesystem::path& path)
 		{
@@ -55,11 +62,8 @@ namespace Nebula {
 			return s_ActiveProject->m_ProjectFile;
 		}
 
-		static const Ref<AssetManagerBase>& GetAssetManager() { return s_ActiveProject->m_AssetManager; }
-
-		ProjectConfig& GetConfig() { return m_Config; }
-
 		static Ref<Project> GetActive() { return s_ActiveProject; }
+		static const Ref<AssetManagerBase>& GetAssetManager() { return s_ActiveProject->m_AssetManager; }
 
 		static Ref<Project> New();
 		static Ref<Project> Load(const std::filesystem::path& path);

@@ -131,24 +131,28 @@ namespace Nebula {
 	static uint64_t Asset_GetOrCreateHandle(MonoString* path)
 	{
 		std::string pathString = Utils::GetStringFromMono(path);
-		AssetHandle handle = AssetManager::ImportAsset(pathString);
+		std::filesystem::path assetPath = Project::GetAssetFileSystemPath(pathString);
+
+		AssetHandle handle = AssetManager::CreateAsset(assetPath);
 		return handle;
 	}
 	
 	static uint64_t Asset_GetHandleFromPath(MonoString* path)
 	{
 		std::string pathString = Utils::GetStringFromMono(path);
-		AssetHandle handle = AssetManager::GetHandleFromPath(pathString);
+		std::filesystem::path assetPath = Project::GetAssetFileSystemPath(pathString);
+
+		AssetHandle handle = AssetManager::GetHandleFromPath(assetPath);
 		return handle;
 	}
 
 	static MonoString* Asset_GetPathFromHandle(AssetHandle handle)
 	{
-		Ref<Asset> asset = AssetManager::GetAsset(handle);
-		if (!asset)
+		const AssetMetadata& metadata = AssetManager::GetAssetMetadata(handle);
+		if (!metadata)
 			return nullptr;
 
-		std::string path = asset->Path.string();
+		std::string path = metadata.RelativePath.string();
 		return ScriptEngine::CreateMonoString(path.c_str());
 	}
 #pragma endregion
@@ -159,12 +163,11 @@ namespace Nebula {
 		if (!handle)
 			return NULL;
 
-		Ref<Asset> asset = AssetManager::GetAsset(handle);
-		NB_ASSERT(asset);
-		FontAsset* data = (FontAsset*)asset->Data;
-		NB_ASSERT(data);
+		Ref<Font> font = AssetManager::GetAsset<Font>(handle);
+		NB_ASSERT(font);
 
-		return data->Bold;
+		// font->IsBold()
+		return false;
 	}
 
 	static bool Font_GetItalic(AssetHandle handle)
@@ -172,12 +175,11 @@ namespace Nebula {
 		if (!handle)
 			return NULL;
 
-		Ref<Asset> asset = AssetManager::GetAsset(handle);
-		NB_ASSERT(asset);
-		FontAsset* data = (FontAsset*)asset->Data;
-		NB_ASSERT(data);
+		Ref<Font> font = AssetManager::GetAsset<Font>(handle);
+		NB_ASSERT(font);
 
-		return data->Bold;
+		// font->IsItalic()
+		return false;
 	}
 #pragma endregion
 
@@ -394,11 +396,11 @@ namespace Nebula {
 
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
-		Ref<Asset> asset = AssetManager::GetAsset(handle);
-		NB_ASSERT(asset);
+		const AssetMetadata& metadata = AssetManager::GetAssetMetadata(handle);
+		NB_ASSERT(metadata);
 
 		PrefabSerializer serializer(scene);
-		Entity entity = serializer.Deserialize(Project::GetAssetFileSystemPath(asset->Path).string());
+		Entity entity = serializer.Deserialize(metadata.Path.string());
 		
 		if (!entity)
 			return NULL;

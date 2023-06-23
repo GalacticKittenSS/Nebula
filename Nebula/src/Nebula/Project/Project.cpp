@@ -35,12 +35,12 @@ namespace Nebula {
 	{
 		Ref<Project> project = CreateRef<Project>();
 		project->m_AssetManager = CreateRef<AssetManagerBase>();
+		project->m_ProjectFile = path;
+		project->m_ProjectDirectory = path.parent_path();
 		
 		ProjectSerializer serializer(project);
 		if (serializer.Deserialize(path))
 		{
-			project->m_ProjectFile = path;
-			project->m_ProjectDirectory = path.parent_path();
 			s_ActiveProject = project;
 			return s_ActiveProject;
 		}

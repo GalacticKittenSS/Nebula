@@ -1,16 +1,49 @@
 #include "nbpch.h"
 #include "AssetManagerBase.h"
 
-#include "AssetData.h"
+#include "AssetImporter.h"
 
 #include "Nebula/Project/Project.h"
 #include "Nebula/Core/Application.h"
+#include "Nebula/Renderer/Texture.h"
+#include "Nebula/Renderer/Fonts.h"
+
+#include "Nebula/Utils/YAML.h"
 
 namespace Nebula
 {
 	namespace Utils
 	{
-		AssetType GetTypeFromExtension(const std::string& extension) 
+		std::string AssetTypeToString(AssetType type)
+		{
+			switch (type)
+			{
+			case AssetType::Scene: return "Scene";
+			case AssetType::Prefab: return "Prefab";
+			case AssetType::Texture: return "Texture";
+			case AssetType::Font: return "Font";
+			case AssetType::FontFamily: return "FontFamily";
+			case AssetType::Script: return "Script";
+			case AssetType::MemoryAsset: return "Memory";
+			}
+
+			return "None";
+		}
+
+		AssetType AssetTypeFromString(std::string_view type)
+		{
+			if (type == "Scene") return AssetType::Scene;
+			else if (type == "Prefab") return AssetType::Prefab;
+			else if (type == "Texture") return AssetType::Texture;
+			else if (type == "Font") return AssetType::Font;
+			else if (type == "FontFamily") return AssetType::FontFamily;
+			else if (type == "Script") return AssetType::Script;
+			else if (type == "Memory") return AssetType::MemoryAsset;
+
+			return AssetType::None;
+		}
+
+		AssetType GetTypeFromExtension(std::string_view extension)
 		{
 			if (extension == ".nebula")			return AssetType::Scene;
 			else if (extension == ".prefab")	return AssetType::Prefab;
@@ -20,42 +53,13 @@ namespace Nebula
 
 			return AssetType::None;
 		}
-
-		template <typename T>
-		static T* Load(Ref<Asset> asset)
-		{
-			T* data = new T(asset->Path);
-			asset->IsLoaded = data->IsLoaded;
-#
-			if (!data->IsLoaded)
-			{
-				delete data;
-				return nullptr;
-			}
-
-			return data;
-		}
-
-		static FontAsset* LoadFont(Ref<Asset> asset, const std::string& name)
-		{
-			FontAsset* data = new FontAsset(name, asset->Path);
-			asset->IsLoaded = data->IsLoaded;
-			
-			if (!data->IsLoaded)
-			{
-				delete data;
-				return nullptr;
-			}
-
-			return data;
-		}
 	}
 
 	// Note: Changing a global asset's index may mess up scenes and prefabs
-	std::unordered_map<AssetHandle, Ref<Asset>> AssetManagerBase::s_GlobalAssets = {};
+	AssetMap AssetManagerBase::s_GlobalAssets = {};
 	uint16_t AssetManagerBase::s_NextGlobalIndex = 1;
 
-	void AssetManagerBase::OnAssetChange(const std::string& path, const filewatch::Event change_type)
+	/*void AssetManagerBase::OnAssetChange(const std::string& path, const filewatch::Event change_type)
 	{
 		if (change_type != filewatch::Event::modified)
 			return;
@@ -66,185 +70,127 @@ namespace Nebula
 		Application::Get().SubmitToMainThread([asset]() {
 			Project::GetAssetManager()->LoadAsset(asset);
 		});
+	}*/
+
+	bool AssetManagerBase::IsHandleValid(AssetHandle handle)
+	{
+		return handle != 0 && m_AssetRegistry.find(handle) != m_AssetRegistry.end();
 	}
 
-	void AssetManagerBase::ImportAsset(AssetHandle handle, const std::filesystem::path& path, const std::filesystem::path& relativePath)
+	bool AssetManagerBase::IsAssetLoaded(AssetHandle handle)
 	{
-		if (m_Assets.find(handle) != m_Assets.end())
-			return;
-
-		AssetType type = Utils::GetTypeFromExtension(path.extension().string());
-		if (type == AssetType::None)
-			return;
-
-		Ref<Asset> asset = CreateRef<Asset>();
-		asset->Handle = handle;
-		asset->Path = path;
-		asset->RelativePath = relativePath;
-		asset->Type = type;
-
-		if (type == AssetType::Font)
-			asset->Data = Utils::LoadFont(asset, relativePath.string());
-
-		m_Assets[handle] = asset;
+		return m_Assets.find(handle) != m_Assets.end();
 	}
 
-	AssetHandle AssetManagerBase::ImportAsset(const std::filesystem::path& path)
+	AssetHandle AssetManagerBase::CreateAsset(const std::filesystem::path& path)
 	{
-		// Return asset if already loaded
-		if (AssetHandle handle = GetHandleFromPath(path))
-			return handle;
+		NB_PROFILE_FUNCTION();
 		
-		AssetType type = Utils::GetTypeFromExtension(path.extension().string());
-		if (type == AssetType::None)
-			return 0;
+		if (const AssetMetadata& data = GetAssetMetadata(path))
+			return data.Handle;
 
 		std::filesystem::path relativePath = std::filesystem::relative(path, Project::GetAssetDirectory());
-
-		Ref<Asset> asset = CreateRef<Asset>();
-		asset->Handle = AssetHandle();
-		asset->Path = path;
-		asset->RelativePath = relativePath;
-		asset->Type = type;
+		AssetHandle handle = AssetHandle();
 		
-		if (type == AssetType::Font)
-			asset->Data = Utils::LoadFont(asset, relativePath.string());
+		if (!CreateAsset(handle, path, relativePath))
+			return NULL;
 
-		m_Assets[asset->Handle] = asset;
-		return asset->Handle;
+		return handle;
 	}
 
-	AssetHandle AssetManagerBase::ImportFont(const std::string& name, const std::filesystem::path path, bool bold, bool italic)
+	bool AssetManagerBase::CreateAsset(AssetHandle handle, const std::filesystem::path& path, const std::filesystem::path& relativePath)
 	{
-		if (!std::filesystem::exists(path))
-			return NULL;
+		NB_PROFILE_FUNCTION();
+		
+		if (IsHandleValid(handle)
+			|| !std::filesystem::exists(path))
+			return false;
 
 		AssetType type = Utils::GetTypeFromExtension(path.extension().string());
-		if (type != AssetType::Font)
-			return NULL;
+		if (type == AssetType::None)
+			return false;
 
-		Ref<Asset> asset = CreateRef<Asset>();
-		asset->Handle = s_NextGlobalIndex;
-		asset->Path = path;
-		asset->RelativePath = path;
-		asset->Type = type;
+		AssetMetadata data;
+		data.Handle = handle;
+		data.Type = type;
+		data.Path = path;
+		data.RelativePath = relativePath;
 
-		FontAsset* data = Utils::LoadFont(asset, name + "_" + path.stem().string());
-		data->Bold = bold;
-		data->Italic = italic;
-		asset->Data = data;
-
-		s_GlobalAssets[asset->Handle] = asset;
-		s_NextGlobalIndex++;
-		return asset->Handle;
+		m_AssetRegistry[handle] = data;
 	}
 
-	void AssetManagerBase::ImportFontFamily(const std::filesystem::path& directory, std::string name)
+	bool AssetManagerBase::CreateAsset(AssetMetadata& metadata)
 	{
-		std::filesystem::path path = directory / name;
+		if (!metadata || IsHandleValid(metadata.Handle)
+			|| !std::filesystem::exists(metadata.Path))
+			return false;
 
-		FontFamilyAsset* data = new FontFamilyAsset();
-		data->Name = name;
-		data->Regular = ImportFont(name, path / "Regular.ttf");
-		data->Bold = ImportFont(name, path / "Bold.ttf");
-		data->BoldItalic = ImportFont(name, path / "BoldItalic.ttf");
-		data->Italic = ImportFont(name, path / "Italic.ttf");
-		data->IsLoaded = true;
-
-		Ref<Asset> asset = CreateRef<Asset>();
-		asset->Handle = s_NextGlobalIndex;
-		asset->Path = directory;
-		asset->RelativePath = name;
-		asset->Type = AssetType::FontFamily;
-		asset->Data = data;
-		asset->IsLoaded = true;
-
-		s_GlobalAssets[asset->Handle] = asset;
-		s_NextGlobalIndex++;
+		m_AssetRegistry[metadata.Handle] = metadata;
 	}
 
 	AssetHandle AssetManagerBase::GetHandleFromPath(const std::filesystem::path& path)
 	{
-		for (const auto& [handle, asset] : m_Assets)
+		for (const auto& [handle, asset] : m_AssetRegistry)
 		{
-			if (asset->Path == path || asset->RelativePath == path)
-				return handle;
-		}
-
-		for (const auto& [handle, asset] : s_GlobalAssets)
-		{
-			if (asset->Path == path || asset->RelativePath == path)
+			if (asset.Path == path || asset.RelativePath == path.string())
 				return handle;
 		}
 
 		return NULL;
 	}
 
-	bool AssetManagerBase::LoadAsset(Ref<Asset> asset)
-	{
-		switch (asset->Type)
-		{
-		case AssetType::Texture:
-			asset->Data = Utils::Load<TextureAsset>(asset);
-			break;
-		case AssetType::Font:
-			asset->Data = Utils::Load<FontAsset>(asset);
-			break;
-		default:
-			asset->Data = nullptr;
-			asset->IsLoaded = true;
-		}
-
-		if (asset->IsLoaded)
-			asset->Watcher = CreateScope<filewatch::FileWatch<std::string>>(asset->Path.string(), AssetManagerBase::OnAssetChange);
-		
-		return asset->IsLoaded;
-	}
-
 	Ref<Asset> AssetManagerBase::FindAsset(AssetHandle handle)
 	{
 		auto it = m_Assets.find(handle);
-		if (it == m_Assets.end())
-			return nullptr;
+		if (it != m_Assets.end())
+			return it->second;
 
-		return it->second;
-	}
-
-	Ref<Asset> AssetManagerBase::FindGlobalAsset(AssetHandle handle)
-	{
-		auto it = s_GlobalAssets.find(handle);
-		if (it == s_GlobalAssets.end())
-			return nullptr;
-
-		return it->second;
+		return nullptr;
 	}
 
 	Ref<Asset> AssetManagerBase::GetAsset(AssetHandle handle, bool load)
 	{
-		Ref<Asset> asset = FindAsset(handle);
-		
-		if (!asset)
-			asset = FindGlobalAsset(handle);
+		NB_PROFILE_FUNCTION();
 
+		if (!IsHandleValid(handle))
+			return nullptr;
+
+		if (IsAssetLoaded(handle))
+			return FindAsset(handle);
+		
+		const AssetMetadata& metadata = GetAssetMetadata(handle);
+		Ref<Asset> asset = AssetImporter::ImportAsset(handle, metadata);
+		
 		if (!asset)
 			return nullptr;
 
-		if (load && !asset->IsLoaded)
-		{
-			if (!LoadAsset(asset))
-				return nullptr;
-		}
-		
+		m_Assets[handle] = asset;
 		return asset;
 	}
 
-	AssetType AssetManagerBase::GetAssetType(AssetHandle handle)
+	const AssetMetadata& AssetManagerBase::GetAssetMetadata(AssetHandle handle) const
 	{
-		auto it = m_Assets.find(handle);
-		if (it == m_Assets.end())
-			return AssetType::None;
-		
-		return it->second->Type;
+		static AssetMetadata s_NullMetadata;
+
+		auto it = m_AssetRegistry.find(handle);
+		if (it == m_AssetRegistry.end())
+			return s_NullMetadata;
+
+		return it->second;
+	}
+
+	const AssetMetadata& AssetManagerBase::GetAssetMetadata(const std::filesystem::path& path) const
+	{
+		NB_PROFILE_FUNCTION();
+		static AssetMetadata s_NullMetadata;
+
+		for (auto [handle, metadata] : m_AssetRegistry)
+		{
+			if (metadata.Path == path)
+				return metadata;
+		}
+
+		return s_NullMetadata;
 	}
 
 	Array<AssetHandle> AssetManagerBase::GetAllAssetsWithType(AssetType type, bool global)
@@ -256,23 +202,72 @@ namespace Nebula
 
 	void AssetManagerBase::GetAllAssetsWithType(Array<AssetHandle>& handlesArray, AssetType type, bool global)
 	{
-		for (const auto& [handle, asset] : m_Assets)
+		NB_PROFILE_FUNCTION();
+
+		for (const auto& [handle, metadata] : m_AssetRegistry)
 		{
-			if (asset->Type != type)
+			if (metadata.Type != type)
 				continue;
 
 			handlesArray.push_back(handle);
 		}
+	}
 
-		if (!global)
-			return;
+	void AssetManagerBase::SerializeRegistry(const std::filesystem::path& path)
+	{
+		NB_PROFILE_FUNCTION();
 
-		for (const auto& [handle, asset] : s_GlobalAssets)
+		YAML::Emitter out; 
+		out << YAML::BeginMap; // Root
+		out << YAML::Key << "AssetRegistry" << YAML::Value;
+		out << YAML::BeginSeq; // AssetRegistry
+
+		for (const auto& [handle, metadata] : m_AssetRegistry)
 		{
-			if (asset->Type != type)
-				continue;
+			out << YAML::BeginMap;
+			out << YAML::Key << "Handle" << handle;
+			out << YAML::Key << "Type" << Utils::AssetTypeToString(metadata.Type);
+			out << YAML::Key << "Path" << metadata.Path.string();
+			out << YAML::Key << "RelativePath" << metadata.RelativePath.string();
+			out << YAML::EndMap;
+		}
 
-			handlesArray.push_back(handle);
+		out << YAML::EndSeq; // AssetRegistry
+		out << YAML::EndMap; // Root
+
+		std::ofstream fout(path);
+		fout << out.c_str();
+	}
+
+	bool AssetManagerBase::DeserializeRegistry(const std::filesystem::path& path)
+	{
+		NB_PROFILE_FUNCTION();
+
+		YAML::Node data;
+		try
+		{
+			data = YAML::LoadFile(path.string());
+		}
+		catch (YAML::Exception e)
+		{
+			NB_ERROR("[AssetManager] Failed to load registry file '{0}'\n     {1}", path.string(), e.what());
+			return false;
+		}
+
+		auto registryNode = data["AssetRegistry"];
+		if (!registryNode)
+			return false;
+
+		for (const auto& node : registryNode)
+		{
+			AssetHandle handle = node["Handle"].as<AssetHandle>();
+			std::string type = node["Type"].as<std::string>();
+			
+			auto& metadata = m_AssetRegistry[handle];
+			metadata.Handle = handle;
+			metadata.Path = node["Path"].as<std::string>();
+			metadata.RelativePath = node["RelativePath"].as<std::string>();
+			metadata.Type = Utils::AssetTypeFromString(type);
 		}
 	}
 }

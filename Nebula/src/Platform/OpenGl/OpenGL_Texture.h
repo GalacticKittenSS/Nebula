@@ -7,20 +7,18 @@
 namespace Nebula {
 	class OpenGL_Texture2D : public Texture2D {
 	public:
-		OpenGL_Texture2D(const TextureSpecification& specification);
-		OpenGL_Texture2D(const std::string& path);
+		OpenGL_Texture2D(const TextureSpecification& specification, Buffer data = Buffer());
 		~OpenGL_Texture2D();
 
 		const TextureSpecification& GetSpecification() const override { return m_Specification; }
 
-		void SetData(void* data, uint32_t size) override;
+		void SetData(Buffer data) override;
 		void SetFilterNearest(bool nearest) override;
 		
 		uint32_t GetWidth() const override { return m_Width; }
 		uint32_t GetHeight() const override { return m_Height; }
 		uint32_t GetRendererID() const override { return m_RendererID; }
-		std::string GetPath() const override { return m_Path; }
-
+		
 		void Bind(uint32_t slot) const;
 		void Unbind() const;
 
@@ -32,7 +30,6 @@ namespace Nebula {
 	private:
 		TextureSpecification m_Specification;
 
-		std::string m_Path;
 		bool m_IsLoaded = false;
 		uint32_t m_Width, m_Height;
 		uint32_t m_RendererID;

@@ -8,44 +8,42 @@
 
 namespace Nebula
 {
+	using AssetMap = std::unordered_map<AssetHandle, Ref<Asset>>;
+	using AssetRegistry = std::unordered_map<AssetHandle, AssetMetadata>;
+
 	class AssetManagerBase
 	{
 	public:
 		AssetManagerBase() = default;
 
-		AssetHandle ImportAsset(const std::filesystem::path& path);
-		void ImportAsset(AssetHandle handle, const std::filesystem::path& path, const std::filesystem::path& relativePath);
-		AssetHandle GetHandleFromPath(const std::filesystem::path& path);
+		AssetHandle CreateAsset(const std::filesystem::path& path);
+		bool CreateAsset(AssetMetadata& metadata);
+		bool CreateAsset(AssetHandle handle, const std::filesystem::path& path, const std::filesystem::path& relativePath);
 
 		Ref<Asset> GetAsset(AssetHandle handle, bool load = true);
-		AssetType GetAssetType(AssetHandle handle);
+		const AssetMetadata& GetAssetMetadata(AssetHandle handle) const;
+		const AssetMetadata& GetAssetMetadata(const std::filesystem::path& path) const;
+		AssetHandle GetHandleFromPath(const std::filesystem::path& path);
 		
-		template <typename T>
-		Ref<T> GetAssetData(AssetHandle handle)
-		{
-			Ref<Asset> asset = GetAsset(handle);
-			if (!asset)
-				return nullptr;
-
-			return asset->GetData<T>();
-		}
+		bool IsHandleValid(AssetHandle handle);
+		bool IsAssetLoaded(AssetHandle handle);
 
 		Array<AssetHandle> GetAllAssetsWithType(AssetType type, bool global = false);
 		void GetAllAssetsWithType(Array<AssetHandle>& handlesArray, AssetType type, bool global = false);
-		const std::unordered_map<AssetHandle, Ref<Asset>>& GetAssets() const { return m_Assets; }
+		const AssetRegistry& GetAssetRegistry() const { return m_AssetRegistry; }
 
-		static void ImportFontFamily(const std::filesystem::path& directory, std::string name);
+		void SerializeRegistry(const std::filesystem::path& path);
+		bool DeserializeRegistry(const std::filesystem::path& path);
 	private:
-		bool LoadAsset(Ref<Asset> asset);
-		static AssetHandle ImportFont(const std::string& name, const std::filesystem::path path, bool bold = false, bool italic = false);
-		
-		static void OnAssetChange(const std::string& path, const filewatch::Event change_type); 
+		//static void OnAssetChange(const std::string& path, const filewatch::Event change_type); 
 		
 		Ref<Asset> FindAsset(AssetHandle handle);
 		static Ref<Asset> FindGlobalAsset(AssetHandle handle);
 	private:
-		std::unordered_map<AssetHandle, Ref<Asset>> m_Assets;
-		static std::unordered_map<AssetHandle, Ref<Asset>> s_GlobalAssets;
+		AssetRegistry m_AssetRegistry;
+		AssetMap m_Assets;
+
+		static AssetMap s_GlobalAssets;
 		static uint16_t s_NextGlobalIndex;
 	};
 }

@@ -7,10 +7,29 @@ namespace Nebula
 	class AssetManager
 	{
 	public:
-		static inline AssetHandle ImportAsset(const std::filesystem::path& path)
+		static inline AssetHandle CreateAsset(const std::filesystem::path& path)
 		{
 			NB_ASSERT(Project::GetAssetManager());
-			return Project::GetAssetManager()->ImportAsset(path);
+			return Project::GetAssetManager()->CreateAsset(path);
+		}
+		
+		static AssetHandle CreateFontFamily(const std::filesystem::path& path)
+		{
+			std::string pathString = path.string();
+			size_t lastSlash = pathString.find_last_of("/");
+			std::string relativePath = pathString.substr(lastSlash + 1);
+
+			AssetMetadata data;
+			data.Handle = AssetHandle();
+			data.Type = AssetType::FontFamily;
+			data.Path = path;
+			data.RelativePath = relativePath;
+
+			NB_ASSERT(Project::GetAssetManager());
+			if (!Project::GetAssetManager()->CreateAsset(data))
+				return NULL;
+
+			return data.Handle;
 		}
 
 		static inline AssetHandle GetHandleFromPath(const std::filesystem::path& path)
@@ -19,23 +38,18 @@ namespace Nebula
 			return Project::GetAssetManager()->GetHandleFromPath(path);
 		}
 
-		static inline Ref<Asset> GetAsset(AssetHandle handle, bool load = true)
-		{
-			NB_ASSERT(Project::GetAssetManager());
-			return Project::GetAssetManager()->GetAsset(handle, load);
-		}
-
-		static inline AssetType GetAssetType(AssetHandle handle)
-		{
-			NB_ASSERT(Project::GetAssetManager());
-			return Project::GetAssetManager()->GetAssetType(handle);
-		}
-
 		template <typename T>
-		static inline Ref<T> GetAssetData(AssetHandle handle)
+		static inline Ref<T> GetAsset(AssetHandle handle, bool load = true)
 		{
 			NB_ASSERT(Project::GetAssetManager());
-			return Project::GetAssetManager()->GetAssetData<T>(handle);
+			Ref<Asset> asset = Project::GetAssetManager()->GetAsset(handle, load);
+			return std::static_pointer_cast<T>(asset);
+		}
+
+		static inline const AssetMetadata& GetAssetMetadata(AssetHandle handle)
+		{
+			NB_ASSERT(Project::GetAssetManager());
+			return Project::GetAssetManager()->GetAssetMetadata(handle);
 		}
 
 		static inline Array<AssetHandle> GetAllAssetsWithType(AssetType type, bool global = false)
@@ -50,20 +64,21 @@ namespace Nebula
 			Project::GetAssetManager()->GetAllAssetsWithType(handlesArray, type, global);
 		}
 
-		static inline void ImportFontFamily(const std::filesystem::path& directory, const std::string& name)
+		static inline bool IsHandleValid(AssetHandle handle)
 		{
-			AssetManagerBase::ImportFontFamily(directory, name);
+			NB_ASSERT(Project::GetAssetManager());
+			return Project::GetAssetManager()->IsHandleValid(handle);
+		}
+		
+		static inline bool IsAssetLoaded(AssetHandle handle)
+		{
+			NB_ASSERT(Project::GetAssetManager());
+			return Project::GetAssetManager()->IsAssetLoaded(handle);
 		}
 
-		static AssetType GetTypeFromExtension(const std::string& extension)
+		static AssetType GetTypeFromExtension(std::string_view extension)
 		{
-			if (extension == ".nebula")			return AssetType::Scene;
-			else if (extension == ".prefab")	return AssetType::Prefab;
-			else if (extension == ".cs")		return AssetType::Script;
-			else if (extension == ".ttf" || extension == ".TTF")  return AssetType::Font;
-			else if (extension == ".png" || extension == ".jpeg") return AssetType::Texture;
-
-			return AssetType::None;
+			return Utils::GetTypeFromExtension(extension);
 		}
 	};
 }

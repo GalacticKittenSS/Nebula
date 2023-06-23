@@ -1,6 +1,7 @@
 #include "Content_Browser.h"
 
 #include <Nebula/Scene/Prefab_Serializer.h>
+#include <Nebula/AssetManager/TextureImporter.h>
 
 #include <Nebula/Utils/UI.h>
 #include <imgui_internal.h>
@@ -10,9 +11,9 @@ namespace Nebula {
 	
 	ContentBrowserPanel::ContentBrowserPanel()
 	{
-		m_DirectoryIcon = Texture2D::Create("Resources/Icons/ContentBrowser/DirectoryIcon.png");
-		m_FileIcon = Texture2D::Create("Resources/Icons/ContentBrowser/FileIcon.png");
-		m_PrefabIcon = Texture2D::Create("Resources/Icons/ContentBrowser/PrefabIcon.png");
+		m_DirectoryIcon = TextureImporter::CreateTexture2D("Resources/Icons/ContentBrowser/DirectoryIcon.png");
+		m_FileIcon = TextureImporter::CreateTexture2D("Resources/Icons/ContentBrowser/FileIcon.png");
+		m_PrefabIcon = TextureImporter::CreateTexture2D("Resources/Icons/ContentBrowser/PrefabIcon.png");
 	}
 
 	void ContentBrowserPanel::SetContext(const std::filesystem::path& assetsPath)
@@ -158,7 +159,7 @@ namespace Nebula {
 					AssetManager::GetTypeFromExtension(path.extension().string()) != AssetType::None)
 				{
 					if (ImGui::Button("Import Asset"))
-						AssetManager::ImportAsset(path);
+						AssetManager::CreateAsset(path);
 				}
 
 				if (directoryEntry.is_directory())

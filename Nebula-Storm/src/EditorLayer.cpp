@@ -2,6 +2,7 @@
 
 #include <Nebula/Utils/UI.h>
 #include <Nebula/AssetManager/AssetManager.h>
+#include <Nebula/AssetManager/TextureImporter.h>
 
 #include <imgui.h>
 #include <ImGuizmo.h>
@@ -85,21 +86,18 @@ namespace Nebula {
 	void EditorLayer::Attach() {
 		NB_PROFILE_FUNCTION();
 
-		m_PlayIcon		= Texture2D::Create("Resources/Icons/Play.png");
-		m_SimulateIcon	= Texture2D::Create("Resources/Icons/Simulate.png");
-		m_PauseIcon		= Texture2D::Create("Resources/Icons/Pause.png");
-		m_StopIcon		= Texture2D::Create("Resources/Icons/Stop.png");
-		m_StepIcon		= Texture2D::Create("Resources/Icons/Step.png");
-		m_Backdrop		= Texture2D::Create("Resources/Textures/bg.png");
+		m_PlayIcon		= TextureImporter::CreateTexture2D("Resources/Icons/Play.png");
+		m_SimulateIcon	= TextureImporter::CreateTexture2D("Resources/Icons/Simulate.png");
+		m_PauseIcon		= TextureImporter::CreateTexture2D("Resources/Icons/Pause.png");
+		m_StopIcon		= TextureImporter::CreateTexture2D("Resources/Icons/Stop.png");
+		m_StepIcon		= TextureImporter::CreateTexture2D("Resources/Icons/Step.png");
+		m_Backdrop		= TextureImporter::CreateTexture2D("Resources/Textures/bg.png");
 
 		m_EditorCam = EditorCamera(60.0f, 16.0f / 9.0f, 0.01f, 1000.0f);
 
 		RenderCommand::SetClearColour({ 0.1f, 0.1f, 0.1f, 1.0f });
 		RenderCommand::SetLineWidth(4.0f);
 		
-		AssetManagerBase::ImportFontFamily("Resources/fonts", "OpenSans");
-		AssetManagerBase::ImportFontFamily("Resources/fonts", "Roboto");
-
 		//Initialize Frame Buffer
 		FrameBufferSpecification fbSpec;
 		fbSpec.Attachments = { FramebufferTextureFormat::RGBA8, FramebufferTextureFormat::RED_INT, FramebufferTextureFormat::Depth };
@@ -111,15 +109,16 @@ namespace Nebula {
 		NewScene();
 
 		//Open Project on Startup
-#if false
+#if true
 		auto commandLineArgs = Application::Get().GetSpecification().CommandLineArgs;
 		if (commandLineArgs.Count > 1)
 			OpenProject(commandLineArgs[1]);
 #else
 		OpenProject();
+#endif
+
 		if (!Project::GetActive())
 			Application::Get().Close();
-#endif
 	}
 
 	void EditorLayer::Detach() 
@@ -702,7 +701,7 @@ namespace Nebula {
 		}
 
 		for (const auto& path : filepaths)
-			AssetManager::ImportAsset(path);
+			AssetManager::CreateAsset(path);
 		
 		return false;
 	}
@@ -714,7 +713,7 @@ namespace Nebula {
 
 	void EditorLayer::SaveProject()
 	{
-		if (Project::GetActive())
+		if (Project::GetActive() && !Project::GetProjectFile().empty())
 			Project::SaveActive(Project::GetProjectFile());
 	}
 

@@ -151,14 +151,32 @@ namespace Nebula {
 
 		Ref<Font> GetFont() 
 		{
-			Ref<Asset> asset = AssetManager::GetAsset(FontHandle);
-			if (!asset)
-				return Font::GetDefault();
-
-			if (asset->Type == AssetType::FontFamily)
-				return asset->GetData<Font>(Bold, Italic);
+			const AssetMetadata& metadata = AssetManager::GetAssetMetadata(FontHandle);
 			
-			return asset->GetData<Font>();
+			if (metadata.Type == AssetType::Font)
+			{
+				Ref<Font> asset = AssetManager::GetAsset<Font>(FontHandle);
+				if (asset)
+					return asset;
+			}
+			else if (metadata.Type == AssetType::FontFamily)
+			{
+				Ref<FontFamily> family = AssetManager::GetAsset<FontFamily>(FontHandle);
+				AssetHandle handle = family->Regular;
+
+				if (Bold && Italic)
+					handle = family->BoldItalic;
+				else if (Bold)
+					handle = family->Bold;
+				else if (Italic)
+					handle = family->Italic;
+
+				Ref<Font> font = AssetManager::GetAsset<Font>(handle);
+				if (font)
+					return font;
+			}
+
+			return Font::GetDefault();
 		}
 	};
 

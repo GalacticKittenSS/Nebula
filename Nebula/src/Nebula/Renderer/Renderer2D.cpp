@@ -273,7 +273,7 @@ namespace Nebula {
 		//White Texture
 		s_Data.WhiteTexture = Texture2D::Create(TextureSpecification());
 		uint32_t whiteTextureData = 0xffffffff;
-		s_Data.WhiteTexture->SetData(&whiteTextureData, sizeof(uint32_t));
+		s_Data.WhiteTexture->SetData(Buffer(&whiteTextureData, sizeof(uint32_t)));
 		s_Data.TextureSlots[0] = s_Data.WhiteTexture;
 
 		//Shaders
@@ -348,6 +348,8 @@ namespace Nebula {
 		const auto& metrics = fontGeometry.getMetrics();
 		
 		Ref<Texture2D> fontAtlas = font->GetAtlasTexture();
+		NB_ASSERT(fontAtlas);
+		
 		float texelWidth = 1.0f / fontAtlas->GetWidth();
 		float texelHeight = 1.0f / fontAtlas->GetHeight();
 
@@ -571,8 +573,7 @@ namespace Nebula {
 		}
 		case NB_QUAD: {
 			auto& spriteRenderer = entity.GetComponent<SpriteRendererComponent>();
-
-			Ref<Texture2D> texture = AssetManager::GetAssetData<Texture2D>(spriteRenderer.Texture);
+			Ref<Texture2D> texture = AssetManager::GetAsset<Texture2D>(spriteRenderer.Texture);
 
 			if (texture && texture->IsLoaded()) {
 				Ref<SubTexture2D> SubT = SubTexture2D::CreateFromCoords(texture,
