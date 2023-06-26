@@ -99,6 +99,22 @@ namespace YAML
 		}
 	};
 
+	template<>
+	struct convert<std::filesystem::path>
+	{
+		static Node encode(const std::filesystem::path& path)
+		{
+			Node node;
+			node.push_back(path.string());
+			return node;
+		}
+
+		static bool decode(const Node& node, std::filesystem::path& path)
+		{
+			path = node.as<std::string>();
+			return true;
+		}
+	};
 }
 
 namespace Nebula
@@ -109,4 +125,22 @@ namespace Nebula
 
 	std::string RigidBody2DBodyTypeToString(Rigidbody2DComponent::BodyType bodyType);
 	Rigidbody2DComponent::BodyType RigidBody2DBodyTypeFromString(const std::string& bodyTypeString);
+
+	template<typename T>
+	void DeserializeValue(T& var, const YAML::Node& val)
+	{
+		if (!val)
+			return;
+
+		var = val.as<T>();
+	}
+
+	template<typename T>
+	T DeserializeValue(const YAML::Node& val, T default = (T)0)
+	{
+		if (!val)
+			return default;
+
+		return val.as<T>();
+	}
 }

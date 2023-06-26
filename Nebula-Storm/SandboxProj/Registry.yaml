@@ -1,29 +1,29 @@
 AssetRegistry:
-  - Handle: 199469299191224083
-    Type: Texture
-    Path: SandboxProj\Assets\Textures/Checkerboard.png
-    RelativePath: Textures\Checkerboard.png
-  - Handle: 3235123935084672078
-    Type: Font
-    Path: SandboxProj\Assets\Fonts\arialbd.ttf
-    RelativePath: Fonts\arialbd.ttf
   - Handle: 3871083381578152467
     Type: Font
-    Path: SandboxProj\Assets\Fonts\ariali.ttf
-    RelativePath: Fonts\ariali.ttf
-  - Handle: 7660240480337578553
-    Type: Prefab
-    Path: SandboxProj\Assets\Prefabs\Player.prefab
-    RelativePath: Prefabs\Player.prefab
-  - Handle: 10465062411550986415
+    Path: Assets/Fonts/ariali.ttf
+    RelativePath: Fonts/ariali.ttf
+  - Handle: 199469299191224083
+    Type: Texture
+    Path: Assets/Textures/Checkerboard.png
+    RelativePath: Textures/Checkerboard.png
+  - Handle: 3235123935084672078
     Type: Font
-    Path: SandboxProj\Assets\Fonts\arialbi.ttf
-    RelativePath: Fonts\arialbi.ttf
+    Path: Assets/Fonts/arialbd.ttf
+    RelativePath: Fonts/arialbd.ttf
   - Handle: 10672057491365945081
     Type: Font
-    Path: SandboxProj\Assets\Fonts\arial.ttf
-    RelativePath: Fonts\arial.ttf
+    Path: Assets/Fonts/arial.ttf
+    RelativePath: Fonts/arial.ttf
+  - Handle: 7660240480337578553
+    Type: Prefab
+    Path: Assets/Prefabs/Player.prefab
+    RelativePath: Prefabs/Player.prefab
+  - Handle: 10465062411550986415
+    Type: Font
+    Path: Assets/Fonts/arialbi.ttf
+    RelativePath: Fonts/arialbi.ttf
   - Handle: 16617440293131663672
     Type: Prefab
-    Path: SandboxProj\Assets\Prefabs\Enviroment.prefab
-    RelativePath: Prefabs\Enviroment.prefab
+    Path: Assets/Prefabs/Enviroment.prefab
+    RelativePath: Prefabs/Enviroment.prefab

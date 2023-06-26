@@ -20,6 +20,7 @@ namespace Nebula {
 	{
 		m_BaseDirectory = assetsPath;
 		m_CurrentDirectory = m_BaseDirectory;
+		RefreshAssetTree();
 	}
 
 	void ContentBrowserPanel::SetSceneContext(const Ref<Scene>& scene)
@@ -31,7 +32,6 @@ namespace Nebula {
 	{
 		ImGui::Begin("Content Browser");
 		RenderBrowser();
-		CreateFilePopup();
 
 		ImGuiWindow* window = ImGui::GetCurrentWindow();
 		if (m_Scene && !m_DragDrop && ImGui::BeginDragDropTargetCustom(window->ContentRegionRect, window->ID))
@@ -45,9 +45,11 @@ namespace Nebula {
 
 				PrefabSerializer serializer(m_Scene.get());
 				serializer.Serialize(entity, filepath.string());
+
+				AssetManager::CreateAsset(filepath);
+				RefreshAssetTree();
 			}
 		}
-
 		m_DragDrop = false;
 		ImGui::End();
 	}
@@ -61,9 +63,23 @@ namespace Nebula {
 
 		UI::ScopedStyleVar rounding(ImGuiStyleVar_FrameRounding, 7.5f);
 
-		ImGui::SetCursorPosX(ImGui::GetContentRegionMax().x - 200.0f);
+		ImGui::SetCursorPosX(ImGui::GetContentRegionMax().x - 240.0f);
 		ImGui::SetNextItemWidth(200.0f);
 		ImGui::SliderFloat("##thumbnail", &size, 0, 2);
+
+		ImGui::SameLine();
+
+		if (ImGui::ImageButton((ImTextureID)m_DirectoryIcon->GetRendererID(), ImVec2{ 20.0f, 20.0f }, { 0, 1 }, { 1, 0 }))
+			m_OnlyShowAssets = !m_OnlyShowAssets;
+		
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::BeginTooltipEx(ImGuiWindowFlags_NoBackground, ImGuiTooltipFlags_None);
+			GImGui->FontSize /= 1.1f;
+			ImGui::Text("Toggle Imported Assets");
+			GImGui->FontSize *= 1.1f;
+			ImGui::EndTooltip();
+		}
 
 		ImGui::SameLine();
 		ImGui::SetCursorPosX(ImGui::GetWindowContentRegionMin().x);
@@ -101,21 +117,29 @@ namespace Nebula {
 			columCount = 1;
 
 		ImGui::Columns(columCount, 0, false);
-
-		for (auto& directoryEntry : std::filesystem::directory_iterator(m_CurrentDirectory)) {
-			const auto& path = directoryEntry.path();
+		
+		for (auto& directoryEntry : std::filesystem::directory_iterator(m_CurrentDirectory))
+		{
+			std::filesystem::path path = std::filesystem::relative(directoryEntry, Project::GetAssetDirectory());
 			std::string filename = path.filename().string();
+
+			bool isAsset = m_TreeNodes.find(path) < m_TreeNodes.size();
+			if (m_OnlyShowAssets && !isAsset)
+				continue;
 
 			ImGui::PushID(filename.c_str());
 
 			Ref<Texture2D> icon = directoryEntry.is_directory() ? m_DirectoryIcon : m_FileIcon;
 			icon = path.extension() == ".prefab" ? m_PrefabIcon : icon;
-			
+
+			float tint = isAsset ? 1.0f : 0.5f;
+
 			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
-			ImGui::ImageButton((ImTextureID)(uint64_t)icon->GetRendererID(), { thumbnailSize, thumbnailSize }, { 0, 1 }, { 1, 0 });
+			ImGui::ImageButton((ImTextureID)(uint64_t)icon->GetRendererID(), { thumbnailSize, thumbnailSize }, { 0, 1 }, { 1, 0 }, -1, ImVec4(), ImVec4(1.0f, 1.0f, 1.0f, tint));
 			ImGui::PopStyleColor();
 
-			if (ImGui::BeginDragDropSource()) {
+			if (ImGui::BeginDragDropSource())
+			{
 				std::filesystem::path relativePath(path);
 				const wchar_t* itemPath = relativePath.c_str();
 				ImGui::SetDragDropPayload("CONTENT_BROWSER_ITEM", itemPath, (wcslen(itemPath) + 1) * sizeof(wchar_t), ImGuiCond_Once);
@@ -125,7 +149,7 @@ namespace Nebula {
 			if (directoryEntry.is_directory())
 			{
 				if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
-					m_CurrentDirectory /= path.filename();
+					m_CurrentDirectory /= filename;
 
 				if (ImGui::BeginDragDropTarget())
 				{
@@ -155,11 +179,14 @@ namespace Nebula {
 
 			if (ImGui::BeginPopupContextItem())
 			{
-				if (!AssetManager::GetHandleFromPath(path) &&
+				if (!isAsset &&
 					AssetManager::GetTypeFromExtension(path.extension().string()) != AssetType::None)
 				{
 					if (ImGui::Button("Import Asset"))
-						AssetManager::CreateAsset(path);
+					{
+						AssetManager::CreateAsset(directoryEntry);
+						RefreshAssetTree();
+					}
 				}
 
 				if (directoryEntry.is_directory())
@@ -196,7 +223,29 @@ namespace Nebula {
 			ImGui::PopID();
 		}
 
+		CreateFilePopup();
+
 		ImGui::Columns(1);
+	}
+
+	void ContentBrowserPanel::RefreshAssetTree()
+	{
+		m_TreeNodes.clear();
+
+		const auto& assetRegistry = Project::GetActive()->GetAssetManager()->GetAssetRegistry();
+		for (const auto& [handle, metadata] : assetRegistry)
+		{
+			std::filesystem::path currentPath = "";
+			
+			for (const auto& p : metadata.RelativePath)
+			{
+				currentPath /= p;
+
+				uint32_t index = m_TreeNodes.find(currentPath);
+				if (index >= m_TreeNodes.size())
+					m_TreeNodes.push_back(currentPath);
+			}
+		}
 	}
 
 	void ContentBrowserPanel::CreateFilePopup()

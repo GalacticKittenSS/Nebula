@@ -168,13 +168,13 @@ namespace Nebula
 	{
 		for (const auto& [handle, asset] : m_AssetRegistry)
 		{
-			if (asset.Path == path || asset.RelativePath == path.string())
+			if (asset.Path == path || asset.RelativePath == path)
 				return handle;
 		}
 		
 		for (const auto& [handle, asset] : s_GlobalRegistry)
 		{
-			if (asset.Path == path || asset.RelativePath == path.string())
+			if (asset.Path == path || asset.RelativePath == path)
 				return handle;
 		}
 
@@ -232,13 +232,13 @@ namespace Nebula
 
 		for (auto [handle, metadata] : m_AssetRegistry)
 		{
-			if (metadata.Path == path)
+			if (metadata.Path == path || metadata.RelativePath == path)
 				return metadata;
 		}
 		
 		for (auto [handle, metadata] : s_GlobalRegistry)
 		{
-			if (metadata.Path == path)
+			if (metadata.Path == path || metadata.RelativePath == path)
 				return metadata;
 		}
 
@@ -290,8 +290,10 @@ namespace Nebula
 			out << YAML::BeginMap;
 			out << YAML::Key << "Handle" << handle;
 			out << YAML::Key << "Type" << Utils::AssetTypeToString(metadata.Type);
-			out << YAML::Key << "Path" << metadata.Path.string();
-			out << YAML::Key << "RelativePath" << metadata.RelativePath.string();
+			
+			std::filesystem::path assetPath = std::filesystem::relative(metadata.Path, path.parent_path());
+			out << YAML::Key << "Path" << assetPath.generic_string();
+			out << YAML::Key << "RelativePath" << metadata.RelativePath.generic_string();
 			out << YAML::EndMap;
 		}
 
@@ -325,10 +327,14 @@ namespace Nebula
 		{
 			AssetHandle handle = node["Handle"].as<AssetHandle>();
 			std::string type = node["Type"].as<std::string>();
+			std::filesystem::path assetPath = path.parent_path() / node["Path"].as<std::string>();
 			
+			if (!std::filesystem::exists(assetPath))
+				continue;
+
 			auto& metadata = m_AssetRegistry[handle];
 			metadata.Handle = handle;
-			metadata.Path = node["Path"].as<std::string>();
+			metadata.Path = assetPath;
 			metadata.RelativePath = node["RelativePath"].as<std::string>();
 			metadata.Type = Utils::AssetTypeFromString(type);
 		}

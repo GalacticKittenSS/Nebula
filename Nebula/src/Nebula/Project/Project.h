@@ -11,10 +11,10 @@ namespace Nebula {
 	{
 		std::string Name = "Untitled";
 
-		std::filesystem::path AssetDirectory;
-		std::filesystem::path ScriptModulePath;
-		std::filesystem::path AssetRegistryPath;
 		std::filesystem::path StartScene;
+		std::filesystem::path AssetDirectory = "Asset";
+		std::filesystem::path AssetRegistryPath = "Registry.yaml";
+		std::filesystem::path ScriptModulePath;
 
 		// Scene
 		glm::vec2 Gravity = { 0.0f, -9.81f };

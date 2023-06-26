@@ -1,7 +1,9 @@
 #pragma once
 
 #include <Nebula.h>
+
 #include <filesystem>
+#include <map>
 
 namespace Nebula {
 	class ContentBrowserPanel {
@@ -15,6 +17,7 @@ namespace Nebula {
 		void SetContext(const std::filesystem::path& assetsPath);
 	private:
 		void RenderBrowser();
+		void RefreshAssetTree();
 		void CreateFilePopup();
 	private:
 		Ref<Scene> m_Scene;
@@ -23,6 +26,9 @@ namespace Nebula {
 		Ref<Texture2D> m_DirectoryIcon, m_FileIcon, m_PrefabIcon;
 
 		bool m_DragDrop = false;
+
+		Array<std::filesystem::path> m_TreeNodes;
+		bool m_OnlyShowAssets = false;
 
 		std::string m_CreateFileName;
 		bool m_CreateDirectory = false;

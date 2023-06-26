@@ -299,25 +299,6 @@ namespace Nebula {
 		NB_ASSERT(false, "");
 	}
 
-	template<typename T>
-	static void DeserializeValue(T& var, const YAML::Node& val)
-	{
-		if (!val)
-			return;
-
-		var = val.as<T>();
-	}
-
-
-	template<typename T>
-	static T DeserializeValue(const YAML::Node& val, T default = (T)0)
-	{
-		if (!val)
-			return default;
-
-		return val.as<T>();
-	}
-
 	bool SceneSerializer::Deserialize(const std::string& filepath) {
 		YAML::Node data;
 		try {

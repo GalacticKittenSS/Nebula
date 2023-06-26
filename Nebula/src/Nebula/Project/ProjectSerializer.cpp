@@ -71,15 +71,15 @@ namespace Nebula {
 		if (!projectNode)
 			return false;
 
-		config.Name = projectNode["Name"].as<std::string>();
-		config.StartScene = projectNode["StartScene"].as<std::string>();
-		config.AssetDirectory = projectNode["AssetDirectory"].as<std::string>();
-		config.AssetRegistryPath = projectNode["AssetRegistryPath"].as<std::string>();
-		config.ScriptModulePath = projectNode["ScriptModulePath"].as<std::string>();
+		DeserializeValue(config.Name, projectNode["Name"]);
+		DeserializeValue(config.StartScene, projectNode["StartScene"]);
+		DeserializeValue(config.AssetDirectory, projectNode["AssetDirectory"]);
+		DeserializeValue(config.AssetRegistryPath, projectNode["AssetRegistryPath"]);
+		DeserializeValue(config.ScriptModulePath, projectNode["ScriptModulePath"]);
 
 		if (auto sceneNode = data["Scene"])
 		{
-			config.Gravity = sceneNode["Gravity"].as<glm::vec2>();
+			DeserializeValue(config.Gravity, sceneNode["Gravity"]);
 
 			if (auto layers = sceneNode["Layers"])
 			{
