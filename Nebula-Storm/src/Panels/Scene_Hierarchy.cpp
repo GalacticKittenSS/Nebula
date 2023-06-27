@@ -997,8 +997,10 @@ namespace Nebula {
 
 			float width = ImGui::GetContentRegionAvailWidth();
 
+			Ref<Texture2D> texture = AssetManager::GetAsset<Texture2D>(component.Texture);
+
 			std::string text = "Drop File to Add Texture";
-			if (component.Texture)
+			if (texture)
 			{
 				const AssetMetadata& metadata = AssetManager::GetAssetMetadata(component.Texture);
 				text = metadata.RelativePath.string();
@@ -1032,15 +1034,13 @@ namespace Nebula {
 			}
 			
 			bool remove = false;
-			if (component.Texture)
+			if (texture)
 			{
 				ImGui::SameLine(ImGui::GetContentRegionMax().x - 40.0f);
 				remove = ImGui::Button("X", ImVec2(40.0f, 0.0f));
 				ImGui::Spacing();
 				
 				DrawVec1Control("Tiling Factor", component.Tiling, 0.1f, 0.0f, 100.0f);
-
-				Ref<Texture2D> texture = AssetManager::GetAsset<Texture2D>(component.Texture);
 
 				glm::vec2 textureSize = { (float)texture->GetWidth(), (float)texture->GetHeight() };
 				glm::vec2 maxOffset = textureSize - component.SubTextureCellSize * component.SubTextureCellNum;

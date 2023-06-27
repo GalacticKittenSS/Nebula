@@ -164,6 +164,12 @@ namespace Nebula
 		return data.Handle;
 	}
 
+	void AssetManagerBase::DeleteAsset(AssetHandle handle)
+	{
+		m_Assets.erase(handle);
+		m_AssetRegistry.erase(handle);
+	}
+
 	AssetHandle AssetManagerBase::GetHandleFromPath(const std::filesystem::path& path)
 	{
 		for (const auto& [handle, asset] : m_AssetRegistry)

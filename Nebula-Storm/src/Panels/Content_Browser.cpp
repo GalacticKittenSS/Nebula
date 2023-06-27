@@ -179,13 +179,24 @@ namespace Nebula {
 
 			if (ImGui::BeginPopupContextItem())
 			{
-				if (!isAsset &&
-					AssetManager::GetTypeFromExtension(path.extension().string()) != AssetType::None)
+				if (AssetManager::GetTypeFromExtension(path.extension().string()) != AssetType::None)
 				{
-					if (ImGui::Button("Import Asset"))
+					if (!isAsset)
 					{
-						AssetManager::CreateAsset(directoryEntry);
-						RefreshAssetTree();
+						if (ImGui::Button("Import Asset"))
+						{
+							AssetManager::CreateAsset(directoryEntry);
+							RefreshAssetTree();
+						}
+					}
+					else
+					{
+						if (ImGui::Button("Delete Asset"))
+						{
+							AssetHandle handle = AssetManager::GetHandleFromPath(directoryEntry);
+							AssetManager::DeleteAsset(handle);
+							RefreshAssetTree();
+						}
 					}
 				}
 

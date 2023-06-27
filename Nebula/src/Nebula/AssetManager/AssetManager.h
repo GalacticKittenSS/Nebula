@@ -31,6 +31,12 @@ namespace Nebula
 			return data.Handle;
 		}
 
+		static inline void DeleteAsset(AssetHandle handle)
+		{
+			NB_ASSERT(Project::GetAssetManager());
+			return Project::GetAssetManager()->DeleteAsset(handle);
+		}
+
 		static inline AssetHandle GetHandleFromPath(const std::filesystem::path& path)
 		{
 			NB_ASSERT(Project::GetAssetManager());

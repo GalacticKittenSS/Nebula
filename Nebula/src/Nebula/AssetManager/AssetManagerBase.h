@@ -23,6 +23,8 @@ namespace Nebula
 		static bool CreateGlobalAsset(AssetMetadata& metadata);
 		static AssetHandle CreateGlobalAsset(const std::filesystem::path& path, const std::filesystem::path& relativePath);
 		
+		void DeleteAsset(AssetHandle handle);
+
 		Ref<Asset> GetAsset(AssetHandle handle, bool load = true);
 		const AssetMetadata& GetAssetMetadata(AssetHandle handle) const;
 		const AssetMetadata& GetAssetMetadata(const std::filesystem::path& path) const;
