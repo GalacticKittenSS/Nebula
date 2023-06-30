@@ -191,7 +191,7 @@ namespace Nebula {
 					}
 					else
 					{
-						if (ImGui::Button("Delete Asset"))
+						if (ImGui::Button("Remove Asset"))
 						{
 							AssetHandle handle = AssetManager::GetHandleFromPath(directoryEntry);
 							AssetManager::DeleteAsset(handle);
@@ -200,15 +200,31 @@ namespace Nebula {
 					}
 				}
 
-				if (directoryEntry.is_directory())
+				if (ImGui::Button("Delete"))
+					ImGui::OpenPopup("DeleteFile");
+
+				if (ImGui::BeginPopup("DeleteFile"))
 				{
-					if (ImGui::Button("Delete Directory"))
-						std::filesystem::remove_all(path.string().c_str());
-				}
-				else
-				{
-					if (ImGui::Button("Delete File"))
-						std::filesystem::remove(path.string().c_str());
+					ImGui::Text("Are you sure you want to delete?");
+					
+					if (ImGui::Button("Delete"))
+					{
+						AssetHandle handle = AssetManager::GetHandleFromPath(directoryEntry);
+						AssetManager::DeleteAsset(handle);
+						RefreshAssetTree();
+
+						if (directoryEntry.is_directory())
+							std::filesystem::remove_all(directoryEntry);
+						else
+							std::filesystem::remove(directoryEntry);
+					}
+
+					ImGui::SameLine();
+
+					if (ImGui::Button("Cancel"))
+						ImGui::CloseCurrentPopup();
+					
+					ImGui::EndPopup();
 				}
 
 				ImGui::EndPopup();
@@ -292,7 +308,7 @@ namespace Nebula {
 					m_CreateFileName = "NewScript.cs";
 					open_popup = true;
 				}
-
+				
 				ImGui::EndMenu();
 			}
 
