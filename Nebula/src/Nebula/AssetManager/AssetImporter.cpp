@@ -4,6 +4,9 @@
 #include "TextureImporter.h"
 #include "FontImporter.h"
 
+#include "AssetManager.h"
+#include "Nebula/Core/Application.h"
+
 #include <map>
 
 namespace Nebula
@@ -24,6 +27,28 @@ namespace Nebula
 			return nullptr;
 		}
 
-		return func->second(handle, metadata);
+		Ref<Asset> asset = func->second(handle, metadata);
+		if (asset)
+			asset->Handle = handle;
+
+		return asset;
+	}
+
+	void AssetImporter::OnAssetChange(const std::filesystem::path& path, const filewatch::Event change_type)
+	{
+		if (change_type != filewatch::Event::modified)
+			return;
+
+		Ref<AssetManagerBase> assetManager = Project::GetAssetManager();
+		AssetHandle handle = assetManager->GetHandleFromPath(path);
+		AssetMetadata& metadata = assetManager->m_AssetRegistry.at(handle);
+
+		Application::Get().SubmitToMainThread([assetManager, handle, &metadata]() {
+			Ref<Asset> asset = AssetImporter::ImportAsset(handle, metadata);
+			if (!asset)
+				return;
+
+			assetManager->m_Assets[handle] = asset;
+		});
 	}
 }

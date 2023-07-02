@@ -40,13 +40,12 @@ namespace Nebula
 		void SerializeRegistry(const std::filesystem::path& path);
 		bool DeserializeRegistry(const std::filesystem::path& path);
 	private:
-		//static void OnAssetChange(const std::string& path, const filewatch::Event change_type); 
-		
 		Ref<Asset> FindAsset(AssetHandle handle);
-		static Ref<Asset> FindGlobalAsset(AssetHandle handle);
 	private:
 		AssetRegistry m_AssetRegistry;
 		AssetMap m_Assets;
+
+		friend class AssetImporter;
 
 		static AssetRegistry s_GlobalRegistry;
 		static uint16_t s_GlobalIndex;

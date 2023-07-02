@@ -3,11 +3,12 @@
 #include "Nebula/Core/UUID.h"
 
 #include <filesystem>
-//#include "../filewatch/FileWatch.hpp"
+#include "../filewatch/FileWatch.hpp"
 
 namespace Nebula 
 {
 	using AssetHandle = UUID;
+	using FileWatcher = filewatch::FileWatch<std::filesystem::path>;
 
 	enum class AssetType : uint16_t
 	{
@@ -18,6 +19,7 @@ namespace Nebula
 		Font,
 		FontFamily,
 		Script,
+		Material,
 		MemoryAsset
 	};
 
@@ -29,6 +31,8 @@ namespace Nebula
 		std::filesystem::path RelativePath;
 		bool isGlobal = false;
 
+		Ref<FileWatcher> Watcher = nullptr;
+
 		operator bool() const { return Type != AssetType::None; }
 	};
 
@@ -37,10 +41,6 @@ namespace Nebula
 	public:
 		AssetHandle Handle = NULL;
 		virtual AssetType GetType() const = 0;
-	private:
-		//Scope<filewatch::FileWatch<std::string>> Watcher;
-		
-		friend class AssetManagerBase;
 	};
 
 	namespace Utils

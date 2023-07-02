@@ -59,19 +59,6 @@ namespace Nebula
 	AssetRegistry AssetManagerBase::s_GlobalRegistry = {};
 	uint16_t AssetManagerBase::s_GlobalIndex = 1;
 
-	/*void AssetManagerBase::OnAssetChange(const std::string& path, const filewatch::Event change_type)
-	{
-		if (change_type != filewatch::Event::modified)
-			return;
-
-		AssetHandle handle = Project::GetAssetManager()->GetHandleFromPath(path);
-		Ref<Asset> asset = Project::GetAssetManager()->m_Assets.at(handle);
-
-		Application::Get().SubmitToMainThread([asset]() {
-			Project::GetAssetManager()->LoadAsset(asset);
-		});
-	}*/
-
 	bool AssetManagerBase::IsHandleValid(AssetHandle handle)
 	{
 		return handle != 0 && (m_AssetRegistry.find(handle) != m_AssetRegistry.end() 
@@ -116,6 +103,7 @@ namespace Nebula
 		data.Type = type;
 		data.Path = path;
 		data.RelativePath = relativePath;
+		data.Watcher = CreateRef<FileWatcher>(path, AssetImporter::OnAssetChange);
 
 		m_AssetRegistry[handle] = data;
 	}
@@ -343,6 +331,7 @@ namespace Nebula
 			metadata.Path = assetPath;
 			metadata.RelativePath = node["RelativePath"].as<std::string>();
 			metadata.Type = Utils::AssetTypeFromString(type);
+			metadata.Watcher = CreateRef<FileWatcher>(assetPath, AssetImporter::OnAssetChange);
 		}
 	}
 }
