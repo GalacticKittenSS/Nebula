@@ -117,6 +117,19 @@ namespace Nebula
 		m_AssetRegistry[metadata.Handle] = metadata;
 	}
 
+	AssetHandle AssetManagerBase::CreateMemoryAsset(Ref<Asset> asset)
+	{
+		AssetMetadata data;
+		data.Handle = AssetHandle();
+		data.Type = AssetType::MemoryAsset;
+		
+		m_AssetRegistry[data.Handle] = data;
+		m_Assets[data.Handle] = asset;
+		
+		asset->Handle = data.Handle;
+		return data.Handle;
+	}
+
 	bool AssetManagerBase::CreateGlobalAsset(AssetMetadata& metadata)
 	{
 		if (!metadata || !std::filesystem::exists(metadata.Path))
@@ -281,6 +294,9 @@ namespace Nebula
 
 		for (const auto& [handle, metadata] : m_AssetRegistry)
 		{
+			if (metadata.Type == AssetType::MemoryAsset)
+				continue;
+
 			out << YAML::BeginMap;
 			out << YAML::Key << "Handle" << handle;
 			out << YAML::Key << "Type" << Utils::AssetTypeToString(metadata.Type);

@@ -17,6 +17,7 @@ namespace Nebula
 		AssetManagerBase() = default;
 
 		AssetHandle CreateAsset(const std::filesystem::path& path);
+		AssetHandle CreateMemoryAsset(Ref<Asset> asset);
 		bool CreateAsset(AssetMetadata& metadata);
 		bool CreateAsset(AssetHandle handle, const std::filesystem::path& path, const std::filesystem::path& relativePath);
 		
