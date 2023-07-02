@@ -452,22 +452,22 @@ namespace Nebula {
 	}
 
 	void Renderer2D::DrawTri(const uint32_t vertexCount, const glm::vec4* vertexPos, glm::vec2* texCoords,
-		const glm::mat4& transform, const glm::vec4& colour, Ref<Texture2D> texture, float tiling, uint32_t entityID)
+		const glm::mat4& transform, const Material& mat, uint32_t entityID)
 	{
 		NB_PROFILE_FUNCTION();
 
 		if (s_Data.TriIndexCount >= s_Data.MaxIndices)
 			FlushAndReset();
 
-		float textureIndex = GetTextureIndex(texture ? texture : s_Data.WhiteTexture);
+		float textureIndex = GetTextureIndex(mat.Texture ? mat.Texture : s_Data.WhiteTexture);
 
 		for (size_t i = 0; i < vertexCount; i++) 
 		{
 			s_Data.TriVBPtr->Position = transform * vertexPos[i];
-			s_Data.TriVBPtr->Colour = colour;
+			s_Data.TriVBPtr->Colour = mat.Colour;
 			s_Data.TriVBPtr->TexCoord = texCoords[i];
 			s_Data.TriVBPtr->TexIndex = textureIndex;
-			s_Data.TriVBPtr->TilingFactor = tiling;
+			s_Data.TriVBPtr->TilingFactor = mat.Tiling;
 			s_Data.TriVBPtr->EntityID = entityID;
 			s_Data.TriVBPtr++;
 		}
@@ -476,21 +476,21 @@ namespace Nebula {
 	}
 
 	void Renderer2D::DrawQuad(const uint32_t vertexCount, const glm::vec4* vertexPos, glm::vec2* texCoords,
-		const glm::mat4& transform, const glm::vec4& colour, Ref<Texture2D> texture, float tiling, uint32_t entityID)
+		const glm::mat4& transform, const Material& mat, uint32_t entityID)
 	{
 		NB_PROFILE_FUNCTION();
 		if (s_Data.QuadIndexCount >= s_Data.MaxIndices)
 			FlushAndReset();
 
-		float textureIndex = GetTextureIndex(texture ? texture : s_Data.WhiteTexture);
+		float textureIndex = GetTextureIndex(mat.Texture ? mat.Texture : s_Data.WhiteTexture);
 
 		for (size_t i = 0; i < vertexCount; i++)
 		{
 			s_Data.QuadVBPtr->Position = transform * vertexPos[i];
-			s_Data.QuadVBPtr->Colour = colour;
+			s_Data.QuadVBPtr->Colour = mat.Colour;
 			s_Data.QuadVBPtr->TexCoord = texCoords[i];
 			s_Data.QuadVBPtr->TexIndex = textureIndex;
-			s_Data.QuadVBPtr->TilingFactor = tiling;
+			s_Data.QuadVBPtr->TilingFactor = mat.Tiling;
 			s_Data.QuadVBPtr->EntityID = entityID;
 			s_Data.QuadVBPtr++;
 		}
@@ -498,7 +498,7 @@ namespace Nebula {
 		s_Data.QuadIndexCount += uint32_t(vertexCount * 1.5);
 	}
 
-	void Renderer2D::DrawCircle(const glm::mat4& transform, const glm::vec4& colour, const float thickness, const float fade, uint32_t entityID) 
+	void Renderer2D::DrawCircle(const glm::mat4& transform, const Material& mat, const float thickness, const float fade, uint32_t entityID)
 	{
 		NB_PROFILE_FUNCTION();
 
@@ -509,7 +509,7 @@ namespace Nebula {
 		{
 			s_Data.CircleVBPtr->Position = transform * s_Data.QuadVertexPos[i];
 			s_Data.CircleVBPtr->LocalPosition = s_Data.QuadVertexPos[i] * 2.0f;
-			s_Data.CircleVBPtr->Colour = colour;
+			s_Data.CircleVBPtr->Colour = mat.Colour;
 			s_Data.CircleVBPtr->Thickness = thickness;
 			s_Data.CircleVBPtr->Fade = fade;
 			s_Data.CircleVBPtr->EntityID = entityID;
@@ -539,15 +539,11 @@ namespace Nebula {
 		NB_PROFILE_FUNCTION();
 
 		glm::mat4 transform = entity.GetComponent<WorldTransformComponent>().Transform;
+		
 		switch (type)
 		{
 		case NB_RECT: {
 			glm::vec4 colour = { 1, 1, 1, 1 };
-
-			if (entity.HasComponent<SpriteRendererComponent>())
-				colour = entity.GetComponent<SpriteRendererComponent>().Colour;
-			else if (entity.HasComponent<CircleRendererComponent>())
-				colour = entity.GetComponent<CircleRendererComponent>().Colour;
 
 			glm::vec3 p0 = transform * glm::vec4(-0.5f, -0.5f, 0.0f, 1.0f);
 			glm::vec3 p1 = transform * glm::vec4(0.5f, -0.5f, 0.0f, 1.0f);
@@ -563,7 +559,9 @@ namespace Nebula {
 		}
 		case NB_CIRCLE: {
 			auto& circleRenderer = entity.GetComponent<CircleRendererComponent>();
-			DrawCircle(transform, circleRenderer.Colour, circleRenderer.Thickness, circleRenderer.Fade, entity);
+
+			Ref<Material> material = AssetManager::GetAsset<Material>(circleRenderer.Material);
+			DrawCircle(transform, Material::Get(material), circleRenderer.Thickness, circleRenderer.Fade, entity);
 			break;
 		}
 		case NB_LINE: {
@@ -573,17 +571,16 @@ namespace Nebula {
 		}
 		case NB_QUAD: {
 			auto& spriteRenderer = entity.GetComponent<SpriteRendererComponent>();
-			Ref<Texture2D> texture = AssetManager::GetAsset<Texture2D>(spriteRenderer.Texture);
 
-			if (texture && texture->IsLoaded()) {
-				Ref<SubTexture2D> SubT = SubTexture2D::CreateFromCoords(texture,
+			Ref<Material> material = AssetManager::GetAsset<Material>(spriteRenderer.Material);
+			if (material && material->Texture) {
+				Ref<SubTexture2D> SubT = SubTexture2D::CreateFromCoords(material->Texture,
 					spriteRenderer.SubTextureOffset, spriteRenderer.SubTextureCellSize, spriteRenderer.SubTextureCellNum);
-				DrawQuad(4, s_Data.QuadVertexPos, SubT->GetTextureCoords(), transform,
-					spriteRenderer.Colour, texture, spriteRenderer.Tiling, entity);
+				DrawQuad(4, s_Data.QuadVertexPos, SubT->GetTextureCoords(), transform, Material::Get(material), entity);
 			}
 			else
 				DrawQuad(4, s_Data.QuadVertexPos, s_Data.QuadTexCoords, transform, 
-					spriteRenderer.Colour, s_Data.WhiteTexture, spriteRenderer.Tiling, entity);
+					Material::Get(material), entity);
 			break;
 		}
 		case NB_STRING: {
@@ -599,7 +596,7 @@ namespace Nebula {
 		}
 	}
 
-	void Renderer2D::Draw(const uint32_t type, const glm::mat4& transform, const glm::vec4& colour, Ref<Texture2D> texture, float tiling) {
+	void Renderer2D::Draw(const uint32_t type, const glm::mat4& transform, const Material& material) {
 		switch (type) {
 		case NB_RECT: {
 			glm::vec3 p0 = transform * s_Data.QuadVertexPos[0];
@@ -607,28 +604,28 @@ namespace Nebula {
 			glm::vec3 p2 = transform * s_Data.QuadVertexPos[2];
 			glm::vec3 p3 = transform * s_Data.QuadVertexPos[3];
 
-			DrawLine(p0, p1, colour);
-			DrawLine(p1, p2, colour);
-			DrawLine(p2, p3, colour);
-			DrawLine(p3, p0, colour);
+			DrawLine(p0, p1, material.Colour);
+			DrawLine(p1, p2, material.Colour);
+			DrawLine(p2, p3, material.Colour);
+			DrawLine(p3, p0, material.Colour);
 
 			break;
 		}
 
 		case NB_LINE:
-			DrawLine(s_Data.LineVertexPos[0] * transform[3], s_Data.LineVertexPos[1] * transform[3], colour);
+			DrawLine(s_Data.LineVertexPos[0] * transform[3], s_Data.LineVertexPos[1] * transform[3], material.Colour);
 			break;
 
 		case NB_CIRCLE:
-			DrawCircle(transform, colour);
+			DrawCircle(transform, material);
 			break;
 
 		case NB_QUAD:
-			DrawQuad(4, s_Data.QuadVertexPos, s_Data.QuadTexCoords, transform, colour, texture, tiling);
+			DrawQuad(4, s_Data.QuadVertexPos, s_Data.QuadTexCoords, transform, material);
 			break;
 
 		case NB_TRI:
-			DrawTri(3, s_Data.TriVertexPos, s_Data.TriTexCoords, transform, colour, texture, tiling);
+			DrawTri(3, s_Data.TriVertexPos, s_Data.TriTexCoords, transform, material);
 			break;
 
 		case NB_STRING:
@@ -638,7 +635,7 @@ namespace Nebula {
 	}
 	
 	void Renderer2D::Draw(const uint32_t type, const glm::vec4* vertexPos, glm::vec2* texCoords, 
-		const glm::mat4& transform, const glm::vec4& colour, Ref<Texture2D> texture, float tiling) {
+		const glm::mat4& transform, const Material& material) {
 		uint32_t size = sizeof(vertexPos) / sizeof(glm::vec4);
 		switch (type) {
 			case NB_QUAD:
@@ -652,7 +649,7 @@ namespace Nebula {
 					};
 				}
 
-				DrawQuad(size, vertexPos, texCoords, transform, colour, texture, tiling);
+				DrawQuad(size, vertexPos, texCoords, transform, material);
 				break;
 
 			case NB_TRI:
@@ -664,7 +661,7 @@ namespace Nebula {
 						texCoords[i + 2] = s_Data.TriVertexPos[2];
 					};
 				}
-				DrawTri(size, vertexPos, texCoords, transform, colour, texture, tiling);
+				DrawTri(size, vertexPos, texCoords, transform, material);
 				break;
 		}
 	}

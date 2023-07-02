@@ -13,6 +13,7 @@
 #include "Nebula/Project/Project.h"
 #include "Nebula/Project/ProjectLayer.h"
 
+#include "Nebula/Renderer/Material.h"
 #include "Nebula/Renderer/Texture.h"
 #include "Nebula/Utils/Arrays.h"
 
@@ -112,19 +113,17 @@ namespace Nebula {
 	};
 
 	struct SpriteRendererComponent {
-		glm::vec4 Colour{ 1.0f, 1.0f, 1.0f, 1.0f };
-		AssetHandle Texture = NULL;
+		AssetHandle Material = NULL;
 		glm::vec2 SubTextureOffset = { 0.0f, 0.0f };
 		glm::vec2 SubTextureCellSize = { 128.0f, 128.0f };
 		glm::vec2 SubTextureCellNum = { 1, 1 };
-		float Tiling = 1.0f;
-
+		
 		SpriteRendererComponent() = default;
 		SpriteRendererComponent(const SpriteRendererComponent&) = default;
 	};
 
 	struct CircleRendererComponent {
-		glm::vec4 Colour{ 1.0f, 1.0f, 1.0f, 1.0f };
+		AssetHandle Material = NULL;
 		float Radius = 0.5f;
 		float Thickness = 1.0f;
 		float Fade = 0.005f;

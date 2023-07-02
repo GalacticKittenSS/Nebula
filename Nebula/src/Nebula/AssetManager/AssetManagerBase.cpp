@@ -24,6 +24,7 @@ namespace Nebula
 			case AssetType::Font: return "Font";
 			case AssetType::FontFamily: return "FontFamily";
 			case AssetType::Script: return "Script";
+			case AssetType::Material: return "Material";
 			case AssetType::MemoryAsset: return "Memory";
 			}
 
@@ -38,6 +39,7 @@ namespace Nebula
 			else if (type == "Font") return AssetType::Font;
 			else if (type == "FontFamily") return AssetType::FontFamily;
 			else if (type == "Script") return AssetType::Script;
+			else if (type == "Material") return AssetType::Material;
 			else if (type == "Memory") return AssetType::MemoryAsset;
 
 			return AssetType::None;
@@ -48,6 +50,7 @@ namespace Nebula
 			if (extension == ".nebula")			return AssetType::Scene;
 			else if (extension == ".prefab")	return AssetType::Prefab;
 			else if (extension == ".cs")		return AssetType::Script;
+			else if (extension == ".mat")		return AssetType::Material;
 			else if (extension == ".ttf" || extension == ".TTF")  return AssetType::Font;
 			else if (extension == ".png" || extension == ".jpeg") return AssetType::Texture;
 

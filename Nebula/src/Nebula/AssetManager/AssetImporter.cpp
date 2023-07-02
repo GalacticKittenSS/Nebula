@@ -3,6 +3,7 @@
 
 #include "TextureImporter.h"
 #include "FontImporter.h"
+#include "MaterialImporter.h"
 
 #include "AssetManager.h"
 #include "Nebula/Core/Application.h"
@@ -16,6 +17,7 @@ namespace Nebula
 		{ AssetType::Font, FontImporter::ImportFont },
 		{ AssetType::FontFamily, FontImporter::ImportFontFamily },
 		{ AssetType::Texture, TextureImporter::ImportTexture2D },
+		{ AssetType::Material, MaterialImporter::ImportMaterial },
 	};
 
 	Ref<Asset> AssetImporter::ImportAsset(AssetHandle handle, const AssetMetadata& metadata)

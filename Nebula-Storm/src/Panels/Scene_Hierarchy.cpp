@@ -990,76 +990,50 @@ namespace Nebula {
 		}, true);
 
 		DrawComponent<SpriteRendererComponent>("Sprite Renderer", entity, [](auto& component) {
-			DrawColourEdit("Colour", component.Colour);
+			const AssetMetadata& metadata = AssetManager::GetAssetMetadata(component.Material);
+			std::string text = metadata.RelativePath.empty() ? "None" : metadata.RelativePath.string();
 
-			ImGui::Separator();
-			ImGui::Spacing();
+			DrawLabel("Material");
+			if (ImGui::Button(text.c_str(), ImVec2{ImGui::GetContentRegionAvailWidth(), 0}))
+				component.Material = NULL;
 
-			float width = ImGui::GetContentRegionAvailWidth();
-
-			Ref<Texture2D> texture = AssetManager::GetAsset<Texture2D>(component.Texture);
-
-			std::string text = "Drop File to Add Texture";
-			if (texture)
+			if (ImGui::BeginDragDropTarget())
 			{
-				const AssetMetadata& metadata = AssetManager::GetAssetMetadata(component.Texture);
-				text = metadata.RelativePath.string();
-				
-				width -= 40.0f - GImGui->Style.FrameRounding;
-			}
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
+				{
+					const wchar_t* payloadPath = (const wchar_t*)payload->Data;
+					std::filesystem::path path = payloadPath;
 
-			ImGui::PushStyleColor(ImGuiCol_ButtonActive, GImGui->Style.Colors[ImGuiCol_Button]);
-			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, GImGui->Style.Colors[ImGuiCol_Button]);
-			ImGui::Button(text.c_str(), ImVec2(width, 0.0f));
-			ImGui::PopStyleColor(2);
-
-			if (ImGui::BeginDragDropTarget()) {
-				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
-					const wchar_t* path = (const wchar_t*)payload->Data;
-					
-					std::filesystem::path texturePath = path;
-
-					AssetHandle handle = AssetManager::CreateAsset(texturePath);
-					Ref<Texture2D> texture = AssetManager::GetAsset<Texture2D>(handle);
-					if (texture)
-					{
-						component.Texture = handle;
-						component.SubTextureCellSize = glm::min(component.SubTextureCellSize, 
-							{ (float)texture->GetWidth(), (float)texture->GetHeight() });
-					}
-					else
-						NB_WARN("Could not load texture {0}", texturePath.filename().string());
+					if (AssetManager::GetTypeFromExtension(path.extension().string()) == AssetType::Material)
+						component.Material = AssetManager::CreateAsset(path);
 				}
-				ImGui::EndDragDropTarget();
-			}
-			
-			bool remove = false;
-			if (texture)
-			{
-				ImGui::SameLine(ImGui::GetContentRegionMax().x - 40.0f);
-				remove = ImGui::Button("X", ImVec2(40.0f, 0.0f));
-				ImGui::Spacing();
-				
-				DrawVec1Control("Tiling Factor", component.Tiling, 0.1f, 0.0f, 100.0f);
-
-				glm::vec2 textureSize = { (float)texture->GetWidth(), (float)texture->GetHeight() };
-				glm::vec2 maxOffset = textureSize - component.SubTextureCellSize * component.SubTextureCellNum;
-				component.SubTextureOffset = glm::min(glm::max(component.SubTextureOffset, glm::vec2(0.0f)), maxOffset);
-
-				glm::vec2 maxCellNum = textureSize / component.SubTextureCellSize;
-				component.SubTextureCellNum = glm::min(component.SubTextureCellNum, maxCellNum);
-
-				DrawVec2Control("Offset", component.SubTextureOffset, glm::vec2(0.0f), maxOffset != glm::vec2(0.0f) ? maxOffset : glm::vec2(0.001f));
-				DrawVec2Control("Cell Size", component.SubTextureCellSize, glm::vec2(0.1f), textureSize, textureSize);
-				DrawVec2Control("Cell Number", component.SubTextureCellNum, glm::vec2(0.1f), maxCellNum, glm::vec2(1.0f));
 			}
 
-			if (remove)
-				component.Texture = NULL;
+			DrawVec2Control("Offset", component.SubTextureOffset, glm::vec2(0.0f));
+			DrawVec2Control("Cell Size", component.SubTextureCellSize, glm::vec2(0.1f));
+			DrawVec2Control("Cell Number", component.SubTextureCellNum, glm::vec2(0.1f));
 		}, true);
 
 		DrawComponent<CircleRendererComponent>("Circle Renderer", entity, [](auto& component) {
-			DrawColourEdit("Colour", component.Colour);
+			const AssetMetadata& metadata = AssetManager::GetAssetMetadata(component.Material);
+			std::string text = metadata.RelativePath.empty() ? "None" : metadata.RelativePath.string();
+
+			DrawLabel("Material");
+			if (ImGui::Button(text.c_str(), ImVec2{ ImGui::GetContentRegionAvailWidth(), 0 }))
+				component.Material = NULL;
+
+			if (ImGui::BeginDragDropTarget())
+			{
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
+				{
+					const wchar_t* payloadPath = (const wchar_t*)payload->Data;
+					std::filesystem::path path = payloadPath;
+
+					if (AssetManager::GetTypeFromExtension(path.extension().string()) == AssetType::Material)
+						component.Material = AssetManager::CreateAsset(path);
+				}
+			}
+
 			DrawVec1Control("Thickness", component.Thickness, 0.01f, 0.01f, 1.0f);
 			DrawVec1Control("Fade", component.Fade, 0.0025f, 0.01f, 1.0f);
 		}, true);

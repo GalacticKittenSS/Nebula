@@ -3,11 +3,13 @@
 #include <Nebula/Scene/Prefab_Serializer.h>
 #include <Nebula/AssetManager/TextureImporter.h>
 
+#include <Nebula/Maths/MinMax.h>
 #include <Nebula/Utils/UI.h>
 #include <imgui_internal.h>
 
 namespace Nebula {
-	extern const std::filesystem::path s_AssetPath;
+	static float s_TextColumnWidth = 105.0f;
+	static float s_MaxItemWidth = 425.0f;
 	
 	ContentBrowserPanel::ContentBrowserPanel()
 	{
@@ -26,6 +28,63 @@ namespace Nebula {
 	void ContentBrowserPanel::SetSceneContext(const Ref<Scene>& scene)
 	{
 		m_Scene = scene;
+	}
+
+	static float DrawLabel(std::string label)
+	{
+		float padding = ImGui::GetStyle().ItemSpacing.x * 2;
+		float max_width = Maths::Max(s_TextColumnWidth, ImGui::GetWindowContentRegionMax().x - s_MaxItemWidth);
+
+		if (ImGui::CalcTextSize(label.c_str()).x + padding > max_width)
+		{
+			int i = 0;
+			for (; i < label.length(); i++)
+			{
+				if (ImGui::CalcTextSize(label.c_str(), &label[i]).x + padding > max_width)
+					break;
+			}
+
+			label = label.substr(0, i - 3) + "...";
+		}
+
+		ImGui::Text(label.c_str());
+		ImGui::SameLine();
+
+		float size = Maths::Min(s_MaxItemWidth, ImGui::GetWindowContentRegionMax().x - max_width - padding);
+		ImGui::SetCursorPosX(ImGui::GetWindowContentRegionMax().x - size);
+		return size;
+	}
+
+	static bool DrawVec1Control(std::string label, float& values, const float& min = 0.0f, const float& max = 0.0f,
+		const float& resetvalue = 0.0f, float step = 0.1f)
+	{
+		ImGui::PushID(label.c_str());
+		float size = DrawLabel(label);
+		ImGui::SetNextItemWidth(size);
+
+		bool open = ImGui::DragFloat("##V", &values, step, min, max, "%.2f");
+		ImGui::PopID();
+		return open;
+	}
+
+	static bool DrawColourEdit(const std::string& label, glm::vec4& colour)
+	{
+		ImGui::PushID(label.c_str());
+		float size = DrawLabel(label);
+		const ImVec4 col_v4(colour.x, colour.y, colour.z, colour.w);
+
+		if (ImGui::ColorButton("##button", col_v4, 0, ImVec2{ size, 0.0f }))
+			ImGui::OpenPopup("picker");
+
+		bool changed = false;
+		if (ImGui::BeginPopup("picker"))
+		{
+			changed = ImGui::ColorPicker4("##picker", glm::value_ptr(colour));
+			ImGui::EndPopup();
+		}
+
+		ImGui::PopID();
+		return changed;
 	}
 
 	void ContentBrowserPanel::OnImGuiRender() 
@@ -50,7 +109,12 @@ namespace Nebula {
 				RefreshAssetTree();
 			}
 		}
+
 		m_DragDrop = false;
+		ImGui::End();
+
+		ImGui::Begin("File Properties");
+		RenderProperties();
 		ImGui::End();
 	}
 
@@ -135,7 +199,18 @@ namespace Nebula {
 			float tint = isAsset ? 1.0f : 0.5f;
 
 			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
-			ImGui::ImageButton((ImTextureID)(uint64_t)icon->GetRendererID(), { thumbnailSize, thumbnailSize }, { 0, 1 }, { 1, 0 }, -1, ImVec4(), ImVec4(1.0f, 1.0f, 1.0f, tint));
+			
+			if (ImGui::ImageButton((ImTextureID)(uint64_t)icon->GetRendererID(), { thumbnailSize, thumbnailSize }, { 0, 1 }, { 1, 0 }, -1, ImVec4(), ImVec4(1.0f, 1.0f, 1.0f, tint)))
+			{
+				if (!directoryEntry.is_directory())
+				{
+					m_SelectedFile = directoryEntry;
+
+					AssetHandle handle = AssetManager::GetHandleFromPath(m_SelectedFile);
+					m_AssetPreview = AssetManager::GetAsset<Asset>(handle);
+				}
+			}
+
 			ImGui::PopStyleColor();
 
 			if (ImGui::BeginDragDropSource())
@@ -158,7 +233,7 @@ namespace Nebula {
 					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
 					{
 						std::filesystem::path filepath = (const wchar_t*)payload->Data;
-						std::filesystem::rename(filepath, directoryEntry / filepath.filename());
+						std::filesystem::rename(Project::GetAssetDirectory() / filepath, directoryEntry / filepath.filename());
 					}
 
 					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENTITY"))
@@ -253,6 +328,123 @@ namespace Nebula {
 		CreateFilePopup();
 
 		ImGui::Columns(1);
+	}
+
+	static void DrawFile(const std::filesystem::path& path)
+	{
+		std::ifstream file(path);
+		if (file.is_open())
+		{
+			std::string line;
+			while (std::getline(file, line))
+			{
+				ImGui::Text(line.c_str());
+			}
+
+			file.close();
+		}
+	}
+
+	void ContentBrowserPanel::RenderProperties()
+	{
+		if (!std::filesystem::exists(m_SelectedFile))
+			return;
+
+		ImGuiIO& io = ImGui::GetIO();
+		ImFont* boldFont = io.Fonts->Fonts[0];
+		
+		std::filesystem::path relative = std::filesystem::relative(m_SelectedFile, m_BaseDirectory);
+
+		ImGui::PushFont(boldFont);
+		GImGui->FontSize *= 1.5f;
+		ImGui::SetCursorPosX((ImGui::GetWindowContentRegionMax().x - ImGui::CalcTextSize(relative.string().c_str()).x) / 2);
+		ImGui::Text(relative.string().c_str());
+		ImGui::PopFont();
+
+		ImGui::Separator();
+		ImGui::Separator();
+
+		if (!m_AssetPreview)
+		{
+			DrawFile(m_SelectedFile);
+			return;
+		}
+
+		AssetType type = AssetManager::GetTypeFromExtension(m_SelectedFile.extension().string());
+		switch (type)
+		{
+		case AssetType::Material:
+		{
+			Ref<Material> material = std::static_pointer_cast<Material>(m_AssetPreview);
+
+			bool colour = DrawColourEdit("Colour", material->Colour);
+			bool tiling = DrawVec1Control("Tiling", material->Tiling);
+
+			DrawLabel("Texture");
+			std::string text = "None";
+			if (material->Texture)
+			{
+				auto& metadata = AssetManager::GetAssetMetadata(material->Texture->Handle);
+				if (metadata)
+					text = metadata.RelativePath.string();
+			}
+
+			bool texture = false;
+			if (ImGui::Button(text.c_str(), ImVec2{ ImGui::GetContentRegionAvailWidth(), 0 }))
+			{
+				material->Texture = nullptr;
+				texture = true;
+			}
+
+			if (ImGui::BeginDragDropTarget())
+			{
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
+				{
+					const wchar_t* payloadPath = (const wchar_t*)payload->Data;
+					std::filesystem::path path = payloadPath;
+
+					if (AssetManager::GetTypeFromExtension(path.extension().string()) == AssetType::Texture)
+					{
+						AssetHandle handle = AssetManager::CreateAsset(path);
+						material->Texture = AssetManager::GetAsset<Texture2D>(handle);
+						texture = true;
+					}
+				}
+			}
+
+			if (colour || tiling || texture)
+			{
+				MaterialSerializer serializer(material);
+				serializer.Serialize(m_SelectedFile.string());
+			}
+			break;
+		}
+		case AssetType::Texture:
+		{
+			Ref<Texture2D> texture = std::static_pointer_cast<Texture2D>(m_AssetPreview);
+			float buttonSize = ImGui::GetContentRegionAvailWidth();
+			ImGui::Image((ImTextureID)texture->GetRendererID(), ImVec2{ buttonSize, buttonSize }, { 0, 1 }, { 1, 0 });
+			break;
+		}
+		case AssetType::Font:
+		{
+			Ref<Font> font = std::static_pointer_cast<Font>(m_AssetPreview);
+			Ref<Texture2D> atlasTexture = font->GetAtlasTexture();
+
+			if (atlasTexture)
+			{
+				float buttonSize = ImGui::GetContentRegionAvailWidth();
+				ImGui::Image((ImTextureID)atlasTexture->GetRendererID(), ImVec2{ buttonSize, buttonSize }, { 0, 1 }, { 1, 0 });
+			}
+
+			break;
+		}
+		default:
+		{
+			DrawFile(m_SelectedFile);
+			break;
+		}
+		}
 	}
 
 	void ContentBrowserPanel::RefreshAssetTree()

@@ -10,6 +10,7 @@
 #include "Nebula/Project/Project.h"
 #include "Nebula/Utils/Time.h"
 #include "Nebula/Utils/Physics2D.h"
+#include "Nebula/Renderer/Material.h"
 
 #include <mono/metadata/object.h>
 #include <mono/metadata/reflection.h>
@@ -618,7 +619,13 @@ namespace Nebula {
 		Entity entity = { entityID, scene };
 		NB_ASSERT(entity);
 
-		entity.GetComponent<SpriteRendererComponent>().Colour = *colour;
+		AssetHandle handle = entity.GetComponent<SpriteRendererComponent>().Material;
+		Ref<Material> mat = AssetManager::GetAsset<Material>(handle);
+		
+		if (!mat)
+			return;
+
+		mat->Colour = *colour;
 	}
 
 	static void SpriteRendererComponent_GetColour(UUID entityID, glm::vec4* colour)
@@ -628,7 +635,13 @@ namespace Nebula {
 		Entity entity = { entityID, scene };
 		NB_ASSERT(entity);
 
-		*colour = entity.GetComponent<SpriteRendererComponent>().Colour;
+		AssetHandle handle = entity.GetComponent<SpriteRendererComponent>().Material;
+		Ref<Material> mat = AssetManager::GetAsset<Material>(handle);
+
+		if (!mat)
+			return;
+
+		*colour = mat->Colour;
 	}
 
 	static void SpriteRendererComponent_SetOffset(UUID entityID, glm::vec2* offset)
@@ -698,7 +711,13 @@ namespace Nebula {
 		Entity entity = { entityID, scene };
 		NB_ASSERT(entity);
 
-		entity.GetComponent<SpriteRendererComponent>().Tiling = tiling;
+		AssetHandle handle = entity.GetComponent<CircleRendererComponent>().Material;
+		Ref<Material> mat = AssetManager::GetAsset<Material>(handle);
+
+		if (!mat)
+			return;
+
+		mat->Tiling = tiling;
 	}
 
 	static float SpriteRendererComponent_GetTiling(UUID entityID)
@@ -708,7 +727,13 @@ namespace Nebula {
 		Entity entity = { entityID, scene };
 		NB_ASSERT(entity);
 
-		return entity.GetComponent<SpriteRendererComponent>().Tiling;
+		AssetHandle handle = entity.GetComponent<CircleRendererComponent>().Material;
+		Ref<Material> mat = AssetManager::GetAsset<Material>(handle);
+
+		if (!mat)
+			return 1.0f;
+
+		return mat->Tiling;
 	}
 #pragma endregion
 
@@ -720,7 +745,13 @@ namespace Nebula {
 		Entity entity = { entityID, scene };
 		NB_ASSERT(entity);
 
-		entity.GetComponent<CircleRendererComponent>().Colour = *colour;
+		AssetHandle handle = entity.GetComponent<CircleRendererComponent>().Material;
+		Ref<Material> mat = AssetManager::GetAsset<Material>(handle);
+
+		if (!mat)
+			return;
+
+		mat->Colour = *colour;
 	}
 
 	static void CircleRendererComponent_GetColour(UUID entityID, glm::vec4* colour)
@@ -730,7 +761,13 @@ namespace Nebula {
 		Entity entity = { entityID, scene };
 		NB_ASSERT(entity);
 
-		*colour = entity.GetComponent<CircleRendererComponent>().Colour;
+		AssetHandle handle = entity.GetComponent<CircleRendererComponent>().Material;
+		Ref<Material> mat = AssetManager::GetAsset<Material>(handle);
+
+		if (!mat)
+			return;
+
+		*colour = mat->Colour;
 	}
 
 	static void CircleRendererComponent_SetRadius(UUID entityID, float radius)

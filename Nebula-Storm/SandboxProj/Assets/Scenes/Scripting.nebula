@@ -3,105 +3,40 @@ Order:
   Size: 4
   Data: [5354795815195642397, 14893174671831111502, 10433741447867120391, 10596639639892002622]
 Entities:
-  - Entity: 7772064114241021311
+  - Entity: 5354795815195642397
     TagComponent:
-      Tag: Floor Collider
+      Tag: Camera
     PropertiesComponent:
       IsEnabled: true
       Layer: 1
     ParentChildComponent:
-      PrimaryParent: 14893174671831111502
+      PrimaryParent: 0
       Children: ~
       ChildCount: 0
     TransformComponent:
       Translation: [0, 0, 0]
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
+    CameraComponent:
+      Camera:
+        ProjectionType: 0
+        PerspectiveFOV: 0.785398185
+        PerspectiveNear: 0.00999999978
+        PerspectiveFar: 1000
+        OrthographicSize: 10
+        OrthographicNear: -1
+        OrthographicFar: 1
+      Primary: true
+      FixedAspectRatio: false
     ScriptComponent:
-      Class: Sandbox.Collision
+      Class: Sandbox.Camera
       ScriptFields:
-        - Name: CollisionCount
-          Type: int
-          Data: 0
-        - Name: Handled
-          Type: bool
-          Data: true
-    Rigidbody2DComponent:
-      BodyType: Dynamic
-      FixedRotation: true
-      IsTrigger: true
-    BoxCollider2DComponent:
-      Offset: [0, 0]
-      Size: [0.5, 0.5]
-      Density: 0
-      Friction: 0.5
-      Restitution: 0
-      RestitutionThreshold: 0.5
-      Mask: 65535
-  - Entity: 10596639639892002622
-    TagComponent:
-      Tag: Sprite
-    PropertiesComponent:
-      IsEnabled: true
-      Layer: 1
-    ParentChildComponent:
-      PrimaryParent: 0
-      Children: ~
-      ChildCount: 0
-    TransformComponent:
-      Translation: [0, -4.77309418, 0]
-      Rotation: [0, 0, 0]
-      Scale: [12.2438126, 1, 1]
-    SpriteRendererComponent:
-      Colour: [1, 1, 1, 1]
-      Tiling: 1
-      Offset: [0, 0]
-      CellSize: [128, 128]
-      CellNum: [1, 1]
-    Rigidbody2DComponent:
-      BodyType: Static
-      FixedRotation: false
-      IsTrigger: false
-    BoxCollider2DComponent:
-      Offset: [0, 0]
-      Size: [0.5, 0.5]
-      Density: 1
-      Friction: 0.5
-      Restitution: 0
-      RestitutionThreshold: 0.5
-      Mask: 65535
-  - Entity: 10433741447867120391
-    TagComponent:
-      Tag: Sprite
-    PropertiesComponent:
-      IsEnabled: true
-      Layer: 1
-    ParentChildComponent:
-      PrimaryParent: 0
-      Children: ~
-      ChildCount: 0
-    TransformComponent:
-      Translation: [0, 4.64733791, 0]
-      Rotation: [0, 0, 0]
-      Scale: [12.2438126, 1, 1]
-    SpriteRendererComponent:
-      Colour: [1, 1, 1, 1]
-      Tiling: 1
-      Offset: [0, 0]
-      CellSize: [128, 128]
-      CellNum: [1, 1]
-    Rigidbody2DComponent:
-      BodyType: Static
-      FixedRotation: false
-      IsTrigger: false
-    BoxCollider2DComponent:
-      Offset: [0, 0]
-      Size: [0.5, 0.5]
-      Density: 1
-      Friction: 0.5
-      Restitution: 0
-      RestitutionThreshold: 0.5
-      Mask: 65535
+        - Name: DistanceFromPlayer
+          Type: float
+          Data: 10
+        - Name: Offset
+          Type: Vector2
+          Data: [0, 0]
   - Entity: 14893174671831111502
     TagComponent:
       Tag: Player
@@ -141,8 +76,7 @@ Entities:
           Type: Texture
           Data: 0
     SpriteRendererComponent:
-      Colour: [1, 1, 1, 1]
-      Tiling: 1
+      Material: 6045269018309978525
       Offset: [0, 0]
       CellSize: [128, 128]
       CellNum: [1, 1]
@@ -158,9 +92,9 @@ Entities:
       Restitution: 0
       RestitutionThreshold: 0.5
       Mask: 65535
-  - Entity: 5354795815195642397
+  - Entity: 10433741447867120391
     TagComponent:
-      Tag: Camera
+      Tag: Sprite
     PropertiesComponent:
       IsEnabled: true
       Layer: 1
@@ -169,26 +103,89 @@ Entities:
       Children: ~
       ChildCount: 0
     TransformComponent:
+      Translation: [0, 4.64733791, 0]
+      Rotation: [0, 0, 0]
+      Scale: [12.2438126, 1, 1]
+    SpriteRendererComponent:
+      Material: 7718980365410581583
+      Offset: [0, 0]
+      CellSize: [128, 128]
+      CellNum: [1, 1]
+    Rigidbody2DComponent:
+      BodyType: Static
+      FixedRotation: false
+      IsTrigger: false
+    BoxCollider2DComponent:
+      Offset: [0, 0]
+      Size: [0.5, 0.5]
+      Density: 1
+      Friction: 0.5
+      Restitution: 0
+      RestitutionThreshold: 0.5
+      Mask: 65535
+  - Entity: 10596639639892002622
+    TagComponent:
+      Tag: Sprite
+    PropertiesComponent:
+      IsEnabled: true
+      Layer: 1
+    ParentChildComponent:
+      PrimaryParent: 0
+      Children: ~
+      ChildCount: 0
+    TransformComponent:
+      Translation: [0, -4.77309418, 0]
+      Rotation: [0, 0, 0]
+      Scale: [12.2438126, 1, 1]
+    SpriteRendererComponent:
+      Material: 7718980365410581583
+      Offset: [0, 0]
+      CellSize: [128, 128]
+      CellNum: [1, 1]
+    Rigidbody2DComponent:
+      BodyType: Static
+      FixedRotation: false
+      IsTrigger: false
+    BoxCollider2DComponent:
+      Offset: [0, 0]
+      Size: [0.5, 0.5]
+      Density: 1
+      Friction: 0.5
+      Restitution: 0
+      RestitutionThreshold: 0.5
+      Mask: 65535
+  - Entity: 7772064114241021311
+    TagComponent:
+      Tag: Floor Collider
+    PropertiesComponent:
+      IsEnabled: true
+      Layer: 1
+    ParentChildComponent:
+      PrimaryParent: 14893174671831111502
+      Children: ~
+      ChildCount: 0
+    TransformComponent:
       Translation: [0, 0, 0]
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
-    CameraComponent:
-      Camera:
-        ProjectionType: 0
-        PerspectiveFOV: 0.785398185
-        PerspectiveNear: 0.00999999978
-        PerspectiveFar: 1000
-        OrthographicSize: 10
-        OrthographicNear: -1
-        OrthographicFar: 1
-      Primary: true
-      FixedAspectRatio: false
     ScriptComponent:
-      Class: Sandbox.Camera
+      Class: Sandbox.Collision
       ScriptFields:
-        - Name: DistanceFromPlayer
-          Type: float
-          Data: 10
-        - Name: Offset
-          Type: Vector2
-          Data: [0, 0]
+        - Name: CollisionCount
+          Type: int
+          Data: 0
+        - Name: Handled
+          Type: bool
+          Data: true
+    Rigidbody2DComponent:
+      BodyType: Dynamic
+      FixedRotation: true
+      IsTrigger: true
+    BoxCollider2DComponent:
+      Offset: [0, 0]
+      Size: [0.5, 0.5]
+      Density: 0
+      Friction: 0.5
+      Restitution: 0
+      RestitutionThreshold: 0.5
+      Mask: 65535

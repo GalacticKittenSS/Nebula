@@ -379,8 +379,8 @@ namespace Nebula {
 				uint32_t vertexCount = sizeof(s_CubeVertexPos) / sizeof(glm::vec4);
 				glm::mat4 transform = glm::translate(m_EditorCam.GetPosition()) * glm::scale(glm::vec3(1000.0f));
 
-				Renderer2D::DrawQuad(vertexCount, s_CubeVertexPos, s_CubeTexturePos, 
-					transform, glm::vec4(1.0f), m_Backdrop, 1.0f);
+				Renderer2D::DrawQuad(vertexCount, s_CubeVertexPos, s_CubeTexturePos,
+					transform, Material{glm::vec4(1.0f), m_Backdrop, 1.0f});
 			}
 
 			if (Entity selectedEntity = m_SceneHierarchy.GetSelectedEntity())
@@ -410,7 +410,7 @@ namespace Nebula {
 
 			glm::mat4 transform = glm::translate(wTranslation) * glm::toMat4(glm::quat(wRotation))
 				* glm::translate(glm::vec3(cc.Offset, -projectionCollider.z)) * glm::scale(Scale);
-			Renderer2D::DrawCircle(transform, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), 0.05f);
+			Renderer2D::DrawCircle(transform, Material{ glm::vec4(0.0f, 1.0f, 0.0f, 1.0f) }, 0.05f);
 		}
 
 		auto BoxView = m_ActiveScene->GetAllEntitiesWith<WorldTransformComponent, BoxCollider2DComponent>();
@@ -424,7 +424,7 @@ namespace Nebula {
 
 			glm::mat4 transform = glm::translate(wTranslation) * glm::toMat4(glm::quat(wRotation)) *
 				glm::translate(glm::vec3(bc2d.Offset, zIndex)) * glm::scale(Scale);
-			Renderer2D::Draw(NB_RECT, transform, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
+			Renderer2D::Draw(NB_RECT, transform, Material{ glm::vec4(0.0f, 1.0f, 0.0f, 1.0f) });
 		}
 	}
 
@@ -437,7 +437,7 @@ namespace Nebula {
 			|| selectedEntity.HasComponent<CircleRendererComponent>())
 		{
 			const WorldTransformComponent& wtc = selectedEntity.GetComponent<WorldTransformComponent>();
-			Renderer2D::Draw(NB_RECT, wtc.Transform, glm::vec4(1.0f, 0.5f, 0.0f, 1.0f));
+			Renderer2D::Draw(NB_RECT, wtc.Transform, Material{ glm::vec4(1.0f, 0.5f, 0.0f, 1.0f) });
 		}
 		
 		for (auto& id : selectedEntity.GetParentChild().ChildrenIDs)

@@ -3,6 +3,7 @@
 #include "Camera.h"
 #include "Texture.h"
 #include "Fonts.h"
+#include "Material.h"
 
 #include "Nebula/Scene/Entity.h"
 
@@ -31,9 +32,9 @@ namespace Nebula {
 		static void EndScene();
 
 		static void Draw(const uint32_t type, Entity& quad);
-		static void Draw(const uint32_t type, const glm::mat4& transform, const glm::vec4& colour, const Ref<Texture2D> texture = nullptr, float tiling = 1.0f);
-		static void Draw(const uint32_t type, const glm::vec4* vertexPos, glm::vec2* texCoords,
-			const glm::mat4& transform, const glm::vec4& colour, Ref<Texture2D> texture, float tiling);
+		static void Draw(const uint32_t type, const glm::mat4& transform, const Material& mat);
+		static void Draw(const uint32_t type, const glm::vec4* vertexPos, glm::vec2* texCoords, 
+			const glm::mat4& transform, const Material& mat);
 
 		//Primitives
 
@@ -46,10 +47,10 @@ namespace Nebula {
 		static void DrawString(const std::string& text, Ref<Font> font,
 			const glm::mat4& transform, const TextParams& params, uint32_t entityID = -1);
 		static void DrawTri(const uint32_t vertexCount, const glm::vec4* vertexPos, glm::vec2* texCoords,
-			const glm::mat4& transform, const glm::vec4& colour, Ref<Texture2D> texture = nullptr, float tiling = 1.0f, uint32_t entityID = -1);
+			const glm::mat4& transform, const Material& mat, uint32_t entityID = -1);
 		static void DrawQuad(const uint32_t vertexCount, const glm::vec4* vertexPos, glm::vec2* texCoords,
-			const glm::mat4& transform, const glm::vec4& colour, Ref<Texture2D> texture = nullptr, float tiling = 1.0f, uint32_t entityID = -1);
-		static void DrawCircle(const glm::mat4& transform, const glm::vec4& colour, const float thickness = 1.0f, const float fade = 0.005f, uint32_t entityID = -1);
+			const glm::mat4& transform, const Material& mat, uint32_t entityID = -1);
+		static void DrawCircle(const glm::mat4& transform, const Material& mat, const float thickness = 1.0f, const float fade = 0.005f, uint32_t entityID = -1);
 		static void DrawLine(const glm::vec3& p0, const glm::vec3& p1, const glm::vec4& colour, int entityID = -1);
 	private:
 		static void FlushAndReset();

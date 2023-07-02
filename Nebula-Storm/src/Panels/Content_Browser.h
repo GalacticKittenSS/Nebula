@@ -12,6 +12,8 @@ namespace Nebula {
 
 		void OnImGuiRender();
 
+		void RenderProperties();
+
 		// For Creating Prefabs
 		void SetSceneContext(const Ref<Scene>& scene);
 		void SetContext(const std::filesystem::path& assetsPath);
@@ -23,7 +25,10 @@ namespace Nebula {
 		Ref<Scene> m_Scene;
 		std::filesystem::path m_BaseDirectory;
 		std::filesystem::path m_CurrentDirectory;
+		std::filesystem::path m_SelectedFile;
 		Ref<Texture2D> m_DirectoryIcon, m_FileIcon, m_PrefabIcon;
+
+		Ref<Asset> m_AssetPreview;
 
 		bool m_DragDrop = false;
 

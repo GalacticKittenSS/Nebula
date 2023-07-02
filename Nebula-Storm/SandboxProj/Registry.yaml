@@ -27,3 +27,11 @@ AssetRegistry:
     Type: Prefab
     Path: Assets/Prefabs/Enviroment.prefab
     RelativePath: Prefabs/Enviroment.prefab
+  - Handle: 6045269018309978525
+    Type: Material
+    Path: Assets/Materials/Checkerboard.mat
+    RelativePath: Materials/Checkerboard.mat
+  - Handle: 7718980365410581583
+    Type: Material
+    Path: Assets/Materials/Orange.mat
+    RelativePath: Materials/Orange.mat

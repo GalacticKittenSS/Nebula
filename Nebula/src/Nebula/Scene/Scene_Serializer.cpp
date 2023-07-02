@@ -6,6 +6,7 @@
 #include "Entity.h"
 #include "Nebula/Project/Project.h"
 #include "Nebula/Scripting/ScriptEngine.h"
+#include "Nebula/Renderer/Material.h"
 
 #include <fstream>
 
@@ -173,12 +174,7 @@ namespace Nebula {
 			out << YAML::BeginMap; // SpriteRendererComponent
 
 			auto& component = entity.GetComponent<SpriteRendererComponent>();
-			out << YAML::Key << "Colour" << YAML::Value << component.Colour;
-
-			if (component.Texture)
-				out << YAML::Key << "Texture" << YAML::Value << component.Texture;
-			
-			out << YAML::Key << "Tiling" << YAML::Value << component.Tiling;
+			out << YAML::Key << "Material" << YAML::Value << component.Material;
 			out << YAML::Key << "Offset" << YAML::Value << component.SubTextureOffset;
 			out << YAML::Key << "CellSize" << YAML::Value << component.SubTextureCellSize;
 			out << YAML::Key << "CellNum" << YAML::Value << component.SubTextureCellNum;
@@ -191,7 +187,7 @@ namespace Nebula {
 			out << YAML::BeginMap; // CircleRendererComponent
 
 			auto& component = entity.GetComponent<CircleRendererComponent>();
-			out << YAML::Key << "Colour" << YAML::Value << component.Colour;
+			out << YAML::Key << "Material" << YAML::Value << component.Material;
 			out << YAML::Key << "Thickness" << YAML::Value << component.Thickness;
 			out << YAML::Key << "Fade" << YAML::Value << component.Fade;
 			
@@ -443,18 +439,36 @@ namespace Nebula {
 			if (auto spriteRendererComponent = entity["SpriteRendererComponent"])
 			{
 				auto& src = deserializedEntity.AddComponent<SpriteRendererComponent>();
-				DeserializeValue(src.Colour, spriteRendererComponent["Colour"]);
-				DeserializeValue(src.Tiling, spriteRendererComponent["Tiling"]);
+				
+				DeserializeValue(src.Material, spriteRendererComponent["Material"]);
+				if (!src.Material)
+				{
+					Ref<Material> material = CreateRef<Material>();
+					DeserializeValue(material->Colour, spriteRendererComponent["Colour"]);
+					DeserializeValue(material->Tiling, spriteRendererComponent["Tiling"]);
+					
+					AssetHandle handle = DeserializeValue<UUID>(spriteRendererComponent["Texture"]);
+					material->Texture = AssetManager::GetAsset<Texture2D>(handle);
+
+					src.Material = AssetManager::CreateMemoryAsset(material);
+				}
+
 				DeserializeValue(src.SubTextureOffset, spriteRendererComponent["Offset"]);
 				DeserializeValue(src.SubTextureCellSize, spriteRendererComponent["CellSize"]);
 				DeserializeValue(src.SubTextureCellNum, spriteRendererComponent["CellNum"]);
-				src.Texture = DeserializeValue<uint64_t>(spriteRendererComponent["Texture"]);
 			}
 
 			if (auto circleRendererComponent = entity["CircleRendererComponent"])
 			{
 				auto& crc = deserializedEntity.AddComponent<CircleRendererComponent>();
-				DeserializeValue(crc.Colour, circleRendererComponent["Colour"]);
+				DeserializeValue(crc.Material, circleRendererComponent["Material"]);
+				if (!crc.Material)
+				{
+					Ref<Material> material = CreateRef<Material>();
+					DeserializeValue(material->Colour, circleRendererComponent["Colour"]);
+					crc.Material = AssetManager::CreateMemoryAsset(material);
+				}
+				
 				DeserializeValue(crc.Thickness, circleRendererComponent["Thickness"]);
 				DeserializeValue(crc.Fade, circleRendererComponent["Fade"]);
 			}
