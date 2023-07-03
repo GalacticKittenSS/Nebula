@@ -37,6 +37,8 @@ Entities:
         - Name: Offset
           Type: Vector2
           Data: [0, 0]
+    MaterialComponent:
+      Material: 0
   - Entity: 14893174671831111502
     TagComponent:
       Tag: Player
@@ -75,8 +77,9 @@ Entities:
         - Name: m_Texture
           Type: Texture
           Data: 0
-    SpriteRendererComponent:
+    MaterialComponent:
       Material: 6045269018309978525
+    SpriteRendererComponent:
       Offset: [0, 0]
       CellSize: [128, 128]
       CellNum: [1, 1]
@@ -106,8 +109,9 @@ Entities:
       Translation: [0, 4.64733791, 0]
       Rotation: [0, 0, 0]
       Scale: [12.2438126, 1, 1]
+    MaterialComponent:
+      Material: 14921270579791867488
     SpriteRendererComponent:
-      Material: 7718980365410581583
       Offset: [0, 0]
       CellSize: [128, 128]
       CellNum: [1, 1]
@@ -137,8 +141,9 @@ Entities:
       Translation: [0, -4.77309418, 0]
       Rotation: [0, 0, 0]
       Scale: [12.2438126, 1, 1]
+    MaterialComponent:
+      Material: 664617754764121497
     SpriteRendererComponent:
-      Material: 7718980365410581583
       Offset: [0, 0]
       CellSize: [128, 128]
       CellNum: [1, 1]
@@ -177,6 +182,8 @@ Entities:
         - Name: Handled
           Type: bool
           Data: true
+    MaterialComponent:
+      Material: 0
     Rigidbody2DComponent:
       BodyType: Dynamic
       FixedRotation: true

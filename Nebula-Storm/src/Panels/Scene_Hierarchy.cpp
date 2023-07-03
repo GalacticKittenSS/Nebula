@@ -620,7 +620,7 @@ namespace Nebula {
 		return open;
 	}
 	
-	static void DrawColourEdit(const std::string& label, glm::vec4& colour)
+	static bool DrawColourEdit(const std::string& label, glm::vec4& colour)
 	{
 		ImGui::PushID(label.c_str());
 		float size = DrawLabel(label);
@@ -629,13 +629,15 @@ namespace Nebula {
 		if (ImGui::ColorButton("##button", col_v4, 0, ImVec2{ size, 0.0f }))
 			ImGui::OpenPopup("picker");
 
+		bool changed = false;
 		if (ImGui::BeginPopup("picker"))
 		{
-			ImGui::ColorPicker4("##picker", glm::value_ptr(colour));
+			changed = ImGui::ColorPicker4("##picker", glm::value_ptr(colour));
 			ImGui::EndPopup();
 		}
 
 		ImGui::PopID();
+		return changed;
 	}
 
 	template<typename T, typename UIFunction>
@@ -955,6 +957,7 @@ namespace Nebula {
 					case ScriptFieldType::Prefab:
 					case ScriptFieldType::Font:
 					case ScriptFieldType::Texture:
+					case ScriptFieldType::Material:
 					case ScriptFieldType::Asset:
 					{
 						auto data = scriptInstance->GetFieldValue<MonoObject*>(name);
@@ -989,34 +992,9 @@ namespace Nebula {
 			}
 		}, true);
 
-		DrawComponent<SpriteRendererComponent>("Sprite Renderer", entity, [](auto& component) {
+		DrawComponent<MaterialComponent>("Material", entity, [](auto& component) {
 			const AssetMetadata& metadata = AssetManager::GetAssetMetadata(component.Material);
-			std::string text = metadata.RelativePath.empty() ? "None" : metadata.RelativePath.string();
-
-			DrawLabel("Material");
-			if (ImGui::Button(text.c_str(), ImVec2{ImGui::GetContentRegionAvailWidth(), 0}))
-				component.Material = NULL;
-
-			if (ImGui::BeginDragDropTarget())
-			{
-				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
-				{
-					const wchar_t* payloadPath = (const wchar_t*)payload->Data;
-					std::filesystem::path path = payloadPath;
-
-					if (AssetManager::GetTypeFromExtension(path.extension().string()) == AssetType::Material)
-						component.Material = AssetManager::CreateAsset(path);
-				}
-			}
-
-			DrawVec2Control("Offset", component.SubTextureOffset, glm::vec2(0.0f));
-			DrawVec2Control("Cell Size", component.SubTextureCellSize, glm::vec2(0.1f));
-			DrawVec2Control("Cell Number", component.SubTextureCellNum, glm::vec2(0.1f));
-		}, true);
-
-		DrawComponent<CircleRendererComponent>("Circle Renderer", entity, [](auto& component) {
-			const AssetMetadata& metadata = AssetManager::GetAssetMetadata(component.Material);
-			std::string text = metadata.RelativePath.empty() ? "None" : metadata.RelativePath.string();
+			std::string text = metadata.RelativePath.empty() ? "Default" : metadata.RelativePath.string();
 
 			DrawLabel("Material");
 			if (ImGui::Button(text.c_str(), ImVec2{ ImGui::GetContentRegionAvailWidth(), 0 }))
@@ -1034,8 +1012,68 @@ namespace Nebula {
 				}
 			}
 
-			DrawVec1Control("Thickness", component.Thickness, 0.01f, 0.01f, 1.0f);
-			DrawVec1Control("Fade", component.Fade, 0.0025f, 0.01f, 1.0f);
+			Ref<Material> material = AssetManager::GetAsset<Material>(component.Material);
+			bool isDefault = !material;
+
+			if (isDefault)
+				material = CreateRef<Material>();
+			
+			bool colour = DrawColourEdit("Colour", material->Colour);
+			bool tiling = DrawVec1Control("Tiling", material->Tiling);
+			
+			DrawLabel("Texture");
+			text = "None";
+			if (material->Texture)
+			{
+				auto& metadata = AssetManager::GetAssetMetadata(material->Texture->Handle);
+				if (metadata)
+					text = metadata.RelativePath.string();
+			}
+
+			bool texture = false;
+			if (ImGui::Button(text.c_str(), ImVec2{ ImGui::GetContentRegionAvailWidth(), 0 }))
+			{
+				material->Texture = nullptr;
+				texture = true;
+			}
+
+			if (ImGui::BeginDragDropTarget())
+			{
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
+				{
+					const wchar_t* payloadPath = (const wchar_t*)payload->Data;
+					std::filesystem::path path = payloadPath;
+
+					if (AssetManager::GetTypeFromExtension(path.extension().string()) == AssetType::Texture)
+					{
+						AssetHandle handle = AssetManager::CreateAsset(path);
+						material->Texture = AssetManager::GetAsset<Texture2D>(handle);
+						texture = true;
+					}
+				}
+			}
+
+			if (colour || tiling || texture)
+			{
+				if (isDefault)
+					component.Material = AssetManager::CreateMemoryAsset(material);
+				
+				const AssetMetadata& data = AssetManager::GetAssetMetadata(component.Material);
+
+				MaterialSerializer serializer(material);
+				serializer.Serialize(data.Path.string());
+			}
+		}, false);
+
+		DrawComponent<SpriteRendererComponent>("Sprite Renderer", entity, [](auto& component) {
+			DrawVec2Control("Offset", component.SubTextureOffset, glm::vec2(0.0f));
+			DrawVec2Control("Cell Size", component.SubTextureCellSize, glm::vec2(0.1f));
+			DrawVec2Control("Cell Number", component.SubTextureCellNum, glm::vec2(0.1f));
+		}, true);
+
+		DrawComponent<CircleRendererComponent>("Circle Renderer", entity, [](auto& component) {
+			DrawVec1Control("Thickness", component.Thickness, 0.0f, 1.0f, 1.0f, 0.01f);
+			DrawVec1Control("Fade", component.Fade, 0.005f, 1.0f, 0.01f, 0.001f);
 		}, true);
 
 		DrawComponent<StringRendererComponent>("String Renderer", entity, [](auto& component) {

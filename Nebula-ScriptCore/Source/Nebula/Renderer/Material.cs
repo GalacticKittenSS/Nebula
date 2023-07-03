@@ -2,8 +2,8 @@
 {
     public class Material : Asset
     {
-        protected Material()
-            : base()
+        public Material()
+            : base(InternalCalls.Material_Create())
         {
         }
 
@@ -11,6 +11,14 @@
             : base(handle)
         {
         }
+
+        internal Material(ulong handle, ulong entityID)
+            : base(handle)
+        {
+            EntityID = entityID;
+        }
+
+        internal ulong EntityID = 0;
 
         public Material(string path)
             : base(path)
@@ -24,7 +32,10 @@
                 InternalCalls.Material_GetColour(AssetHandle, out Vector4 colour);
                 return colour;
             }
-            set => InternalCalls.Material_SetColour(AssetHandle, ref value);
+            set
+            {
+                InternalCalls.Material_SetColour(AssetHandle, EntityID, ref value);
+            }
         }
 
         public Texture Texture
@@ -39,14 +50,14 @@
             }
             set
             {
-                InternalCalls.Material_SetTexture(AssetHandle, value.AssetHandle);
+                InternalCalls.Material_SetTexture(AssetHandle, EntityID, value.AssetHandle);
             }
         }
 
         public float Tiling
         {
             get => InternalCalls.Material_GetTiling(AssetHandle);
-            set => InternalCalls.Material_SetTiling(AssetHandle, value);
+            set => InternalCalls.Material_SetTiling(AssetHandle, EntityID, value);
         }
 
         public static implicit operator string(Material material) => material.FilePath;

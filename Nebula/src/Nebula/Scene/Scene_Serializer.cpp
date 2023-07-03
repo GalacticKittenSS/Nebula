@@ -169,12 +169,20 @@ namespace Nebula {
 			out << YAML::EndMap; // ScriptComponent
 		}
 		
+		if (entity.HasComponent<MaterialComponent>()) {
+			out << YAML::Key << "MaterialComponent";
+			out << YAML::BeginMap; // MaterialComponent
+
+			auto& component = entity.GetComponent<MaterialComponent>();
+			out << YAML::Key << "Material" << YAML::Value << component.Material;
+			out << YAML::EndMap; // MaterialComponent
+		}
+
 		if (entity.HasComponent<SpriteRendererComponent>()) {
 			out << YAML::Key << "SpriteRendererComponent";
 			out << YAML::BeginMap; // SpriteRendererComponent
 
 			auto& component = entity.GetComponent<SpriteRendererComponent>();
-			out << YAML::Key << "Material" << YAML::Value << component.Material;
 			out << YAML::Key << "Offset" << YAML::Value << component.SubTextureOffset;
 			out << YAML::Key << "CellSize" << YAML::Value << component.SubTextureCellSize;
 			out << YAML::Key << "CellNum" << YAML::Value << component.SubTextureCellNum;
@@ -187,7 +195,7 @@ namespace Nebula {
 			out << YAML::BeginMap; // CircleRendererComponent
 
 			auto& component = entity.GetComponent<CircleRendererComponent>();
-			out << YAML::Key << "Material" << YAML::Value << component.Material;
+			//out << YAML::Key << "Material" << YAML::Value << component.Material;
 			out << YAML::Key << "Thickness" << YAML::Value << component.Thickness;
 			out << YAML::Key << "Fade" << YAML::Value << component.Fade;
 			
@@ -436,12 +444,17 @@ namespace Nebula {
 				}
 			}
 
+			auto& mc = deserializedEntity.GetComponent<MaterialComponent>();
+			if (auto materialComponent = entity["MaterialComponent"])
+			{
+				DeserializeValue(mc.Material, materialComponent["Material"]);
+			}
+
 			if (auto spriteRendererComponent = entity["SpriteRendererComponent"])
 			{
 				auto& src = deserializedEntity.AddComponent<SpriteRendererComponent>();
 				
-				DeserializeValue(src.Material, spriteRendererComponent["Material"]);
-				if (!src.Material)
+				if (!mc.Material)
 				{
 					Ref<Material> material = CreateRef<Material>();
 					DeserializeValue(material->Colour, spriteRendererComponent["Colour"]);
@@ -450,7 +463,7 @@ namespace Nebula {
 					AssetHandle handle = DeserializeValue<UUID>(spriteRendererComponent["Texture"]);
 					material->Texture = AssetManager::GetAsset<Texture2D>(handle);
 
-					src.Material = AssetManager::CreateMemoryAsset(material);
+					mc.Material = AssetManager::CreateMemoryAsset(material);
 				}
 
 				DeserializeValue(src.SubTextureOffset, spriteRendererComponent["Offset"]);
@@ -461,12 +474,12 @@ namespace Nebula {
 			if (auto circleRendererComponent = entity["CircleRendererComponent"])
 			{
 				auto& crc = deserializedEntity.AddComponent<CircleRendererComponent>();
-				DeserializeValue(crc.Material, circleRendererComponent["Material"]);
-				if (!crc.Material)
+				
+				if (!mc.Material)
 				{
 					Ref<Material> material = CreateRef<Material>();
 					DeserializeValue(material->Colour, circleRendererComponent["Colour"]);
-					crc.Material = AssetManager::CreateMemoryAsset(material);
+					mc.Material = AssetManager::CreateMemoryAsset(material);
 				}
 				
 				DeserializeValue(crc.Thickness, circleRendererComponent["Thickness"]);

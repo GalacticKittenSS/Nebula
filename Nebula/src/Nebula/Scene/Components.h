@@ -112,8 +112,14 @@ namespace Nebula {
 		}
 	};
 
-	struct SpriteRendererComponent {
+	struct MaterialComponent {
 		AssetHandle Material = NULL;
+
+		MaterialComponent() = default;
+		MaterialComponent(const MaterialComponent&) = default;
+	};
+
+	struct SpriteRendererComponent {
 		glm::vec2 SubTextureOffset = { 0.0f, 0.0f };
 		glm::vec2 SubTextureCellSize = { 128.0f, 128.0f };
 		glm::vec2 SubTextureCellNum = { 1, 1 };
@@ -123,7 +129,6 @@ namespace Nebula {
 	};
 
 	struct CircleRendererComponent {
-		AssetHandle Material = NULL;
 		float Radius = 0.5f;
 		float Thickness = 1.0f;
 		float Fade = 0.005f;
@@ -247,7 +252,7 @@ namespace Nebula {
 	using AllComponents = ComponentGroup <
 		PropertiesComponent, TransformComponent, WorldTransformComponent,
 		CameraComponent, ScriptComponent, NativeScriptComponent,
-		SpriteRendererComponent, CircleRendererComponent, StringRendererComponent,
+		MaterialComponent, SpriteRendererComponent, CircleRendererComponent, StringRendererComponent,
 		Rigidbody2DComponent, BoxCollider2DComponent, CircleColliderComponent
 	>;
 }

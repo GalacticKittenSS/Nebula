@@ -539,29 +539,29 @@ namespace Nebula {
 		NB_PROFILE_FUNCTION();
 
 		glm::mat4 transform = entity.GetComponent<WorldTransformComponent>().Transform;
-		
+
+		auto& matComp = entity.GetComponent<MaterialComponent>();
+		Ref<Material> asset = AssetManager::GetAsset<Material>(matComp.Material);
+		Material material = Material::Get(asset);
+
 		switch (type)
 		{
 		case NB_RECT: {
-			glm::vec4 colour = { 1, 1, 1, 1 };
-
 			glm::vec3 p0 = transform * glm::vec4(-0.5f, -0.5f, 0.0f, 1.0f);
 			glm::vec3 p1 = transform * glm::vec4(0.5f, -0.5f, 0.0f, 1.0f);
 			glm::vec3 p2 = transform * glm::vec4(0.5f, 0.5f, 0.0f, 1.0f);
 			glm::vec3 p3 = transform * glm::vec4(-0.5f, 0.5f, 0.0f, 1.0f);
 
-			DrawLine(p0, p1, colour, entity);
-			DrawLine(p1, p2, colour, entity);
-			DrawLine(p2, p3, colour, entity);
-			DrawLine(p3, p0, colour, entity);
+			DrawLine(p0, p1, material.Colour, entity);
+			DrawLine(p1, p2, material.Colour, entity);
+			DrawLine(p2, p3, material.Colour, entity);
+			DrawLine(p3, p0, material.Colour, entity);
 
 			break;
 		}
 		case NB_CIRCLE: {
 			auto& circleRenderer = entity.GetComponent<CircleRendererComponent>();
-
-			Ref<Material> material = AssetManager::GetAsset<Material>(circleRenderer.Material);
-			DrawCircle(transform, Material::Get(material), circleRenderer.Thickness, circleRenderer.Fade, entity);
+			DrawCircle(transform, material, circleRenderer.Thickness, circleRenderer.Fade, entity);
 			break;
 		}
 		case NB_LINE: {
@@ -572,15 +572,13 @@ namespace Nebula {
 		case NB_QUAD: {
 			auto& spriteRenderer = entity.GetComponent<SpriteRendererComponent>();
 
-			Ref<Material> material = AssetManager::GetAsset<Material>(spriteRenderer.Material);
-			if (material && material->Texture) {
-				Ref<SubTexture2D> SubT = SubTexture2D::CreateFromCoords(material->Texture,
+			if (material.Texture && material.Texture->IsLoaded()) {
+				Ref<SubTexture2D> SubT = SubTexture2D::CreateFromCoords(material.Texture,
 					spriteRenderer.SubTextureOffset, spriteRenderer.SubTextureCellSize, spriteRenderer.SubTextureCellNum);
-				DrawQuad(4, s_Data.QuadVertexPos, SubT->GetTextureCoords(), transform, Material::Get(material), entity);
+				DrawQuad(4, s_Data.QuadVertexPos, SubT->GetTextureCoords(), transform, material, entity);
 			}
 			else
-				DrawQuad(4, s_Data.QuadVertexPos, s_Data.QuadTexCoords, transform, 
-					Material::Get(material), entity);
+				DrawQuad(4, s_Data.QuadVertexPos, s_Data.QuadTexCoords, transform, material, entity);
 			break;
 		}
 		case NB_STRING: {

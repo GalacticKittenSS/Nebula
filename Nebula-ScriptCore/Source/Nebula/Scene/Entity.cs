@@ -77,6 +77,19 @@ namespace Nebula
             }
         }
 
+        public Material Material
+        {
+            get
+            {
+                ulong handle = InternalCalls.Entity_GetMaterial(ID);
+                if (handle == 0)
+                    return null;
+
+                return new Material(handle, ID);
+            }
+            set => InternalCalls.Entity_SetMaterial(ID, value.AssetHandle);
+        }
+
         public uint ChildCount
         {
             get => InternalCalls.Entity_GetChildCount(ID);

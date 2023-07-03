@@ -113,22 +113,6 @@
     {
         // public Texture2D Texture
         
-        public Material Material
-        {
-            get 
-            {
-                ulong handle = InternalCalls.SpriteRendererComponent_GetMaterial(Entity.ID);
-                if (handle == 0)
-                    return null;
-
-                return new Material(handle);
-            }
-            set
-            {
-                InternalCalls.SpriteRendererComponent_SetMaterial(Entity.ID, value.AssetHandle);
-            }
-        }
-
         public Vector2 Offset
         {
             get
@@ -171,20 +155,6 @@
 
     public class CircleRendererComponent : Component
     {
-        public Material Material
-        {
-            get
-            {
-                ulong handle = InternalCalls.CircleRendererComponent_GetMaterial(Entity.ID);
-                if (handle == 0)
-                    return null;
-
-                return new Material(handle);
-            }
-
-            set => InternalCalls.CircleRendererComponent_SetMaterial(Entity.ID, value.AssetHandle);
-        }
-
         public float Radius
         {
             get => InternalCalls.CircleRendererComponent_GetRadius(Entity.ID); 

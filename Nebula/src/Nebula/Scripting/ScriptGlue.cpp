@@ -185,26 +185,42 @@ namespace Nebula {
 #pragma endregion
 
 #pragma region Material
+	static uint64_t Material_Create()
+	{
+		Ref<Material> mat = CreateRef<Material>();
+		return AssetManager::CreateMemoryAsset(mat);
+	}
+
 	static void Material_GetColour(UUID handle, glm::vec4* colour)
 	{
-		if (!handle)
-			return;
-
 		Ref<Material> material = AssetManager::GetAsset<Material>(handle);
 		NB_ASSERT(material);
 
 		*colour = material->Colour;
 	}
 
-	static void Material_SetColour(UUID handle, glm::vec4* colour)
+	static void Material_SetColour(UUID handle, UUID entityID, glm::vec4* colour)
 	{
-		if (!handle)
-			return;
-
+		const AssetMetadata& data = AssetManager::GetAssetMetadata(handle);
+		NB_ASSERT(data);
 		Ref<Material> material = AssetManager::GetAsset<Material>(handle);
 		NB_ASSERT(material);
 
-		material->Colour = *colour;
+		if (entityID && data.Type != AssetType::MemoryAsset)
+		{
+			Scene* scene = ScriptEngine::GetSceneContext();
+			NB_ASSERT(scene);
+			Entity entity = { entityID, scene };
+			NB_ASSERT(entity);
+
+			Ref<Material> newMat = CreateRef<Material>(*colour, material->Texture, material->Tiling);
+
+			auto& component = entity.GetComponent<MaterialComponent>();
+			component.Material = AssetManager::CreateMemoryAsset(newMat);
+		}
+		else
+			material->Colour = *colour;
+
 	}
 
 	static UUID Material_GetTexture(UUID handle)
@@ -218,37 +234,61 @@ namespace Nebula {
 		return material->Texture->Handle;
 	}
 
-	static void Material_SetTexture(UUID handle, UUID texture)
+	static void Material_SetTexture(UUID handle, UUID entityID, UUID textureHandle)
 	{
-		if (!handle)
-			return;
-
+		const AssetMetadata& data = AssetManager::GetAssetMetadata(handle);
+		NB_ASSERT(data);
 		Ref<Material> material = AssetManager::GetAsset<Material>(handle);
 		NB_ASSERT(material);
+		
+		Ref<Texture2D> texture = AssetManager::GetAsset<Texture2D>(textureHandle);
+		NB_ASSERT(texture);
 
-		material->Texture = AssetManager::GetAsset<Texture2D>(texture);
+		if (entityID && data.Type != AssetType::MemoryAsset)
+		{
+			Scene* scene = ScriptEngine::GetSceneContext();
+			NB_ASSERT(scene);
+			Entity entity = { entityID, scene };
+			NB_ASSERT(entity);
+
+			Ref<Material> newMat = CreateRef<Material>(material->Colour, texture, material->Tiling);
+
+			auto& component = entity.GetComponent<MaterialComponent>();
+			component.Material = AssetManager::CreateMemoryAsset(newMat);
+		}
+		else
+			material->Texture = texture;
 	}
 
 	static float Material_GetTiling(UUID handle)
 	{
-		if (!handle)
-			return NULL;
-
 		Ref<Material> material = AssetManager::GetAsset<Material>(handle);
 		NB_ASSERT(material);
 
 		return material->Tiling;
 	}
 
-	static void Material_SetTiling(UUID handle, float tiling)
+	static void Material_SetTiling(UUID handle, UUID entityID, float tiling)
 	{
-		if (!handle)
-			return;
-
 		Ref<Material> material = AssetManager::GetAsset<Material>(handle);
 		NB_ASSERT(material);
+		const AssetMetadata& data = AssetManager::GetAssetMetadata(handle);
+		NB_ASSERT(data);
 
-		material->Tiling = tiling;
+		if (entityID && data.Type != AssetType::MemoryAsset)
+		{
+			Scene* scene = ScriptEngine::GetSceneContext();
+			NB_ASSERT(scene);
+			Entity entity = { entityID, scene };
+			NB_ASSERT(entity);
+
+			Ref<Material> newMat = CreateRef<Material>(material->Colour, material->Texture, tiling);
+
+			auto& component = entity.GetComponent<MaterialComponent>();
+			component.Material = AssetManager::CreateMemoryAsset(newMat);
+		}
+		else
+			material->Tiling = tiling;
 	}
 #pragma endregion
 
@@ -429,6 +469,28 @@ namespace Nebula {
 
 		auto& comp = entity.GetComponent<PropertiesComponent>();
 		comp.Layer->Identity = layer;
+	}
+
+	static void Entity_SetMaterial(UUID entityID, UUID handle)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+		Entity entity = { entityID, scene };
+		NB_ASSERT(entity);
+
+		auto& component = entity.GetComponent<MaterialComponent>();
+		component.Material = handle;
+	}
+
+	static uint64_t Entity_GetMaterial(UUID entityID)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+		Entity entity = { entityID, scene };
+		NB_ASSERT(entity);
+
+		auto& component = entity.GetComponent<MaterialComponent>();
+		return component.Material;
 	}
 
 	static uint64_t Entity_GetChild(UUID entityID, uint32_t index)
@@ -680,28 +742,6 @@ namespace Nebula {
 #pragma endregion
 
 #pragma region SpriteRendererComponent
-	static void SpriteRendererComponent_SetMaterial(UUID entityID, UUID handle)
-	{
-		Scene* scene = ScriptEngine::GetSceneContext();
-		NB_ASSERT(scene);
-		Entity entity = { entityID, scene };
-		NB_ASSERT(entity);
-
-		auto& component = entity.GetComponent<SpriteRendererComponent>();
-		component.Material = handle;
-	}
-
-	static uint64_t SpriteRendererComponent_GetMaterial(UUID entityID)
-	{
-		Scene* scene = ScriptEngine::GetSceneContext();
-		NB_ASSERT(scene);
-		Entity entity = { entityID, scene };
-		NB_ASSERT(entity);
-
-		auto& component = entity.GetComponent<SpriteRendererComponent>();
-		return component.Material;
-	}
-
 	static void SpriteRendererComponent_SetOffset(UUID entityID, glm::vec2* offset)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
@@ -764,28 +804,6 @@ namespace Nebula {
 #pragma endregion
 
 #pragma region CircleRendererComponent
-	static void CircleRendererComponent_SetMaterial(UUID entityID, AssetHandle handle)
-	{
-		Scene* scene = ScriptEngine::GetSceneContext();
-		NB_ASSERT(scene);
-		Entity entity = { entityID, scene };
-		NB_ASSERT(entity);
-
-		auto& component = entity.GetComponent<CircleRendererComponent>();
-		component.Material = handle;
-	}
-
-	static uint64_t CircleRendererComponent_GetMaterial(UUID entityID)
-	{
-		Scene* scene = ScriptEngine::GetSceneContext();
-		NB_ASSERT(scene);
-		Entity entity = { entityID, scene };
-		NB_ASSERT(entity);
-
-		auto& component = entity.GetComponent<CircleRendererComponent>();
-		return component.Material;
-	}
-
 	static void CircleRendererComponent_SetRadius(UUID entityID, float radius)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
@@ -1448,6 +1466,7 @@ namespace Nebula {
 		NB_ADD_INTERNAL_CALL(Font_GetBold);
 		NB_ADD_INTERNAL_CALL(Font_GetItalic);
 
+		NB_ADD_INTERNAL_CALL(Material_Create);
 		NB_ADD_INTERNAL_CALL(Material_GetColour);
 		NB_ADD_INTERNAL_CALL(Material_SetColour);
 		NB_ADD_INTERNAL_CALL(Material_GetTexture);
@@ -1464,13 +1483,19 @@ namespace Nebula {
 
 		NB_ADD_INTERNAL_CALL(Entity_HasComponent);
 		NB_ADD_INTERNAL_CALL(Entity_AddComponent);
-		NB_ADD_INTERNAL_CALL(Entity_GetName);
-		NB_ADD_INTERNAL_CALL(Entity_SetName);
-		NB_ADD_INTERNAL_CALL(Entity_GetScriptInstance);
-		NB_ADD_INTERNAL_CALL(Entity_SetScriptInstance);
 		NB_ADD_INTERNAL_CALL(Entity_FindChildByName);
 		NB_ADD_INTERNAL_CALL(Entity_GetChild);
 		NB_ADD_INTERNAL_CALL(Entity_GetChildCount);
+
+		NB_ADD_INTERNAL_CALL(Entity_GetName);
+		NB_ADD_INTERNAL_CALL(Entity_GetScriptInstance);
+		NB_ADD_INTERNAL_CALL(Entity_GetLayer);
+		NB_ADD_INTERNAL_CALL(Entity_GetMaterial);
+
+		NB_ADD_INTERNAL_CALL(Entity_SetName);
+		NB_ADD_INTERNAL_CALL(Entity_SetScriptInstance);
+		NB_ADD_INTERNAL_CALL(Entity_SetLayer);
+		NB_ADD_INTERNAL_CALL(Entity_SetMaterial);
 
 		NB_ADD_INTERNAL_CALL(TransformComponent_GetTranslation);
 		NB_ADD_INTERNAL_CALL(TransformComponent_GetRotation);
@@ -1493,20 +1518,16 @@ namespace Nebula {
 
 		NB_ADD_INTERNAL_CALL(SpriteRendererComponent_GetCellNumber);
 		NB_ADD_INTERNAL_CALL(SpriteRendererComponent_GetCellSize);
-		NB_ADD_INTERNAL_CALL(SpriteRendererComponent_GetMaterial);
 		NB_ADD_INTERNAL_CALL(SpriteRendererComponent_GetOffset);
 
 		NB_ADD_INTERNAL_CALL(SpriteRendererComponent_SetCellNumber);
 		NB_ADD_INTERNAL_CALL(SpriteRendererComponent_SetCellSize);
-		NB_ADD_INTERNAL_CALL(SpriteRendererComponent_SetMaterial);
 		NB_ADD_INTERNAL_CALL(SpriteRendererComponent_SetOffset);
 
-		NB_ADD_INTERNAL_CALL(CircleRendererComponent_GetMaterial);
 		NB_ADD_INTERNAL_CALL(CircleRendererComponent_GetFade);
 		NB_ADD_INTERNAL_CALL(CircleRendererComponent_GetRadius);
 		NB_ADD_INTERNAL_CALL(CircleRendererComponent_GetThickness);
-
-		NB_ADD_INTERNAL_CALL(CircleRendererComponent_SetMaterial);
+		
 		NB_ADD_INTERNAL_CALL(CircleRendererComponent_SetFade);
 		NB_ADD_INTERNAL_CALL(CircleRendererComponent_SetRadius);
 		NB_ADD_INTERNAL_CALL(CircleRendererComponent_SetThickness);
