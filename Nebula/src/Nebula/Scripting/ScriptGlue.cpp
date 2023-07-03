@@ -804,26 +804,6 @@ namespace Nebula {
 #pragma endregion
 
 #pragma region CircleRendererComponent
-	static void CircleRendererComponent_SetRadius(UUID entityID, float radius)
-	{
-		Scene* scene = ScriptEngine::GetSceneContext();
-		NB_ASSERT(scene);
-		Entity entity = { entityID, scene };
-		NB_ASSERT(entity);
-
-		entity.GetComponent<CircleRendererComponent>().Radius = radius;
-	}
-
-	static float CircleRendererComponent_GetRadius(UUID entityID)
-	{
-		Scene* scene = ScriptEngine::GetSceneContext();
-		NB_ASSERT(scene);
-		Entity entity = { entityID, scene };
-		NB_ASSERT(entity);
-
-		return entity.GetComponent<CircleRendererComponent>().Radius;
-	}
-
 	static void CircleRendererComponent_SetThickness(UUID entityID, float thickness)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
@@ -1525,11 +1505,9 @@ namespace Nebula {
 		NB_ADD_INTERNAL_CALL(SpriteRendererComponent_SetOffset);
 
 		NB_ADD_INTERNAL_CALL(CircleRendererComponent_GetFade);
-		NB_ADD_INTERNAL_CALL(CircleRendererComponent_GetRadius);
 		NB_ADD_INTERNAL_CALL(CircleRendererComponent_GetThickness);
 		
 		NB_ADD_INTERNAL_CALL(CircleRendererComponent_SetFade);
-		NB_ADD_INTERNAL_CALL(CircleRendererComponent_SetRadius);
 		NB_ADD_INTERNAL_CALL(CircleRendererComponent_SetThickness);
 
 		NB_ADD_INTERNAL_CALL(StringRendererComponent_GetBold);

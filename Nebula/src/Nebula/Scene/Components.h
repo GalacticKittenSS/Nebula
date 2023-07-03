@@ -129,7 +129,6 @@ namespace Nebula {
 	};
 
 	struct CircleRendererComponent {
-		float Radius = 0.5f;
 		float Thickness = 1.0f;
 		float Fade = 0.005f;
 

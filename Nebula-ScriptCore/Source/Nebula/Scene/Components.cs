@@ -155,12 +155,6 @@
 
     public class CircleRendererComponent : Component
     {
-        public float Radius
-        {
-            get => InternalCalls.CircleRendererComponent_GetRadius(Entity.ID); 
-            set => InternalCalls.CircleRendererComponent_SetRadius(Entity.ID, value);
-        }
-
         public float Thickness
         {
             get => InternalCalls.CircleRendererComponent_GetThickness(Entity.ID); 

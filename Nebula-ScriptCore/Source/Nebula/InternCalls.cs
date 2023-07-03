@@ -231,12 +231,6 @@ namespace Nebula
 
         #region CircleRendererComponent
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static float CircleRendererComponent_GetRadius(ulong entityID);
-
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static void CircleRendererComponent_SetRadius(ulong entityID, float radius);
-
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static float CircleRendererComponent_GetThickness(ulong entityID);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
