@@ -28,7 +28,7 @@ namespace Nebula {
 		std::filesystem::path m_SelectedFile;
 		Ref<Texture2D> m_DirectoryIcon, m_FileIcon, m_PrefabIcon;
 
-		Ref<Asset> m_AssetPreview;
+		AssetHandle m_AssetPreview;
 
 		bool m_DragDrop = false;
 

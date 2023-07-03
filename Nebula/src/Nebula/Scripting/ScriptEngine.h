@@ -26,7 +26,7 @@ namespace Nebula {
 
 		Vector2, Vector3, Vector4,
 		Entity, 
-		Asset, Prefab, Font, Texture
+		Asset, Prefab, Font, Texture, Material
 	};
 
 	struct ScriptField

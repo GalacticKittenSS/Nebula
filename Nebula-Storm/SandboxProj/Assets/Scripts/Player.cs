@@ -59,7 +59,8 @@ namespace Sandbox
             boxCollider2D.Mask = Rigidbody2DComponent.Filters.A;
 
             SpriteRendererComponent SpriteRenderer = GetComponent<SpriteRendererComponent>();
-            SpriteRenderer.Colour = new Vector4(0.0f, 0.5f, 1.0f, 1.0f);
+            Material material = SpriteRenderer.Material;
+            material.Colour = new Vector4(0.0f, 0.5f, 1.0f, 1.0f);
 
             StringRendererComponent stringRenderer = AddComponent<StringRendererComponent>();
             stringRenderer.Text = "This is a String";

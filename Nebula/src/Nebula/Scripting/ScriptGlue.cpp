@@ -184,6 +184,74 @@ namespace Nebula {
 	}
 #pragma endregion
 
+#pragma region Material
+	static void Material_GetColour(UUID handle, glm::vec4* colour)
+	{
+		if (!handle)
+			return;
+
+		Ref<Material> material = AssetManager::GetAsset<Material>(handle);
+		NB_ASSERT(material);
+
+		*colour = material->Colour;
+	}
+
+	static void Material_SetColour(UUID handle, glm::vec4* colour)
+	{
+		if (!handle)
+			return;
+
+		Ref<Material> material = AssetManager::GetAsset<Material>(handle);
+		NB_ASSERT(material);
+
+		material->Colour = *colour;
+	}
+
+	static UUID Material_GetTexture(UUID handle)
+	{
+		if (!handle)
+			return NULL;
+
+		Ref<Material> material = AssetManager::GetAsset<Material>(handle);
+		NB_ASSERT(material);
+
+		return material->Texture->Handle;
+	}
+
+	static void Material_SetTexture(UUID handle, UUID texture)
+	{
+		if (!handle)
+			return;
+
+		Ref<Material> material = AssetManager::GetAsset<Material>(handle);
+		NB_ASSERT(material);
+
+		material->Texture = AssetManager::GetAsset<Texture2D>(texture);
+	}
+
+	static float Material_GetTiling(UUID handle)
+	{
+		if (!handle)
+			return NULL;
+
+		Ref<Material> material = AssetManager::GetAsset<Material>(handle);
+		NB_ASSERT(material);
+
+		return material->Tiling;
+	}
+
+	static void Material_SetTiling(UUID handle, float tiling)
+	{
+		if (!handle)
+			return;
+
+		Ref<Material> material = AssetManager::GetAsset<Material>(handle);
+		NB_ASSERT(material);
+
+		material->Tiling = tiling;
+	}
+#pragma endregion
+
 #pragma region Scene
 	static uint64_t Scene_FindEntityByName(MonoString* name)
 	{
@@ -612,36 +680,26 @@ namespace Nebula {
 #pragma endregion
 
 #pragma region SpriteRendererComponent
-	static void SpriteRendererComponent_SetColour(UUID entityID, glm::vec4* colour)
+	static void SpriteRendererComponent_SetMaterial(UUID entityID, UUID handle)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
 		Entity entity = { entityID, scene };
 		NB_ASSERT(entity);
 
-		AssetHandle handle = entity.GetComponent<SpriteRendererComponent>().Material;
-		Ref<Material> mat = AssetManager::GetAsset<Material>(handle);
-		
-		if (!mat)
-			return;
-
-		mat->Colour = *colour;
+		auto& component = entity.GetComponent<SpriteRendererComponent>();
+		component.Material = handle;
 	}
 
-	static void SpriteRendererComponent_GetColour(UUID entityID, glm::vec4* colour)
+	static uint64_t SpriteRendererComponent_GetMaterial(UUID entityID)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
 		Entity entity = { entityID, scene };
 		NB_ASSERT(entity);
 
-		AssetHandle handle = entity.GetComponent<SpriteRendererComponent>().Material;
-		Ref<Material> mat = AssetManager::GetAsset<Material>(handle);
-
-		if (!mat)
-			return;
-
-		*colour = mat->Colour;
+		auto& component = entity.GetComponent<SpriteRendererComponent>();
+		return component.Material;
 	}
 
 	static void SpriteRendererComponent_SetOffset(UUID entityID, glm::vec2* offset)
@@ -703,71 +761,29 @@ namespace Nebula {
 
 		*number = entity.GetComponent<SpriteRendererComponent>().SubTextureCellNum;
 	}
-
-	static void SpriteRendererComponent_SetTiling(UUID entityID, float tiling)
-	{
-		Scene* scene = ScriptEngine::GetSceneContext();
-		NB_ASSERT(scene);
-		Entity entity = { entityID, scene };
-		NB_ASSERT(entity);
-
-		AssetHandle handle = entity.GetComponent<CircleRendererComponent>().Material;
-		Ref<Material> mat = AssetManager::GetAsset<Material>(handle);
-
-		if (!mat)
-			return;
-
-		mat->Tiling = tiling;
-	}
-
-	static float SpriteRendererComponent_GetTiling(UUID entityID)
-	{
-		Scene* scene = ScriptEngine::GetSceneContext();
-		NB_ASSERT(scene);
-		Entity entity = { entityID, scene };
-		NB_ASSERT(entity);
-
-		AssetHandle handle = entity.GetComponent<CircleRendererComponent>().Material;
-		Ref<Material> mat = AssetManager::GetAsset<Material>(handle);
-
-		if (!mat)
-			return 1.0f;
-
-		return mat->Tiling;
-	}
 #pragma endregion
 
 #pragma region CircleRendererComponent
-	static void CircleRendererComponent_SetColour(UUID entityID, glm::vec4* colour)
+	static void CircleRendererComponent_SetMaterial(UUID entityID, AssetHandle handle)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
 		Entity entity = { entityID, scene };
 		NB_ASSERT(entity);
 
-		AssetHandle handle = entity.GetComponent<CircleRendererComponent>().Material;
-		Ref<Material> mat = AssetManager::GetAsset<Material>(handle);
-
-		if (!mat)
-			return;
-
-		mat->Colour = *colour;
+		auto& component = entity.GetComponent<CircleRendererComponent>();
+		component.Material = handle;
 	}
 
-	static void CircleRendererComponent_GetColour(UUID entityID, glm::vec4* colour)
+	static uint64_t CircleRendererComponent_GetMaterial(UUID entityID)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
 		Entity entity = { entityID, scene };
 		NB_ASSERT(entity);
 
-		AssetHandle handle = entity.GetComponent<CircleRendererComponent>().Material;
-		Ref<Material> mat = AssetManager::GetAsset<Material>(handle);
-
-		if (!mat)
-			return;
-
-		*colour = mat->Colour;
+		auto& component = entity.GetComponent<CircleRendererComponent>();
+		return component.Material;
 	}
 
 	static void CircleRendererComponent_SetRadius(UUID entityID, float radius)
@@ -1432,6 +1448,13 @@ namespace Nebula {
 		NB_ADD_INTERNAL_CALL(Font_GetBold);
 		NB_ADD_INTERNAL_CALL(Font_GetItalic);
 
+		NB_ADD_INTERNAL_CALL(Material_GetColour);
+		NB_ADD_INTERNAL_CALL(Material_SetColour);
+		NB_ADD_INTERNAL_CALL(Material_GetTexture);
+		NB_ADD_INTERNAL_CALL(Material_SetTexture);
+		NB_ADD_INTERNAL_CALL(Material_GetTiling);
+		NB_ADD_INTERNAL_CALL(Material_SetTiling);
+
 		NB_ADD_INTERNAL_CALL(Scene_FindEntityByName);
 		NB_ADD_INTERNAL_CALL(Scene_CreateNewEntity);
 		NB_ADD_INTERNAL_CALL(Scene_DuplicateEntity);
@@ -1470,22 +1493,20 @@ namespace Nebula {
 
 		NB_ADD_INTERNAL_CALL(SpriteRendererComponent_GetCellNumber);
 		NB_ADD_INTERNAL_CALL(SpriteRendererComponent_GetCellSize);
-		NB_ADD_INTERNAL_CALL(SpriteRendererComponent_GetColour);
+		NB_ADD_INTERNAL_CALL(SpriteRendererComponent_GetMaterial);
 		NB_ADD_INTERNAL_CALL(SpriteRendererComponent_GetOffset);
-		NB_ADD_INTERNAL_CALL(SpriteRendererComponent_GetTiling);
 
 		NB_ADD_INTERNAL_CALL(SpriteRendererComponent_SetCellNumber);
 		NB_ADD_INTERNAL_CALL(SpriteRendererComponent_SetCellSize);
-		NB_ADD_INTERNAL_CALL(SpriteRendererComponent_SetColour);
+		NB_ADD_INTERNAL_CALL(SpriteRendererComponent_SetMaterial);
 		NB_ADD_INTERNAL_CALL(SpriteRendererComponent_SetOffset);
-		NB_ADD_INTERNAL_CALL(SpriteRendererComponent_SetTiling);
 
-		NB_ADD_INTERNAL_CALL(CircleRendererComponent_GetColour);
+		NB_ADD_INTERNAL_CALL(CircleRendererComponent_GetMaterial);
 		NB_ADD_INTERNAL_CALL(CircleRendererComponent_GetFade);
 		NB_ADD_INTERNAL_CALL(CircleRendererComponent_GetRadius);
 		NB_ADD_INTERNAL_CALL(CircleRendererComponent_GetThickness);
 
-		NB_ADD_INTERNAL_CALL(CircleRendererComponent_SetColour);
+		NB_ADD_INTERNAL_CALL(CircleRendererComponent_SetMaterial);
 		NB_ADD_INTERNAL_CALL(CircleRendererComponent_SetFade);
 		NB_ADD_INTERNAL_CALL(CircleRendererComponent_SetRadius);
 		NB_ADD_INTERNAL_CALL(CircleRendererComponent_SetThickness);
@@ -1569,7 +1590,7 @@ namespace Nebula {
 			}
 			
 			s_EntityHasComponentFuncs[managedType] = [](Entity entity) { return entity.HasComponent<Component>(); };
-			s_EntityAddComponentFuncs[managedType] = [](Entity entity) { entity.AddComponent<Component>(); };
+			s_EntityAddComponentFuncs[managedType] = [](Entity entity) { entity.AddOrReplaceComponent<Component>(); };
 		}(), ... );
 	}
 

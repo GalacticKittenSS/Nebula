@@ -205,9 +205,7 @@ namespace Nebula {
 				if (!directoryEntry.is_directory())
 				{
 					m_SelectedFile = directoryEntry;
-
-					AssetHandle handle = AssetManager::GetHandleFromPath(m_SelectedFile);
-					m_AssetPreview = AssetManager::GetAsset<Asset>(handle);
+					m_AssetPreview = AssetManager::GetHandleFromPath(m_SelectedFile);
 				}
 			}
 
@@ -375,7 +373,7 @@ namespace Nebula {
 		{
 		case AssetType::Material:
 		{
-			Ref<Material> material = std::static_pointer_cast<Material>(m_AssetPreview);
+			Ref<Material> material = AssetManager::GetAsset<Material>(m_AssetPreview);
 
 			bool colour = DrawColourEdit("Colour", material->Colour);
 			bool tiling = DrawVec1Control("Tiling", material->Tiling);
@@ -421,14 +419,14 @@ namespace Nebula {
 		}
 		case AssetType::Texture:
 		{
-			Ref<Texture2D> texture = std::static_pointer_cast<Texture2D>(m_AssetPreview);
+			Ref<Texture2D> texture = AssetManager::GetAsset<Texture2D>(m_AssetPreview);
 			float buttonSize = ImGui::GetContentRegionAvailWidth();
 			ImGui::Image((ImTextureID)texture->GetRendererID(), ImVec2{ buttonSize, buttonSize }, { 0, 1 }, { 1, 0 });
 			break;
 		}
 		case AssetType::Font:
 		{
-			Ref<Font> font = std::static_pointer_cast<Font>(m_AssetPreview);
+			Ref<Font> font = AssetManager::GetAsset<Font>(m_AssetPreview);
 			Ref<Texture2D> atlasTexture = font->GetAtlasTexture();
 
 			if (atlasTexture)

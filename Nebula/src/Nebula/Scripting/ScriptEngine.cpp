@@ -38,7 +38,8 @@ namespace Nebula {
 		{ "Nebula.Asset", ScriptFieldType::Asset },
 		{ "Nebula.Prefab", ScriptFieldType::Prefab },
 		{ "Nebula.Font", ScriptFieldType::Font },
-		{ "Nebula.Texture", ScriptFieldType::Texture }
+		{ "Nebula.Texture", ScriptFieldType::Texture },
+		{ "Nebula.Material", ScriptFieldType::Material },
 	};
 
 	namespace Utils {

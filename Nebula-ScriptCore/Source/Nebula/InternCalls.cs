@@ -77,6 +77,26 @@ namespace Nebula
         internal extern static bool Font_GetItalic(ulong handle);
         #endregion
 
+        #region Material
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void Material_GetColour(ulong handle, out Vector4 colour);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void Material_SetColour(ulong handle, ref Vector4 colour);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static ulong Material_GetTexture(ulong handle);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void Material_SetTexture(ulong handle, ulong texture);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static float Material_GetTiling(ulong handle);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void Material_SetTiling(ulong handle, float tiling);
+        #endregion
+
         #region Scene
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static ulong Scene_FindEntityByName(string name);
@@ -182,10 +202,10 @@ namespace Nebula
 
         #region SpriteRendererComponent
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static void SpriteRendererComponent_GetColour(ulong entityID, out Vector4 colour);
+        internal extern static ulong SpriteRendererComponent_GetMaterial(ulong entityID);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static void SpriteRendererComponent_SetColour(ulong entityID, ref Vector4 colour);
+        internal extern static void SpriteRendererComponent_SetMaterial(ulong entityID, ulong material);
         
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void SpriteRendererComponent_GetOffset(ulong entityID, out Vector2 offset);
@@ -204,20 +224,14 @@ namespace Nebula
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void SpriteRendererComponent_SetCellNumber(ulong entityID, ref Vector2 number);
-        
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static float SpriteRendererComponent_GetTiling(ulong entityID);
-
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static void SpriteRendererComponent_SetTiling(ulong entityID, float tiling);
         #endregion
 
         #region CircleRendererComponent
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static void CircleRendererComponent_GetColour(ulong entityID, out Vector4 colour);
+        internal extern static ulong CircleRendererComponent_GetMaterial(ulong entityID);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        internal extern static void CircleRendererComponent_SetColour(ulong entityID, ref Vector4 colour);
+        internal extern static void CircleRendererComponent_SetMaterial(ulong entityID, ulong material);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static float CircleRendererComponent_GetRadius(ulong entityID);

@@ -113,16 +113,19 @@
     {
         // public Texture2D Texture
         
-        public Vector4 Colour
+        public Material Material
         {
             get 
             {
-                InternalCalls.SpriteRendererComponent_GetColour(Entity.ID, out Vector4 colour);
-                return colour;
+                ulong handle = InternalCalls.SpriteRendererComponent_GetMaterial(Entity.ID);
+                if (handle == 0)
+                    return null;
+
+                return new Material(handle);
             }
             set
             {
-                InternalCalls.SpriteRendererComponent_SetColour(Entity.ID, ref value);
+                InternalCalls.SpriteRendererComponent_SetMaterial(Entity.ID, value.AssetHandle);
             }
         }
 
@@ -164,27 +167,22 @@
                 InternalCalls.SpriteRendererComponent_SetCellNumber(Entity.ID, ref value);
             }
         }
-
-        public float Tiling
-        {
-            get => InternalCalls.SpriteRendererComponent_GetTiling(Entity.ID); 
-            set => InternalCalls.SpriteRendererComponent_SetTiling(Entity.ID, value);
-        }
     }
 
     public class CircleRendererComponent : Component
     {
-        public Vector4 Colour
+        public Material Material
         {
             get
             {
-                InternalCalls.CircleRendererComponent_GetColour(Entity.ID, out Vector4 colour);
-                return colour;
+                ulong handle = InternalCalls.CircleRendererComponent_GetMaterial(Entity.ID);
+                if (handle == 0)
+                    return null;
+
+                return new Material(handle);
             }
-            set
-            {
-                InternalCalls.CircleRendererComponent_SetColour(Entity.ID, ref value);
-            }
+
+            set => InternalCalls.CircleRendererComponent_SetMaterial(Entity.ID, value.AssetHandle);
         }
 
         public float Radius
