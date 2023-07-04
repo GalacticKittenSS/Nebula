@@ -21,12 +21,13 @@ namespace Nebula {
 		void RenderBrowser();
 		void RefreshAssetTree();
 		void CreateFilePopup();
+		Ref<Texture2D> GetIcon(const std::filesystem::path& extension);
 	private:
 		Ref<Scene> m_Scene;
 		std::filesystem::path m_BaseDirectory;
 		std::filesystem::path m_CurrentDirectory;
 		std::filesystem::path m_SelectedFile;
-		Ref<Texture2D> m_DirectoryIcon, m_FileIcon, m_PrefabIcon;
+		Ref<Texture2D> m_DirectoryIcon, m_FileIcon, m_PrefabIcon, m_FontIcon, m_MaterialIcon, m_ScriptIcon;
 
 		AssetHandle m_AssetPreview;
 

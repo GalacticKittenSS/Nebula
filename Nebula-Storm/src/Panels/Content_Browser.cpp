@@ -16,6 +16,9 @@ namespace Nebula {
 		m_DirectoryIcon = TextureImporter::CreateTexture2D("Resources/Icons/ContentBrowser/DirectoryIcon.png");
 		m_FileIcon = TextureImporter::CreateTexture2D("Resources/Icons/ContentBrowser/FileIcon.png");
 		m_PrefabIcon = TextureImporter::CreateTexture2D("Resources/Icons/ContentBrowser/PrefabIcon.png");
+		m_FontIcon = TextureImporter::CreateTexture2D("Resources/Icons/ContentBrowser/FontIcon.png");
+		m_MaterialIcon = TextureImporter::CreateTexture2D("Resources/Icons/ContentBrowser/MaterialIcon.png");
+		m_ScriptIcon = TextureImporter::CreateTexture2D("Resources/Icons/ContentBrowser/ScriptIcon.png");
 	}
 
 	void ContentBrowserPanel::SetContext(const std::filesystem::path& assetsPath)
@@ -118,6 +121,25 @@ namespace Nebula {
 		ImGui::End();
 	}
 
+	Ref<Texture2D> ContentBrowserPanel::GetIcon(const std::filesystem::path& path)
+	{
+		AssetType type = AssetManager::GetTypeFromExtension(path.extension().string());
+		switch (type)
+		{
+		case AssetType::Prefab: return m_PrefabIcon;
+		case AssetType::Font: return m_FontIcon;
+		case AssetType::Script: return m_ScriptIcon;
+		case AssetType::Material: return m_MaterialIcon;
+		case AssetType::Texture:
+		{
+			AssetHandle handle = AssetManager::GetHandleFromPath(path);
+			return AssetManager::GetAsset<Texture2D>(handle);
+		}
+		}
+		
+		return m_FileIcon;
+	}
+
 	void ContentBrowserPanel::RenderBrowser()
 	{
 		static float size = 0.0f;
@@ -192,15 +214,25 @@ namespace Nebula {
 				continue;
 
 			ImGui::PushID(filename.c_str());
+			
+			Ref<Texture2D> icon;
+			if (directoryEntry.is_directory())
+				icon = m_DirectoryIcon;
+			else
+				icon = GetIcon(path);
 
-			Ref<Texture2D> icon = directoryEntry.is_directory() ? m_DirectoryIcon : m_FileIcon;
-			icon = path.extension() == ".prefab" ? m_PrefabIcon : icon;
-
-			float tint = isAsset ? 1.0f : 0.5f;
+			ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, isAsset ? 1.0f : 0.5f);
+			if (AssetManager::GetTypeFromExtension(path.extension().string()) == AssetType::Material)
+			{
+				AssetHandle handle = AssetManager::GetHandleFromPath(path);
+				Ref<Material> mat = AssetManager::GetAsset<Material>(handle);
+				if (mat)
+					tint = ImVec4(mat->Colour.r, mat->Colour.g, mat->Colour.b, mat->Colour.a);
+			}
 
 			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
 			
-			if (ImGui::ImageButton((ImTextureID)(uint64_t)icon->GetRendererID(), { thumbnailSize, thumbnailSize }, { 0, 1 }, { 1, 0 }, -1, ImVec4(), ImVec4(1.0f, 1.0f, 1.0f, tint)))
+			if (ImGui::ImageButton((ImTextureID)(uint64_t)icon->GetRendererID(), { thumbnailSize, thumbnailSize }, { 0, 1 }, { 1, 0 }, -1, ImVec4(), tint))
 			{
 				if (!directoryEntry.is_directory())
 				{
