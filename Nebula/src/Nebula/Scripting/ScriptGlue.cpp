@@ -425,14 +425,12 @@ namespace Nebula {
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
-		Entity entity = { entityID, scene };
-		NB_ASSERT(entity);
-
+		
 		UUID childID = 0;
 		char* cName = mono_string_to_utf8(name);
 
-		const auto& children = entity.GetParentChild().ChildrenIDs;
-		for (const auto& id : children) {
+		const auto& children = scene->GetEntityNode(entityID);
+		for (const auto& id : children.Children) {
 			Entity ent = { id, scene };
 
 			if (ent.GetName() == cName)
@@ -497,25 +495,21 @@ namespace Nebula {
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
-		Entity entity = { entityID, scene };
-		NB_ASSERT(entity);
 
-		auto& comp = entity.GetComponent<ParentChildComponent>();
-		if (index > comp.ChildrenIDs.size())
+		auto& comp = scene->GetEntityNode(entityID);
+		if (index > comp.Children.size())
 			return NULL;
 
-		return comp.ChildrenIDs[index];
+		return comp.Children[index];
 	}
 
 	static uint32_t Entity_GetChildCount(UUID entityID)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
-		Entity entity = { entityID, scene };
-		NB_ASSERT(entity);
-
-		auto& comp = entity.GetComponent<ParentChildComponent>();
-		return (uint32_t)comp.ChildrenIDs.size();
+		
+		auto& comp = scene->GetEntityNode(entityID);
+		return (uint32_t)comp.Children.size();
 	}
 #pragma endregion
 

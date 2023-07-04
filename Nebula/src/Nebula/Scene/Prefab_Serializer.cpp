@@ -23,11 +23,13 @@ namespace Nebula
 
 	PrefabSerializer::PrefabSerializer(Scene* scene) : m_Scene(scene) { }
 
-	static void SerializeEntity(YAML::Emitter& out, Entity entity)
+	static void SerializeEntity(YAML::Emitter& out, Scene* scene, Entity entity)
 	{
 		out << YAML::BeginMap;
 		out << YAML::Key << "Entity";
-		out << YAML::Value << entity.GetUUID();
+
+		UUID uuid = entity.GetUUID();
+		out << YAML::Value << uuid;
 
 		if (entity.HasComponent<TagComponent>()) {
 			out << YAML::Key << "TagComponent";
@@ -50,24 +52,22 @@ namespace Nebula
 			out << YAML::EndMap; // TransformComponent
 		}
 
-		if (entity.HasComponent<ParentChildComponent>()) {
-			out << YAML::Key << "ParentChildComponent";
-			out << YAML::BeginMap; // ParentChildComponent
+		out << YAML::Key << "ParentChildComponent";
+		out << YAML::BeginMap; // ParentChildComponent
 
-			auto& component = entity.GetComponent<ParentChildComponent>();
+		auto& component = scene->GetEntityNode(uuid);
 
-			YAML::Node children;
-			for (uint32_t i = 0; i < component.ChildrenIDs.size(); i++)
-				children.push_back((uint64_t)component[i]);
-			children.SetStyle(YAML::EmitterStyle::Flow);
+		YAML::Node children;
+		for (uint32_t i = 0; i < component.Children.size(); i++)
+			children.push_back((uint64_t)component.Children[i]);
+		children.SetStyle(YAML::EmitterStyle::Flow);
 
-			out << YAML::Key << "PrimaryParent" << YAML::Value << component.Parent;
-			out << YAML::Key << "Children" << YAML::Value << children;
-			out << YAML::Key << "ChildCount" << YAML::Value << component.ChildrenIDs.size();
+		out << YAML::Key << "PrimaryParent" << YAML::Value << component.Parent;
+		out << YAML::Key << "Children" << YAML::Value << children;
+		out << YAML::Key << "ChildCount" << YAML::Value << component.Children.size();
 
-			out << YAML::EndMap; // ParentChildComponent
-		}
-
+		out << YAML::EndMap; // ParentChildComponent
+		
 		if (entity.HasComponent<TransformComponent>()) {
 			out << YAML::Key << "TransformComponent";
 			out << YAML::BeginMap; // TransformComponent
@@ -263,14 +263,14 @@ namespace Nebula
 		out << YAML::EndMap;
 	}
 
-	static void SerializeOrder(YAML::Emitter& out, Entity entity, Array<UUID>& entities)
+	static void SerializeOrder(YAML::Emitter& out, Scene* scene, Entity entity, Array<UUID>& entities)
 	{
 		out << entity.GetUUID();
 		entities.push_back(entity.GetUUID());
 		
-		const auto& children = entity.GetParentChild().ChildrenIDs;
-		for (const auto& child : children)
-			SerializeOrder(out, { child, entity }, entities);
+		const auto& children = scene->GetEntityNode(entity.GetUUID());
+		for (const auto& child : children.Children)
+			SerializeOrder(out, scene, { child, entity }, entities);
 	}
 
 	void PrefabSerializer::Serialize(Entity entity, const std::string& filepath)
@@ -281,13 +281,13 @@ namespace Nebula
 		Array<UUID> entities;
 		
 		out << YAML::Key << "Order" << YAML::Value << YAML::BeginSeq;
-		SerializeOrder(out, entity, entities);
+		SerializeOrder(out, m_Scene, entity, entities);
 		out << YAML::EndSeq;
 
 		out << YAML::Key << "Prefab" << YAML::Value << YAML::BeginSeq;
 		
 		for (auto& id : entities)
-			SerializeEntity(out, { id, m_Scene });
+			SerializeEntity(out, m_Scene, { id, m_Scene });
 
 		out << YAML::EndSeq;
 		out << YAML::EndMap;
@@ -351,7 +351,7 @@ namespace Nebula
 			}
 
 			if (auto parentComponent = entity["ParentChildComponent"]) {
-				auto& pcc = deserializedEntity.GetComponent<ParentChildComponent>();
+				auto& pcc = m_Scene->m_Nodes.at(uuid);
 
 				pcc.Parent = DeserializeID(idMap, parentComponent["PrimaryParent"]);
 				if (pcc.Parent)
@@ -360,7 +360,7 @@ namespace Nebula
 				uint32_t count = DeserializeValue<uint32_t>(parentComponent["ChildCount"]);
 				auto children = parentComponent["Children"];
 				for (uint32_t i = 0; i < count; i++)
-					pcc.AddChild(DeserializeID(idMap, children[i]));
+					pcc.Children.push_back(DeserializeID(idMap, children[i]));
 			}
 
 			if (auto transformComponent = entity["TransformComponent"]) {

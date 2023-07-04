@@ -440,7 +440,7 @@ namespace Nebula {
 			Renderer2D::Draw(NB_RECT, wtc.Transform, Material{ glm::vec4(1.0f, 0.5f, 0.0f, 1.0f) });
 		}
 		
-		for (auto& id : selectedEntity.GetParentChild().ChildrenIDs)
+		for (auto& id : m_ActiveScene->GetEntityNode(selectedEntity.GetUUID()).Children)
 		{
 			Entity child = { id, selectedEntity };
 			RenderSelectionUI(child);
@@ -513,7 +513,7 @@ namespace Nebula {
 				{
 					glm::mat4 transform = wc.Transform;
 					
-					if (UUID pid = selectedEntity.GetParentChild().Parent)
+					if (UUID pid = m_ActiveScene->GetEntityNode(selectedEntity.GetUUID()).Parent)
 					{
 						Entity parent = { pid, m_ActiveScene.get() };
 						auto& pwc = parent.GetComponent<WorldTransformComponent>();

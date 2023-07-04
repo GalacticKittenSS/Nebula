@@ -12,7 +12,7 @@ namespace Nebula {
 		glm::mat4 transform = GetTransform().CalculateMatrix();
 		world.Transform = transform;
 		
-		UUID parentID = GetParentChild().Parent;
+		UUID parentID = m_Scene->GetEntityNode(GetUUID()).Parent;
 		if (parentID) {
 			Entity parent = { parentID, m_Scene };
 			parent.CalculateTransform();
@@ -24,7 +24,7 @@ namespace Nebula {
 	void Entity::UpdateTransform() {
 		CalculateTransform();
 
-		for (UUID id : GetParentChild().ChildrenIDs)
+		for (UUID id : m_Scene->GetEntityNode(GetUUID()).Children)
 		{
 			Entity child = { id, m_Scene };
 			child.UpdateTransform();

@@ -42,24 +42,6 @@ namespace Nebula {
 		PropertiesComponent(const PropertiesComponent&) = default;
 	};
 
-	struct ParentChildComponent {
-		UUID Parent = NULL;
-		Array<UUID> ChildrenIDs;
-		
-		ParentChildComponent() = default;
-		ParentChildComponent(const ParentChildComponent&) = default;
-
-		UUID operator[](int index) { return ChildrenIDs[index]; }
-
-		void AddChild(UUID id) {
-			ChildrenIDs.push_back(id);
-		}
-
-		void RemoveChild(UUID id) {
-			ChildrenIDs.remove(id);
-		}
-	};
-
 	struct TransformComponent {
 		glm::vec3 Translation = { 0.0f, 0.0f, 0.0f };
 		glm::vec3 Rotation =	{ 0.0f, 0.0f, 0.0f };

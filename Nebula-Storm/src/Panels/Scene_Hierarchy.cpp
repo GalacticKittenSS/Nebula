@@ -23,41 +23,40 @@ namespace Nebula {
 		uint32_t indexBelow;
 	};
 
-	static bool DroppedIntoChildren(Entity child, Entity parentEntity) {
-		if (parentEntity.GetUUID() == child.GetUUID())
+	static bool DroppedIntoChildren(Ref<Scene> scene, UUID child, UUID parentEntity) {
+		if (parentEntity == child)
 			return true;
 
-		UUID parent = parentEntity.GetParentChild().Parent;
+		UUID parent = scene->GetEntityNode(parentEntity).Parent;
 		if (!parent)
 			return false;
 
-		return DroppedIntoChildren(child, Entity(parent, parentEntity));
+		return DroppedIntoChildren(scene, child, parent);
 	}
 
-	static void AddParent(UUID childID, Entity parentEntity, Scene* scene) {
-		auto& parent = parentEntity.GetComponent<ParentChildComponent>();
-
-		Entity dropEnt{ childID, scene };
-		auto& child = dropEnt.GetComponent<ParentChildComponent>();
+	static void AddParent(Ref<Scene> scene, UUID childID, Entity parentEntity) {
+		UUID parentID = parentEntity.GetUUID();
+		auto& parent = scene->GetEntityNode(parentID);
+		auto& child = scene->GetEntityNode(childID);
 
 		//Check if Dropped Entity is being dropped to parent of itself
-		if (child.Parent == parentEntity.GetUUID())
+		if (child.Parent == parentID)
 			return;
 
-		if (DroppedIntoChildren(dropEnt, parentEntity))
+		if (DroppedIntoChildren(scene, childID, parentID))
 			return;
 
 		//Go Ahead if safe
-		UUID parentID = child.Parent;
-		if (parentID) {
-			Entity parent{ parentID, scene };
-			parent.GetParentChild().RemoveChild(childID);
+		UUID pid = child.Parent;
+		if (pid) {
+			auto& pcc = scene->GetEntityNode(pid);
+			pcc.Children.remove(childID);
 		}
 
-		parent.AddChild(childID);
+		parent.Children.push_back(childID);
 		scene->m_SceneOrder.remove(childID);
 		
-		child.Parent = parentEntity.GetUUID();
+		child.Parent = parentID;
 		parentEntity.UpdateTransform();
 	}
 	
@@ -65,20 +64,20 @@ namespace Nebula {
 		const ImGuiPayload* payload = ImGui::GetDragDropPayload();
 		if (!payload)
 			return;
-	
-		Entity Ent{ *(const UUID*)payload->Data, currentScene };
-		auto& ParentComp = Ent.GetParentChild();
+
+		UUID uuid = *(const UUID*)payload->Data;
+		auto& ParentComp = currentScene->GetEntityNode(uuid);
 
 		if (!ParentComp.Parent)
 			return;
 
-		Entity{ ParentComp.Parent, currentScene }.GetComponent<ParentChildComponent>().RemoveChild(*(const UUID*)payload->Data);
-
-		UUID parentsParent = Entity{ ParentComp.Parent, currentScene }.GetParentChild().Parent;
+		currentScene->GetEntityNode(ParentComp.Parent).Children.remove(uuid);
+		
+		UUID parentsParent = currentScene->GetEntityNode(ParentComp.Parent).Parent;
 		ParentComp.Parent = parentsParent;
 
 		if (parentsParent)
-			Entity{ parentsParent, currentScene }.GetParentChild().AddChild(Ent.GetUUID());
+			currentScene->GetEntityNode(parentsParent).Children.push_back(uuid);
 	}
 
 	static bool DrawVec2Control(const std::string& label, glm::vec2& values, const glm::vec2& min = glm::vec2(0.0f), const glm::vec2& max = glm::vec2(0.0f),
@@ -177,9 +176,9 @@ namespace Nebula {
 					
 					if (data->Parent) {
 						Entity parent = { data->Parent, m_Context.get() };
-						AddParent(entityID, parent, m_Context.get());
+						AddParent(m_Context, entityID, parent);
 						
-						Array<UUID>& children = parent.GetParentChild().ChildrenIDs;
+						Array<UUID>& children = m_Context->GetEntityNode(data->Parent).Children;
 
 						size_t entityIndex = children.find(entityID);
 						size_t newIndex = entityIndex;
@@ -196,14 +195,12 @@ namespace Nebula {
 					{
 						Entity entity = { entityID, m_Context.get() };
 						
-						if (UUID parentID = entity.GetParentChild().Parent)
+						if (UUID parentID = m_Context->GetEntityNode(entityID).Parent)
 						{
-							Entity parent = { parentID, m_Context.get() };
-							parent.GetParentChild().RemoveChild(entityID);
-							
-							entity.GetParentChild().Parent = NULL;
+							m_Context->GetEntityNode(parentID).Children.remove(entityID);
+							m_Context->GetEntityNode(entityID).Parent = NULL;
 							m_Context->m_SceneOrder.push_back(entityID);
-							
+
 							entity.UpdateTransform();
 						}
 						
@@ -247,7 +244,7 @@ namespace Nebula {
 				auto& entity = m_Context->CreateEntity("Entity");
 
 				if (parent)
-					AddParent(entity.GetUUID(), parent, m_Context.get());
+					AddParent(m_Context, entity.GetUUID(), parent);
 			}
 
 			if (ImGui::MenuItem("Sprite")) 
@@ -258,7 +255,7 @@ namespace Nebula {
 				sprite.AddComponent<BoxCollider2DComponent>();
 				
 				if (parent)
-					AddParent(sprite.GetUUID(), parent, m_Context.get());
+					AddParent(m_Context, sprite.GetUUID(), parent);
 			}
 
 			if (ImGui::MenuItem("Circle")) 
@@ -269,7 +266,7 @@ namespace Nebula {
 				sprite.AddComponent<CircleColliderComponent>();
 
 				if (parent)
-					AddParent(sprite.GetUUID(), parent, m_Context.get());
+					AddParent(m_Context, sprite.GetUUID(), parent);
 			}
 
 			if (ImGui::MenuItem("Camera")) 
@@ -278,7 +275,7 @@ namespace Nebula {
 				cam.AddComponent<CameraComponent>();
 
 				if (parent)
-					AddParent(cam.GetUUID(), parent, m_Context.get());
+					AddParent(m_Context, cam.GetUUID(), parent);
 			}
 
 			ImGui::EndMenu();
@@ -287,7 +284,6 @@ namespace Nebula {
 
 	void SceneHierarchyPanel::DrawArray(Array<UUID>& entities) {
 		if (entities.size()) {
-			Entity entity{ entities[0], m_Context.get() };
 			ImVec2 cursorPos = ImGui::GetCursorPos();
 			ImVec2 elementSize = ImGui::GetItemRectSize();
 			elementSize.x -= ImGui::GetStyle().FramePadding.x;
@@ -295,7 +291,7 @@ namespace Nebula {
 			cursorPos.y -= ImGui::GetStyle().FramePadding.y;
 			ImVec2 windowPos = ImGui::GetCurrentWindow()->Pos;
 			RectData* data = new RectData();
-			data->Parent = entity.GetParentChild().Parent;
+			data->Parent = m_Context->GetEntityNode(entities[0]).Parent;
 			data->Rect = ImRect(windowPos.x + cursorPos.x, windowPos.y + cursorPos.y, windowPos.x + cursorPos.x + elementSize.x, windowPos.y + cursorPos.y + elementSize.y);
 			data->indexAbove = 0;
 			data->indexBelow = 0;
@@ -310,11 +306,13 @@ namespace Nebula {
 
 	void SceneHierarchyPanel::DrawEntityNode(Entity entity, uint32_t index) {
 		auto& tag = entity.GetComponent<TagComponent>().Tag;
+		UUID uuid = entity.GetUUID();
+		auto& pcc = m_Context->m_Nodes.at(uuid);
 
 		ImGuiTreeNodeFlags flags = m_SelectionContext == entity ? ImGuiTreeNodeFlags_Selected : ImGuiTreeNodeFlags_None;
 		flags |= ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_FramePadding;
 
-		if (entity.GetParentChild().ChildrenIDs.size() == 0)
+		if (pcc.Children.size() == 0)
 			flags |= ImGuiTreeNodeFlags_Leaf;
 
 		bool opened = ImGui::TreeNodeEx((void*)(uint32_t)entity, flags, tag.c_str());
@@ -331,7 +329,7 @@ namespace Nebula {
 		
 		if (ImGui::BeginDragDropTarget()) {
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENTITY"))
-				AddParent(*(const UUID*)payload->Data, entity, m_Context.get());
+				AddParent(m_Context, *(const UUID*)payload->Data, entity);
 			
 			ImGui::EndDragDropTarget();
 		}
@@ -350,11 +348,7 @@ namespace Nebula {
 		}
 
 		if (opened) {
-			if (entity.HasComponent<ParentChildComponent>()) {
-				auto& comp = entity.GetParentChild();
-				DrawArray(comp.ChildrenIDs);
-			}
-
+			DrawArray(pcc.Children);
 			ImGui::TreePop();
 		}
 		
@@ -372,7 +366,7 @@ namespace Nebula {
 		cursorPos.y -= ImGui::GetStyle().FramePadding.y;
 		ImVec2 windowPos = ImGui::GetCurrentWindow()->Pos;
 		RectData* data = new RectData();
-		data->Parent = entity.GetParentChild().Parent;
+		data->Parent = pcc.Parent;
 
 		if (index == 0)
 			elementSize.x = ImGui::GetContentRegionAvailWidth();
@@ -695,7 +689,7 @@ namespace Nebula {
 		}
 	}
 
-	static void UpdateChildProperties(Entity entity, bool enabled)
+	static void UpdateChildProperties(Ref<Scene> scene, Entity entity, bool enabled)
 	{
 		if (entity.HasComponent<Rigidbody2DComponent>())
 		{
@@ -703,13 +697,13 @@ namespace Nebula {
 				body->SetEnabled(enabled);
 		}
 		
-		auto& pcc = entity.GetParentChild();
-		for (UUID id : pcc.ChildrenIDs)
+		auto& pcc = scene->GetEntityNode(entity.GetUUID());
+		for (UUID id : pcc.Children)
 		{
 			Entity child = { id, entity };
 			auto& prop = child.GetComponent<PropertiesComponent>();
 			prop.Enabled = enabled;
-			UpdateChildProperties(child, enabled);
+			UpdateChildProperties(scene, child, enabled);
 		}
 	}
 
@@ -760,7 +754,7 @@ namespace Nebula {
 			ImGui::SameLine();
 
 			if (ImGui::Checkbox("##Enabled", &prop.Enabled))
-				UpdateChildProperties(entity, prop.Enabled);
+				UpdateChildProperties(m_Context, entity, prop.Enabled);
 		}
 
 		if (ImGui::BeginPopup("Add Component")) {

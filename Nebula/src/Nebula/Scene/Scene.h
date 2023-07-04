@@ -17,6 +17,18 @@ namespace Nebula {
 	
 	class Scene {
 	public:
+		struct SceneNode
+		{
+			UUID ID;
+			UUID Parent = NULL;
+			Array<UUID> Children;
+
+			SceneNode() = default;
+			SceneNode(const SceneNode&) = default;
+			SceneNode(UUID id)
+				: ID(id) {}
+		};
+	public:
 		Scene();
 		~Scene();
 
@@ -57,6 +69,8 @@ namespace Nebula {
 		auto GetAllEntitiesWith() {
 			return m_Registry.view<Components...>();
 		}
+
+		SceneNode GetEntityNode(UUID entityID);
 		
 		void SetPaused(bool paused) { m_IsPaused = paused; }
 		bool IsPaused() const { return m_IsPaused; }
@@ -82,6 +96,7 @@ namespace Nebula {
 	private:
 		entt::registry m_Registry;
 		std::unordered_map<UUID, entt::entity> m_EntityMap;
+		std::unordered_map<UUID, SceneNode> m_Nodes;
 
 		bool m_IsRunning = false, m_IsPaused = false;
 		int m_StepFrames = 0;

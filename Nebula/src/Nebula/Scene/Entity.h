@@ -64,8 +64,7 @@ namespace Nebula {
 		bool IsEnabled() { return GetComponent<PropertiesComponent>().Enabled; }
 
 		TransformComponent& GetTransform() { return GetComponent<TransformComponent>(); }
-		ParentChildComponent& GetParentChild() { return GetComponent<ParentChildComponent>(); }
-
+		
 		void CalculateTransform();
 		void UpdateTransform();
 		void UpdatePhysicsBody();

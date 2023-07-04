@@ -83,8 +83,8 @@ namespace Nebula {
 		}
 
 		CopyComponent(AllComponents{}, dstSceneReg, srcSceneReg, enttMap);
-		CopyComponent(ComponentGroup<ParentChildComponent>{}, dstSceneReg, srcSceneReg, enttMap);
 
+		newScene->m_Nodes = other->m_Nodes;
 		newScene->m_SceneOrder = other->m_SceneOrder;
 
 		return newScene;
@@ -98,10 +98,11 @@ namespace Nebula {
 		Entity entity = { m_Registry.create(), this };
 		m_SceneOrder.push_back(uuid); 
 		m_EntityMap[uuid] = entity;
+		m_Nodes[uuid] = SceneNode(uuid);
 
 		entity.AddComponent<TransformComponent>();
 		entity.AddComponent<WorldTransformComponent>();
-		entity.AddComponent<ParentChildComponent>();
+		entity.AddComponent<MaterialComponent>();
 
 		auto& idc = entity.AddComponent<IDComponent>();
 		idc.ID = uuid;
@@ -114,7 +115,6 @@ namespace Nebula {
 		auto& tag = entity.AddComponent<TagComponent>();
 		tag.Tag = name.empty() ? "Entity" : name;
 		
-		entity.AddComponent<MaterialComponent>();
 		return entity;
 	}
 
@@ -126,24 +126,21 @@ namespace Nebula {
 
 		const UUID& duplicatedID = duplicated.GetUUID();
 
-		ParentChildComponent& pcc = entity.GetParentChild();
+		auto& pcc = m_Nodes.at(entity.GetUUID());
 		if (pcc.Parent && duplicateIntoParent)
 		{
-			duplicated.GetParentChild().Parent = pcc.Parent;
-			
-			Entity parent = { pcc.Parent, this };
-			parent.GetParentChild().AddChild(duplicatedID);
-
+			m_Nodes.at(duplicatedID).Parent = pcc.Parent;
+			m_Nodes.at(pcc.Parent).Children.push_back(duplicatedID);
 			m_SceneOrder.remove(duplicatedID);
 		}
 		
-		for (uint32_t i = 0; i < entity.GetParentChild().ChildrenIDs.size(); i++)
+		for (uint32_t i = 0; i < pcc.Children.size(); i++)
 		{
-			Entity child = DuplicateEntity({ entity.GetParentChild().ChildrenIDs[i], this }, false);
+			Entity child = DuplicateEntity({ pcc.Children[i], this }, false);
 			UUID childID = child.GetUUID();
 
-			duplicated.GetParentChild().AddChild(childID);
-			child.GetParentChild().Parent = duplicatedID;
+			m_Nodes.at(duplicatedID).Children.push_back(childID);
+			m_Nodes.at(childID).Parent = duplicatedID;
 			m_SceneOrder.remove(childID);
 		}
 		
@@ -194,19 +191,20 @@ namespace Nebula {
 			}
 		}
 		
-		auto& Parent = entity.GetParentChild();
-		size_t size = Parent.ChildrenIDs.size();
+		auto& Parent = m_Nodes.at(entityID);
+		size_t size = Parent.Children.size();
 		for (size_t i = 0; i < size; i++)
-			DestroyEntity({ Parent.ChildrenIDs[0], this});
+			DestroyEntity({ Parent.Children[0], this});
 
 		if (Parent.Parent) 
 		{
-			Entity parent = { Parent.Parent, this };
-			parent.GetParentChild().RemoveChild(entityID);
+			auto& parent = m_Nodes.at(Parent.Parent);
+			parent.Children.remove(entityID);
 		}
 
 		ScriptEngine::DeleteScriptInstance(entityID);
 
+		m_Nodes.erase(entityID);
 		m_SceneOrder.remove(entityID);
 		m_EntityMap.erase(entityID);
 		m_Registry.destroy(entity);
@@ -241,9 +239,17 @@ namespace Nebula {
 
 	Entity Scene::GetEntityWithUUID(UUID id) {
 		auto it = m_EntityMap.find(id);
-		NB_ASSERT(it == m_EntityMap.end(), "Could Not Find Entity UUID");
+		NB_ASSERT(it != m_EntityMap.end(), "Could Not Find Entity UUID");
 
 		return { it->second, this };
+	}
+
+	Scene::SceneNode Scene::GetEntityNode(UUID entityID)
+	{
+		auto it = m_Nodes.find(entityID);
+		NB_ASSERT(it != m_Nodes.end(), "Could Not Find Entity Node");
+
+		return it->second;
 	}
 
 	void Scene::CreateBox2DBody(Entity entity) {
