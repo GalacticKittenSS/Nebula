@@ -134,7 +134,7 @@ namespace Nebula {
 		StringRendererComponent() = default;
 		StringRendererComponent(const StringRendererComponent&) = default;
 
-		Ref<Font> GetFont() 
+		Ref<Font> GetFont() const
 		{
 			const AssetMetadata& metadata = AssetManager::GetAssetMetadata(FontHandle);
 			

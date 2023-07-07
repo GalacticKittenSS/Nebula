@@ -92,6 +92,8 @@ namespace Nebula {
 
 	void ContentBrowserPanel::OnImGuiRender() 
 	{
+		NB_PROFILE_FUNCTION();
+
 		ImGui::Begin("Content Browser");
 		RenderBrowser();
 
@@ -215,10 +217,8 @@ namespace Nebula {
 
 			ImGui::PushID(filename.c_str());
 			
-			Ref<Texture2D> icon;
-			if (directoryEntry.is_directory())
-				icon = m_DirectoryIcon;
-			else
+			Ref<Texture2D> icon = m_DirectoryIcon;
+			if (!directoryEntry.is_directory())
 				icon = GetIcon(path);
 
 			ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, isAsset ? 1.0f : 0.5f);

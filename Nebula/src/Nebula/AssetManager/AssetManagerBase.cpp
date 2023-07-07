@@ -122,6 +122,8 @@ namespace Nebula
 
 	AssetHandle AssetManagerBase::CreateMemoryAsset(Ref<Asset> asset)
 	{
+		NB_PROFILE_FUNCTION();
+
 		AssetMetadata data;
 		data.Handle = AssetHandle();
 		data.Type = AssetType::MemoryAsset;
@@ -176,6 +178,8 @@ namespace Nebula
 
 	AssetHandle AssetManagerBase::GetHandleFromPath(const std::filesystem::path& path)
 	{
+		NB_PROFILE_FUNCTION();
+
 		for (const auto& [handle, asset] : m_AssetRegistry)
 		{
 			if (asset.Path == path || asset.RelativePath == path)

@@ -7,34 +7,45 @@
 #include "box2d/b2_circle_shape.h"
 
 namespace Nebula {
-	void Entity::CalculateTransform() {
+	void Entity::CalculateTransform(bool calcParent) {
+		NB_PROFILE_FUNCTION();
+
 		auto& world = GetComponent<WorldTransformComponent>();
 		glm::mat4 transform = GetTransform().CalculateMatrix();
 		world.Transform = transform;
 		
-		UUID parentID = m_Scene->GetEntityNode(GetUUID()).Parent;
-		if (parentID) {
+		if (UUID parentID = m_Scene->GetEntityNode(GetUUID()).Parent) 
+		{
 			Entity parent = { parentID, m_Scene };
-			parent.CalculateTransform();
+			
+			if (calcParent)
+				parent.CalculateTransform();
+
 			auto& pWorld = parent.GetComponent<WorldTransformComponent>();
 			world.Transform = pWorld.Transform * transform;
 		}
 	}
 
-	void Entity::UpdateTransform() {
+	void Entity::UpdateTransform(bool updatePhysics) {
+		NB_PROFILE_FUNCTION();
+
 		CalculateTransform();
 
-		for (UUID id : m_Scene->GetEntityNode(GetUUID()).Children)
+		auto& node = m_Scene->GetEntityNode(GetUUID());
+		for (UUID id : node.Children)
 		{
 			Entity child = { id, m_Scene };
-			child.UpdateTransform();
+			child.UpdateTransform(updatePhysics);
 		}
 
-		UpdatePhysicsBody();
+		if (updatePhysics)
+			UpdatePhysicsBody();
 	}
 
 	void Entity::UpdatePhysicsBody()
 	{
+		NB_PROFILE_FUNCTION();
+
 		if (!HasComponent<Rigidbody2DComponent>())
 			return;
 

@@ -33,6 +33,8 @@ namespace Nebula {
 
 	Ref<Project> Project::Load(const std::filesystem::path& path) 
 	{
+		NB_PROFILE_FUNCTION();
+
 		Ref<Project> project = CreateRef<Project>();
 		project->m_AssetManager = CreateRef<AssetManagerBase>();
 		project->m_ProjectFile = path;
@@ -50,6 +52,7 @@ namespace Nebula {
 
 	bool Project::SaveActive(const std::filesystem::path& path)
 	{
+		NB_PROFILE_FUNCTION();
 		NB_ASSERT(!path.empty());
 
 		ProjectSerializer serializer(s_ActiveProject);

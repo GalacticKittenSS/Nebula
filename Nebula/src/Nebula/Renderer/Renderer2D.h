@@ -31,10 +31,9 @@ namespace Nebula {
 		static void BeginScene(const EditorCamera& camera);
 		static void EndScene();
 
-		static void Draw(const uint32_t type, Entity& quad);
-		static void Draw(const uint32_t type, const glm::mat4& transform, const Material& mat);
-		static void Draw(const uint32_t type, const glm::vec4* vertexPos, glm::vec2* texCoords, 
-			const glm::mat4& transform, const Material& mat);
+		static void Draw(const SpriteRendererComponent& sprite, const glm::mat4& transform, const Material& material, int entityID);
+		static void Draw(const CircleRendererComponent& circle, const glm::mat4& transform, const Material& material, int entityID);
+		static void Draw(const StringRendererComponent& string, const glm::mat4& transform, int entityID);
 
 		//Primitives
 
@@ -52,6 +51,7 @@ namespace Nebula {
 			const glm::mat4& transform, const Material& mat, uint32_t entityID = -1);
 		static void DrawCircle(const glm::mat4& transform, const Material& mat, const float thickness = 1.0f, const float fade = 0.005f, uint32_t entityID = -1);
 		static void DrawLine(const glm::vec3& p0, const glm::vec3& p1, const glm::vec4& colour, int entityID = -1);
+		static void DrawRect(const glm::mat4& transform, const Material& material, int entityID = -1);
 	private:
 		static void FlushAndReset();
 		static float GetTextureIndex(const Ref<Texture2D>& texture);

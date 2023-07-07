@@ -65,8 +65,8 @@ namespace Nebula {
 
 		TransformComponent& GetTransform() { return GetComponent<TransformComponent>(); }
 		
-		void CalculateTransform();
-		void UpdateTransform();
+		void CalculateTransform(bool calcParent = false);
+		void UpdateTransform(bool updatePhysics = true);
 		void UpdatePhysicsBody();
 
 		bool IsValid() const { return m_Scene->m_Registry.valid(m_EntityHandle); }

@@ -205,7 +205,6 @@ namespace Nebula {
 			case SceneState::Edit:
 				m_ActiveScene->Render(m_EditorCam);
 				OnOverlayRender();
-				m_ActiveScene->RenderOverlay(m_EditorCam);
 
 				GetPixelData();
 				break;
@@ -213,7 +212,6 @@ namespace Nebula {
 			case SceneState::Simulate:
 				m_ActiveScene->Render(m_EditorCam);
 				OnOverlayRender();
-				m_ActiveScene->RenderOverlay(m_EditorCam);
 
 				GetPixelData();
 				break;
@@ -221,7 +219,6 @@ namespace Nebula {
 			case SceneState::Play:
 				m_ActiveScene->RenderRuntime();
 				OnOverlayRender();
-				m_ActiveScene->RenderRuntimeOverlay();
 				break;
 		}
 
@@ -424,7 +421,7 @@ namespace Nebula {
 
 			glm::mat4 transform = glm::translate(wTranslation) * glm::toMat4(glm::quat(wRotation)) *
 				glm::translate(glm::vec3(bc2d.Offset, zIndex)) * glm::scale(Scale);
-			Renderer2D::Draw(NB_RECT, transform, Material{ glm::vec4(0.0f, 1.0f, 0.0f, 1.0f) });
+			Renderer2D::DrawRect(transform, Material{ glm::vec4(0.0f, 1.0f, 0.0f, 1.0f) });
 		}
 	}
 
@@ -437,7 +434,7 @@ namespace Nebula {
 			|| selectedEntity.HasComponent<CircleRendererComponent>())
 		{
 			const WorldTransformComponent& wtc = selectedEntity.GetComponent<WorldTransformComponent>();
-			Renderer2D::Draw(NB_RECT, wtc.Transform, Material{ glm::vec4(1.0f, 0.5f, 0.0f, 1.0f) });
+			Renderer2D::DrawRect(wtc.Transform, Material{ glm::vec4(1.0f, 0.5f, 0.0f, 1.0f) });
 		}
 		
 		for (auto& id : m_ActiveScene->GetEntityNode(selectedEntity.GetUUID()).Children)

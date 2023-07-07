@@ -15,6 +15,8 @@ namespace Nebula {
 
 	bool ProjectSerializer::Serialize(const std::filesystem::path& filepath)
 	{
+		NB_PROFILE_FUNCTION();
+
 		const auto& config = m_Project->GetConfig();
 
 		YAML::Emitter out;
@@ -54,6 +56,8 @@ namespace Nebula {
 
 	bool ProjectSerializer::Deserialize(const std::filesystem::path& filepath)
 	{
+		NB_PROFILE_FUNCTION();
+
 		auto& config = m_Project->GetConfig();
 
 		YAML::Node data;

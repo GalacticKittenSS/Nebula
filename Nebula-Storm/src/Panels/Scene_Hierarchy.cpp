@@ -95,6 +95,8 @@ namespace Nebula {
 	}
 
 	void SceneHierarchyPanel::OnImGuiRender() {
+		NB_PROFILE_FUNCTION();
+
 		Rects.clear();
 
 		ImGui::Begin("Scene Hierarchy");

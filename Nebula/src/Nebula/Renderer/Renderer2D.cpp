@@ -189,8 +189,6 @@ namespace Nebula {
 	}
 
 	static void ResetBatch() {
-		NB_PROFILE_FUNCTION();
-
 		s_Data.QuadIndexCount = 0;
 		s_Data.QuadVBPtr = s_Data.QuadVBBase;
 
@@ -534,134 +532,42 @@ namespace Nebula {
 		s_Data.LineVertexCount += 2;
 	}
 
-	void Renderer2D::Draw(const uint32_t type, Entity& entity) 
+	void Renderer2D::DrawRect(const glm::mat4& transform, const Material& material, int entityID)
 	{
-		NB_PROFILE_FUNCTION();
+		glm::vec3 p0 = transform * s_Data.QuadVertexPos[0];
+		glm::vec3 p1 = transform * s_Data.QuadVertexPos[1];
+		glm::vec3 p2 = transform * s_Data.QuadVertexPos[2];
+		glm::vec3 p3 = transform * s_Data.QuadVertexPos[3];
 
-		glm::mat4 transform = entity.GetComponent<WorldTransformComponent>().Transform;
-
-		auto& matComp = entity.GetComponent<MaterialComponent>();
-		Ref<Material> asset = AssetManager::GetAsset<Material>(matComp.Material);
-		Material material = Material::Get(asset);
-
-		switch (type)
-		{
-		case NB_RECT: {
-			glm::vec3 p0 = transform * glm::vec4(-0.5f, -0.5f, 0.0f, 1.0f);
-			glm::vec3 p1 = transform * glm::vec4(0.5f, -0.5f, 0.0f, 1.0f);
-			glm::vec3 p2 = transform * glm::vec4(0.5f, 0.5f, 0.0f, 1.0f);
-			glm::vec3 p3 = transform * glm::vec4(-0.5f, 0.5f, 0.0f, 1.0f);
-
-			DrawLine(p0, p1, material.Colour, entity);
-			DrawLine(p1, p2, material.Colour, entity);
-			DrawLine(p2, p3, material.Colour, entity);
-			DrawLine(p3, p0, material.Colour, entity);
-
-			break;
-		}
-		case NB_CIRCLE: {
-			auto& circleRenderer = entity.GetComponent<CircleRendererComponent>();
-			DrawCircle(transform, material, circleRenderer.Thickness, circleRenderer.Fade, entity);
-			break;
-		}
-		case NB_LINE: {
-			//TODO: Line Renderer Component
-			DrawLine(s_Data.LineVertexPos[0] * transform[3], s_Data.LineVertexPos[1] * transform[3], glm::vec4(1.0f));
-			break;
-		}
-		case NB_QUAD: {
-			auto& spriteRenderer = entity.GetComponent<SpriteRendererComponent>();
-
-			if (material.Texture && material.Texture->IsLoaded()) {
-				Ref<SubTexture2D> SubT = SubTexture2D::CreateFromCoords(material.Texture,
-					spriteRenderer.SubTextureOffset, spriteRenderer.SubTextureCellSize, spriteRenderer.SubTextureCellNum);
-				DrawQuad(4, s_Data.QuadVertexPos, SubT->GetTextureCoords(), transform, material, entity);
-			}
-			else
-				DrawQuad(4, s_Data.QuadVertexPos, s_Data.QuadTexCoords, transform, material, entity);
-			break;
-		}
-		case NB_STRING: {
-			auto& stringRender = entity.GetComponent<StringRendererComponent>();
-			
-			TextParams params = { stringRender.Colour, stringRender.Kerning, stringRender.LineSpacing };
-			DrawString(stringRender.Text, stringRender.GetFont(), transform, params, entity);
-			break;
-		}
-		default:
-			NB_ERROR("[Renderer2D] Unknown Type Specified");
-			break;
-		}
+		DrawLine(p0, p1, material.Colour);
+		DrawLine(p1, p2, material.Colour);
+		DrawLine(p2, p3, material.Colour);
+		DrawLine(p3, p0, material.Colour);
 	}
 
-	void Renderer2D::Draw(const uint32_t type, const glm::mat4& transform, const Material& material) {
-		switch (type) {
-		case NB_RECT: {
-			glm::vec3 p0 = transform * s_Data.QuadVertexPos[0];
-			glm::vec3 p1 = transform * s_Data.QuadVertexPos[1];
-			glm::vec3 p2 = transform * s_Data.QuadVertexPos[2];
-			glm::vec3 p3 = transform * s_Data.QuadVertexPos[3];
-
-			DrawLine(p0, p1, material.Colour);
-			DrawLine(p1, p2, material.Colour);
-			DrawLine(p2, p3, material.Colour);
-			DrawLine(p3, p0, material.Colour);
-
-			break;
+	void Renderer2D::Draw(const SpriteRendererComponent& sprite, const glm::mat4& transform, const Material& material, int entityID)
+	{
+		if (material.Texture)
+		{
+			Ref<SubTexture2D> SubT = SubTexture2D::CreateFromCoords(material.Texture, sprite.SubTextureOffset, sprite.SubTextureCellSize, sprite.SubTextureCellNum);
+			DrawQuad(4, s_Data.QuadVertexPos, SubT->GetTextureCoords(), transform, material, entityID);
 		}
-
-		case NB_LINE:
-			DrawLine(s_Data.LineVertexPos[0] * transform[3], s_Data.LineVertexPos[1] * transform[3], material.Colour);
-			break;
-
-		case NB_CIRCLE:
-			DrawCircle(transform, material);
-			break;
-
-		case NB_QUAD:
-			DrawQuad(4, s_Data.QuadVertexPos, s_Data.QuadTexCoords, transform, material);
-			break;
-
-		case NB_TRI:
-			DrawTri(3, s_Data.TriVertexPos, s_Data.TriTexCoords, transform, material);
-			break;
-
-		case NB_STRING:
-			NB_WARN("[Render2D] Please Use Renderer2D::DrawString to render text");
-			break;
+		else
+		{
+			DrawQuad(4, s_Data.QuadVertexPos, s_Data.QuadTexCoords, transform, material, entityID);
 		}
+		
 	}
 	
-	void Renderer2D::Draw(const uint32_t type, const glm::vec4* vertexPos, glm::vec2* texCoords, 
-		const glm::mat4& transform, const Material& material) {
-		uint32_t size = sizeof(vertexPos) / sizeof(glm::vec4);
-		switch (type) {
-			case NB_QUAD:
-				if (!texCoords) {
-					texCoords = new glm::vec2[size];
-					for (uint32_t i = 0; i < size; i += 4) {
-						texCoords[i + 0] = s_Data.QuadVertexPos[0];
-						texCoords[i + 1] = s_Data.QuadVertexPos[1];
-						texCoords[i + 2] = s_Data.QuadVertexPos[2];
-						texCoords[i + 3] = s_Data.QuadVertexPos[3];
-					};
-				}
-
-				DrawQuad(size, vertexPos, texCoords, transform, material);
-				break;
-
-			case NB_TRI:
-				if (!texCoords) {
-					texCoords = new glm::vec2[size];
-					for (uint32_t i = 0; i < size; i += 4) {
-						texCoords[i + 0] = s_Data.TriVertexPos[0];
-						texCoords[i + 1] = s_Data.TriVertexPos[1];
-						texCoords[i + 2] = s_Data.TriVertexPos[2];
-					};
-				}
-				DrawTri(size, vertexPos, texCoords, transform, material);
-				break;
-		}
+	void Renderer2D::Draw(const CircleRendererComponent& circle, const glm::mat4& transform, const Material& material, int entityID)
+	{
+		DrawCircle(transform, material, circle.Thickness, circle.Fade, entityID);
+	}
+	
+	void Renderer2D::Draw(const StringRendererComponent& string, const glm::mat4& transform, int entityID)
+	{
+		TextParams params = { string.Colour, string.Kerning, string.LineSpacing };
+		DrawString(string.Text, string.GetFont(), transform, params, entityID);
 	}
 
 	float Renderer2D::GetTextureIndex(const Ref<Texture2D>& texture) 

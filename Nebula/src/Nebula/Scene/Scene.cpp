@@ -60,6 +60,8 @@ namespace Nebula {
 	}
 
 	Ref<Scene> Scene::Copy(Ref<Scene> other) {
+		NB_PROFILE_FUNCTION();
+
 		Ref<Scene> newScene = CreateRef<Scene>();
 		newScene->m_ViewportWidth = other->m_ViewportWidth;
 		newScene->m_ViewportHeight = other->m_ViewportHeight;
@@ -95,6 +97,8 @@ namespace Nebula {
 	}
 
 	Entity Scene::CreateEntity(UUID uuid, std::string_view name) {
+		NB_PROFILE_FUNCTION();
+
 		Entity entity = { m_Registry.create(), this };
 		m_SceneOrder.push_back(uuid); 
 		m_EntityMap[uuid] = entity;
@@ -119,6 +123,8 @@ namespace Nebula {
 	}
 
 	Entity Scene::DuplicateEntity(Entity entity, bool duplicateIntoParent) {
+		NB_PROFILE_FUNCTION();
+
 		std::string name = entity.GetName();
 		Entity duplicated = CreateEntity(name);
 
@@ -160,6 +166,8 @@ namespace Nebula {
 	}
 
 	void Scene::DestroyEntity(Entity entity) {
+		NB_PROFILE_FUNCTION();
+
 		if (!entity)
 			return;
 		
@@ -211,6 +219,8 @@ namespace Nebula {
 	}
 
 	Entity Scene::GetPrimaryCamera() {
+		NB_PROFILE_FUNCTION();
+
 		auto view = m_Registry.view<CameraComponent>();
 
 		for (auto entity : view) {
@@ -224,6 +234,8 @@ namespace Nebula {
 	}
 
 	Entity Scene::GetEntityWithTag(std::string_view tag) {
+		NB_PROFILE_FUNCTION();
+
 		auto view = m_Registry.view<TagComponent>();
 
 		for (auto& entity : view) {
@@ -244,8 +256,7 @@ namespace Nebula {
 		return { it->second, this };
 	}
 
-	Scene::SceneNode Scene::GetEntityNode(UUID entityID)
-	{
+	Scene::SceneNode& Scene::GetEntityNode(UUID entityID) {
 		auto it = m_Nodes.find(entityID);
 		NB_ASSERT(it != m_Nodes.end(), "Could Not Find Entity Node");
 
@@ -253,6 +264,8 @@ namespace Nebula {
 	}
 
 	void Scene::CreateBox2DBody(Entity entity) {
+		NB_PROFILE_FUNCTION();
+
 		auto& world = entity.GetComponent<WorldTransformComponent>();
 		auto& rb2d = entity.GetComponent<Rigidbody2DComponent>();
 		auto& prop = entity.GetComponent<PropertiesComponent>();
@@ -318,6 +331,8 @@ namespace Nebula {
 
 	void Scene::UpdateBox2DBody(Entity entity)
 	{
+		NB_PROFILE_FUNCTION();
+
 		if (!m_IsRunning)
 			return;
 
@@ -400,6 +415,8 @@ namespace Nebula {
 	}
 
 	void Scene::InitPhysics() {
+		NB_PROFILE_FUNCTION();
+
 		m_ContactListener = new ContactListener(this);
 
 		glm::vec2 gravity = Project::GetActive()->GetConfig().Gravity;
@@ -414,22 +431,23 @@ namespace Nebula {
 	}
 
 	void Scene::UpdatePhysics() {
+		NB_PROFILE_FUNCTION();
+
 		m_PhysicsWorld->Step(Time::DeltaTime(), 6, 2);
 		m_ContactListener->Flush();
 
-		auto view = m_Registry.view<Rigidbody2DComponent>();
-		for (auto e : view) {
-			Entity entity = { e, this };
-			
-			auto& world = entity.GetComponent<WorldTransformComponent>();
-			auto& transform = entity.GetComponent<TransformComponent>();
-			auto& rb2d = entity.GetComponent<Rigidbody2DComponent>();
+		auto view = m_Registry.view<WorldTransformComponent, TransformComponent, Rigidbody2DComponent>();
 
+		for (auto e : view) {
+			NB_PROFILE_SCOPE("Scene::UpdatePhysics - Update Body");
+			auto& [world, transform, rb2d] = view.get<WorldTransformComponent, TransformComponent, Rigidbody2DComponent>(e);
+			
+			Entity entity = { e, this };
 			if (!rb2d.RuntimeBody)
 				CreateBox2DBody(entity);
 
 			b2Body* body = (b2Body*)rb2d.RuntimeBody;
-			auto position = body->GetPosition();
+			const auto& position = body->GetPosition();
 
 			glm::vec3 wTranslation, wRotation, wScale;
 			Maths::DecomposeTransform(world.Transform, wTranslation, wRotation, wScale);
@@ -438,17 +456,20 @@ namespace Nebula {
 			transform.Translation.y += position.y - wTranslation.y;
 			transform.Rotation.z += body->GetAngle() - wRotation.z;
 
-			entity.UpdateTransform();
+			entity.UpdateTransform(false);
 		}
 	}
 
 	void Scene::DestroyPhysics() {
+		NB_PROFILE_FUNCTION();
+
 		auto view = m_Registry.view<Rigidbody2DComponent>();
 		for (auto e : view) {
 			Entity entity = { e, this };
 			auto& rb2d = entity.GetComponent<Rigidbody2DComponent>();
 			if (rb2d.RuntimeBody) {
-				delete (Entity*)((b2Body*)rb2d.RuntimeBody)->GetUserData().pointer;
+				if (Entity* entity = (Entity*)((b2Body*)rb2d.RuntimeBody)->GetUserData().pointer)
+					delete entity;
 				rb2d.RuntimeBody = nullptr;
 			}
 		}
@@ -458,6 +479,8 @@ namespace Nebula {
 	}
 
 	void Scene::InitScripts() {
+		NB_PROFILE_FUNCTION();
+
 		m_Registry.view<NativeScriptComponent>().each([=](auto entity, NativeScriptComponent& nsc) {
 			nsc.Instance = nsc.InstantiateScript();
 			nsc.Instance->m_Entity = Entity{ entity, this };
@@ -486,6 +509,8 @@ namespace Nebula {
 	}
 
 	void Scene::UpdateScripts() {
+		NB_PROFILE_FUNCTION();
+
 		auto scriptView = m_Registry.view<ScriptComponent>();
 		for (auto e : scriptView)
 		{
@@ -512,6 +537,8 @@ namespace Nebula {
 	}
 
 	void Scene::DestroyScripts() {
+		NB_PROFILE_FUNCTION();
+
 		ScriptEngine::OnRuntimeStop();
 
 		auto view = m_Registry.view<NativeScriptComponent>();
@@ -541,6 +568,8 @@ namespace Nebula {
 	}
 
 	void Scene::UpdateRuntime() {
+		NB_PROFILE_FUNCTION();
+
 		if (m_IsPaused && m_StepFrames-- <= 0)
 			return;
 
@@ -559,46 +588,6 @@ namespace Nebula {
 		UpdatePhysics();
 	}
 
-	void Scene::RenderRuntime() {
-		if (!mainCam) return;
-
-		Renderer2D::BeginScene(*mainCam, mainCamTransform);
-
-		auto group = m_Registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
-		for (auto id : group) {
-			Entity entity = { id, this };
-
-			if (entity.IsEnabled())
-				Renderer2D::Draw(NB_QUAD, entity);
-		}
-
-		auto CircleGroup = m_Registry.view<CircleRendererComponent>();
-		for (auto id : CircleGroup) {
-			Entity entity = { id, this };
-
-			if (entity.IsEnabled())
-				Renderer2D::Draw(NB_CIRCLE, entity);
-		}
-
-		Renderer2D::EndScene();
-	}
-
-	void Scene::RenderRuntimeOverlay() {
-		if (!mainCam) return;
-
-		Renderer2D::BeginScene(*mainCam, mainCamTransform);
-		
-		auto StringGroup = m_Registry.view<StringRendererComponent>();
-		for (auto id : StringGroup) {
-			Entity entity = { id, this };
-
-			if (entity.IsEnabled())
-				Renderer2D::Draw(NB_STRING, entity);
-		}
-
-		Renderer2D::EndScene();
-	}
-
 	void Scene::OnSimulationStart() {
 		InitPhysics();
 	}
@@ -608,6 +597,8 @@ namespace Nebula {
 	}
 
 	void Scene::UpdateSimulation() {
+		NB_PROFILE_FUNCTION();
+
 		if (m_IsPaused && m_StepFrames-- <= 0)
 			return;
 
@@ -624,79 +615,66 @@ namespace Nebula {
 
 	void Scene::UpdateEditor() { }
 
-	void Scene::Render(EditorCamera& camera) {
+	void Scene::RenderRuntime() 
+	{
+		NB_PROFILE_FUNCTION();
+
+		if (!mainCam) return;
+
+		Renderer2D::BeginScene(*mainCam, mainCamTransform);
+		RenderComponents();
+		Renderer2D::EndScene();
+	}
+
+	void Scene::Render(EditorCamera& camera) 
+	{
+		NB_PROFILE_FUNCTION();
+
 		Renderer2D::BeginScene(camera);
-
-		auto group = m_Registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
-		for (auto id : group) {
-			Entity entity = { id, this };
-
-			if (entity.IsEnabled())
-				Renderer2D::Draw(NB_QUAD, entity);
-		}
-
-		auto CircleGroup = m_Registry.view<CircleRendererComponent>();
-		for (auto id : CircleGroup) {
-			Entity entity = { id, this };
-
-			if (entity.IsEnabled())
-				Renderer2D::Draw(NB_CIRCLE, entity);
-		}
-
+		RenderComponents();
 		Renderer2D::EndScene();
 	}
 
-	void Scene::RenderOverlay(EditorCamera& camera) {
-		Renderer2D::BeginScene(camera);
+	void Scene::Render(const Camera& camera, const glm::mat4& transform) 
+	{
+		NB_PROFILE_FUNCTION();
 
-		auto StringGroup = m_Registry.view<StringRendererComponent>();
-		for (auto id : StringGroup) {
-			Entity entity = { id, this };
-
-			if (entity.IsEnabled())
-				Renderer2D::Draw(NB_STRING, entity);
-		}
-
-		Renderer2D::EndScene();
-	}
-
-	void Scene::Render(const Camera& camera, const glm::mat4& transform) {
 		Renderer2D::BeginScene(camera, transform);
-
-		auto group = m_Registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
-		for (auto id : group) {
-			Entity entity = { id, this };
-
-			if (entity.IsEnabled())
-				Renderer2D::Draw(NB_QUAD, entity);
-		}
-
-		auto CircleGroup = m_Registry.view<CircleRendererComponent>();
-		for (auto id : CircleGroup) {
-			Entity entity = { id, this };
-
-			if (entity.IsEnabled())
-				Renderer2D::Draw(NB_CIRCLE, entity);
-		}
-
+		RenderComponents();
 		Renderer2D::EndScene();
 	}
 
-	void Scene::RenderOverlay(const Camera& camera, const glm::mat4& transform) {
-		Renderer2D::BeginScene(camera, transform);
+	void Scene::RenderComponents()
+	{
+		auto spriteGroup = m_Registry.group<WorldTransformComponent, MaterialComponent>(entt::get<SpriteRendererComponent>);
+		for (auto id : spriteGroup)
+		{
+			auto [transform, material, sprite] = spriteGroup.get<WorldTransformComponent, MaterialComponent, SpriteRendererComponent>(id);
 
-		auto StringGroup = m_Registry.view<StringRendererComponent>();
-		for (auto id : StringGroup) {
-			Entity entity = { id, this };
-
-			if (entity.IsEnabled())
-				Renderer2D::Draw(NB_STRING, entity);
+			Ref<Material> mat = AssetManager::GetAsset<Material>(material.Material);
+			Renderer2D::Draw(sprite, transform.Transform, Material::Get(mat), (int)id);
 		}
 
-		Renderer2D::EndScene();
+		auto circleGroup = m_Registry.view<WorldTransformComponent, MaterialComponent, CircleRendererComponent>();
+		for (auto id : circleGroup)
+		{
+			auto [transform, material, circle] = circleGroup.get<WorldTransformComponent, MaterialComponent, CircleRendererComponent>(id);
+
+			Ref<Material> mat = AssetManager::GetAsset<Material>(material.Material);
+			Renderer2D::Draw(circle, transform.Transform, Material::Get(mat), (int)id);
+		}
+
+		auto stringGroup = m_Registry.view<WorldTransformComponent, StringRendererComponent>();
+		for (auto id : stringGroup)
+		{
+			auto [transform, string] = stringGroup.get<WorldTransformComponent, StringRendererComponent>(id);
+			Renderer2D::Draw(string, transform.Transform, (int)id);
+		}
 	}
 
 	void Scene::OnViewportResize(uint32_t width, uint32_t height) {
+		NB_PROFILE_FUNCTION();
+
 		m_ViewportWidth = width;
 		m_ViewportHeight = height;
 

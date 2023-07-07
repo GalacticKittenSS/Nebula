@@ -543,7 +543,7 @@ namespace Nebula {
 		}
 
 		for (auto entity : m_Scene->GetAllEntitiesWith<TransformComponent>())
-			Entity{ entity, m_Scene.get() }.CalculateTransform();
+			Entity{ entity, m_Scene.get() }.CalculateTransform(true);
 		
 		return true;
 	}
