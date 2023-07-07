@@ -12,10 +12,13 @@
 
 #include "Platform/OpenGl/OpenGL_Context.h"
 
+#define VK_USE_PLATFORM_WIN32_KHR
+#include <vulkan/vulkan.h>
 #include <stb_image.h>
 
 namespace Nebula {
 	static uint8_t s_GLFWWindowCount = 0;
+	static bool s_GLFWInit = false;
 
 	static void GLFWErrorCallback(int error, const char* description) {
 		NB_ERROR("GLFW Error ({0}): {1}", error, description);
@@ -29,6 +32,20 @@ namespace Nebula {
 		ShutDown();
 	}
 
+	void Win_Window::InitGLFW()
+	{
+		if (!s_GLFWInit) 
+		{
+			//TODO: glfwTerminate on system shutdown
+			NB_INFO("Initializing GLFW");
+			int success = glfwInit();
+			NB_ASSERT(success, "Could Not Initialise GLFW");
+			glfwSetErrorCallback(GLFWErrorCallback);
+
+			s_GLFWInit = true;
+		}
+	}
+
 	void Win_Window::Init(const WindowProps& props) {
 		NB_PROFILE_FUNCTION();
 
@@ -38,18 +55,13 @@ namespace Nebula {
 
 		NB_INFO("Creating Window {0} ({1}, {2})", props.Title, props.Width, props.Height);
 
-		if (s_GLFWWindowCount == 0) {
-			//TODO: glfwTerminate on system shutdown
-			NB_INFO("Initializing GLFW");
-			int success = glfwInit();
-			NB_ASSERT(success, "Could Not Initialise GLFW");
-			glfwSetErrorCallback(GLFWErrorCallback);
-		}
-
 #ifdef NB_DEBUG
 		if (Renderer::GetAPI() == RendererAPI::API::OpenGL)
 			glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
 #endif
+
+		if (Renderer::GetAPI() == RendererAPI::API::Vulkan)
+			glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
 		m_Window = glfwCreateWindow((int)props.Width, (int)props.Height, m_Data.Title.c_str(), nullptr, nullptr);
 		++s_GLFWWindowCount;
@@ -150,6 +162,8 @@ namespace Nebula {
 	void Win_Window::ShutDown() {
 		NB_PROFILE_FUNCTION();
 
+		m_Context->Shutdown();
+
 		glfwDestroyWindow(m_Window);
 		--s_GLFWWindowCount;
 
@@ -167,12 +181,15 @@ namespace Nebula {
 	}
 
 	void Win_Window::SetVSync(bool enabled) {
-		if (enabled)
-			glfwSwapInterval(1);
-		else
-			glfwSwapInterval(0);
+		if (Renderer::GetAPI() != RendererAPI::API::Vulkan)
+		{
+			if (enabled)
+				glfwSwapInterval(1);
+			else
+				glfwSwapInterval(0);
 
-		m_Data.Vsync = enabled;
+			m_Data.Vsync = enabled;
+		}
 	}
 
 	bool Win_Window::IsVSync() const {
@@ -221,12 +238,23 @@ namespace Nebula {
 
 			GLFWmonitor* monitor = FindBestMonitor();
 			const GLFWvidmode* mode = glfwGetVideoMode(monitor);
-			glfwSetWindowMonitor(m_Window, monitor, 0, 0, mode->width, mode->height, GLFW_DONT_CARE);
+
+			glfwSetWindowPos(m_Window, 0, 0);
+			glfwSetWindowSize(m_Window, mode->width, mode->height);
+			glfwWindowHint(GLFW_DECORATED, false);
+
+			//glfwSetWindowMonitor(m_Window, monitor, 0, 0, mode->width, mode->height, GLFW_DONT_CARE);
 		}
 		else if (m_Data.Fullscreen) {
 			glfwSetWindowMonitor(m_Window, nullptr, m_PreviousData.PosX, m_PreviousData.PosY, m_PreviousData.Width, m_PreviousData.Height, GLFW_DONT_CARE);
 		}
 
 		m_Data.Fullscreen = fullscreen;
+	}
+
+	const char** Window::GetExtensions(uint32_t& count)
+	{
+		Win_Window::InitGLFW();
+		return glfwGetRequiredInstanceExtensions(&count);
 	}
 }

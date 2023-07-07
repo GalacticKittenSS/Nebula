@@ -3,12 +3,14 @@
 
 #include "Renderer.h"
 #include "Platform/OpenGl/OpenGL_Shader.h"
+#include "Platform/Vulkan/Vulkan_Shader.h"
 
 namespace Nebula {
 	Ref<Shader> Shader::Create(const std::string& path) {
 		switch (Renderer::GetAPI()) {
 		case RendererAPI::API::None:	NB_ASSERT(false, "RendererAPI::None is currently not supported!");
 		case RendererAPI::API::OpenGL:	return CreateRef<OpenGL_Shader>(path);
+		case RendererAPI::API::Vulkan:	return CreateRef<Vulkan_Shader>(path);
 		}
 
 		NB_ASSERT(false, "Unknown RendererAPI!");
@@ -19,6 +21,7 @@ namespace Nebula {
 		switch (Renderer::GetAPI()) {
 			case RendererAPI::API::None:	NB_ASSERT(false, "RendererAPI::None is currently not supported!");
 			case RendererAPI::API::OpenGL:	return CreateRef<OpenGL_Shader>(name, vertSrc, fragSrc);
+			case RendererAPI::API::Vulkan:	return CreateRef<Vulkan_Shader>(name, vertSrc, fragSrc);
 		}
 
 		NB_ASSERT(false, "Unknown RendererAPI!");

@@ -31,10 +31,12 @@ namespace Nebula {
 		void SetFullscreen(bool fullscreen) override;
 		bool IsFullscreen() override { return m_Data.Fullscreen; }
 
+		inline virtual void* GetSurface() const override { return m_Context->GetSurface(); }
 		inline virtual void* GetNativeWindow() const override { return m_Window; }
 	private:
-		virtual void Init(const WindowProps& props);
-		virtual void ShutDown();
+		void Init(const WindowProps& props);
+		void ShutDown();
+		static void InitGLFW();
 		GLFWmonitor* FindBestMonitor();
 	private:
 		GLFWwindow* m_Window;
@@ -54,5 +56,7 @@ namespace Nebula {
 
 		WindowData m_Data;
 		WindowData m_PreviousData;
+
+		friend Window;
 	};
 }

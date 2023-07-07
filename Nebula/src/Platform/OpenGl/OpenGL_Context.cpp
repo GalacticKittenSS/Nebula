@@ -32,6 +32,10 @@ namespace Nebula {
 #endif
 	}
 
+	void OpenGL_Context::Shutdown()
+	{
+	}
+
 	void OpenGL_Context::SwapBuffers() {
 		NB_PROFILE_FUNCTION();
 

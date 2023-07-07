@@ -3,20 +3,21 @@
 #include "Nebula/renderer/Shader.h"
 #include "Nebula/Maths/Maths.h"
 
-typedef unsigned int GLenum;
+#include <unordered_map>
+#include <vulkan/vulkan.h>
 
 namespace Nebula {
-	class OpenGL_Shader: public Shader {
+	class Vulkan_Shader : public Shader {
 	public:
-		OpenGL_Shader(const std::string& path);
-		OpenGL_Shader(const std::string& name, const std::string& vertSrc, const std::string& fragSrc);
-		~OpenGL_Shader();
+		Vulkan_Shader(const std::string& path);
+		Vulkan_Shader(const std::string& name, const std::string& vertSrc, const std::string& fragSrc);
+		~Vulkan_Shader();
 
 		void Bind() const override;
 		void Unbind() const override;
 
 		const std::string& GetName() const override { return m_Name; }
-		const void* GetPipeline() const override { return nullptr; }
+		const void* GetPipeline() const override { return m_GraphicsPipeline; }
 
 		void SetInt(const std::string& name, int value) override;
 		void SetIntArray(const std::string& name, int* values, uint32_t count) override;
@@ -38,24 +39,19 @@ namespace Nebula {
 		void UploadUniformFloat4(const std::string& name, const glm::vec4& values);
 	private:
 		std::string ReadFile(const std::string& filepath);
-		std::unordered_map<GLenum, std::string> PreProcess(const std::string& source);
-
-		void CompileOrGetVulkanBinaries(const std::unordered_map<GLenum, std::string>& shaderSources);
-		void CompileOrGetOpenGLBinaries();
-		void CreateProgram();
-
-		void CompileOpenGLBinariesForAmd(GLenum& program, std::array<uint32_t, 2>& glShadersIDs);
-		void CreateProgramForAmd();
-
-		void Reflect(GLenum stage, const std::vector<uint32_t>& shaderData);
+		std::unordered_map<VkShaderStageFlagBits, std::string> PreProcess(const std::string& source);
+		void CompileOrGetVulkanBinaries(const std::unordered_map<VkShaderStageFlagBits, std::string>& shaderSources);
+		void Reflect(VkShaderStageFlagBits stage, const std::vector<uint32_t>& shaderData);
+		VkShaderModule CreateShaderModule(const std::vector<uint32_t>& code);
 	private:
 		uint32_t m_RendererID;
 		std::string m_FilePath;
 		std::string m_Name;
 
-		std::unordered_map<GLenum, std::vector<uint32_t>> m_VulkanSPIRV;
-		std::unordered_map<GLenum, std::vector<uint32_t>> m_OpenGLSPIRV;
+		std::unordered_map<VkShaderStageFlagBits, std::vector<uint32_t>> m_VulkanSPIRV;
+		std::unordered_map<VkShaderStageFlagBits, std::vector<char>> m_ShaderCode;
 
-		std::unordered_map<GLenum, std::string> m_OpenGLSourceCode;
+		VkPipeline m_GraphicsPipeline;
+		VkPipelineLayout m_PipelineLayout;
 	};
 }

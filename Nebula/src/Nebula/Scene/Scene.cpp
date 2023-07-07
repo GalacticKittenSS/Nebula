@@ -10,6 +10,7 @@
 #include "Components.h"
 #include "Entity.h"
 #include "ContactListener.h"
+#include "SceneRenderer.h"
 
 #include "box2d/b2_world.h"
 #include "box2d/b2_body.h"

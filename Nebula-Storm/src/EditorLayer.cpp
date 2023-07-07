@@ -226,6 +226,8 @@ namespace Nebula {
 	}
 
 	void EditorLayer::ImGuiRender() {
+		NB_PROFILE_FUNCTION();
+
 		ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
 		
 		ImGuiViewport* viewport = ImGui::GetMainViewport();
@@ -283,6 +285,8 @@ namespace Nebula {
 	}
 
 	void EditorLayer::UI_MenuBar() {
+		NB_PROFILE_FUNCTION();
+
 		if (ImGui::BeginMenuBar()) {
 			if (ImGui::BeginMenu("File")) {
 				if (ImGui::MenuItem("New Scene", "Ctrl+N"))
@@ -445,6 +449,8 @@ namespace Nebula {
 	}
 
 	void EditorLayer::UI_GameView() {
+		NB_PROFILE_FUNCTION();
+
 		UI::ScopedStyleVar padding(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 		ImGui::Begin("Game View", nullptr, ImGuiWindowFlags_NoCollapse);
 
@@ -529,6 +535,8 @@ namespace Nebula {
 	}
 
 	void EditorLayer::UI_Toolbar() {
+		NB_PROFILE_FUNCTION();
+
 		UI::ScopedStyleVar padding(ImGuiStyleVar_WindowPadding, ImVec2(0, 2));
 		UI::ScopedStyleVar spacing(ImGuiStyleVar_ItemInnerSpacing, ImVec2(0, 0));
 		

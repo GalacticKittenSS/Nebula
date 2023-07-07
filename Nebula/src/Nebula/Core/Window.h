@@ -39,6 +39,9 @@ namespace Nebula {
 		virtual void SetFullscreen(bool fullscreen) = 0;
 		virtual bool IsFullscreen() = 0;
 
+		static const char** GetExtensions(uint32_t& count);
+
+		virtual void* GetSurface() const = 0;
 		virtual void* GetNativeWindow() const = 0;
 
 		static Scope<Window> Create(const WindowProps& props = WindowProps());

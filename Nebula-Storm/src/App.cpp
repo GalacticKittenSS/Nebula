@@ -10,7 +10,7 @@ namespace Nebula {
 		spec.CommandLineArgs = args;
 
 		Application* app = new Application(spec);
-		app->PushLayer(new EditorLayer());
+		//app->PushLayer(new EditorLayer());
 
 		return app;
 	}

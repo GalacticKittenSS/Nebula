@@ -3,6 +3,8 @@
 #include "entt.hpp"
 
 #include "Components.h"
+#include "SceneRenderer.h"
+
 #include "Nebula/Renderer/Camera.h"
 #include "Nebula/Core/UUID.h"
 
@@ -65,7 +67,7 @@ namespace Nebula {
 			return m_Registry.view<Components...>();
 		}
 
-		SceneNode GetEntityNode(UUID entityID);
+		SceneNode& GetEntityNode(UUID entityID);
 		
 		void SetPaused(bool paused) { m_IsPaused = paused; }
 		bool IsPaused() const { return m_IsPaused; }
@@ -105,6 +107,8 @@ namespace Nebula {
 
 		Camera* mainCam = nullptr;
 		glm::mat4 mainCamTransform;
+
+		SceneRenderer m_Renderer;
 
 		friend class Entity;
 		friend class SceneHierarchyPanel;
