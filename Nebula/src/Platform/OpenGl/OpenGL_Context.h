@@ -12,7 +12,8 @@ namespace Nebula {
 		void Init() override;
 		void Shutdown() override;
 		void SwapBuffers() override;
-		void* GetSurface() override { return nullptr; }
+		const void* GetSurface() const override { return nullptr; }
+		const void* GetImageFormat() const override { return nullptr; }
 	private:
 		GLFWwindow* m_WindowHandle;
 	};

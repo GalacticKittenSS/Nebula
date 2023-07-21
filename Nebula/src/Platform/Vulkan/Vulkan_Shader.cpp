@@ -4,6 +4,10 @@
 #include "Nebula/Utils/Time.h"
 #include "Nebula/Scene/SceneRenderer.h"
 #include "Nebula/Renderer/Render_Command.h"
+#include "Nebula/Core/Application.h"
+
+#include "Vulkan_Context.h"
+#include "Vulkan_Framebuffer.h"
 
 #include <shaderc/shaderc.hpp>
 #include <spirv_cross/spirv_cross.hpp>
@@ -176,6 +180,8 @@ namespace Nebula
 		VkResult result = vkCreatePipelineLayout((VkDevice)RenderCommand::GetDevice(), &pipelineLayoutInfo, nullptr, &m_PipelineLayout);
 		NB_ASSERT(result == VK_SUCCESS, "Failed to create pipeline layout");
 		
+		Vulkan_Context* context = (Vulkan_Context*)Application::Get().GetWindow().GetContext();
+
 		VkGraphicsPipelineCreateInfo pipelineInfo{};
 		pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 		pipelineInfo.stageCount = 2;
@@ -188,7 +194,7 @@ namespace Nebula
 		pipelineInfo.pColorBlendState = &colorBlending;
 		pipelineInfo.pDynamicState = &dynamicState;
 		pipelineInfo.layout = m_PipelineLayout;
-		pipelineInfo.renderPass = (VkRenderPass)SceneRenderer::GetRenderPass();
+		pipelineInfo.renderPass = Vulkan_FrameBuffer::s_BindedInstance->m_RenderPass;
 		pipelineInfo.subpass = 0;
 		pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 

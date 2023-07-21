@@ -21,6 +21,7 @@ namespace Nebula {
 		const void* GetInstance() const override { return nullptr; }
 		const void* GetDevice() const override { return nullptr; }
 		const void* GetPhysicalDevice() const override { return nullptr; }
-		const void* GetCommandBuffer(uint32_t frame) const override { return nullptr; }
+		const void* GetImageSemaphore() const override { return nullptr; }
+		const void* GetRenderSemaphore() const override { return nullptr; }
 	};
 }

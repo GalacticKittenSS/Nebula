@@ -5,6 +5,8 @@
 #include "API.h"
 #include "Nebula/Events/Event.h"
 
+#include "Nebula/Renderer/Graphics_Context.h"
+
 namespace Nebula {
 	struct WindowProps {
 		std::string Title;
@@ -41,7 +43,9 @@ namespace Nebula {
 
 		static const char** GetExtensions(uint32_t& count);
 
-		virtual void* GetSurface() const = 0;
+		virtual const void* GetSurface() const = 0;
+		virtual const void* GetImageFormat() const = 0;
+		virtual const GraphicsContext* GetContext() const = 0;
 		virtual void* GetNativeWindow() const = 0;
 
 		static Scope<Window> Create(const WindowProps& props = WindowProps());

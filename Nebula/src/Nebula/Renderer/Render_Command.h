@@ -53,8 +53,12 @@ namespace Nebula {
 			return s_RendererAPI->GetPhysicalDevice();
 		}
 
-		inline static const void* GetCommandBuffer(uint32_t frame = 0) {
-			return s_RendererAPI->GetCommandBuffer(frame);
+		inline static const void* GetImageSemaphore() {
+			return s_RendererAPI->GetImageSemaphore();
+		}
+
+		inline static const void* GetRenderSemaphore() {
+			return s_RendererAPI->GetRenderSemaphore();
 		}
 	private:
 		static Scope<RendererAPI> s_RendererAPI;

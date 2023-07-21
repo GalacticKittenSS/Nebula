@@ -5,6 +5,8 @@
 #include <vulkan/vulkan.h>
 #include <optional>
 
+#include "Vulkan_Context.h"
+
 namespace Nebula {
 	class Vulkan_RendererAPI : public RendererAPI {
 	public:
@@ -25,7 +27,8 @@ namespace Nebula {
 		const void* GetInstance() const override { return m_Instance; }
 		const void* GetDevice() const override { return m_Device; }
 		const void* GetPhysicalDevice() const override { return m_PhysicalDevice; }
-		const void* GetCommandBuffer(uint32_t frame = 0) const override { return m_CommandBuffers[frame]; }
+		const void* GetImageSemaphore() const override;
+		const void* GetRenderSemaphore() const override;
 	private:
 		struct QueueFamilyIndices {
 			std::optional<uint32_t> graphicsFamily;
@@ -45,8 +48,9 @@ namespace Nebula {
 		VkPhysicalDevice PickPhysicalDevice();
 		uint16_t RateDeviceSuitability(VkPhysicalDevice device);
 		bool IsDeviceSuitable(VkPhysicalDevice device);
+		void recordCommandBuffer(VkCommandBuffer commandBuffer, Vulkan_Context* context);
 		
-		QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device);
+		static QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device);
 		bool CheckDeviceExtensionSupport(VkPhysicalDevice device);
 	private:
 		VkInstance m_Instance;
@@ -63,6 +67,8 @@ namespace Nebula {
 		std::vector<VkSemaphore> m_RenderSemaphores;
 		std::vector<VkFence> m_Fences;
 
+		uint8_t m_CurrentFrame;
+
 		std::vector<const char*> m_ValidationLayers = {
 		   "VK_LAYER_KHRONOS_validation"
 		};
@@ -70,5 +76,7 @@ namespace Nebula {
 		const std::vector<const char*> m_DeviceExtensions = {
 			VK_KHR_SWAPCHAIN_EXTENSION_NAME
 		};
+
+		friend class Vulkan_Context;
 	};
 }

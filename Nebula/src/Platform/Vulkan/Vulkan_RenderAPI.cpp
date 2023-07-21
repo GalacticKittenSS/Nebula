@@ -4,6 +4,8 @@
 #include "Nebula/Core/Application.h"
 #include "Nebula/Scene/SceneRenderer.h"
 
+#include "Vulkan_Framebuffer.h"
+
 #include <map>
 #include <set>
 
@@ -122,6 +124,7 @@ namespace Nebula {
 		CreateDebugMessenger();
 		CreateLogicalDevice();
 		CreateCommandBuffers();
+		CreateSyncObjects();
 	}
 
 	std::vector<const char*> Vulkan_RendererAPI::GetExtensions()
@@ -234,7 +237,7 @@ namespace Nebula {
 
 		for (const auto& device : devices)
 		{
-			uint8_t score = RateDeviceSuitability(device);
+			uint16_t score = RateDeviceSuitability(device);
 			candidates.insert(std::make_pair(score, device));
 		}
 
@@ -290,18 +293,19 @@ namespace Nebula {
 
 	void Vulkan_RendererAPI::CreateSyncObjects()
 	{
-		m_ImageSemaphores.resize(2);
-		m_RenderSemaphores.resize(2);
-		m_Fences.resize(2);
+		m_ImageSemaphores.resize(3);
+		m_RenderSemaphores.resize(3);
+		m_Fences.resize(3);
 
 		VkSemaphoreCreateInfo semaphoreInfo{};
 		semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+		semaphoreInfo.flags = VK_SEMAPHORE_TYPE_BINARY;
 
 		VkFenceCreateInfo fenceInfo{};
 		fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 		fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-		for (size_t i = 0; i < 2; i++)
+		for (size_t i = 0; i < 3; i++)
 		{
 			if (vkCreateSemaphore(m_Device, &semaphoreInfo, nullptr, &m_ImageSemaphores[i]) != VK_SUCCESS ||
 				vkCreateSemaphore(m_Device, &semaphoreInfo, nullptr, &m_RenderSemaphores[i]) != VK_SUCCESS ||
@@ -315,6 +319,14 @@ namespace Nebula {
 
 	void Vulkan_RendererAPI::Shutdown()
 	{
+		vkDeviceWaitIdle(m_Device);
+
+		for (size_t i = 0; i < 2; i++) {
+			vkDestroySemaphore(m_Device, m_ImageSemaphores[i], nullptr);
+			vkDestroySemaphore(m_Device, m_RenderSemaphores[i], nullptr);
+			vkDestroyFence(m_Device, m_Fences[i], nullptr);
+		}
+
 		DestroyDebugUtilsMessengerEXT(m_Instance, m_DebugMessenger, nullptr);
 		vkDestroyCommandPool(m_Device, m_CommandPool, nullptr);
 		vkDestroyDevice(m_Device, nullptr);
@@ -331,13 +343,13 @@ namespace Nebula {
 		VkResult result = vkCreateCommandPool(m_Device, &poolInfo, nullptr, &m_CommandPool);
 		NB_ASSERT(result == VK_SUCCESS, "Failed to create command pool!");
 
-		m_CommandBuffers.resize(2);
+		m_CommandBuffers.resize(3);
 
 		VkCommandBufferAllocateInfo allocInfo{};
 		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 		allocInfo.commandPool = m_CommandPool;
 		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		allocInfo.commandBufferCount = 2;
+		allocInfo.commandBufferCount = 3;
 
 		result = vkAllocateCommandBuffers(m_Device, &allocInfo, m_CommandBuffers.data());
 		NB_ASSERT(result == VK_SUCCESS, "Failed to allocate command buffers!");
@@ -352,7 +364,7 @@ namespace Nebula {
 		viewport.height = (float)height;
 		viewport.minDepth = 0.0f;
 		viewport.maxDepth = 1.0f;
-		vkCmdSetViewport(m_CommandBuffers[m_VKData.currentFrame], 0, 1, &viewport);
+		//vkCmdSetViewport(m_CommandBuffers[m_CurrentFrame], 0, 1, &viewport);
 
 		VkExtent2D extent;
 		extent.height = height;
@@ -361,7 +373,7 @@ namespace Nebula {
 		VkRect2D scissor{};
 		scissor.offset = { 0, 0 };
 		scissor.extent = extent;
-		vkCmdSetScissor(m_CommandBuffers[m_VKData.currentFrame], 0, 1, &scissor);
+		//vkCmdSetScissor(m_CommandBuffers[m_CurrentFrame], 0, 1, &scissor);
 	}
 
 	void Vulkan_RendererAPI::Clear() 
@@ -377,7 +389,7 @@ namespace Nebula {
 	void Vulkan_RendererAPI::SetBackfaceCulling(bool cull) {
 	}
 
-	void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
+	void Vulkan_RendererAPI::recordCommandBuffer(VkCommandBuffer commandBuffer, Vulkan_Context* context) {
 		VkCommandBufferBeginInfo beginInfo{};
 		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
@@ -385,32 +397,38 @@ namespace Nebula {
 			NB_CRITICAL("Failed to begin recording command buffer!");
 		}
 
+		Vulkan_FrameBuffer* framebuffer = Vulkan_FrameBuffer::s_BindedInstance;
+
+		VkExtent2D extent;
+		extent.width = framebuffer->m_Specifications.Width;
+		extent.height = framebuffer->m_Specifications.Height;
+
 		VkRenderPassBeginInfo renderPassInfo{};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderPassInfo.renderPass = (VkRenderPass)SceneRenderer::GetRenderPass();
-		renderPassInfo.framebuffer = s_VKData.swapChainFramebuffers[imageIndex];
+		renderPassInfo.renderPass = framebuffer->m_RenderPass;
+		renderPassInfo.framebuffer = framebuffer->m_Framebuffer[context->m_ImageIndex];
 		renderPassInfo.renderArea.offset = { 0, 0 };
-		renderPassInfo.renderArea.extent = s_VKData.swapChainExtent;
-
+		renderPassInfo.renderArea.extent = extent;
+		
 		VkClearValue clearColor = { {{0.0f, 0.0f, 0.0f, 1.0f}} };
 		renderPassInfo.clearValueCount = 1;
 		renderPassInfo.pClearValues = &clearColor;
 
 		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, (VkPipeline)s_VKData.shader->GetPipeline());
+		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, (VkPipeline)SceneRenderer::GetShader()->GetPipeline());
 
 		VkViewport viewport{};
 		viewport.x = 0.0f;
 		viewport.y = 0.0f;
-		viewport.width = (float)s_VKData.swapChainExtent.width;
-		viewport.height = (float)s_VKData.swapChainExtent.height;
+		viewport.width = (float)extent.width;
+		viewport.height = (float)extent.height;
 		viewport.minDepth = 0.0f;
 		viewport.maxDepth = 1.0f;
 		vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
 		VkRect2D scissor{};
 		scissor.offset = { 0, 0 };
-		scissor.extent = s_VKData.swapChainExtent;
+		scissor.extent = extent;
 		vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
 		vkCmdDraw(commandBuffer, 3, 1, 0, 0);
@@ -421,67 +439,42 @@ namespace Nebula {
 	}
 
 	void Vulkan_RendererAPI::DrawIndexed(const Ref<VertexArray>& vertexArray, uint32_t indexCount) {
-		vkWaitForFences(m_Device, 1, &m_Fences[s_VKData.currentFrame], VK_TRUE, UINT64_MAX);
+		Vulkan_Context* context = (Vulkan_Context*)Application::Get().GetWindow().GetContext();
+		m_CurrentFrame = context->m_ImageIndex;
 
-		VkFenceCreateInfo fenceInfo{};
-		fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-		fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-
-		uint32_t imageIndex;
-		VkResult result = vkAcquireNextImageKHR(m_Device, s_VKData.swapChain, UINT64_MAX, m_ImageSemaphores[s_VKData.currentFrame], VK_NULL_HANDLE, &imageIndex);
-
-		if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-			SceneRenderer::RecreateSwapChain();
-			return;
-		}
-		else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-			NB_CRITICAL("Failed to acquire swap chain image!");
-		}
-
-		vkResetFences(m_Device, 1, & m_Fences[s_VKData.currentFrame]);
-
-		vkResetCommandBuffer(m_CommandBuffers[s_VKData.currentFrame], 0);
-		recordCommandBuffer(m_CommandBuffers[s_VKData.currentFrame], imageIndex);
+		vkWaitForFences(m_Device, 1, &m_Fences[m_CurrentFrame], VK_TRUE, UINT64_MAX);
+		vkResetFences(m_Device, 1, & m_Fences[m_CurrentFrame]);
+		
+		vkResetCommandBuffer(m_CommandBuffers[m_CurrentFrame], 0);
+		recordCommandBuffer(m_CommandBuffers[m_CurrentFrame], context);
 
 		VkSubmitInfo submitInfo{};
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-		VkSemaphore waitSemaphores[] = { s_VKData.imageAvailableSemaphores[s_VKData.currentFrame] };
+		VkSemaphore waitSemaphores[] = { m_ImageSemaphores[m_CurrentFrame] };
 		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 		submitInfo.waitSemaphoreCount = 1;
 		submitInfo.pWaitSemaphores = waitSemaphores;
 		submitInfo.pWaitDstStageMask = waitStages;
 		submitInfo.commandBufferCount = 1;
-		submitInfo.pCommandBuffers = &m_CommandBuffers[s_VKData.currentFrame];
+		submitInfo.pCommandBuffers = &m_CommandBuffers[m_CurrentFrame];
 
-		VkSemaphore signalSemaphores[] = { m_RenderSemaphores[s_VKData.currentFrame] };
+		VkSemaphore signalSemaphores[] = { m_RenderSemaphores[m_CurrentFrame] };
 		submitInfo.signalSemaphoreCount = 1;
 		submitInfo.pSignalSemaphores = signalSemaphores;
 
-		result = vkQueueSubmit(s_VKData.graphicsQueue, 1, &submitInfo, m_Fences[s_VKData.currentFrame]);
+		VkResult result = vkQueueSubmit(*(VkQueue*)SceneRenderer::GetGraphicsQueue(), 1, &submitInfo, m_Fences[m_CurrentFrame]);
 		NB_ASSERT(result == VK_SUCCESS, "Failed to submit draw command buffer!");
-		
-		VkPresentInfoKHR presentInfo{};
-		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-		presentInfo.waitSemaphoreCount = 1;
-		presentInfo.pWaitSemaphores = signalSemaphores;
+	}
 
-		VkSwapchainKHR swapChains[] = { s_VKData.swapChain };
-		presentInfo.swapchainCount = 1;
-		presentInfo.pSwapchains = swapChains;
-		presentInfo.pImageIndices = &imageIndex;
+	const void* Vulkan_RendererAPI::GetRenderSemaphore() const
+	{
+		return &m_RenderSemaphores[m_CurrentFrame];
+	}
 
-		result = vkQueuePresentKHR(s_VKData.presentQueue, &presentInfo);
-		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || s_VKData.framebufferResized) {
-			s_VKData.framebufferResized = false;
-			SceneRenderer::RecreateSwapChain();
-			return;
-		}
-		else if (result != VK_SUCCESS) {
-			NB_CRITICAL("Failed to present swap chain image!");
-		}
-
-		s_VKData.currentFrame = (s_VKData.currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+	const void* Vulkan_RendererAPI::GetImageSemaphore() const
+	{
+		return &m_ImageSemaphores[m_CurrentFrame];
 	}
 
 	void Vulkan_RendererAPI::DrawLines(const Ref<VertexArray>& vertexArray, uint32_t vertexCount) {
