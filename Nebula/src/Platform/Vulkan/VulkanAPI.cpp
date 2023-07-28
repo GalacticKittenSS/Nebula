@@ -424,6 +424,48 @@ namespace Nebula
 		VulkanAPI::EndSingleUseCommand(commandBuffer);
 	}
 
+	VulkanBuffer::VulkanBuffer(uint32_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties)
+	{
+		VkBufferCreateInfo bufferInfo{};
+		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		bufferInfo.size = size;
+		bufferInfo.usage = usage;
+		bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+		VkResult result = vkCreateBuffer(VulkanAPI::GetDevice(), &bufferInfo, nullptr, &m_Buffer);
+		NB_ASSERT(result == VK_SUCCESS, "Failed to create vertex buffer!");
+
+		VkMemoryRequirements memRequirements;
+		vkGetBufferMemoryRequirements(VulkanAPI::GetDevice(), m_Buffer, &memRequirements);
+
+		VkMemoryAllocateInfo allocInfo{};
+		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+		allocInfo.allocationSize = memRequirements.size;
+		allocInfo.memoryTypeIndex = VulkanAPI::FindMemoryType(memRequirements.memoryTypeBits, properties);
+
+		result = vkAllocateMemory(VulkanAPI::GetDevice(), &allocInfo, nullptr, &m_BufferMemory);
+		NB_ASSERT(result == VK_SUCCESS, "Failed to create vertex buffer memory!");
+
+		vkBindBufferMemory(VulkanAPI::GetDevice(), m_Buffer, m_BufferMemory, 0);
+		vkMapMemory(VulkanAPI::GetDevice(), m_BufferMemory, 0, size, 0, &m_MappedMemory);
+	}
+
+	VulkanBuffer::~VulkanBuffer()
+	{
+		vkDestroyBuffer(VulkanAPI::GetDevice(), m_Buffer, nullptr);
+		vkFreeMemory(VulkanAPI::GetDevice(), m_BufferMemory, nullptr);
+	}
+
+	void VulkanBuffer::SetData(const void* data, uint32_t size, uint32_t offset)
+	{
+		NB_ASSERT(m_MappedMemory, "Cannot Write to unmapped Memory");
+
+		char* memOffset = (char*)m_MappedMemory;
+		memOffset += offset;
+		memcpy(m_MappedMemory, data, size);
+	}
+
+
 	VulkanImage::VulkanImage()
 	{
 		m_Images.resize(g_MaxFrames);

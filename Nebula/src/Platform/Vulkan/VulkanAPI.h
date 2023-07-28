@@ -57,6 +57,20 @@ namespace Nebula
 		friend class ImGuiLayer;
 	};
 
+	class VulkanBuffer
+	{
+	public:
+		VulkanBuffer(uint32_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties);
+		~VulkanBuffer();
+		
+		void SetData(const void* data, uint32_t size, uint32_t offset = 0);
+		VkBuffer& GetBuffer() { return m_Buffer; }
+	private:
+		VkBuffer m_Buffer;
+		VkDeviceMemory m_BufferMemory;
+		void* m_MappedMemory;
+	};
+
 	class VulkanImage
 	{
 	public:

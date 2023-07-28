@@ -127,6 +127,8 @@ namespace Nebula {
 		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, (VkPipeline)SceneRenderer::GetShader()->GetPipeline());
 
+		array->Bind();
+
 		VkViewport viewport{};
 		viewport.x = 0.0f;
 		viewport.y = 0.0f;
@@ -141,7 +143,7 @@ namespace Nebula {
 		scissor.extent = extent;
 		vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-		vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+		vkCmdDrawIndexed(commandBuffer, array->GetIndexBuffer()->GetCount(), 1, 0, 0, 0);
 		vkCmdEndRenderPass(commandBuffer);
 
 		VkResult result = vkEndCommandBuffer(commandBuffer);

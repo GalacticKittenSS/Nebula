@@ -5,15 +5,7 @@
 #include "Nebula/Renderer/Render_Command.h"
 #include "Nebula/Renderer/Framebuffer.h"
 
-#define VK_USE_PLATFORM_WIN32_KHR
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-#define GLFW_EXPOSE_NATIVE_WIN32
-#include <GLFW/glfw3native.h>
 
-#include <shaderc/shaderc.hpp>
-#include <spirv_cross/spirv_cross.hpp>
-#include <spirv_cross/spirv_glsl.hpp>
 
 #include <map>
 #include <optional>
@@ -28,6 +20,10 @@ namespace Nebula
 
 		bool framebufferResize = false;
 		uint32_t width = 0, height = 0;
+
+		Ref<VertexBuffer> vBuffer;
+		Ref<IndexBuffer> iBuffer;
+		Ref<VertexArray> vao;
 	};
 	static VulkanData s_VKData;
 
@@ -46,6 +42,24 @@ namespace Nebula
 		s_VKData.frambuffer = FrameBuffer::Create(spec);
 		s_VKData.frambuffer->Bind();
 		s_VKData.shader = Shader::Create("Resources/shaders/Vulkan.glsl");
+
+		const float vertices[] = {
+			-0.5f, -0.5f, 1.0f, 1.0f, 1.0f,
+			 0.5f, -0.5f, 1.0f, 1.0f, 1.0f,
+			 0.5f,  0.5f, 0.0f, 1.0f, 0.0f,
+			-0.5f,  0.5f, 0.0f, 0.0f, 1.0f
+		};
+
+		const uint32_t indices[] = {
+			0, 1, 2, 2, 3, 0
+		};
+
+		s_VKData.vBuffer = VertexBuffer::Create((float*)vertices, sizeof(vertices));
+		s_VKData.iBuffer = IndexBuffer::Create((uint32_t*)indices, 6);
+		
+		s_VKData.vao = VertexArray::Create();
+		s_VKData.vao->AddVertexBuffer(s_VKData.vBuffer);
+		s_VKData.vao->SetIndexBuffer(s_VKData.iBuffer);
 	}
 
 	Ref<Shader> SceneRenderer::GetShader()
@@ -70,7 +84,7 @@ namespace Nebula
 		}
 
 		s_VKData.frambuffer->Bind();
-		RenderCommand::DrawIndexed(nullptr);
+		RenderCommand::DrawIndexed(s_VKData.vao);
 		//s_VKData.frambuffer->Unbind();
 	}
 

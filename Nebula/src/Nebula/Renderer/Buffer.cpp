@@ -3,12 +3,14 @@
 
 #include "Renderer.h"
 #include "Platform/OpenGl/OpenGL_Buffer.h"
+#include "Platform/Vulkan/Vulkan_Buffer.h"
 
 namespace Nebula {
 	Ref<VertexBuffer> VertexBuffer::Create(uint32_t size) {
 		switch (Renderer::GetAPI()) {
 			case RendererAPI::API::None:		NB_ASSERT(false, "RendererAPI::None is not supported!"); return nullptr;
 			case RendererAPI::API::OpenGL:		return CreateRef<OpenGL_VertexBuffer>(size);
+			case RendererAPI::API::Vulkan:		return CreateRef<Vulkan_VertexBuffer>(size);
 		}
 
 		NB_ASSERT(false, "Unknown Renderer API!");
@@ -19,6 +21,7 @@ namespace Nebula {
 		switch (Renderer::GetAPI()) {
 			case RendererAPI::API::None:		NB_ASSERT(false, "RendererAPI::None is not supported!"); return nullptr;
 			case RendererAPI::API::OpenGL:		return CreateRef<OpenGL_VertexBuffer>(vertices, size);
+			case RendererAPI::API::Vulkan:		return CreateRef<Vulkan_VertexBuffer>(vertices, size);
 		}
 
 		NB_ASSERT(false, "Unknown Renderer API!"); 
@@ -29,6 +32,7 @@ namespace Nebula {
 		switch (Renderer::GetAPI()) {
 		case RendererAPI::API::None:		NB_ASSERT(false, "RendererAPI::None is not supported!"); return nullptr;
 		case RendererAPI::API::OpenGL:		return CreateRef<OpenGL_IndexBuffer>(indices, count);
+		case RendererAPI::API::Vulkan:		return CreateRef<Vulkan_IndexBuffer>(indices, count);
 		}
 
 		NB_ASSERT(false, "Unknown Renderer API!");
