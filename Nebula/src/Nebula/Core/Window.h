@@ -24,6 +24,9 @@ namespace Nebula {
 
 		virtual ~Window() { }
 
+		static void InitAPI();
+		static void ShutdownAPI();
+		
 		virtual void Update() = 0;
 
 		virtual uint32_t GetWidth() const = 0;
@@ -43,8 +46,6 @@ namespace Nebula {
 
 		static const char** GetExtensions(uint32_t& count);
 
-		virtual const void* GetSurface() const = 0;
-		virtual const void* GetImageFormat() const = 0;
 		virtual const GraphicsContext* GetContext() const = 0;
 		virtual void* GetNativeWindow() const = 0;
 

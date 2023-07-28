@@ -31,8 +31,6 @@ namespace Nebula {
 		void SetFullscreen(bool fullscreen) override;
 		bool IsFullscreen() override { return m_Data.Fullscreen; }
 
-		inline virtual const void* GetSurface() const override { return m_Context->GetSurface(); }
-		inline virtual const void* GetImageFormat() const override { return m_Context->GetImageFormat(); }
 		inline virtual const GraphicsContext* GetContext() const override { return m_Context.get(); }
 		inline virtual void* GetNativeWindow() const override { return m_Window; }
 	private:

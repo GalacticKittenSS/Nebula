@@ -32,19 +32,30 @@ namespace Nebula {
 		ShutDown();
 	}
 
-	void Win_Window::InitGLFW()
+#ifdef NB_WINDOWS // Static Functions
+	void Window::InitAPI()
 	{
-		if (!s_GLFWInit) 
-		{
-			//TODO: glfwTerminate on system shutdown
-			NB_INFO("Initializing GLFW");
-			int success = glfwInit();
-			NB_ASSERT(success, "Could Not Initialise GLFW");
-			glfwSetErrorCallback(GLFWErrorCallback);
+		NB_ASSERT(!s_GLFWInit, "GLFW has already been initialized!");
 
-			s_GLFWInit = true;
-		}
+		NB_INFO("Initializing GLFW");
+		int success = glfwInit();
+		NB_ASSERT(success, "Could Not Initialise GLFW");
+		glfwSetErrorCallback(GLFWErrorCallback);
+
+		s_GLFWInit = true;
 	}
+
+	void Window::ShutdownAPI()
+	{
+		NB_INFO("Terminating GLFW");
+		glfwTerminate();
+	}
+
+	const char** Window::GetExtensions(uint32_t& count)
+	{
+		return glfwGetRequiredInstanceExtensions(&count);
+	}
+#endif // NB_WINDOWS
 
 	void Win_Window::Init(const WindowProps& props) {
 		NB_PROFILE_FUNCTION();
@@ -65,8 +76,8 @@ namespace Nebula {
 
 		m_Window = glfwCreateWindow((int)props.Width, (int)props.Height, m_Data.Title.c_str(), nullptr, nullptr);
 		++s_GLFWWindowCount;
+		
 		m_Context = GraphicsContext::Create(m_Window);
-
 		m_Context->Init();
 
 		glfwSetWindowUserPointer(m_Window, &m_Data);
@@ -167,10 +178,8 @@ namespace Nebula {
 		glfwDestroyWindow(m_Window);
 		--s_GLFWWindowCount;
 
-		if (s_GLFWWindowCount == 0) {
-			NB_INFO("Terminating GLFW");
-			glfwTerminate();
-		}
+		if (s_GLFWWindowCount == 0)
+			Window::ShutdownAPI();
 	}
 
 	void Win_Window::Update() {
@@ -250,11 +259,5 @@ namespace Nebula {
 		}
 
 		m_Data.Fullscreen = fullscreen;
-	}
-
-	const char** Window::GetExtensions(uint32_t& count)
-	{
-		Win_Window::InitGLFW();
-		return glfwGetRequiredInstanceExtensions(&count);
 	}
 }

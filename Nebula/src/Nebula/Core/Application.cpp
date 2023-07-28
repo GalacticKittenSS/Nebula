@@ -17,6 +17,7 @@ namespace Nebula {
 			std::filesystem::current_path(m_Specification.WorkingDirectory);
 
 		Time::Init();
+		Window::InitAPI();
 		Renderer::Init();
 		ScriptEngine::Init();
 
@@ -35,6 +36,9 @@ namespace Nebula {
 		ScriptEngine::Shutdown();
 		SceneRenderer::CleanUp();
 		Renderer::Shutdown();
+		
+		//GLFW is still needed during Application Close
+		//Window::ShutdownAPI();
 	}
 
 	void Application::run() {
