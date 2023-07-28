@@ -56,4 +56,22 @@ namespace Nebula
 		friend class Vulkan_RendererAPI;
 		friend class ImGuiLayer;
 	};
+
+	class VulkanImage
+	{
+	public:
+		VulkanImage();
+		VulkanImage(VkFormat format, VkImageUsageFlags usage, VkImageAspectFlags aspect, int samples, uint32_t width, uint32_t height);
+		~VulkanImage();
+
+		const std::vector<VkImage>& GetImages() const { return m_Images; }
+		const std::vector<VkImageView>& GetImageViews() const { return m_ImageViews; }
+	private:
+		VkSampleCountFlagBits GetSampleFlags(int samples);
+		void CreateTextureImage(VkImageView& view, VkImage& image, VkDeviceMemory& memory, int samples, VkFormat format, VkImageUsageFlags usage, VkImageAspectFlags aspect, uint32_t width, uint32_t height);
+	private:
+		std::vector<VkImage> m_Images;
+		std::vector<VkImageView> m_ImageViews;
+		std::vector<VkDeviceMemory> m_ImageMemory;
+	};
 }

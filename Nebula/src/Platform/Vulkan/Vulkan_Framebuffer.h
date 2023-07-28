@@ -2,7 +2,7 @@
 
 #include "Nebula/Renderer/FrameBuffer.h"
 
-#include <vulkan/vulkan.h>
+#include "VulkanAPI.h"
 
 namespace Nebula {
 	class Vulkan_FrameBuffer : public FrameBuffer {
@@ -32,11 +32,12 @@ namespace Nebula {
 		std::vector<VkFramebuffer> m_Framebuffer;
 		VkRenderPass m_RenderPass = VK_NULL_HANDLE;
 
-		std::vector<VkImageView> m_ColourAttachments;
-		VkImageView m_DepthAttachment = VK_NULL_HANDLE;
+		std::vector<Ref<VulkanImage>> m_ColourAttachments;
+		Ref<VulkanImage> m_DepthAttachment;
 
 		static Vulkan_FrameBuffer* s_BindedInstance;
 		friend class Vulkan_RendererAPI;
+		friend class Vulkan_Context;
 		friend class Vulkan_Shader;
 	};
 }

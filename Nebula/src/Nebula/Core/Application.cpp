@@ -140,6 +140,7 @@ namespace Nebula {
 
 		m_Minimized = false;
 		Renderer::OnWindowResize(e.GetWidth(), e.GetHeight());
+		SceneRenderer::OnWindowResize(e);
 
 		return false;
 	}

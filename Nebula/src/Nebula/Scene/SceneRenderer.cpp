@@ -25,17 +25,13 @@ namespace Nebula
 	{
 		Ref<Shader> shader;
 		Ref<FrameBuffer> frambuffer;
-		
-		uint32_t currentFrame = 0;
-		bool framebufferResized = false;
+
+		bool framebufferResize = false;
+		uint32_t width = 0, height = 0;
 	};
 	static VulkanData s_VKData;
 
 	SceneRenderer::Settings SceneRenderer::m_Settings = {};
-
-	static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
-		s_VKData.framebufferResized = true;
-	}
 
 	void SceneRenderer::Setup()
 	{
@@ -57,11 +53,25 @@ namespace Nebula
 		return s_VKData.shader;
 	}
 
+	bool SceneRenderer::OnWindowResize(WindowResizeEvent& e)
+	{
+		s_VKData.framebufferResize = true;
+		s_VKData.width = e.GetWidth();
+		s_VKData.height = e.GetHeight(); 
+		return false;
+	}
+
 	void SceneRenderer::Render()
 	{
+		if (s_VKData.framebufferResize)
+		{
+			s_VKData.frambuffer->Resize(s_VKData.width, s_VKData.height);
+			s_VKData.framebufferResize = false;
+		}
+
 		s_VKData.frambuffer->Bind();
 		RenderCommand::DrawIndexed(nullptr);
-		s_VKData.frambuffer->Unbind();
+		//s_VKData.frambuffer->Unbind();
 	}
 
 	void SceneRenderer::CleanUp()

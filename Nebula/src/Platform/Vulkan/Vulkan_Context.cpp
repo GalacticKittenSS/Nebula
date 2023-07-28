@@ -5,12 +5,40 @@
 #include "Nebula/Scene/SceneRenderer.h"
 
 #include "VulkanAPI.h"
+#include "Vulkan_FrameBuffer.h"
 
 #include <GLFW/glfw3.h>
 
 namespace Nebula {
+	namespace Utils
+	{
+		static void CopyImage(VkImage srcimage, VkImage dstimage, uint32_t width, uint32_t height)
+		{
+			VkCommandBuffer commandBuffer = VulkanAPI::BeginSingleUseCommand();
+
+			VkImageCopy region{};
+
+			region.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			region.dstSubresource.mipLevel = 0;
+			region.dstSubresource.baseArrayLayer = 0;
+			region.dstSubresource.layerCount = 1;
+
+			region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			region.srcSubresource.mipLevel = 0;
+			region.srcSubresource.baseArrayLayer = 0;
+			region.srcSubresource.layerCount = 1;
+
+			region.dstOffset = { 0, 0, 0 };
+			region.srcOffset = { 0, 0, 0 };
+			region.extent = { width, height, 1 };
+
+			vkCmdCopyImage(commandBuffer, srcimage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstimage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+			VulkanAPI::EndSingleUseCommand(commandBuffer);
+		}
+	}
+
 	Vulkan_Context::Vulkan_Context(GLFWwindow* windowHandle) : m_WindowHandle(windowHandle) {
-		NB_ASSERT(windowHandle, "Window Handle is NULL!")
+		NB_ASSERT(windowHandle, "Window Handle is NULL!");
 	}
 
 	static std::string VendorIDToString(uint32_t vendor)
@@ -30,6 +58,9 @@ namespace Nebula {
 
 	void Vulkan_Context::Init() {
 		NB_PROFILE_FUNCTION();
+		
+		// TODO: Move GLFW API to Window
+		NB_ASSERT(glfwVulkanSupported(), "GLFW: Vulkan not supported!");
 
 		VkResult result = glfwCreateWindowSurface(VulkanAPI::GetInstance(), m_WindowHandle, nullptr, &m_Surface);
 		NB_ASSERT(result == VK_SUCCESS, "Failed to create window surface");
@@ -50,7 +81,7 @@ namespace Nebula {
 
 		CreateSwapChain();
 		CreateImageViews();
-		CreateRenderPass();
+		AcquireNextImage();
 	}
 
 	void Vulkan_Context::Shutdown()
@@ -61,40 +92,59 @@ namespace Nebula {
 		vkDestroySurfaceKHR(VulkanAPI::GetInstance(), m_Surface, nullptr);
 	}
 
-	void Vulkan_Context::SwapBuffers() 
+	bool Vulkan_Context::AcquireNextImage()
 	{
 		VkResult result = vkAcquireNextImageKHR(VulkanAPI::GetDevice(), m_SwapChain, UINT64_MAX,
 			VulkanAPI::GetImageSemaphore(), VK_NULL_HANDLE, &m_ImageIndex);
 
-		if (result == VK_ERROR_OUT_OF_DATE_KHR)
+		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
 		{
 			RecreateSwapChain();
-			return;
+			m_ImageIndex = -1;
+			return false;
 		}
 
-		NB_ASSERT(result == VK_SUCCESS || result == VK_SUBOPTIMAL_KHR, "Failed to acquire swap chain image!");
-		
+		NB_ASSERT(result == VK_SUCCESS, "Failed to acquire swap chain image!");
+		return true;
+	}
+
+	void Vulkan_Context::PresentCurrentImage()
+	{
 		VkPresentInfoKHR presentInfo{};
 		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 		presentInfo.waitSemaphoreCount = 1;
 		presentInfo.pWaitSemaphores = &VulkanAPI::GetRenderSemaphore();
-
-		VkSwapchainKHR swapChains[] = { m_SwapChain };
 		presentInfo.swapchainCount = 1;
-		presentInfo.pSwapchains = swapChains;
+		presentInfo.pSwapchains = &m_SwapChain;
 		presentInfo.pImageIndices = &m_ImageIndex;
 
-		result = vkQueuePresentKHR(VulkanAPI::GetQueue(), &presentInfo);
+		VkResult result = vkQueuePresentKHR(VulkanAPI::GetQueue(), &presentInfo);
 		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
 		{
 			RecreateSwapChain();
 			return;
 		}
-		
+
 		NB_ASSERT(result == VK_SUCCESS, "Failed to present swap chain image!");
 	}
 
-	Vulkan_Context::SwapChainSupportDetails Vulkan_Context::QuerySwapChainSupport(VkPhysicalDevice device) {
+	void Vulkan_Context::SwapBuffers() 
+	{
+		if (Vulkan_FrameBuffer* framebuffer = Vulkan_FrameBuffer::s_BindedInstance)
+		{
+			Ref<VulkanImage> image = framebuffer->m_ColourAttachments[0];
+			
+			VulkanAPI::TransitionImageLayout(m_Images[m_ImageIndex], VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+			Utils::CopyImage(image->GetImages()[m_ImageIndex], m_Images[m_ImageIndex], m_Extent.width, m_Extent.height);
+			VulkanAPI::TransitionImageLayout(m_Images[m_ImageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+		}
+
+		PresentCurrentImage();
+		AcquireNextImage();
+	}
+
+	Vulkan_Context::SwapChainSupportDetails Vulkan_Context::QuerySwapChainSupport(VkPhysicalDevice device) 
+	{
 		SwapChainSupportDetails details;
 		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, m_Surface, &details.capabilities);
 
@@ -163,21 +213,24 @@ namespace Nebula {
 		VkPresentModeKHR presentMode = ChooseSwapPresentMode(swapChainSupport.presentModes);
 		VkExtent2D extent = ChooseSwapExtent(swapChainSupport.capabilities);
 
-		uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
+		m_SwapChainImageCount = swapChainSupport.capabilities.minImageCount + 1;
 
-		if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount) {
-			imageCount = swapChainSupport.capabilities.maxImageCount;
-		}
+		if (swapChainSupport.capabilities.maxImageCount > 0 && m_SwapChainImageCount > swapChainSupport.capabilities.maxImageCount)
+			m_SwapChainImageCount = swapChainSupport.capabilities.maxImageCount;
+		
+		VkBool32 presentSupport = false;
+		vkGetPhysicalDeviceSurfaceSupportKHR(VulkanAPI::GetPhysicalDevice(), VulkanAPI::GetQueueFamily(), m_Surface, &presentSupport);
+		NB_ASSERT(presentSupport == VK_TRUE);
 
 		VkSwapchainCreateInfoKHR createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-		createInfo.minImageCount = imageCount;
+		createInfo.surface = m_Surface;
+		createInfo.minImageCount = m_SwapChainImageCount;
 		createInfo.imageFormat = surfaceFormat.format;
 		createInfo.imageColorSpace = surfaceFormat.colorSpace;
-		createInfo.imageExtent = extent;
 		createInfo.imageArrayLayers = 1;
-		createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-		createInfo.surface = m_Surface;
+		createInfo.imageExtent = extent;
+		createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 		createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE; // Assume that graphics family == present family
 		createInfo.preTransform = swapChainSupport.capabilities.currentTransform;
 		createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
@@ -189,9 +242,9 @@ namespace Nebula {
 		VkResult result = vkCreateSwapchainKHR(device, &createInfo, nullptr, &m_SwapChain);
 		NB_ASSERT(result == VK_SUCCESS, "Failed to create swap chain!");
 		
-		vkGetSwapchainImagesKHR(device, m_SwapChain, &imageCount, nullptr);
-		m_Images.resize(imageCount);
-		vkGetSwapchainImagesKHR(device, m_SwapChain, &imageCount, m_Images.data());
+		vkGetSwapchainImagesKHR(device, m_SwapChain, &m_SwapChainImageCount, nullptr);
+		m_Images.resize(m_SwapChainImageCount);
+		vkGetSwapchainImagesKHR(device, m_SwapChain, &m_SwapChainImageCount, m_Images.data());
 
 		m_ImageFormat = surfaceFormat.format;
 		m_Extent = extent;
@@ -199,9 +252,9 @@ namespace Nebula {
 
 	void Vulkan_Context::CreateImageViews()
 	{
-		m_ImageViews.resize(m_Images.size());
+		m_ImageViews.resize(m_SwapChainImageCount);
 
-		for (size_t i = 0; i < m_Images.size(); i++) 
+		for (size_t i = 0; i < m_SwapChainImageCount; i++)
 		{
 			VkImageViewCreateInfo createInfo{};
 			createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -223,53 +276,8 @@ namespace Nebula {
 		}
 	}
 
-	void Vulkan_Context::CreateRenderPass()
-	{
-		VkAttachmentDescription colorAttachment{};
-		colorAttachment.format = m_ImageFormat;
-		colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-		colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-		VkAttachmentReference colorAttachmentRef{};
-		colorAttachmentRef.attachment = 0;
-		colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-		VkSubpassDescription subpass{};
-		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-		subpass.colorAttachmentCount = 1;
-		subpass.pColorAttachments = &colorAttachmentRef;
-
-		VkSubpassDependency dependency{};
-		dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-		dependency.dstSubpass = 0;
-		dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		dependency.srcAccessMask = 0;
-		dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-		VkRenderPassCreateInfo renderPassInfo{};
-		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-		renderPassInfo.attachmentCount = 1;
-		renderPassInfo.pAttachments = &colorAttachment;
-		renderPassInfo.subpassCount = 1;
-		renderPassInfo.pSubpasses = &subpass;
-		renderPassInfo.dependencyCount = 1;
-		renderPassInfo.pDependencies = &dependency;
-
-		VkResult result = vkCreateRenderPass(VulkanAPI::GetDevice(), &renderPassInfo, nullptr, &m_RenderPass);
-		NB_ASSERT(result == VK_SUCCESS, "Failed to create render pass!");
-	}
-
 	void Vulkan_Context::RecreateSwapChain() 
 	{
-		int width = 0, height = 0;
-		glfwGetFramebufferSize(m_WindowHandle, &width, &height);
-
 		vkDeviceWaitIdle(VulkanAPI::GetDevice());
 		CleanUpSwapChain();
 
@@ -286,7 +294,6 @@ namespace Nebula {
 			vkDestroyImageView(device, imageView, nullptr);
 		}
 
-		vkDestroyRenderPass(device, m_RenderPass, nullptr);
 		vkDestroySwapchainKHR(device, m_SwapChain, nullptr);
 	}
 }
