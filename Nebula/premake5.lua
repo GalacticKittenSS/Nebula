@@ -58,7 +58,8 @@ project "Nebula"
 		"yaml-cpp",
 		"opengl32.lib",
 
-		"%{Library.mono}"
+		"%{Library.mono}",
+		"%{Library.Vulkan}"
 	}
 	
 	filter "files:Modules/imguizmo/**.cpp"
