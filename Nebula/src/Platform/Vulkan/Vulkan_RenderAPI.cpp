@@ -6,6 +6,7 @@
 
 #include "VulkanAPI.h"
 #include "Vulkan_Framebuffer.h"
+#include "Vulkan_Shader.h"
 
 #include <map>
 #include <set>
@@ -124,8 +125,12 @@ namespace Nebula {
 		renderPassInfo.clearValueCount = 2;
 		renderPassInfo.pClearValues = clearValues;
 
+		// shader = Vulkan_Shader::s_BindedInstance
+		Ref<Vulkan_Shader> shader = std::static_pointer_cast<Vulkan_Shader>(SceneRenderer::GetShader());
+
 		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, (VkPipeline)SceneRenderer::GetShader()->GetPipeline());
+		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, shader->m_GraphicsPipeline);
+		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, shader->m_PipelineLayout, 0, 1, &shader->m_DescriptorSet, 0, nullptr);
 
 		array->Bind();
 

@@ -53,5 +53,11 @@ namespace Nebula {
 
 		VkPipeline m_GraphicsPipeline;
 		VkPipelineLayout m_PipelineLayout;
+		VkDescriptorSetLayout m_DescriptorSetLayout;
+		VkDescriptorPool m_DescriptorPool;
+		VkDescriptorSet m_DescriptorSet;
+		
+		friend class Vulkan_RendererAPI;
+		friend class Vulkan_UniformBuffer;
 	};
 }

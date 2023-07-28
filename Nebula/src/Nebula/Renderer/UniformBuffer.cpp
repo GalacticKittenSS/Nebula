@@ -3,6 +3,7 @@
 
 #include "Renderer.h"
 #include "Platform/OpenGL/OpenGL_UniformBuffer.h"
+#include "Platform/Vulkan/Vulkan_UniformBuffer.h"
 
 namespace Nebula {
 
@@ -12,6 +13,7 @@ namespace Nebula {
 		{
 		case RendererAPI::API::None:    NB_ASSERT(false, "RendererAPI::None is currently not supported!"); return nullptr;
 		case RendererAPI::API::OpenGL:  return CreateRef<OpenGL_UniformBuffer>(size, binding);
+		case RendererAPI::API::Vulkan:  return CreateRef<Vulkan_UniformBuffer>(size, binding);
 		}
 
 		NB_ASSERT(false, "Unknown RendererAPI!");

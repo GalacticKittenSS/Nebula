@@ -119,6 +119,69 @@ namespace Nebula
 
 		VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
 
+		spirv_cross::Compiler vertexCompiler(m_VulkanSPIRV[VK_SHADER_STAGE_VERTEX_BIT]);
+		spirv_cross::ShaderResources vertexResources = vertexCompiler.get_shader_resources();
+
+		std::vector<VkDescriptorSetLayoutBinding> descriptorSetLayoutBindings;
+		for (const auto& resource : vertexResources.uniform_buffers)
+		{
+			uint32_t binding = vertexCompiler.get_decoration(resource.id, spv::DecorationBinding);
+
+			VkDescriptorSetLayoutBinding uboLayoutBinding{};
+			uboLayoutBinding.binding = binding;
+			uboLayoutBinding.descriptorCount = 1;
+			uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+			descriptorSetLayoutBindings.push_back(uboLayoutBinding);
+		}
+
+		spirv_cross::Compiler fragmentCompiler(m_VulkanSPIRV[VK_SHADER_STAGE_FRAGMENT_BIT]);
+		spirv_cross::ShaderResources fragmentResources = fragmentCompiler.get_shader_resources();
+
+		for (const auto& resource : fragmentResources.uniform_buffers)
+		{
+			uint32_t binding = vertexCompiler.get_decoration(resource.id, spv::DecorationBinding);
+
+			VkDescriptorSetLayoutBinding uboLayoutBinding{};
+			uboLayoutBinding.binding = binding;
+			uboLayoutBinding.descriptorCount = 1;
+			uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			uboLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+			descriptorSetLayoutBindings.push_back(uboLayoutBinding);
+		}
+
+		VkDescriptorSetLayoutCreateInfo layoutInfo{};
+		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		layoutInfo.bindingCount = (uint32_t)descriptorSetLayoutBindings.size();
+		layoutInfo.pBindings = descriptorSetLayoutBindings.data();
+
+		VkResult result = vkCreateDescriptorSetLayout(VulkanAPI::GetDevice(), &layoutInfo, nullptr, &m_DescriptorSetLayout);
+		NB_ASSERT(result == VK_SUCCESS, "Failed to create descriptor set layout!");
+
+		VkDescriptorPoolSize poolSize{};
+		poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		poolSize.descriptorCount = 1;
+
+		VkDescriptorPoolCreateInfo poolInfo{};
+		poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+		poolInfo.poolSizeCount = 1;
+		poolInfo.pPoolSizes = &poolSize;
+		poolInfo.maxSets = 1;
+
+		result = vkCreateDescriptorPool(VulkanAPI::GetDevice(), &poolInfo, nullptr, &m_DescriptorPool);
+		NB_ASSERT(result == VK_SUCCESS, "Failed to create descriptor pool!");
+
+		VkDescriptorSetAllocateInfo allocInfo{};
+		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+		allocInfo.descriptorPool = m_DescriptorPool;
+		allocInfo.descriptorSetCount = 1;
+		allocInfo.pSetLayouts = &m_DescriptorSetLayout;
+
+		result = vkAllocateDescriptorSets(VulkanAPI::GetDevice(), &allocInfo, &m_DescriptorSet);
+		NB_ASSERT(result == VK_SUCCESS, "Failed to allocate descriptor sets!");
+
 		VkVertexInputBindingDescription bindingDescription{};
 		bindingDescription.binding = 0;
 		bindingDescription.stride = sizeof(glm::vec2) + sizeof(glm::vec3);
@@ -137,11 +200,11 @@ namespace Nebula
 		
 		VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 		vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-		vertexInputInfo.vertexAttributeDescriptionCount = (uint32_t)attributeDescriptions.size();
-		vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
 		vertexInputInfo.vertexBindingDescriptionCount = 1;
+		vertexInputInfo.vertexAttributeDescriptionCount = (uint32_t)attributeDescriptions.size();
 		vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
-
+		vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
+		
 		VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
 		inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 		inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
@@ -161,7 +224,8 @@ namespace Nebula
 		rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
 		rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
 		rasterizer.depthBiasEnable = VK_FALSE;
-
+		rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+			
 		VkPipelineMultisampleStateCreateInfo multisampling{};
 		multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 		multisampling.sampleShadingEnable = VK_FALSE;
@@ -196,10 +260,10 @@ namespace Nebula
 
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		pipelineLayoutInfo.setLayoutCount = 0;
-		pipelineLayoutInfo.pushConstantRangeCount = 0;
+		pipelineLayoutInfo.setLayoutCount = 1;
+		pipelineLayoutInfo.pSetLayouts = &m_DescriptorSetLayout;
 
-		VkResult result = vkCreatePipelineLayout(VulkanAPI::GetDevice(), &pipelineLayoutInfo, nullptr, &m_PipelineLayout);
+		result = vkCreatePipelineLayout(VulkanAPI::GetDevice(), &pipelineLayoutInfo, nullptr, &m_PipelineLayout);
 		NB_ASSERT(result == VK_SUCCESS, "Failed to create pipeline layout");
 		
 		Vulkan_Context* context = (Vulkan_Context*)Application::Get().GetWindow().GetContext();
@@ -238,6 +302,8 @@ namespace Nebula
 	{
 		vkDestroyPipeline(VulkanAPI::GetDevice(), m_GraphicsPipeline, nullptr);
 		vkDestroyPipelineLayout(VulkanAPI::GetDevice(), m_PipelineLayout, nullptr);
+		vkDestroyDescriptorPool(VulkanAPI::GetDevice(), m_DescriptorPool, nullptr);
+		vkDestroyDescriptorSetLayout(VulkanAPI::GetDevice(), m_DescriptorSetLayout, nullptr);
 	}
 
 	void Vulkan_Shader::Bind() const

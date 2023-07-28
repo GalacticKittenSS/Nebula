@@ -4,6 +4,7 @@
 #include "Nebula/Core/Application.h"
 #include "Nebula/Renderer/Render_Command.h"
 #include "Nebula/Renderer/Framebuffer.h"
+#include "Nebula/Renderer/UniformBuffer.h"
 
 
 
@@ -24,8 +25,17 @@ namespace Nebula
 		Ref<VertexBuffer> vBuffer;
 		Ref<IndexBuffer> iBuffer;
 		Ref<VertexArray> vao;
+
+		Ref<UniformBuffer> CameraUniformBuffer;
 	};
 	static VulkanData s_VKData;
+
+	struct UniformBufferObject 
+	{
+		glm::mat4 model;
+		glm::mat4 view;
+		glm::mat4 proj;
+	};
 
 	SceneRenderer::Settings SceneRenderer::m_Settings = {};
 
@@ -60,6 +70,8 @@ namespace Nebula
 		s_VKData.vao = VertexArray::Create();
 		s_VKData.vao->AddVertexBuffer(s_VKData.vBuffer);
 		s_VKData.vao->SetIndexBuffer(s_VKData.iBuffer);
+		
+		s_VKData.CameraUniformBuffer = UniformBuffer::Create(sizeof(UniformBufferObject), 0);
 	}
 
 	Ref<Shader> SceneRenderer::GetShader()
@@ -83,6 +95,20 @@ namespace Nebula
 			s_VKData.framebufferResize = false;
 		}
 
+		static auto startTime = std::chrono::high_resolution_clock::now();
+		
+		auto currentTime = std::chrono::high_resolution_clock::now();
+		float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+
+		Window& window = Application::Get().GetWindow();
+
+		UniformBufferObject ubo{};
+		ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+		ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+		ubo.proj = glm::perspective(glm::radians(45.0f), window.GetWidth() / (float)window.GetHeight(), 0.1f, 10.0f);
+		ubo.proj[1][1] *= -1;
+
+		s_VKData.CameraUniformBuffer->SetData(&ubo, sizeof(ubo));
 		s_VKData.frambuffer->Bind();
 		RenderCommand::DrawIndexed(s_VKData.vao);
 		//s_VKData.frambuffer->Unbind();
