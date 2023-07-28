@@ -15,9 +15,6 @@ namespace Nebula
 		static void Setup();
 		static void Render();
 		static void CleanUp();
-		
-		static void** GetGraphicsQueue();
-		static void** GetPresentQueue();
 		static Ref<Shader> GetShader();
 	private:
 		static Settings m_Settings;

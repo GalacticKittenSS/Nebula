@@ -6,6 +6,7 @@
 #include "Nebula/Renderer/Render_Command.h"
 #include "Nebula/Core/Application.h"
 
+#include "VulkanAPI.h"
 #include "Vulkan_Context.h"
 #include "Vulkan_Framebuffer.h"
 
@@ -177,7 +178,7 @@ namespace Nebula
 		pipelineLayoutInfo.setLayoutCount = 0;
 		pipelineLayoutInfo.pushConstantRangeCount = 0;
 
-		VkResult result = vkCreatePipelineLayout((VkDevice)RenderCommand::GetDevice(), &pipelineLayoutInfo, nullptr, &m_PipelineLayout);
+		VkResult result = vkCreatePipelineLayout(VulkanAPI::GetDevice(), &pipelineLayoutInfo, nullptr, &m_PipelineLayout);
 		NB_ASSERT(result == VK_SUCCESS, "Failed to create pipeline layout");
 		
 		Vulkan_Context* context = (Vulkan_Context*)Application::Get().GetWindow().GetContext();
@@ -198,11 +199,11 @@ namespace Nebula
 		pipelineInfo.subpass = 0;
 		pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
-		result = vkCreateGraphicsPipelines((VkDevice)RenderCommand::GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_GraphicsPipeline);
+		result = vkCreateGraphicsPipelines(VulkanAPI::GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_GraphicsPipeline);
 		NB_ASSERT(result == VK_SUCCESS, "Failed to create graphics pipeline!");
 		
-		vkDestroyShaderModule((VkDevice)RenderCommand::GetDevice(), vertShaderModule, nullptr);
-		vkDestroyShaderModule((VkDevice)RenderCommand::GetDevice(), fragShaderModule, nullptr);
+		vkDestroyShaderModule(VulkanAPI::GetDevice(), vertShaderModule, nullptr);
+		vkDestroyShaderModule(VulkanAPI::GetDevice(), fragShaderModule, nullptr);
 	}
 
 	Vulkan_Shader::Vulkan_Shader(const std::string& name, const std::string& vertSrc, const std::string& fragSrc)
@@ -213,8 +214,8 @@ namespace Nebula
 
 	Vulkan_Shader::~Vulkan_Shader()
 	{
-		vkDestroyPipeline((VkDevice)RenderCommand::GetDevice(), m_GraphicsPipeline, nullptr);
-		vkDestroyPipelineLayout((VkDevice)RenderCommand::GetDevice(), m_PipelineLayout, nullptr);
+		vkDestroyPipeline(VulkanAPI::GetDevice(), m_GraphicsPipeline, nullptr);
+		vkDestroyPipelineLayout(VulkanAPI::GetDevice(), m_PipelineLayout, nullptr);
 	}
 
 	void Vulkan_Shader::Bind() const
@@ -364,7 +365,7 @@ namespace Nebula
 		createInfo.pCode = code.data();
 
 		VkShaderModule shaderModule;
-		VkResult result = vkCreateShaderModule((VkDevice)RenderCommand::GetDevice(), &createInfo, nullptr, &shaderModule);
+		VkResult result = vkCreateShaderModule(VulkanAPI::GetDevice(), &createInfo, nullptr, &shaderModule);
 		if (result != VK_SUCCESS)
 		{
 			NB_ERROR("Failed to create shader module!");

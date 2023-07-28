@@ -26,11 +26,6 @@ namespace Nebula {
 		virtual void DrawLines(const Ref<VertexArray>& vertexArray, uint32_t vertexCount) = 0;
 
 		virtual void SetLineWidth(float width) = 0;
-		virtual const void* GetInstance() const = 0; 
-		virtual const void* GetDevice() const = 0;
-		virtual const void* GetPhysicalDevice() const = 0;
-		virtual const void* GetImageSemaphore() const = 0;
-		virtual const void* GetRenderSemaphore() const = 0;
 
 		inline static API GetAPI() { return s_API; }
 		static Scope<RendererAPI> Create();

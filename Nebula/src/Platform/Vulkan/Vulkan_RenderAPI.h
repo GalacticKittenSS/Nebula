@@ -24,58 +24,12 @@ namespace Nebula {
 		void DrawLines(const Ref<VertexArray>& vertexArray, uint32_t vertexCount) override;
 
 		void SetLineWidth(float width) override;
-		const void* GetInstance() const override { return m_Instance; }
-		const void* GetDevice() const override { return m_Device; }
-		const void* GetPhysicalDevice() const override { return m_PhysicalDevice; }
-		const void* GetImageSemaphore() const override;
-		const void* GetRenderSemaphore() const override;
 	private:
-		struct QueueFamilyIndices {
-			std::optional<uint32_t> graphicsFamily;
-			std::optional<uint32_t> presentFamily;
-
-			bool isComplete() {
-				return graphicsFamily.has_value() && presentFamily.has_value();
-			}
-		};
-	private:
-		std::vector<const char*> GetExtensions();
 		void CreateDebugMessenger();
-		void CreateLogicalDevice();
-		void CreateCommandBuffers();
-		void CreateSyncObjects();
-		
-		VkPhysicalDevice PickPhysicalDevice();
-		uint16_t RateDeviceSuitability(VkPhysicalDevice device);
-		bool IsDeviceSuitable(VkPhysicalDevice device);
-		void recordCommandBuffer(VkCommandBuffer commandBuffer, Vulkan_Context* context);
-		
-		static QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device);
-		bool CheckDeviceExtensionSupport(VkPhysicalDevice device);
+		void recordCommandBuffer(Ref<VertexArray> array, VkCommandBuffer commandBuffer, uint32_t imageIndex);
 	private:
-		VkInstance m_Instance;
 		VkDebugUtilsMessengerEXT m_DebugMessenger;
-
-		QueueFamilyIndices m_QueueIndices;
-		VkPhysicalDevice m_PhysicalDevice = VK_NULL_HANDLE;
-		VkDevice m_Device;
-
-		VkCommandPool m_CommandPool;
-		std::vector<VkCommandBuffer> m_CommandBuffers;
-
-		std::vector<VkSemaphore> m_ImageSemaphores;
-		std::vector<VkSemaphore> m_RenderSemaphores;
-		std::vector<VkFence> m_Fences;
-
 		uint8_t m_CurrentFrame;
-
-		std::vector<const char*> m_ValidationLayers = {
-		   "VK_LAYER_KHRONOS_validation"
-		};
-
-		const std::vector<const char*> m_DeviceExtensions = {
-			VK_KHR_SWAPCHAIN_EXTENSION_NAME
-		};
 
 		friend class Vulkan_Context;
 	};

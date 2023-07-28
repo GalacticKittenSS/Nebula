@@ -4,7 +4,7 @@
 #include "Nebula/Renderer/Render_Command.h"
 #include "Nebula/Scene/SceneRenderer.h"
 
-#include "Vulkan_RenderAPI.h"
+#include "VulkanAPI.h"
 
 #include <GLFW/glfw3.h>
 
@@ -24,16 +24,18 @@ namespace Nebula {
 		case 0x5143: return "Qualcomm";
 		case 0x8086: return "INTEL";
 		}
+
+		return "Unknown";
 	}
 
 	void Vulkan_Context::Init() {
 		NB_PROFILE_FUNCTION();
 
-		VkResult result = glfwCreateWindowSurface((VkInstance)RenderCommand::GetInstance(), m_WindowHandle, nullptr, &m_Surface);
+		VkResult result = glfwCreateWindowSurface(VulkanAPI::GetInstance(), m_WindowHandle, nullptr, &m_Surface);
 		NB_ASSERT(result == VK_SUCCESS, "Failed to create window surface");
 
 		VkPhysicalDeviceProperties properties;
-		vkGetPhysicalDeviceProperties((VkPhysicalDevice)RenderCommand::GetPhysicalDevice(), &properties);
+		vkGetPhysicalDeviceProperties(VulkanAPI::GetPhysicalDevice(), &properties);
 
 		uint8_t versionMajor = VK_API_VERSION_MAJOR(properties.apiVersion);
 		uint8_t versionMinor = VK_API_VERSION_MINOR(properties.apiVersion);
@@ -56,13 +58,13 @@ namespace Nebula {
 		NB_PROFILE_FUNCTION();
 
 		CleanUpSwapChain();
-		vkDestroySurfaceKHR((VkInstance)RenderCommand::GetInstance(), m_Surface, nullptr);
+		vkDestroySurfaceKHR(VulkanAPI::GetInstance(), m_Surface, nullptr);
 	}
 
 	void Vulkan_Context::SwapBuffers() 
 	{
-		VkResult result = vkAcquireNextImageKHR((VkDevice)RenderCommand::GetDevice(), m_SwapChain, UINT64_MAX, 
-			*(VkSemaphore*)RenderCommand::GetImageSemaphore(), VK_NULL_HANDLE, &m_ImageIndex);
+		VkResult result = vkAcquireNextImageKHR(VulkanAPI::GetDevice(), m_SwapChain, UINT64_MAX,
+			VulkanAPI::GetImageSemaphore(), VK_NULL_HANDLE, &m_ImageIndex);
 
 		if (result == VK_ERROR_OUT_OF_DATE_KHR)
 		{
@@ -75,15 +77,15 @@ namespace Nebula {
 		VkPresentInfoKHR presentInfo{};
 		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 		presentInfo.waitSemaphoreCount = 1;
-		presentInfo.pWaitSemaphores = (VkSemaphore*)RenderCommand::GetRenderSemaphore();
+		presentInfo.pWaitSemaphores = &VulkanAPI::GetRenderSemaphore();
 
 		VkSwapchainKHR swapChains[] = { m_SwapChain };
 		presentInfo.swapchainCount = 1;
 		presentInfo.pSwapchains = swapChains;
 		presentInfo.pImageIndices = &m_ImageIndex;
 
-		result = vkQueuePresentKHR(*(VkQueue*)SceneRenderer::GetPresentQueue(), &presentInfo);
-		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) 
+		result = vkQueuePresentKHR(VulkanAPI::GetQueue(), &presentInfo);
+		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
 		{
 			RecreateSwapChain();
 			return;
@@ -155,7 +157,7 @@ namespace Nebula {
 
 	void Vulkan_Context::CreateSwapChain()
 	{
-		SwapChainSupportDetails swapChainSupport = QuerySwapChainSupport((VkPhysicalDevice)RenderCommand::GetPhysicalDevice());
+		SwapChainSupportDetails swapChainSupport = QuerySwapChainSupport(VulkanAPI::GetPhysicalDevice());
 
 		VkSurfaceFormatKHR surfaceFormat = ChooseSwapSurfaceFormat(swapChainSupport.formats);
 		VkPresentModeKHR presentMode = ChooseSwapPresentMode(swapChainSupport.presentModes);
@@ -176,28 +178,14 @@ namespace Nebula {
 		createInfo.imageArrayLayers = 1;
 		createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 		createInfo.surface = m_Surface;
-
-		Vulkan_RendererAPI::QueueFamilyIndices indices = Vulkan_RendererAPI::FindQueueFamilies((VkPhysicalDevice)RenderCommand::GetPhysicalDevice());
-		uint32_t queueFamilyIndices[] = { indices.graphicsFamily.value(), indices.presentFamily.value() };
-
-		if (indices.graphicsFamily != indices.presentFamily) {
-			createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-			createInfo.queueFamilyIndexCount = 2;
-			createInfo.pQueueFamilyIndices = queueFamilyIndices;
-		}
-		else {
-			createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-			createInfo.queueFamilyIndexCount = 0; // Optional
-			createInfo.pQueueFamilyIndices = nullptr; // Optional
-		}
-
+		createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE; // Assume that graphics family == present family
 		createInfo.preTransform = swapChainSupport.capabilities.currentTransform;
 		createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 		createInfo.presentMode = presentMode;
 		createInfo.clipped = VK_TRUE;
 		createInfo.oldSwapchain = VK_NULL_HANDLE;
 
-		VkDevice device = (VkDevice)RenderCommand::GetDevice();
+		VkDevice device = VulkanAPI::GetDevice();
 		VkResult result = vkCreateSwapchainKHR(device, &createInfo, nullptr, &m_SwapChain);
 		NB_ASSERT(result == VK_SUCCESS, "Failed to create swap chain!");
 		
@@ -230,7 +218,7 @@ namespace Nebula {
 			createInfo.subresourceRange.baseArrayLayer = 0;
 			createInfo.subresourceRange.layerCount = 1;
 
-			VkResult result = vkCreateImageView((VkDevice)RenderCommand::GetDevice(), &createInfo, nullptr, &m_ImageViews[i]);
+			VkResult result = vkCreateImageView(VulkanAPI::GetDevice(), &createInfo, nullptr, &m_ImageViews[i]);
 			NB_ASSERT(result == VK_SUCCESS, "Failed to create image views!");
 		}
 	}
@@ -273,7 +261,7 @@ namespace Nebula {
 		renderPassInfo.dependencyCount = 1;
 		renderPassInfo.pDependencies = &dependency;
 
-		VkResult result = vkCreateRenderPass((VkDevice)RenderCommand::GetDevice(), &renderPassInfo, nullptr, &m_RenderPass);
+		VkResult result = vkCreateRenderPass(VulkanAPI::GetDevice(), &renderPassInfo, nullptr, &m_RenderPass);
 		NB_ASSERT(result == VK_SUCCESS, "Failed to create render pass!");
 	}
 
@@ -282,7 +270,7 @@ namespace Nebula {
 		int width = 0, height = 0;
 		glfwGetFramebufferSize(m_WindowHandle, &width, &height);
 
-		vkDeviceWaitIdle((VkDevice)RenderCommand::GetDevice());
+		vkDeviceWaitIdle(VulkanAPI::GetDevice());
 		CleanUpSwapChain();
 
 		CreateSwapChain();
@@ -291,7 +279,7 @@ namespace Nebula {
 
 	void Vulkan_Context::CleanUpSwapChain()
 	{
-		VkDevice device = (VkDevice)RenderCommand::GetDevice();
+		VkDevice device = VulkanAPI::GetDevice();
 		vkDeviceWaitIdle(device);
 
 		for (auto imageView : m_ImageViews) {

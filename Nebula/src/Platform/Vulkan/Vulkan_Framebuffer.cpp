@@ -3,6 +3,7 @@
 
 #include "Nebula/Renderer/Render_Command.h"
 #include "Nebula/Core/Application.h"
+#include "VulkanAPI.h"
 #include "Vulkan_Context.h"
 
 namespace Nebula {
@@ -50,10 +51,11 @@ namespace Nebula {
 	{
 		for (auto& framebuffer : m_Framebuffer)
 		{
-			vkDestroyFramebuffer((VkDevice)RenderCommand::GetDevice(), framebuffer, nullptr);
+			vkDestroyFramebuffer(VulkanAPI::GetDevice(), framebuffer, nullptr);
 		}
 		
-		vkDestroyRenderPass((VkDevice)RenderCommand::GetDevice(), m_RenderPass, nullptr);
+		vkDestroyRenderPass(VulkanAPI::GetDevice(), m_RenderPass, nullptr);
+		vkDestroyRenderPass(VulkanAPI::GetDevice(), m_RenderPass, nullptr);
 	}
 
 	void Vulkan_FrameBuffer::Invalidate() {
@@ -61,16 +63,16 @@ namespace Nebula {
 		{
 			for (auto& framebuffer : m_Framebuffer)
 			{
-				vkDestroyFramebuffer((VkDevice)RenderCommand::GetDevice(), framebuffer, nullptr);
+				vkDestroyFramebuffer(VulkanAPI::GetDevice(), framebuffer, nullptr);
 			}
 			
-			vkDestroyRenderPass((VkDevice)RenderCommand::GetDevice(), m_RenderPass, nullptr);
+			vkDestroyRenderPass(VulkanAPI::GetDevice(), m_RenderPass, nullptr);
 
 			for (auto& imageView : m_ColourAttachments) 
 			{
-				vkDestroyImageView((VkDevice)RenderCommand::GetDevice(), imageView, nullptr);
+				vkDestroyImageView(VulkanAPI::GetDevice(), imageView, nullptr);
 			}
-			vkDestroyImageView((VkDevice)RenderCommand::GetDevice(), m_DepthAttachment, nullptr);
+			vkDestroyImageView(VulkanAPI::GetDevice(), m_DepthAttachment, nullptr);
 			
 			m_ColourAttachments.clear();
 			m_DepthAttachment = VK_NULL_HANDLE;
@@ -187,7 +189,7 @@ namespace Nebula {
 		renderPassInfo.dependencyCount = 1;
 		renderPassInfo.pDependencies = &dependency;
 
-		VkResult result = vkCreateRenderPass((VkDevice)RenderCommand::GetDevice(), &renderPassInfo, nullptr, &m_RenderPass);
+		VkResult result = vkCreateRenderPass(VulkanAPI::GetDevice(), &renderPassInfo, nullptr, &m_RenderPass);
 		NB_ASSERT(result == VK_SUCCESS, "Failed to create render pass!");
 
 
@@ -254,7 +256,7 @@ namespace Nebula {
 					createInfo.subresourceRange.baseArrayLayer = 0;
 					createInfo.subresourceRange.layerCount = 1;
 
-					result = vkCreateImageView((VkDevice)RenderCommand::GetDevice(), &createInfo, nullptr, &m_ColourAttachments[i]);
+					result = vkCreateImageView(VulkanAPI::GetDevice(), &createInfo, nullptr, &m_ColourAttachments[i]);
 					NB_ASSERT(result == VK_SUCCESS, "Failed to create image view!");
 
 					attachments[i] = m_ColourAttachments[i];
@@ -315,7 +317,7 @@ namespace Nebula {
 			framebufferInfo.height = m_Specifications.Height;
 			framebufferInfo.layers = 1;
 
-			VkResult result = vkCreateFramebuffer((VkDevice)RenderCommand::GetDevice(), &framebufferInfo, nullptr, &m_Framebuffer[imageIndex]);
+			VkResult result = vkCreateFramebuffer(VulkanAPI::GetDevice(), &framebufferInfo, nullptr, &m_Framebuffer[imageIndex]);
 			NB_ASSERT(result == VK_SUCCESS, "Failed to create framebuffer");
 		}
 	}

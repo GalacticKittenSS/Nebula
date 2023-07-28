@@ -18,10 +18,5 @@ namespace Nebula {
 		void DrawLines(const Ref<VertexArray>& vertexArray, uint32_t vertexCount) override;
 
 		void SetLineWidth(float width) override;
-		const void* GetInstance() const override { return nullptr; }
-		const void* GetDevice() const override { return nullptr; }
-		const void* GetPhysicalDevice() const override { return nullptr; }
-		const void* GetImageSemaphore() const override { return nullptr; }
-		const void* GetRenderSemaphore() const override { return nullptr; }
 	};
 }

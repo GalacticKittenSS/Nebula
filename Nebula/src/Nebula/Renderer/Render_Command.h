@@ -40,26 +40,6 @@ namespace Nebula {
 		inline static void SetLineWidth(float width) {
 			s_RendererAPI->SetLineWidth(width);
 		}
-
-		inline static const void* GetInstance() {
-			return s_RendererAPI->GetInstance();
-		}
-
-		inline static const void* GetDevice() {
-			return s_RendererAPI->GetDevice();
-		}
-
-		inline static const void* GetPhysicalDevice() {
-			return s_RendererAPI->GetPhysicalDevice();
-		}
-
-		inline static const void* GetImageSemaphore() {
-			return s_RendererAPI->GetImageSemaphore();
-		}
-
-		inline static const void* GetRenderSemaphore() {
-			return s_RendererAPI->GetRenderSemaphore();
-		}
 	private:
 		static Scope<RendererAPI> s_RendererAPI;
 	};

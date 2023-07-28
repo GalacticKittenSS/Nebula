@@ -23,9 +23,6 @@ namespace Nebula
 {
 	struct VulkanData
 	{
-		VkQueue graphicsQueue;
-		VkQueue presentQueue;
-		
 		Ref<Shader> shader;
 		Ref<FrameBuffer> frambuffer;
 		
@@ -53,16 +50,6 @@ namespace Nebula
 		s_VKData.frambuffer = FrameBuffer::Create(spec);
 		s_VKData.frambuffer->Bind();
 		s_VKData.shader = Shader::Create("Resources/shaders/Vulkan.glsl");
-	}
-
-	void** SceneRenderer::GetGraphicsQueue()
-	{
-		return (void**)&s_VKData.graphicsQueue;
-	}
-
-	void** SceneRenderer::GetPresentQueue()
-	{
-		return (void**)&s_VKData.presentQueue;
 	}
 
 	Ref<Shader> SceneRenderer::GetShader()
