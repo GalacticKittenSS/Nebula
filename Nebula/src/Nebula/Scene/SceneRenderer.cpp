@@ -44,7 +44,7 @@ namespace Nebula
 		Window& window = Application::Get().GetWindow();
 
 		FrameBufferSpecification spec;
-		spec.Attachments = { FramebufferTextureFormat::RGBA8, FramebufferTextureFormat::DEPTH24STENCIL8 };
+		spec.Attachments = { FramebufferTextureFormat::RGBA8, FramebufferTextureFormat::RED_INT, FramebufferTextureFormat::DEPTH24STENCIL8 };
 		spec.Width = window.GetWidth();
 		spec.Height = window.GetHeight();
 		spec.SwapChainTarget = true;
@@ -72,6 +72,9 @@ namespace Nebula
 		s_VKData.vao->SetIndexBuffer(s_VKData.iBuffer);
 		
 		s_VKData.CameraUniformBuffer = UniformBuffer::Create(sizeof(UniformBufferObject), 0);
+
+		RenderCommand::SetBackfaceCulling(true);
+		RenderCommand::SetLineWidth(0.5f);
 	}
 
 	Ref<Shader> SceneRenderer::GetShader()
@@ -109,9 +112,14 @@ namespace Nebula
 		ubo.proj[1][1] *= -1;
 
 		s_VKData.CameraUniformBuffer->SetData(&ubo, sizeof(ubo));
+
 		s_VKData.frambuffer->Bind();
+		s_VKData.frambuffer->ClearAttachment(1, -1);
+
+		RenderCommand::Clear();
 		RenderCommand::DrawIndexed(s_VKData.vao);
-		//s_VKData.frambuffer->Unbind();
+		
+		s_VKData.frambuffer->Unbind();
 	}
 
 	void SceneRenderer::CleanUp()

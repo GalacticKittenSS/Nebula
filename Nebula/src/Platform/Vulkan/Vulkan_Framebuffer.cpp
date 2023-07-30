@@ -27,7 +27,7 @@ namespace Nebula {
 			switch (format)
 			{
 			case Nebula::FramebufferTextureFormat::RGBA8:	return VK_FORMAT_B8G8R8A8_SRGB;
-			case Nebula::FramebufferTextureFormat::RED_INT: return VK_FORMAT_R8_UINT;
+			case Nebula::FramebufferTextureFormat::RED_INT: return VK_FORMAT_R8_SINT;
 			}
 
 			NB_ASSERT(false);
@@ -63,10 +63,10 @@ namespace Nebula {
 	{
 		if (!m_Framebuffer.empty()) 
 		{
+			vkDeviceWaitIdle(VulkanAPI::GetDevice());
+
 			for (auto& framebuffer : m_Framebuffer)
-			{
 				vkDestroyFramebuffer(VulkanAPI::GetDevice(), framebuffer, nullptr);
-			}
 			
 			vkDestroyRenderPass(VulkanAPI::GetDevice(), m_RenderPass, nullptr);
 
@@ -78,23 +78,34 @@ namespace Nebula {
 		std::vector<VkAttachmentReference> attachmentRef(m_ColourAttachmentSpecs.size());
 		m_ColourAttachments.resize(m_ColourAttachmentSpecs.size());
 		
-		for (size_t i = 0; i < m_ColourAttachments.size(); i++)
+		Vulkan_Context* context = (Vulkan_Context*)Application::Get().GetWindow().GetContext();
+
+		for (uint32_t i = 0; i < m_ColourAttachments.size(); i++)
 		{
 			VkFormat format = Utils::NebulaFBFormattoVulkan(m_ColourAttachmentSpecs[i].TextureFormat);
-			
-			m_ColourAttachments[i] = CreateRef<VulkanImage>(format, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_IMAGE_ASPECT_COLOR_BIT,
-				m_Specifications.samples, m_Specifications.Width, m_Specifications.Height);
 			
 			VkAttachmentDescription colourAttachment;
 			colourAttachment.format = format;
 			colourAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-			colourAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+			colourAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
 			colourAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 			colourAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 			colourAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-			colourAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-			colourAttachment.finalLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+			colourAttachment.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			colourAttachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 			colourAttachment.flags = 0;
+
+			if (m_Specifications.SwapChainTarget && format == *(VkFormat*)context->GetImageFormat())
+			{
+				m_ColourAttachments[i] = CreateRef<VulkanImage>(context->m_Images, context->m_ImageViews);
+				colourAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+			}
+			else
+			{
+				m_ColourAttachments[i] = CreateRef<VulkanImage>(format, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, VK_IMAGE_ASPECT_COLOR_BIT,
+					m_Specifications.samples, m_Specifications.Width, m_Specifications.Height);
+			}
+
 			attachmentDesc[i] = colourAttachment;
 
 			VkAttachmentReference reference;
@@ -107,7 +118,7 @@ namespace Nebula {
 
 		if (m_DepthAttachmentSpec.TextureFormat != FramebufferTextureFormat::None)
 		{
-			m_DepthAttachment = CreateRef<VulkanImage>(VK_FORMAT_D16_UNORM, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_ASPECT_DEPTH_BIT,
+			m_DepthAttachment = CreateRef<VulkanImage>(VK_FORMAT_D16_UNORM, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, VK_IMAGE_ASPECT_DEPTH_BIT,
 				m_Specifications.samples, m_Specifications.Width, m_Specifications.Height);
 
 			VkAttachmentDescription depthAttachment;
@@ -118,11 +129,11 @@ namespace Nebula {
 			depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 			depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 			depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-			depthAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+			depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 			depthAttachment.flags = 0;
 			attachmentDesc.push_back(depthAttachment);
 
-			depthReference.attachment = m_ColourAttachments.size();
+			depthReference.attachment = (uint32_t)m_ColourAttachments.size();
 			depthReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 		}
 
@@ -152,7 +163,6 @@ namespace Nebula {
 		VkResult result = vkCreateRenderPass(VulkanAPI::GetDevice(), &renderPassInfo, nullptr, &m_RenderPass);
 		NB_ASSERT(result == VK_SUCCESS, "Failed to create render pass!");
 
-		Vulkan_Context* context = (Vulkan_Context*)Application::Get().GetWindow().GetContext();
 		m_Framebuffer.resize(context->GetImageCount());
 
 		for (uint32_t imageIndex = 0; imageIndex < m_Framebuffer.size(); imageIndex++)
@@ -212,5 +222,24 @@ namespace Nebula {
 	void Vulkan_FrameBuffer::ClearAttachment(uint32_t attachmentIndex, int value) 
 	{
 		NB_ASSERT(attachmentIndex < m_ColourAttachments.size(), "");
+
+		Vulkan_Context* context = (Vulkan_Context*)Application::Get().GetWindow().GetContext();
+		auto& image = m_ColourAttachments[attachmentIndex]->GetImages()[context->m_ImageIndex];
+		VulkanAPI::TransitionImageLayout(image, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+		VkCommandBuffer commandBuffer = VulkanAPI::BeginSingleUseCommand();
+		VkClearColorValue clearValue = { value };
+
+		VkImageSubresourceRange subResourceRange = {};
+		subResourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		subResourceRange.baseMipLevel = 0;
+		subResourceRange.levelCount = 1;
+		subResourceRange.baseArrayLayer = 0;
+		subResourceRange.layerCount = 1;
+
+		vkCmdClearColorImage(commandBuffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearValue, 1, &subResourceRange);
+		VulkanAPI::EndSingleUseCommand(commandBuffer);
+
+		VulkanAPI::TransitionImageLayout(image, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 	}
 }

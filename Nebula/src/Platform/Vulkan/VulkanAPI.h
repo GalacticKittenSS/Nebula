@@ -16,7 +16,7 @@ namespace Nebula
 		static void EndSingleUseCommand(VkCommandBuffer commandBuffer);
 	
 		static uint32_t FindMemoryType(uint32_t filter, VkMemoryPropertyFlags properties);
-		static void TransitionImageLayout(VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout);
+		static void TransitionImageLayout(VkImage image, VkImageAspectFlags imageAspect, VkImageLayout oldLayout, VkImageLayout newLayout);
 
 		static const VkInstance& GetInstance() { return s_Instance; }
 		static const VkDevice& GetDevice() { return s_Device; }
@@ -75,6 +75,7 @@ namespace Nebula
 	{
 	public:
 		VulkanImage();
+		VulkanImage(std::vector<VkImage> images, std::vector<VkImageView> imageViews);
 		VulkanImage(VkFormat format, VkImageUsageFlags usage, VkImageAspectFlags aspect, int samples, uint32_t width, uint32_t height);
 		~VulkanImage();
 
@@ -84,6 +85,7 @@ namespace Nebula
 		VkSampleCountFlagBits GetSampleFlags(int samples);
 		void CreateTextureImage(VkImageView& view, VkImage& image, VkDeviceMemory& memory, int samples, VkFormat format, VkImageUsageFlags usage, VkImageAspectFlags aspect, uint32_t width, uint32_t height);
 	private:
+		bool m_Delete = true;
 		std::vector<VkImage> m_Images;
 		std::vector<VkImageView> m_ImageViews;
 		std::vector<VkDeviceMemory> m_ImageMemory;

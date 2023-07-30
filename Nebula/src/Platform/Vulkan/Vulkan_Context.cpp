@@ -130,15 +130,6 @@ namespace Nebula {
 
 	void Vulkan_Context::SwapBuffers() 
 	{
-		if (Vulkan_FrameBuffer* framebuffer = Vulkan_FrameBuffer::s_BindedInstance)
-		{
-			Ref<VulkanImage> image = framebuffer->m_ColourAttachments[0];
-			
-			VulkanAPI::TransitionImageLayout(m_Images[m_ImageIndex], VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-			Utils::CopyImage(image->GetImages()[m_ImageIndex], m_Images[m_ImageIndex], m_Extent.width, m_Extent.height);
-			VulkanAPI::TransitionImageLayout(m_Images[m_ImageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
-		}
-
 		PresentCurrentImage();
 		AcquireNextImage();
 	}

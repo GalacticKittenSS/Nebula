@@ -8,9 +8,6 @@
 #include "Vulkan_Framebuffer.h"
 #include "Vulkan_Shader.h"
 
-#include <map>
-#include <set>
-
 namespace Nebula {
 	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 		VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
@@ -77,12 +74,33 @@ namespace Nebula {
 
 	void Vulkan_RendererAPI::Clear() 
 	{
+		if (Vulkan_FrameBuffer* framebuffer = Vulkan_FrameBuffer::s_BindedInstance)
+		{
+			framebuffer->ClearAttachment(0, 0);
+			return;
+		}
+
 		Vulkan_Context* context = (Vulkan_Context*)Application::Get().GetWindow().GetContext();
+		auto& image = context->m_Images[context->m_ImageIndex];
 		
-		
+		VkCommandBuffer commandBuffer = VulkanAPI::BeginSingleUseCommand();
 
+		VulkanAPI::TransitionImageLayout(image, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
+		commandBuffer = VulkanAPI::BeginSingleUseCommand();
+		VkClearColorValue clearValue = { 0.0f, 0.0f, 0.0f, 1.0f };
 
+		VkImageSubresourceRange subResourceRange = {};
+		subResourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		subResourceRange.baseMipLevel = 0;
+		subResourceRange.levelCount = 1;
+		subResourceRange.baseArrayLayer = 0;
+		subResourceRange.layerCount = 1;
+
+		vkCmdClearColorImage(commandBuffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearValue, 1, &subResourceRange);
+		VulkanAPI::EndSingleUseCommand(commandBuffer);
+
+		VulkanAPI::TransitionImageLayout(image, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 	}
 
 	void Vulkan_RendererAPI::SetClearColour(float r, float g, float b, float a) 
@@ -95,6 +113,9 @@ namespace Nebula {
 
 	void Vulkan_RendererAPI::SetBackfaceCulling(bool cull) 
 	{
+		VkCommandBuffer commandBuffer = VulkanAPI::BeginSingleUseCommand();
+		vkCmdSetCullMode(commandBuffer, cull ? VK_CULL_MODE_BACK_BIT : VK_CULL_MODE_NONE);
+		VulkanAPI::EndSingleUseCommand(commandBuffer);
 	}
 
 	void Vulkan_RendererAPI::recordCommandBuffer(Ref<VertexArray> array, VkCommandBuffer commandBuffer, uint32_t imageIndex)
@@ -118,14 +139,14 @@ namespace Nebula {
 		renderPassInfo.renderArea.offset = { 0, 0 };
 		renderPassInfo.renderArea.extent = extent;
 		
-		VkClearValue clearValues[2];
-		clearValues[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
-		clearValues[1].depthStencil = { 1.0f, 0 };
+		uint32_t attachmentCount = framebuffer->m_ColourAttachments.size();
+		if (framebuffer->m_DepthAttachment)
+			attachmentCount++;
 
-		renderPassInfo.clearValueCount = 2;
-		renderPassInfo.pClearValues = clearValues;
+		std::vector<VkClearValue> clearValues(attachmentCount);
+		renderPassInfo.clearValueCount = (uint32_t)clearValues.size();
+		renderPassInfo.pClearValues = clearValues.data();
 
-		// shader = Vulkan_Shader::s_BindedInstance
 		Ref<Vulkan_Shader> shader = std::static_pointer_cast<Vulkan_Shader>(SceneRenderer::GetShader());
 
 		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);

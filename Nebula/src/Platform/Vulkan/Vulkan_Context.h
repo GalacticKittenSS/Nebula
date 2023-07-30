@@ -53,6 +53,7 @@ namespace Nebula {
 		uint32_t m_SwapChainImageCount;
 
 		friend class Vulkan_RendererAPI;
+		friend class Vulkan_FrameBuffer;
 		friend class ImGuiLayer;
 	};
 }

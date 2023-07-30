@@ -102,7 +102,7 @@ namespace Nebula
 			VkPhysicalDeviceFeatures supportedFeatures;
 			vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
 
-			return indices != (uint32_t)-1 && extensionsSupported && supportedFeatures.samplerAnisotropy;
+			return indices != (uint32_t)-1 && extensionsSupported && supportedFeatures.samplerAnisotropy && supportedFeatures.wideLines;
 		}
 
 		uint16_t RateDeviceSuitability(VkPhysicalDevice device)
@@ -149,7 +149,7 @@ namespace Nebula
 		appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
 		appInfo.pEngineName = "Nebula";
 		appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-		appInfo.apiVersion = VK_API_VERSION_1_2;
+		appInfo.apiVersion = VK_API_VERSION_1_3;
 
 		VkInstanceCreateInfo createInfo = {};
 		createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -241,6 +241,7 @@ namespace Nebula
 
 		VkPhysicalDeviceFeatures deviceFeatures{};
 		deviceFeatures.samplerAnisotropy = VK_TRUE;
+		deviceFeatures.wideLines = VK_TRUE;
 		createInfo.pEnabledFeatures = &deviceFeatures;
 
 #ifdef NB_DEBUG
@@ -370,7 +371,34 @@ namespace Nebula
 		return -1;
 	}
 
-	void VulkanAPI::TransitionImageLayout(VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout)
+	static VkAccessFlags GetAccessMask(VkImageLayout layout)
+	{
+		switch (layout)
+		{
+		case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL: return VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL: return VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+		case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL: return VK_ACCESS_TRANSFER_READ_BIT;
+		case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL: return VK_ACCESS_TRANSFER_WRITE_BIT;
+		case VK_IMAGE_LAYOUT_PRESENT_SRC_KHR: return VK_ACCESS_MEMORY_READ_BIT;
+		}
+
+		return 0;
+	}
+	
+	static VkPipelineStageFlags GetStageFlags(VkImageLayout layout)
+	{
+		switch (layout)
+		{
+		case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL: return VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		//case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL: return VK_PIPELINE_STAGE_;
+		case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL: return VK_PIPELINE_STAGE_TRANSFER_BIT;
+		case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL: return VK_PIPELINE_STAGE_TRANSFER_BIT;
+		}
+
+		return VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+	}
+
+	void VulkanAPI::TransitionImageLayout(VkImage image, VkImageAspectFlags imageAspect, VkImageLayout oldLayout, VkImageLayout newLayout)
 	{
 		VkCommandBuffer commandBuffer = BeginSingleUseCommand();
 
@@ -381,44 +409,16 @@ namespace Nebula
 		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 		barrier.image = image;
-		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		barrier.subresourceRange.aspectMask = imageAspect;
 		barrier.subresourceRange.baseMipLevel = 0;
 		barrier.subresourceRange.levelCount = 1;
 		barrier.subresourceRange.baseArrayLayer = 0;
 		barrier.subresourceRange.layerCount = 1;
-		barrier.srcAccessMask = 0; // TODO
-		barrier.dstAccessMask = 0; // TODO
+		barrier.srcAccessMask = GetAccessMask(oldLayout);
+		barrier.dstAccessMask = GetAccessMask(newLayout);
 
-		VkPipelineStageFlags sourceStage;
-		VkPipelineStageFlags destinationStage;
-
-		if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
-		{
-			barrier.srcAccessMask = 0;
-			barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-
-			sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-			destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-		}
-		else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
-		{
-			barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-			barrier.dstAccessMask = 0;
-
-			sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-			destinationStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-		}
-		else if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL)
-		{
-			barrier.srcAccessMask = 0;
-			barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-
-			sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-			destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-
-		}
-		else
-			NB_ASSERT(false, "Unsupported layout transition!");
+		VkPipelineStageFlags sourceStage = GetStageFlags(oldLayout);
+		VkPipelineStageFlags destinationStage = GetStageFlags(newLayout);
 
 		vkCmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 		VulkanAPI::EndSingleUseCommand(commandBuffer);
@@ -473,6 +473,11 @@ namespace Nebula
 		m_ImageMemory.resize(g_MaxFrames);
 	}
 
+	VulkanImage::VulkanImage(std::vector<VkImage> images, std::vector<VkImageView> imageViews)
+		: m_Images(images), m_ImageViews(imageViews), m_Delete(false)
+	{
+	}
+
 	VulkanImage::VulkanImage(VkFormat format, VkImageUsageFlags usage, VkImageAspectFlags aspect, int samples, uint32_t width, uint32_t height)
 	{
 		m_Images.resize(g_MaxFrames);
@@ -485,6 +490,9 @@ namespace Nebula
 
 	VulkanImage::~VulkanImage()
 	{
+		if (!m_Delete)
+			return;
+
 		for (uint32_t i = 0; i < g_MaxFrames; i++)
 		{
 			vkFreeMemory(VulkanAPI::GetDevice(), m_ImageMemory[i], nullptr);
