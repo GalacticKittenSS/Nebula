@@ -17,7 +17,6 @@ namespace Nebula {
 		void Unbind() const override;
 
 		const std::string& GetName() const override { return m_Name; }
-		const void* GetPipeline() const override { return m_GraphicsPipeline; }
 
 		void SetInt(const std::string& name, int value) override;
 		void SetIntArray(const std::string& name, int* values, uint32_t count) override;
@@ -40,9 +39,12 @@ namespace Nebula {
 	private:
 		std::string ReadFile(const std::string& filepath);
 		std::unordered_map<VkShaderStageFlagBits, std::string> PreProcess(const std::string& source);
+
 		void CompileOrGetVulkanBinaries(const std::unordered_map<VkShaderStageFlagBits, std::string>& shaderSources);
 		void Reflect(VkShaderStageFlagBits stage, const std::vector<uint32_t>& shaderData);
+
 		VkShaderModule CreateShaderModule(const std::vector<uint32_t>& code);
+		void CreatePipeline(VkPipelineShaderStageCreateInfo shaderStages[]);
 	private:
 		uint32_t m_RendererID;
 		std::string m_FilePath;

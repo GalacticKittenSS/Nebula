@@ -16,8 +16,7 @@ namespace Nebula {
 		void Unbind() const override;
 
 		const std::string& GetName() const override { return m_Name; }
-		const void* GetPipeline() const override { return nullptr; }
-
+		
 		void SetInt(const std::string& name, int value) override;
 		void SetIntArray(const std::string& name, int* values, uint32_t count) override;
 		void SetFloat(const std::string& name, float value) override;
