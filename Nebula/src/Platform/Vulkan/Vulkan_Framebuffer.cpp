@@ -136,12 +136,12 @@ namespace Nebula {
 
 			if (m_Specifications.SwapChainTarget && format == *(VkFormat*)context->GetImageFormat())
 			{
-				m_ColourAttachments[i] = CreateRef<VulkanImage>(context->m_Images, context->m_ImageViews);
+				m_ColourAttachments[i] = VulkanImage::CreateImageArray(context->m_Images, context->m_ImageViews);
 				colourAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 			}
 			else
 			{
-				m_ColourAttachments[i] = CreateRef<VulkanImage>(format, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, VK_IMAGE_ASPECT_COLOR_BIT,
+				m_ColourAttachments[i] = VulkanImage::CreateImageArray(format, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, VK_IMAGE_ASPECT_COLOR_BIT,
 					m_Specifications.samples, m_Specifications.Width, m_Specifications.Height);
 			}
 
@@ -210,10 +210,10 @@ namespace Nebula {
 		{
 			std::vector<VkImageView> attachments(m_ColourAttachments.size());
 			for (uint32_t i = 0; i < attachments.size(); i++)
-				attachments[i] = m_ColourAttachments[i]->GetImageViews()[imageIndex];
+				attachments[i] = m_ColourAttachments[i][imageIndex]->GetImageView();
 
 			if (m_DepthAttachmentSpec.TextureFormat != FramebufferTextureFormat::None)
-				attachments.push_back(m_DepthAttachment->GetImageViews()[imageIndex]);
+				attachments.push_back(m_DepthAttachment->GetImageView());
 
 			VkFramebufferCreateInfo framebufferInfo{};
 			framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -265,7 +265,7 @@ namespace Nebula {
 		NB_ASSERT(attachmentIndex < m_ColourAttachments.size());
 
 		Vulkan_Context* context = (Vulkan_Context*)Application::Get().GetWindow().GetContext();
-		auto& image = m_ColourAttachments[attachmentIndex]->GetImages()[context->m_ImageIndex];
+		auto& image = m_ColourAttachments[attachmentIndex][context->m_ImageIndex]->GetImage();
 		VulkanAPI::TransitionImageLayout(image, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
 		VkCommandBuffer commandBuffer = VulkanAPI::BeginSingleUseCommand();
@@ -289,7 +289,7 @@ namespace Nebula {
 		NB_ASSERT(m_DepthAttachment);
 
 		Vulkan_Context* context = (Vulkan_Context*)Application::Get().GetWindow().GetContext();
-		auto& image = m_DepthAttachment->GetImages()[context->m_ImageIndex];
+		auto& image = m_DepthAttachment->GetImage();
 		VkImageAspectFlags aspectFlags = m_DepthAttachment->GetAspectFlags();
 
 		VulkanAPI::TransitionImageLayout(image, aspectFlags, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);

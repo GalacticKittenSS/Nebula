@@ -33,7 +33,7 @@ namespace Nebula {
 		std::vector<VkFramebuffer> m_Framebuffer;
 		VkRenderPass m_RenderPass = VK_NULL_HANDLE;
 
-		std::vector<Ref<VulkanImage>> m_ColourAttachments;
+		std::vector<VulkanImageArray> m_ColourAttachments;
 		Ref<VulkanImage> m_DepthAttachment;
 
 		static Vulkan_FrameBuffer* s_BindedInstance;

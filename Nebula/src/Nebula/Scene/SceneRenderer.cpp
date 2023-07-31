@@ -5,6 +5,7 @@
 #include "Nebula/Renderer/Render_Command.h"
 #include "Nebula/Renderer/Framebuffer.h"
 #include "Nebula/Renderer/UniformBuffer.h"
+#include "Nebula/AssetManager/TextureImporter.h"
 
 
 
@@ -27,6 +28,7 @@ namespace Nebula
 		Ref<VertexArray> vao;
 
 		Ref<UniformBuffer> CameraUniformBuffer;
+		Ref<Texture2D> Texture;
 	};
 	static VulkanData s_VKData;
 
@@ -51,13 +53,13 @@ namespace Nebula
 
 		s_VKData.frambuffer = FrameBuffer::Create(spec);
 		s_VKData.frambuffer->Bind();
-		s_VKData.shader = Shader::Create("Resources/shaders/Vulkan.glsl");
+		s_VKData.shader = Shader::Create("Resources/Vulkan/Shader.glsl");
 
 		const float vertices[] = {
-			-0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 1.0f,
-			 0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 1.0f,
-			 0.5f,  0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
-			-0.5f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f
+			-0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+			 0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 2.0f,
+			 0.5f,  0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 2.0f, 2.0f,
+			-0.5f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 2.0f, 0.0f
 		};
 
 		const uint32_t indices[] = {
@@ -72,6 +74,7 @@ namespace Nebula
 		s_VKData.vao->SetIndexBuffer(s_VKData.iBuffer);
 		
 		s_VKData.CameraUniformBuffer = UniformBuffer::Create(sizeof(UniformBufferObject), 0);
+		s_VKData.Texture = TextureImporter::CreateTexture2D("Resources/Vulkan/Texture.jpg");
 
 		RenderCommand::SetBackfaceCulling(true);
 		RenderCommand::SetLineWidth(0.5f);
@@ -114,6 +117,7 @@ namespace Nebula
 		s_VKData.CameraUniformBuffer->SetData(&ubo, sizeof(ubo));
 
 		s_VKData.frambuffer->Bind();
+		s_VKData.Texture->Bind();
 		s_VKData.frambuffer->ClearAttachment(1, -1);
 
 		RenderCommand::Clear();

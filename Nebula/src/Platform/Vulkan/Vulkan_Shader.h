@@ -61,5 +61,6 @@ namespace Nebula {
 		
 		friend class Vulkan_RendererAPI;
 		friend class Vulkan_UniformBuffer;
+		friend class Vulkan_Texture2D;
 	};
 }

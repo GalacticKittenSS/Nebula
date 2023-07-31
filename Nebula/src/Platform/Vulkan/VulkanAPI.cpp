@@ -462,44 +462,27 @@ namespace Nebula
 
 		char* memOffset = (char*)m_MappedMemory;
 		memOffset += offset;
-		memcpy(m_MappedMemory, data, size);
+		memcpy(memOffset, data, size);
 	}
-
-
-	VulkanImage::VulkanImage()
-	{
-		m_Images.resize(g_MaxFrames);
-		m_ImageViews.resize(g_MaxFrames);
-		m_ImageMemory.resize(g_MaxFrames);
-	}
-
-	VulkanImage::VulkanImage(std::vector<VkImage> images, std::vector<VkImageView> imageViews)
-		: m_Images(images), m_ImageViews(imageViews), m_Delete(false)
-	{
-	}
-
+	
 	VulkanImage::VulkanImage(VkFormat format, VkImageUsageFlags usage, VkImageAspectFlags aspect, int samples, uint32_t width, uint32_t height)
 		: m_ImageFormat(format), m_AspectFlags(aspect)
 	{
-		m_Images.resize(g_MaxFrames);
-		m_ImageViews.resize(g_MaxFrames);
-		m_ImageMemory.resize(g_MaxFrames);
-		
-		for (uint32_t i = 0; i < g_MaxFrames; i++)
-			CreateTextureImage(m_ImageViews[i], m_Images[i], m_ImageMemory[i], samples, format, usage, aspect, width, height);
+		CreateTextureImage(m_ImageView, m_Image, m_ImageMemory, samples, format, usage, aspect, width, height);
 	}
 
 	VulkanImage::~VulkanImage()
 	{
-		if (!m_Delete)
+		if (!m_OwnsImages)
 			return;
 
-		for (uint32_t i = 0; i < g_MaxFrames; i++)
-		{
-			vkFreeMemory(VulkanAPI::GetDevice(), m_ImageMemory[i], nullptr);
-			vkDestroyImage(VulkanAPI::GetDevice(), m_Images[i], nullptr);
-			vkDestroyImageView(VulkanAPI::GetDevice(), m_ImageViews[i], nullptr);
-		}
+		vkFreeMemory(VulkanAPI::GetDevice(), m_ImageMemory, nullptr);
+		vkDestroyImage(VulkanAPI::GetDevice(), m_Image, nullptr);
+		vkDestroyImageView(VulkanAPI::GetDevice(), m_ImageView, nullptr);
+
+		m_ImageMemory = nullptr;
+		m_Image = nullptr;
+		m_ImageView = nullptr;
 	}
 
 	VkSampleCountFlagBits VulkanImage::GetSampleFlags(int samples)
@@ -519,7 +502,7 @@ namespace Nebula
 		return VK_SAMPLE_COUNT_1_BIT;
 	}
 
-	void VulkanImage::CreateTextureImage(VkImageView& view, VkImage& image, VkDeviceMemory& memory, int samples, 
+	void VulkanImage::CreateTextureImage(VkImageView& view, VkImage& image, VkDeviceMemory& memory, int samples,
 		VkFormat format, VkImageUsageFlags usage, VkImageAspectFlags aspect, uint32_t width, uint32_t height)
 	{
 		VkImageCreateInfo imageInfo{};
@@ -566,5 +549,31 @@ namespace Nebula
 
 		result = vkCreateImageView(VulkanAPI::GetDevice(), &createInfo, nullptr, &view);
 		NB_ASSERT(result == VK_SUCCESS, "Failed to create image view!");
+	}
+
+	VulkanImageArray VulkanImage::CreateImageArray(VkFormat format, VkImageUsageFlags usage, VkImageAspectFlags aspect, int samples, uint32_t width, uint32_t height)
+	{
+		VulkanImageArray imageArray(g_MaxFrames);
+
+		for (uint32_t i = 0; i < g_MaxFrames; i++)
+			imageArray[i] = CreateRef<VulkanImage>(format, usage, aspect, samples, width, height);
+
+		return imageArray;
+	}
+
+	VulkanImageArray VulkanImage::CreateImageArray(std::vector<VkImage> images, std::vector<VkImageView> imageViews)
+	{
+		float arraySize = glm::max(images.size(), imageViews.size());
+		VulkanImageArray imageArray(arraySize);
+
+		for (uint32_t i = 0; i < arraySize; i++)
+		{
+			imageArray[i] = CreateRef<VulkanImage>();
+			imageArray[i]->m_Image = images[i];
+			imageArray[i]->m_ImageView = imageViews[i];
+			imageArray[i]->m_OwnsImages = false;
+		}
+
+		return imageArray;
 	}
 }

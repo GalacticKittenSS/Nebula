@@ -3,12 +3,14 @@
 
 #include "Renderer.h"
 #include "Platform/OpenGl/OpenGL_Texture.h"
+#include "Platform/Vulkan/Vulkan_Texture.h"
 
 namespace Nebula {
 	Ref<Texture2D> Texture2D::Create(const TextureSpecification& specification, Buffer data) {
 		switch (RendererAPI::GetAPI()) {
 			case RendererAPI::API::None:	NB_ASSERT(false, "RendererAPI::None is currently not supported!"); return nullptr;
 			case RendererAPI::API::OpenGL:	return CreateRef<OpenGL_Texture2D>(specification, data);
+			case RendererAPI::API::Vulkan:	return CreateRef<Vulkan_Texture2D>(specification, data);
 		}
 
 		NB_ASSERT(false, "Unknown Renderer API!");

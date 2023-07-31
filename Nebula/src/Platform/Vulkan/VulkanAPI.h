@@ -71,29 +71,33 @@ namespace Nebula
 		void* m_MappedMemory;
 	};
 
+	class VulkanImage;
+	using VulkanImageArray = std::vector<Ref<VulkanImage>>;
+
 	class VulkanImage
 	{
 	public:
-		VulkanImage();
-		VulkanImage(std::vector<VkImage> images, std::vector<VkImageView> imageViews);
+		VulkanImage() = default;
 		VulkanImage(VkFormat format, VkImageUsageFlags usage, VkImageAspectFlags aspect, int samples, uint32_t width, uint32_t height);
 		~VulkanImage();
 
-		const std::vector<VkImage>& GetImages() const { return m_Images; }
-		const std::vector<VkImageView>& GetImageViews() const { return m_ImageViews; }
+		static VulkanImageArray CreateImageArray(VkFormat format, VkImageUsageFlags usage, VkImageAspectFlags aspect, int samples, uint32_t width, uint32_t height);
+		static VulkanImageArray CreateImageArray(std::vector<VkImage> images, std::vector<VkImageView> imageViews);
 
+		const VkImage& GetImage() const { return m_Image; }
+		const VkImageView& GetImageView() const { return m_ImageView; }
 		const VkFormat& GetFormat() const { return m_ImageFormat; }
 		const VkImageAspectFlags& GetAspectFlags() const { return m_AspectFlags; }
+	
+		static VkSampleCountFlagBits GetSampleFlags(int samples);
+		static void CreateTextureImage(VkImageView& view, VkImage& image, VkDeviceMemory& memory, int samples, VkFormat format, VkImageUsageFlags usage, VkImageAspectFlags aspect, uint32_t width, uint32_t height);
 	private:
-		VkSampleCountFlagBits GetSampleFlags(int samples);
-		void CreateTextureImage(VkImageView& view, VkImage& image, VkDeviceMemory& memory, int samples, VkFormat format, VkImageUsageFlags usage, VkImageAspectFlags aspect, uint32_t width, uint32_t height);
-	private:
-		bool m_Delete = true;
-		std::vector<VkImage> m_Images;
-		std::vector<VkImageView> m_ImageViews;
-		std::vector<VkDeviceMemory> m_ImageMemory;
+		VkImage m_Image = VK_NULL_HANDLE;
+		VkImageView m_ImageView = VK_NULL_HANDLE;
+		VkDeviceMemory m_ImageMemory = VK_NULL_HANDLE;
 
 		VkFormat m_ImageFormat;
 		VkImageAspectFlags m_AspectFlags;
+		bool m_OwnsImages = true;
 	};
 }
