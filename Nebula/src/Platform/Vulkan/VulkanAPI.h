@@ -81,6 +81,9 @@ namespace Nebula
 
 		const std::vector<VkImage>& GetImages() const { return m_Images; }
 		const std::vector<VkImageView>& GetImageViews() const { return m_ImageViews; }
+
+		const VkFormat& GetFormat() const { return m_ImageFormat; }
+		const VkImageAspectFlags& GetAspectFlags() const { return m_AspectFlags; }
 	private:
 		VkSampleCountFlagBits GetSampleFlags(int samples);
 		void CreateTextureImage(VkImageView& view, VkImage& image, VkDeviceMemory& memory, int samples, VkFormat format, VkImageUsageFlags usage, VkImageAspectFlags aspect, uint32_t width, uint32_t height);
@@ -89,5 +92,8 @@ namespace Nebula
 		std::vector<VkImage> m_Images;
 		std::vector<VkImageView> m_ImageViews;
 		std::vector<VkDeviceMemory> m_ImageMemory;
+
+		VkFormat m_ImageFormat;
+		VkImageAspectFlags m_AspectFlags;
 	};
 }

@@ -14,6 +14,7 @@ namespace Nebula {
 		int ReadPixel(uint32_t attachmentIndex, int x, int y) override;
 
 		void ClearAttachment(uint32_t attachmentIndex, int value) override;
+		void ClearDepthAttachment(int value);
 
 		void Invalidate();
 

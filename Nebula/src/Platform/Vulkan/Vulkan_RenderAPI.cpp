@@ -77,6 +77,7 @@ namespace Nebula {
 		if (Vulkan_FrameBuffer* framebuffer = Vulkan_FrameBuffer::s_BindedInstance)
 		{
 			framebuffer->ClearAttachment(0, 0);
+			framebuffer->ClearDepthAttachment(0);
 			return;
 		}
 
