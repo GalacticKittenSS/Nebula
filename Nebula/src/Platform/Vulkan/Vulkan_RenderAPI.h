@@ -29,8 +29,8 @@ namespace Nebula {
 		void recordCommandBuffer(Ref<VertexArray> array, VkCommandBuffer commandBuffer, uint32_t imageIndex);
 	private:
 		VkDebugUtilsMessengerEXT m_DebugMessenger;
-		uint8_t m_CurrentFrame;
-
+		glm::vec4 m_ClearColour;
+		
 		friend class Vulkan_Context;
 	};
 }

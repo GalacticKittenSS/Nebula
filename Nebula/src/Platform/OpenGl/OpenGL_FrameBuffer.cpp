@@ -190,4 +190,10 @@ namespace Nebula {
 		glClearTexImage(m_ColourAttachments[attachmentIndex], 0, 
 			Utils::NebulaFBFormattoGL(spec.TextureFormat), GL_INT, &value);
 	}
+
+	void OpenGL_FrameBuffer::ClearAttachment(uint32_t attachmentIndex, const glm::vec4& value) {
+		NB_ASSERT(attachmentIndex < m_ColourAttachments.size(), "");
+
+		auto& spec = m_ColourAttachmentSpecs[attachmentIndex];
+	}
 }

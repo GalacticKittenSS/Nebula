@@ -15,7 +15,16 @@ namespace Nebula {
 		const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
 		void* pUserData)
 	{
-		NB_TRACE("Validation Layer: {}", pCallbackData->pMessage);
+
+		switch (messageSeverity)
+		{
+		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT: NB_TRACE(pCallbackData->pMessage); break;
+		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT: NB_INFO(pCallbackData->pMessage); break;
+		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT: NB_WARN(pCallbackData->pMessage); break;
+		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:	NB_ERROR(pCallbackData->pMessage); break;
+		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_FLAG_BITS_MAX_ENUM_EXT: NB_CRITICAL(pCallbackData->pMessage); break;
+		}
+
 		return VK_FALSE;
 	}
 
@@ -69,14 +78,15 @@ namespace Nebula {
 		VulkanAPI::Shutdown();
 	}
 
-	void Vulkan_RendererAPI::SetViewPort(uint32_t x, uint32_t y, uint32_t width, uint32_t height) {
+	void Vulkan_RendererAPI::SetViewPort(uint32_t x, uint32_t y, uint32_t width, uint32_t height) 
+	{
 	}
 
 	void Vulkan_RendererAPI::Clear() 
 	{
 		if (Vulkan_FrameBuffer* framebuffer = Vulkan_FrameBuffer::s_BindedInstance)
 		{
-			framebuffer->ClearAttachment(0, 0);
+			framebuffer->ClearAttachment(0, m_ClearColour);
 			framebuffer->ClearDepthAttachment(0);
 			return;
 		}
@@ -106,10 +116,12 @@ namespace Nebula {
 
 	void Vulkan_RendererAPI::SetClearColour(float r, float g, float b, float a) 
 	{
+		m_ClearColour = { r, g, b, a };
 	}
 
 	void Vulkan_RendererAPI::SetClearColour(const glm::vec4& colour) 
 	{
+		m_ClearColour = colour;
 	}
 
 	void Vulkan_RendererAPI::SetBackfaceCulling(bool cull) 
@@ -155,9 +167,9 @@ namespace Nebula {
 
 		VkViewport viewport{};
 		viewport.x = 0.0f;
-		viewport.y = 0.0f;
+		viewport.y = (float)extent.height;
 		viewport.width = (float)extent.width;
-		viewport.height = (float)extent.height;
+		viewport.height = -(float)extent.height;
 		viewport.minDepth = 0.0f;
 		viewport.maxDepth = 1.0f;
 		vkCmdSetViewport(commandBuffer, 0, 1, &viewport);

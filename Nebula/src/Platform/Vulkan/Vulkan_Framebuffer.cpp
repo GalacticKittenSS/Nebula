@@ -260,7 +260,7 @@ namespace Nebula {
 		return 0;
 	}
 
-	void Vulkan_FrameBuffer::ClearAttachment(uint32_t attachmentIndex, int value) 
+	void Vulkan_FrameBuffer::ClearAttachment(uint32_t attachmentIndex, VkClearColorValue clearValue)
 	{
 		NB_ASSERT(attachmentIndex < m_ColourAttachments.size());
 
@@ -269,8 +269,7 @@ namespace Nebula {
 		VulkanAPI::TransitionImageLayout(image, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
 		VkCommandBuffer commandBuffer = VulkanAPI::BeginSingleUseCommand();
-		VkClearColorValue clearValue = { value };
-
+		
 		VkImageSubresourceRange subResourceRange = {};
 		subResourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		subResourceRange.baseMipLevel = 0;
@@ -282,6 +281,17 @@ namespace Nebula {
 		VulkanAPI::EndSingleUseCommand(commandBuffer);
 
 		VulkanAPI::TransitionImageLayout(image, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+	}
+
+	void Vulkan_FrameBuffer::ClearAttachment(uint32_t attachmentIndex, int value) 
+	{
+		VkClearColorValue clearValue = { value };
+		ClearAttachment(attachmentIndex, clearValue);
+	}
+	
+	void Vulkan_FrameBuffer::ClearAttachment(uint32_t attachmentIndex, const glm::vec4& value) 
+	{
+		ClearAttachment(attachmentIndex, VkClearColorValue{ value.r, value.g, value.b, value.a });
 	}
 	
 	void Vulkan_FrameBuffer::ClearDepthAttachment(int value) 

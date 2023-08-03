@@ -14,6 +14,7 @@ namespace Nebula {
 		int ReadPixel(uint32_t attachmentIndex, int x, int y) override;
 
 		void ClearAttachment(uint32_t attachmentIndex, int value) override;
+		void ClearAttachment(uint32_t attachmentIndex, const glm::vec4& value) override;
 		void ClearDepthAttachment(int value);
 
 		void Invalidate();
@@ -25,6 +26,8 @@ namespace Nebula {
 
 		FrameBufferSpecification& GetFrameBufferSpecifications() override { return m_Specifications; }
 		const FrameBufferSpecification& GetFrameBufferSpecifications() const override { return m_Specifications; }
+	private:
+		void ClearAttachment(uint32_t attachmentIndex, VkClearColorValue clearValue);
 	private:
 		FrameBufferSpecification m_Specifications;
 		Array<FramebufferTextureSpecification> m_ColourAttachmentSpecs;
