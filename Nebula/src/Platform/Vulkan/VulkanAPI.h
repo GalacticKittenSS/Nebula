@@ -17,6 +17,7 @@ namespace Nebula
 	
 		static uint32_t FindMemoryType(uint32_t filter, VkMemoryPropertyFlags properties);
 		static void TransitionImageLayout(VkImage image, VkImageAspectFlags imageAspect, VkImageLayout oldLayout, VkImageLayout newLayout);
+		static void AllocateDescriptorSet(VkDescriptorSet& descriptorSet, const VkDescriptorSetLayout& layout);
 
 		static const VkInstance& GetInstance() { return s_Instance; }
 		static const VkDevice& GetDevice() { return s_Device; }
@@ -50,6 +51,8 @@ namespace Nebula
 		static std::vector<VkSemaphore> s_ImageSemaphores;
 		static std::vector<VkSemaphore> s_RenderSemaphores;
 		static std::vector<VkFence> s_Fences;
+
+		static VkDescriptorPool s_DescriptorPool;
 
 		static uint8_t m_FrameIndex;
 

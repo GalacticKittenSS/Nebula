@@ -139,6 +139,8 @@ namespace Nebula
 	std::vector<VkSemaphore> VulkanAPI::s_RenderSemaphores = {};
 	std::vector<VkFence> VulkanAPI::s_Fences = {};
 
+	VkDescriptorPool VulkanAPI::s_DescriptorPool = VK_NULL_HANDLE;
+
 	uint8_t VulkanAPI::m_FrameIndex = 0;
 
 	void VulkanAPI::Init(PFN_vkDebugUtilsMessengerCallbackEXT debugCallback)
@@ -180,6 +182,31 @@ namespace Nebula
 		CreateLogicalDevice();
 		CreateCommandBuffers();
 		CreateSyncObjects();
+
+		// Descriptor Set Pool
+		{
+			std::vector<VkDescriptorPoolSize> pool_sizes = {
+				{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
+				{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
+				{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
+				{ VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
+				{ VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
+				{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
+				{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
+				{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
+				{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
+				{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
+			};
+
+			VkDescriptorPoolCreateInfo poolInfo{};
+			poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+			poolInfo.poolSizeCount = (uint32_t)pool_sizes.size();
+			poolInfo.pPoolSizes = pool_sizes.data();
+			poolInfo.maxSets = 1000;
+
+			VkResult result = vkCreateDescriptorPool(VulkanAPI::GetDevice(), &poolInfo, nullptr, &s_DescriptorPool);
+			NB_ASSERT(result == VK_SUCCESS, "Failed to create descriptor pool!");
+		}
 	}
 
 	VkDebugUtilsMessengerCreateInfoEXT VulkanAPI::PopulateDebugMessenger(PFN_vkDebugUtilsMessengerCallbackEXT debugCallback)
@@ -422,6 +449,20 @@ namespace Nebula
 
 		vkCmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 		VulkanAPI::EndSingleUseCommand(commandBuffer);
+	}
+
+	void VulkanAPI::AllocateDescriptorSet(VkDescriptorSet& descriptorSet, const VkDescriptorSetLayout& layout)
+	{
+		NB_ASSERT(layout != VK_NULL_HANDLE);
+
+		VkDescriptorSetAllocateInfo allocInfo{};
+		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+		allocInfo.descriptorPool = s_DescriptorPool;
+		allocInfo.pSetLayouts = &layout;
+		allocInfo.descriptorSetCount = 1;
+
+		VkResult result = vkAllocateDescriptorSets(s_Device, &allocInfo, &descriptorSet);
+		NB_ASSERT(result == VK_SUCCESS, "Failed to allocate descriptor set!");
 	}
 
 	VulkanBuffer::VulkanBuffer(uint32_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties)

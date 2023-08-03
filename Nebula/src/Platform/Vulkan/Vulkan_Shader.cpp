@@ -2,9 +2,6 @@
 #include "Vulkan_Shader.h"
 
 #include "Nebula/Utils/Time.h"
-#include "Nebula/Scene/SceneRenderer.h"
-#include "Nebula/Renderer/Render_Command.h"
-#include "Nebula/Core/Application.h"
 
 #include "VulkanAPI.h"
 #include "Vulkan_Context.h"
@@ -102,32 +99,38 @@ namespace Nebula
 			return VK_FORMAT_R16_SFLOAT;
 		}
 
-		VkDescriptorSetLayoutBinding AddLayoutBinding(uint32_t binding, VkDescriptorType type, VkShaderStageFlagBits stage)
+		VkDescriptorSetLayoutBinding CreateLayoutBinding(uint32_t binding, uint32_t count, VkDescriptorType type, VkShaderStageFlagBits stage)
 		{
 			VkDescriptorSetLayoutBinding layoutBinding{};
 			layoutBinding.binding = binding;
-			layoutBinding.descriptorCount = 1;
+			layoutBinding.descriptorCount = glm::max(count, 1u);
 			layoutBinding.descriptorType = type;
 			layoutBinding.stageFlags = stage;
 			return layoutBinding;
 		}
-
-		void AddResourceLayoutBinding(std::vector<VkDescriptorSetLayoutBinding>& descriptorSetLayoutBindings, const spirv_cross::Compiler& compiler, VkShaderStageFlagBits stage)
+			
+		void AddResourceLayoutBinding(std::map<uint32_t, std::vector<VkDescriptorSetLayoutBinding>>& descriptorSetLayouts, const spirv_cross::Compiler& compiler, VkShaderStageFlagBits stage)
 		{
 			spirv_cross::ShaderResources resources = compiler.get_shader_resources();
 			
 			for (const auto& resource : resources.uniform_buffers)
 			{
+				uint32_t descriptorSet = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
 				uint32_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
-				VkDescriptorSetLayoutBinding layoutBinding = AddLayoutBinding(binding, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, stage);
-				descriptorSetLayoutBindings.push_back(layoutBinding);
-			}
+				const spirv_cross::SPIRType& type = compiler.get_type(resource.type_id);
 
+				VkDescriptorSetLayoutBinding layout = CreateLayoutBinding(binding, type.array[0], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, stage);
+				descriptorSetLayouts[descriptorSet].push_back(layout);
+			}
+			
 			for (const auto& resource : resources.sampled_images)
 			{
+				uint32_t descriptorSet = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
 				uint32_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
-				VkDescriptorSetLayoutBinding layoutBinding = AddLayoutBinding(binding, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, stage);
-				descriptorSetLayoutBindings.push_back(layoutBinding);
+				const spirv_cross::SPIRType& type = compiler.get_type(resource.type_id);
+
+				VkDescriptorSetLayoutBinding layout = CreateLayoutBinding(binding, type.array[0], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, stage);
+				descriptorSetLayouts[descriptorSet].push_back(layout);
 			}
 		}
 	}
@@ -171,65 +174,41 @@ namespace Nebula
 		fragShaderStageInfo.module = fragShaderModule;
 		fragShaderStageInfo.pName = "main";
 
-
 		VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
 		
-		// Descriptor Set Layout
+		// Descriptor Sets
 		{
 			spirv_cross::Compiler vertexCompiler(m_VulkanSPIRV[VK_SHADER_STAGE_VERTEX_BIT]);
 			spirv_cross::Compiler fragmentCompiler(m_VulkanSPIRV[VK_SHADER_STAGE_FRAGMENT_BIT]);
 			
-			std::vector<VkDescriptorSetLayoutBinding> descriptorSetLayoutBindings;
+			std::map<uint32_t, std::vector<VkDescriptorSetLayoutBinding>> descriptorSetLayoutBindings;
 			Utils::AddResourceLayoutBinding(descriptorSetLayoutBindings, vertexCompiler, VK_SHADER_STAGE_VERTEX_BIT);
 			Utils::AddResourceLayoutBinding(descriptorSetLayoutBindings, fragmentCompiler, VK_SHADER_STAGE_FRAGMENT_BIT);
 
-			VkDescriptorSetLayoutCreateInfo layoutInfo{};
-			layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-			layoutInfo.bindingCount = (uint32_t)descriptorSetLayoutBindings.size();
-			layoutInfo.pBindings = descriptorSetLayoutBindings.data();
+			uint32_t vectorSize = descriptorSetLayoutBindings.rbegin()->first + 1;
+			m_DescriptorSets.resize(vectorSize);
+			m_DescriptorSetLayouts.resize(vectorSize);
 
-			VkResult result = vkCreateDescriptorSetLayout(VulkanAPI::GetDevice(), &layoutInfo, nullptr, &m_DescriptorSetLayout);
-			NB_ASSERT(result == VK_SUCCESS, "Failed to create descriptor set layout!");
+			for (uint32_t i = 0; i < vectorSize; i++)
+			{
+				VkDescriptorSetLayoutCreateInfo layoutInfo{};
+				layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+				
+				if (descriptorSetLayoutBindings.find(i) != descriptorSetLayoutBindings.end())
+				{
+					auto& layoutBindings = descriptorSetLayoutBindings.at(i);
+					layoutInfo.bindingCount = (uint32_t)layoutBindings.size();
+					layoutInfo.pBindings = layoutBindings.data();
+				}
+
+				VkResult result = vkCreateDescriptorSetLayout(VulkanAPI::GetDevice(), &layoutInfo, nullptr, &m_DescriptorSetLayouts[i]);
+				NB_ASSERT(result == VK_SUCCESS, "Failed to create descriptor set layout!");
+
+				VulkanAPI::AllocateDescriptorSet(m_DescriptorSets[i], m_DescriptorSetLayouts[i]);
+			}
 		}
 		
 		CreatePipeline(shaderStages);
-
-		// Descriptor Set Pool
-		{
-			std::vector<VkDescriptorPoolSize> pool_sizes = {
-				{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
-				{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
-				{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
-				{ VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
-				{ VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
-				{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
-				{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
-				{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
-				{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
-				{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
-			};
-
-			VkDescriptorPoolCreateInfo poolInfo{};
-			poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-			poolInfo.poolSizeCount = (uint32_t)pool_sizes.size();
-			poolInfo.pPoolSizes = pool_sizes.data();
-			poolInfo.maxSets = 1000;
-
-			VkResult result = vkCreateDescriptorPool(VulkanAPI::GetDevice(), &poolInfo, nullptr, &m_DescriptorPool);
-			NB_ASSERT(result == VK_SUCCESS, "Failed to create descriptor pool!");
-		}
-
-		// Descriptor Set
-		{
-			VkDescriptorSetAllocateInfo allocInfo{};
-			allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-			allocInfo.descriptorPool = m_DescriptorPool;
-			allocInfo.descriptorSetCount = 1;
-			allocInfo.pSetLayouts = &m_DescriptorSetLayout;
-
-			VkResult result = vkAllocateDescriptorSets(VulkanAPI::GetDevice(), &allocInfo, &m_DescriptorSet);
-			NB_ASSERT(result == VK_SUCCESS, "Failed to allocate descriptor sets!");
-		}
 
 		vkDestroyShaderModule(VulkanAPI::GetDevice(), vertShaderModule, nullptr);
 		vkDestroyShaderModule(VulkanAPI::GetDevice(), fragShaderModule, nullptr);
@@ -246,8 +225,8 @@ namespace Nebula
 		vkDestroyPipeline(VulkanAPI::GetDevice(), m_GraphicsPipeline, nullptr);
 		vkDestroyPipelineLayout(VulkanAPI::GetDevice(), m_PipelineLayout, nullptr);
 
-		vkDestroyDescriptorPool(VulkanAPI::GetDevice(), m_DescriptorPool, nullptr);
-		vkDestroyDescriptorSetLayout(VulkanAPI::GetDevice(), m_DescriptorSetLayout, nullptr);
+		for (auto& layout : m_DescriptorSetLayouts)
+			vkDestroyDescriptorSetLayout(VulkanAPI::GetDevice(), layout, nullptr);
 	}
 
 	void Vulkan_Shader::Bind() const
@@ -412,8 +391,10 @@ namespace Nebula
 		{
 			VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 			pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-			pipelineLayoutInfo.setLayoutCount = 1;
-			pipelineLayoutInfo.pSetLayouts = &m_DescriptorSetLayout;
+			pipelineLayoutInfo.setLayoutCount = (uint32_t)m_DescriptorSetLayouts.size();
+			pipelineLayoutInfo.pSetLayouts = m_DescriptorSetLayouts.data();
+
+			m_DescriptorSetLayouts.shrink_to_fit();
 
 			VkResult result = vkCreatePipelineLayout(VulkanAPI::GetDevice(), &pipelineLayoutInfo, nullptr, &m_PipelineLayout);
 			NB_ASSERT(result == VK_SUCCESS, "Failed to create pipeline layout");

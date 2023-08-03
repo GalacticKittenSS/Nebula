@@ -3,6 +3,7 @@
 #include "Nebula/renderer/Shader.h"
 #include "Nebula/Maths/Maths.h"
 
+#include <map>
 #include <unordered_map>
 #include <vulkan/vulkan.h>
 
@@ -55,10 +56,10 @@ namespace Nebula {
 
 		VkPipeline m_GraphicsPipeline;
 		VkPipelineLayout m_PipelineLayout;
-		VkDescriptorSetLayout m_DescriptorSetLayout;
-		VkDescriptorPool m_DescriptorPool;
-		VkDescriptorSet m_DescriptorSet;
 		
+		std::vector<VkDescriptorSet> m_DescriptorSets;
+		std::vector<VkDescriptorSetLayout> m_DescriptorSetLayouts;
+
 		friend class Vulkan_RendererAPI;
 		friend class Vulkan_UniformBuffer;
 		friend class Vulkan_Texture2D;

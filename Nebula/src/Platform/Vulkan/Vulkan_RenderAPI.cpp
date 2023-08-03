@@ -152,7 +152,9 @@ namespace Nebula {
 
 		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, shader->m_GraphicsPipeline);
-		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, shader->m_PipelineLayout, 0, 1, &shader->m_DescriptorSet, 0, nullptr);
+
+		for (uint32_t i = 0; i < shader->m_DescriptorSets.size(); i++)
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, shader->m_PipelineLayout, i, 1, &shader->m_DescriptorSets[i], 0, nullptr);
 
 		array->Bind();
 
