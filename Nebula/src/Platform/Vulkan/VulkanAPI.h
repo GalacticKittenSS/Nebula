@@ -63,15 +63,19 @@ namespace Nebula
 	class VulkanBuffer
 	{
 	public:
+		VulkanBuffer() = default;
 		VulkanBuffer(uint32_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties);
 		~VulkanBuffer();
 		
 		void SetData(const void* data, uint32_t size, uint32_t offset = 0);
 		VkBuffer& GetBuffer() { return m_Buffer; }
+		VkDeviceSize GetSize() { return m_AlignedSize; }
 	private:
-		VkBuffer m_Buffer;
-		VkDeviceMemory m_BufferMemory;
-		void* m_MappedMemory;
+		VkBuffer m_Buffer = VK_NULL_HANDLE;
+		VkDeviceMemory m_BufferMemory = VK_NULL_HANDLE;
+		void* m_MappedMemory = nullptr;
+
+		size_t m_AlignedSize = 0;
 	};
 
 	class VulkanImage;

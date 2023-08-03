@@ -148,13 +148,8 @@ namespace Nebula {
 		renderPassInfo.clearValueCount = (uint32_t)clearValues.size();
 		renderPassInfo.pClearValues = clearValues.data();
 
-		Ref<Vulkan_Shader> shader = std::static_pointer_cast<Vulkan_Shader>(SceneRenderer::GetShader());
-
 		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, shader->m_GraphicsPipeline);
-
-		for (uint32_t i = 0; i < shader->m_DescriptorSets.size(); i++)
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, shader->m_PipelineLayout, i, 1, &shader->m_DescriptorSets[i], 0, nullptr);
+		Vulkan_Shader::BindPipeline();
 
 		array->Bind();
 

@@ -7,9 +7,8 @@
 
 namespace Nebula 
 {
-	std::map<uint32_t, Vulkan_UniformBuffer*> Vulkan_UniformBuffer::s_BindedInstances;
-
 	Vulkan_UniformBuffer::Vulkan_UniformBuffer(uint32_t size, uint32_t binding)
+		: m_Binding(binding)
 	{
 		NB_PROFILE_FUNCTION();
 
@@ -18,26 +17,6 @@ namespace Nebula
 		{
 			m_Buffers[i] = CreateScope<VulkanBuffer>(size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 		}
-
-		Ref<Vulkan_Shader> shader = std::static_pointer_cast<Vulkan_Shader>(SceneRenderer::GetShader());
-
-		VkDescriptorBufferInfo bufferInfo{};
-		bufferInfo.buffer = m_Buffers[0]->GetBuffer();
-		bufferInfo.offset = 0;
-		bufferInfo.range = 192;
-
-		VkWriteDescriptorSet descriptorWrite{};
-		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrite.dstSet = shader->m_DescriptorSets[0];
-		descriptorWrite.dstBinding = 0;
-		descriptorWrite.dstArrayElement = 0;
-		descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		descriptorWrite.descriptorCount = 1;
-		descriptorWrite.pBufferInfo = &bufferInfo;
-
-		vkUpdateDescriptorSets(VulkanAPI::GetDevice(), 1, &descriptorWrite, 0, nullptr);
-		
-		s_BindedInstances[binding] = this;
 	}
 
 	Vulkan_UniformBuffer::~Vulkan_UniformBuffer()

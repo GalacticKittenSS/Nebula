@@ -19,6 +19,9 @@ namespace Nebula {
 
 		const std::string& GetName() const override { return m_Name; }
 
+		void SetTextureArray(const std::string& name, Ref<Texture> texture) override;
+		void SetUniformBuffer(const std::string& name, Ref<UniformBuffer> uniformBuffer) override;
+		
 		void SetInt(const std::string& name, int value) override;
 		void SetIntArray(const std::string& name, int* values, uint32_t count) override;
 		void SetFloat(const std::string& name, float value) override;
@@ -26,17 +29,16 @@ namespace Nebula {
 		void SetFloat3(const std::string& name, const glm::vec3& value) override;
 		void SetFloat4(const std::string& name, const glm::vec4& value) override;
 		void SetMat4(const std::string& name, const glm::mat4& value) override;
-
-		void UploadUniformInt(const std::string& name, const int value);
-		void UploadUniformIntArray(const std::string& name, int* values, uint32_t count);
-
-		void UploadUniformMat3(const std::string& name, const glm::mat3& matrix);
-		void UploadUniformMat4(const std::string& name, const glm::mat4& matrix);
-
-		void UploadUniformFloat(const std::string& name, const float values);
-		void UploadUniformFloat2(const std::string& name, const glm::vec2& values);
-		void UploadUniformFloat3(const std::string& name, const glm::vec3& values);
-		void UploadUniformFloat4(const std::string& name, const glm::vec4& values);
+		
+		static void SetTexture(uint32_t slot, VkDescriptorImageInfo info);
+		static void BindPipeline();
+	private:
+		struct UniformData
+		{
+			uint32_t descriptorSet = -1u;
+			uint32_t binding = -1u;
+			uint32_t arrayCount = 0;
+		};
 	private:
 		std::string ReadFile(const std::string& filepath);
 		std::unordered_map<VkShaderStageFlagBits, std::string> PreProcess(const std::string& source);
@@ -46,6 +48,8 @@ namespace Nebula {
 
 		VkShaderModule CreateShaderModule(const std::vector<uint32_t>& code);
 		void CreatePipeline(VkPipelineShaderStageCreateInfo shaderStages[]);
+
+		UniformData GetUniformFromName(const std::string& name) const;
 	private:
 		uint32_t m_RendererID;
 		std::string m_FilePath;
@@ -60,8 +64,12 @@ namespace Nebula {
 		std::vector<VkDescriptorSet> m_DescriptorSets;
 		std::vector<VkDescriptorSetLayout> m_DescriptorSetLayouts;
 
+		std::map<std::string, UniformData> m_Uniforms;
+
 		friend class Vulkan_RendererAPI;
 		friend class Vulkan_UniformBuffer;
 		friend class Vulkan_Texture2D;
+
+		static const Vulkan_Shader* s_BindedInstance;
 	};
 }

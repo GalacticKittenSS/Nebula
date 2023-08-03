@@ -34,7 +34,9 @@ namespace Nebula {
 		uint32_t m_Width, m_Height;
 		VkFormat m_Format;
 
-		Scope<VulkanImage> m_Image;
+		Ref<VulkanImage> m_Image;
 		VkSampler m_Sampler;
+
+		friend class Vulkan_Shader;
 	};
 }

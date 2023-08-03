@@ -4,8 +4,9 @@
 #include "Nebula/Utils/Time.h"
 
 #include "VulkanAPI.h"
-#include "Vulkan_Context.h"
 #include "Vulkan_Framebuffer.h"
+#include "Vulkan_UniformBuffer.h"
+#include "Vulkan_Texture.h"
 
 #include <shaderc/shaderc.hpp>
 #include <spirv_cross/spirv_cross.hpp>
@@ -13,6 +14,8 @@
 
 namespace Nebula
 {
+	const Vulkan_Shader* Vulkan_Shader::s_BindedInstance = nullptr;
+
 	namespace Utils {
 		static VkShaderStageFlagBits ShaderTypeFromString(const std::string& type)
 		{
@@ -199,6 +202,10 @@ namespace Nebula
 					auto& layoutBindings = descriptorSetLayoutBindings.at(i);
 					layoutInfo.bindingCount = (uint32_t)layoutBindings.size();
 					layoutInfo.pBindings = layoutBindings.data();
+					
+					// TODO: Remove hardcoded uniform info (get name automatically)
+					m_Uniforms["u_ViewProjection"] = { 0, layoutBindings[0].binding, layoutBindings[0].descriptorCount};
+					m_Uniforms["u_Textures"] = { 0, layoutBindings[1].binding, layoutBindings[1].descriptorCount };
 				}
 
 				VkResult result = vkCreateDescriptorSetLayout(VulkanAPI::GetDevice(), &layoutInfo, nullptr, &m_DescriptorSetLayouts[i]);
@@ -231,12 +238,23 @@ namespace Nebula
 
 	void Vulkan_Shader::Bind() const
 	{
-
+		s_BindedInstance = this;
 	}
 	
 	void Vulkan_Shader::Unbind() const
 	{
 
+	}
+
+	void Vulkan_Shader::BindPipeline()
+	{
+		vkCmdBindPipeline(VulkanAPI::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, s_BindedInstance->m_GraphicsPipeline);
+
+		for (uint32_t i = 0; i < s_BindedInstance->m_DescriptorSets.size(); i++)
+		{
+			vkCmdBindDescriptorSets(VulkanAPI::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, s_BindedInstance->m_PipelineLayout, 
+				i, 1, &s_BindedInstance->m_DescriptorSets.at(i), 0, nullptr);
+		}
 	}
 
 	std::string Vulkan_Shader::ReadFile(const std::string& filepath) {
@@ -524,6 +542,82 @@ namespace Nebula
 		NB_ASSERT(result == VK_SUCCESS, "Failed to create graphics pipeline!");
 	}
 
+	Vulkan_Shader::UniformData Vulkan_Shader::GetUniformFromName(const std::string& name) const
+	{
+		auto it = m_Uniforms.find(name);
+		if (it != m_Uniforms.end())
+			return it->second;
+
+		return {};
+	}
+
+	void Vulkan_Shader::SetUniformBuffer(const std::string& name, Ref<UniformBuffer> uniformBuffer)
+	{
+		UniformData uniform = GetUniformFromName(name);
+		if (uniform.binding == -1u)
+			return;
+
+		Ref<Vulkan_UniformBuffer> buffer = std::static_pointer_cast<Vulkan_UniformBuffer>(uniformBuffer);
+
+		VkDescriptorBufferInfo bufferInfo{};
+		bufferInfo.buffer = buffer->GetBuffer();
+		bufferInfo.range = buffer->GetSize();
+		bufferInfo.offset = 0;
+
+		VkWriteDescriptorSet descriptorWrite{};
+		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrite.dstSet = m_DescriptorSets.at(uniform.descriptorSet);
+		descriptorWrite.dstBinding = uniform.binding;
+		descriptorWrite.dstArrayElement = 0;
+		descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		descriptorWrite.descriptorCount = 1;
+		descriptorWrite.pBufferInfo = &bufferInfo;
+
+		vkUpdateDescriptorSets(VulkanAPI::GetDevice(), 1, &descriptorWrite, 0, nullptr);
+	}
+
+	void Vulkan_Shader::SetTextureArray(const std::string& name, Ref<Texture> texture)
+	{
+		UniformData uniform = GetUniformFromName(name);
+
+		Ref<Vulkan_Texture2D> vulkanTexture = std::static_pointer_cast<Vulkan_Texture2D>(texture);
+
+		std::vector<VkDescriptorImageInfo> imageInfo(uniform.arrayCount);
+		for (uint32_t i = 0; i < uniform.arrayCount; i++)
+		{
+			imageInfo[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			imageInfo[i].imageView = vulkanTexture->m_Image->GetImageView();
+			imageInfo[i].sampler = vulkanTexture->m_Sampler;
+		}
+
+		VkWriteDescriptorSet descriptorWrite{};
+		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrite.dstSet = m_DescriptorSets.at(uniform.descriptorSet);
+		descriptorWrite.dstBinding = uniform.binding;
+		descriptorWrite.dstArrayElement = 0;
+		descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		descriptorWrite.descriptorCount = uniform.arrayCount;
+		descriptorWrite.pImageInfo = imageInfo.data();
+		
+		vkUpdateDescriptorSets(VulkanAPI::GetDevice(), 1, &descriptorWrite, 0, nullptr);
+	}
+	
+	void Vulkan_Shader::SetTexture(uint32_t slot, VkDescriptorImageInfo info)
+	{
+		UniformData uniform = s_BindedInstance->GetUniformFromName("u_Textures");
+
+		VkWriteDescriptorSet descriptorWrite{};
+		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrite.dstSet = s_BindedInstance->m_DescriptorSets.at(uniform.descriptorSet);
+		descriptorWrite.dstBinding = uniform.binding;
+		descriptorWrite.dstArrayElement = slot;
+		descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		descriptorWrite.descriptorCount = 1;
+		descriptorWrite.pImageInfo = &info;
+
+		vkUpdateDescriptorSets(VulkanAPI::GetDevice(), 1, &descriptorWrite, 0, nullptr);
+	}
+
 	void Vulkan_Shader::SetInt(const std::string& name, int value)
 	{
 	}
@@ -549,38 +643,6 @@ namespace Nebula
 	}
 
 	void Vulkan_Shader::SetMat4(const std::string& name, const glm::mat4& value)
-	{
-	}
-
-	void Vulkan_Shader::UploadUniformInt(const std::string& name, const int value)
-	{
-	}
-
-	void Vulkan_Shader::UploadUniformIntArray(const std::string& name, int* values, uint32_t count)
-	{
-	}
-
-	void Vulkan_Shader::UploadUniformMat3(const std::string& name, const glm::mat3& matrix)
-	{
-	}
-
-	void Vulkan_Shader::UploadUniformMat4(const std::string& name, const glm::mat4& matrix)
-	{
-	}
-
-	void Vulkan_Shader::UploadUniformFloat(const std::string& name, const float values)
-	{
-	}
-
-	void Vulkan_Shader::UploadUniformFloat2(const std::string& name, const glm::vec2& values)
-	{
-	}
-
-	void Vulkan_Shader::UploadUniformFloat3(const std::string& name, const glm::vec3& values)
-	{
-	}
-	
-	void Vulkan_Shader::UploadUniformFloat4(const std::string& name, const glm::vec4& values)
 	{
 	}
 }

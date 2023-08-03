@@ -18,8 +18,6 @@ namespace Nebula
 		static void CleanUp();
 		
 		static bool OnWindowResize(WindowResizeEvent& e);
-
-		static Ref<Shader> GetShader();
 	private:
 		static Settings m_Settings;
 	};

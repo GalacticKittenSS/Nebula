@@ -478,6 +478,7 @@ namespace Nebula
 
 		VkMemoryRequirements memRequirements;
 		vkGetBufferMemoryRequirements(VulkanAPI::GetDevice(), m_Buffer, &memRequirements);
+		m_AlignedSize = memRequirements.size;
 
 		VkMemoryAllocateInfo allocInfo{};
 		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
@@ -488,7 +489,7 @@ namespace Nebula
 		NB_ASSERT(result == VK_SUCCESS, "Failed to create vertex buffer memory!");
 
 		vkBindBufferMemory(VulkanAPI::GetDevice(), m_Buffer, m_BufferMemory, 0);
-		vkMapMemory(VulkanAPI::GetDevice(), m_BufferMemory, 0, size, 0, &m_MappedMemory);
+		vkMapMemory(VulkanAPI::GetDevice(), m_BufferMemory, 0, m_AlignedSize, 0, &m_MappedMemory);
 	}
 
 	VulkanBuffer::~VulkanBuffer()

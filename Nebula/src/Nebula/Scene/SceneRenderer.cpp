@@ -74,15 +74,15 @@ namespace Nebula
 		s_VKData.vao->SetIndexBuffer(s_VKData.iBuffer);
 		
 		s_VKData.CameraUniformBuffer = UniformBuffer::Create(sizeof(UniformBufferObject), 0);
+		s_VKData.shader->SetUniformBuffer("u_ViewProjection", s_VKData.CameraUniformBuffer);
+
 		s_VKData.Texture = TextureImporter::CreateTexture2D("Resources/Vulkan/Texture.jpg");
+
+		// Temporarily initialises every member of sampler2D array u_Textures to s_VKData.Texture
+		s_VKData.shader->SetTextureArray("u_Textures", s_VKData.Texture);
 
 		RenderCommand::SetBackfaceCulling(true);
 		RenderCommand::SetLineWidth(0.5f);
-	}
-
-	Ref<Shader> SceneRenderer::GetShader()
-	{
-		return s_VKData.shader;
 	}
 
 	bool SceneRenderer::OnWindowResize(WindowResizeEvent& e)
@@ -117,10 +117,11 @@ namespace Nebula
 		s_VKData.CameraUniformBuffer->SetData(&ubo, sizeof(ubo));
 
 		s_VKData.frambuffer->Bind();
-		s_VKData.Texture->Bind();
 		s_VKData.frambuffer->ClearAttachment(1, -1);
-
 		RenderCommand::Clear();
+
+		s_VKData.shader->Bind();
+		s_VKData.Texture->Bind();
 		RenderCommand::DrawIndexed(s_VKData.vao);
 		
 		s_VKData.frambuffer->Unbind();

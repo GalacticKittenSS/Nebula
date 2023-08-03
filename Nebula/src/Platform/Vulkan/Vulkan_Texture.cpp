@@ -22,7 +22,7 @@ namespace Nebula {
 			case VK_FORMAT_R8G8B8A8_SRGB: return 4;
 			}
 
-			NB_ASSERT(false, "Unknown OpenGL Format");
+			NB_ASSERT(false, "Unknown Vulkan Format");
 			return 0;
 		}
 
@@ -95,7 +95,7 @@ namespace Nebula {
 
 		m_Format = Utils::NebulaToVKDataFormat(specification.Format);
 
-		m_Image = CreateScope<VulkanImage>(m_Format, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_ASPECT_COLOR_BIT,
+		m_Image = CreateRef<VulkanImage>(m_Format, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_ASPECT_COLOR_BIT,
 			1, m_Specification.Width, m_Specification.Height);
 
 		VkPhysicalDeviceProperties properties{};
@@ -124,24 +124,6 @@ namespace Nebula {
 			SetData(data);
 			m_IsLoaded = true;
 		}
-
-		VkDescriptorImageInfo imageInfo{};
-		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		imageInfo.imageView = m_Image->GetImageView();
-		imageInfo.sampler = m_Sampler;
-
-		Ref<Vulkan_Shader> shader = std::static_pointer_cast<Vulkan_Shader>(SceneRenderer::GetShader());
-
-		VkWriteDescriptorSet descriptorWrite{};
-		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrite.dstSet = shader->m_DescriptorSets[0];
-		descriptorWrite.dstBinding = 1;
-		descriptorWrite.dstArrayElement = 0;
-		descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		descriptorWrite.descriptorCount = 1;
-		descriptorWrite.pImageInfo = &imageInfo;
-
-		vkUpdateDescriptorSets(VulkanAPI::GetDevice(), 1, &descriptorWrite, 0, nullptr);
 	}
 
 	Vulkan_Texture2D::~Vulkan_Texture2D() 
@@ -156,15 +138,14 @@ namespace Nebula {
 		NB_PROFILE_FUNCTION();
 
 		uint32_t bpp = Utils::VulkantoBPP(m_Format);
-		//NB_ASSERT(data.Size == m_Width * m_Height * bpp, "Data must be Entire Texture");
-
-		VulkanBuffer stagingBuffer = VulkanBuffer(m_Width * m_Height * bpp, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+		uint32_t bufferSize = m_Width * m_Height * bpp;
+		VulkanBuffer stagingBuffer = VulkanBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 		
-		if (data.Size != m_Width * m_Height * bpp)
+		if (data.Size != bufferSize)
 		{
 			// Add Alpha Padding
-			uint32_t offset = 0;
-			for (uint32_t i = 0; i < data.Size; i += data.Size / (m_Width * m_Height))
+			uint64_t offset = 0;
+			for (uint64_t i = 0; i < data.Size; i += data.Size / (m_Width * m_Height))
 			{
 				unsigned char padded[] = { data.Data[i] , data.Data[i + 1], data.Data[i + 2], 255 };
 				stagingBuffer.SetData(padded, sizeof(padded), offset);
@@ -183,14 +164,23 @@ namespace Nebula {
 
 	void Vulkan_Texture2D::SetFilterNearest(bool nearest) 
 	{
+		// Recreate Sampler
 	}
 
-	void Vulkan_Texture2D::Bind(uint32_t slot = 0) const {
+	void Vulkan_Texture2D::Bind(uint32_t slot) const 
+	{
 		NB_PROFILE_FUNCTION();
+
+		// Update Descriptor Set
+		VkDescriptorImageInfo imageInfo{};
+		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageInfo.imageView = m_Image->GetImageView();
+		imageInfo.sampler = m_Sampler;
+		Vulkan_Shader::SetTexture(slot, imageInfo);
 	}
 
-	void Vulkan_Texture2D::Unbind() const {
+	void Vulkan_Texture2D::Unbind() const 
+	{
 		NB_PROFILE_FUNCTION();
-
 	}
 }
