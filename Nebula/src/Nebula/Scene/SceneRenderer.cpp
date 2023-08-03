@@ -5,9 +5,8 @@
 #include "Nebula/Renderer/Render_Command.h"
 #include "Nebula/Renderer/Framebuffer.h"
 #include "Nebula/Renderer/UniformBuffer.h"
+#include "Nebula/Renderer/Renderer2D.h"
 #include "Nebula/AssetManager/TextureImporter.h"
-
-
 
 #include <map>
 #include <optional>
@@ -17,27 +16,14 @@ namespace Nebula
 {
 	struct VulkanData
 	{
-		Ref<Shader> shader;
 		Ref<FrameBuffer> frambuffer;
-
 		bool framebufferResize = false;
 		uint32_t width = 0, height = 0;
 
-		Ref<VertexBuffer> vBuffer;
-		Ref<IndexBuffer> iBuffer;
-		Ref<VertexArray> vao;
-
-		Ref<UniformBuffer> CameraUniformBuffer;
 		Ref<Texture2D> Texture;
+		EditorCamera camera;
 	};
 	static VulkanData s_VKData;
-
-	struct UniformBufferObject 
-	{
-		glm::mat4 model;
-		glm::mat4 view;
-		glm::mat4 proj;
-	};
 
 	SceneRenderer::Settings SceneRenderer::m_Settings = {};
 
@@ -53,36 +39,22 @@ namespace Nebula
 
 		s_VKData.frambuffer = FrameBuffer::Create(spec);
 		s_VKData.frambuffer->Bind();
-		s_VKData.shader = Shader::Create("Resources/Vulkan/Shader.glsl");
 
-		const float vertices[] = {
-			-0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
-			 0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 2.0f,
-			 0.5f,  0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 2.0f, 2.0f,
-			-0.5f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 2.0f, 0.0f
-		};
-
-		const uint32_t indices[] = {
-			0, 1, 2, 2, 3, 0
-		};
-
-		s_VKData.vBuffer = VertexBuffer::Create((float*)vertices, sizeof(vertices));
-		s_VKData.iBuffer = IndexBuffer::Create((uint32_t*)indices, 6);
-		
-		s_VKData.vao = VertexArray::Create();
-		s_VKData.vao->AddVertexBuffer(s_VKData.vBuffer);
-		s_VKData.vao->SetIndexBuffer(s_VKData.iBuffer);
-		
-		s_VKData.CameraUniformBuffer = UniformBuffer::Create(sizeof(UniformBufferObject), 0);
-		s_VKData.shader->SetUniformBuffer("u_ViewProjection", s_VKData.CameraUniformBuffer);
+		// Shader currently needs VkRenderPass object located in framebuffer
+		// without a framebuffer bound vulkan will throw errors
+		Renderer2D::Init();
 
 		s_VKData.Texture = TextureImporter::CreateTexture2D("Resources/Vulkan/Texture.jpg");
+		s_VKData.camera = EditorCamera(60.0f, 16.0f / 9.0f, 0.01f, 1000.0f);
+		s_VKData.camera.SetViewPortSize(window.GetWidth(), window.GetHeight());
 
-		// Temporarily initialises every member of sampler2D array u_Textures to s_VKData.Texture
-		s_VKData.shader->SetTextureArray("u_Textures", s_VKData.Texture);
-
-		RenderCommand::SetBackfaceCulling(true);
+		RenderCommand::SetBackfaceCulling(false);
 		RenderCommand::SetLineWidth(0.5f);
+	}
+
+	void SceneRenderer::OnEvent(Event& e)
+	{
+		s_VKData.camera.OnEvent(e);
 	}
 
 	bool SceneRenderer::OnWindowResize(WindowResizeEvent& e)
@@ -90,6 +62,7 @@ namespace Nebula
 		s_VKData.framebufferResize = true;
 		s_VKData.width = e.GetWidth();
 		s_VKData.height = e.GetHeight(); 
+		s_VKData.camera.SetViewPortSize(e.GetWidth(), e.GetHeight());
 		return false;
 	}
 
@@ -101,30 +74,53 @@ namespace Nebula
 			s_VKData.framebufferResize = false;
 		}
 
-		static auto startTime = std::chrono::high_resolution_clock::now();
-		
+		s_VKData.camera.Update();
+
 		auto currentTime = std::chrono::high_resolution_clock::now();
-		float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
-
-		Window& window = Application::Get().GetWindow();
-
-		UniformBufferObject ubo{};
-		ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-		ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-		ubo.proj = glm::perspective(glm::radians(45.0f), window.GetWidth() / (float)window.GetHeight(), 0.1f, 10.0f);
-		ubo.proj[1][1] *= -1;
-
-		s_VKData.CameraUniformBuffer->SetData(&ubo, sizeof(ubo));
-
+		
 		s_VKData.frambuffer->Bind();
 		s_VKData.frambuffer->ClearAttachment(1, -1);
 		RenderCommand::Clear();
 
-		s_VKData.shader->Bind();
-		s_VKData.Texture->Bind();
-		RenderCommand::DrawIndexed(s_VKData.vao);
+		Renderer2D::BeginScene(s_VKData.camera);
 		
+		const glm::vec4 vertices[] = {
+			{ -0.5f, -0.5f, 0.0f, 1.0f },
+			{  0.5f, -0.5f, 0.0f, 1.0f },
+			{  0.5f,  0.5f, 0.0f, 1.0f },
+			{ -0.5f,  0.5f, 0.0f, 1.0f }
+		}; 
+
+		glm::vec2 texCoords[] = {
+			{ 0.0f, 0.0f },
+			{ 1.0f, 0.0f },
+			{ 1.0f, 1.0f },
+			{ 0.0f, 1.0f }
+		}; 
+
+		Material mat;
+		mat.Texture = s_VKData.Texture;
+
+		Renderer2D::DrawQuad(4, vertices, texCoords, glm::mat4(1.0f), mat);
+		Renderer2D::EndScene();
+
 		s_VKData.frambuffer->Unbind();
+		
+		// Frame Counter
+		{
+			static auto lastUpdateTime = std::chrono::high_resolution_clock::now();
+			float timeSinceUpdate = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - lastUpdateTime).count();
+
+			static int frames = 0;
+			frames++;
+
+			if (timeSinceUpdate >= 1.0f)
+			{
+				NB_INFO(frames);
+				lastUpdateTime = std::chrono::high_resolution_clock::now();
+				frames = 0;
+			}
+		}
 	}
 
 	void SceneRenderer::CleanUp()

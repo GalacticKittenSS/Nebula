@@ -25,12 +25,12 @@ layout (location = 3) out flat float v_TexIndex;
 layout (location = 4) out flat int v_EntityID;
 			
 void main() {
+	gl_Position = u_ViewProjection * vec4(position, 1.0);
 	Output.Colour = colour;
 	Output.TexCoord = texCoord;
 	Output.TilingFactor = tilingFactor;
 	v_TexIndex = texIndex;
 	v_EntityID = entityID;
-	gl_Position = u_ViewProjection * vec4(position, 1.0);
 }
 
 #type fragment
@@ -50,7 +50,7 @@ layout (location = 0) in VertexOutput Input;
 layout (location = 3) in flat float v_TexIndex;
 layout (location = 4) in flat int v_EntityID;
 
-layout (binding = 0) uniform sampler2D u_Textures[32];
+layout (binding = 1) uniform sampler2D u_Textures[32];
 
 void main() {
 	vec4 texColour = Input.Colour;

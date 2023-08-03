@@ -276,19 +276,26 @@ namespace Nebula {
 
 		//Shaders
 		s_Data.TextureShader = Shader::Create("Resources/shaders/Default.glsl");
-		s_Data.CircleShader = Shader::Create("Resources/shaders/Circle.glsl");
-		s_Data.LineShader = Shader::Create("Resources/shaders/Line.glsl");
-		s_Data.TextShader = Shader::Create("Resources/shaders/Text.glsl");
+		//s_Data.CircleShader = Shader::Create("Resources/shaders/Circle.glsl");
+		//s_Data.LineShader = Shader::Create("Resources/shaders/Line.glsl");
+		//s_Data.TextShader = Shader::Create("Resources/shaders/Text.glsl");
 		
-		int32_t samplers[s_Data.MaxTextureSlots];
-		for (uint32_t i = 0; i < s_Data.MaxTextureSlots; i++)
-			samplers[i] = i;
+		// OpenGL
+		{
+			int32_t samplers[s_Data.MaxTextureSlots];
+			for (uint32_t i = 0; i < s_Data.MaxTextureSlots; i++)
+				samplers[i] = i;
 
-		s_Data.TextureShader->Bind();
-		s_Data.TextureShader->SetIntArray("u_Textures", samplers, s_Data.MaxTextureSlots);
+			s_Data.TextureShader->Bind();
+			s_Data.TextureShader->SetIntArray("u_Textures", samplers, s_Data.MaxTextureSlots);
+		}
 		
+		// Vulkan (Fill Texture Array with Default Texture)
+		s_Data.TextureShader->SetTextureArray("u_Textures", s_Data.WhiteTexture);
+
 		//Camera Uniform
 		s_Data.CameraUniformBuffer = UniformBuffer::Create(sizeof(Renderer2DData::CameraData), 0);
+		s_Data.TextureShader->SetUniformBuffer("u_ViewProjection", s_Data.CameraUniformBuffer);
 	}
 
 	void Renderer2D::Shutdown() {
@@ -577,20 +584,16 @@ namespace Nebula {
 		{
 			if (*s_Data.TextureSlots[i].get() == *texture.get()) 
 			{
-				textureIndex = (float)i;
-				break;
+				return (float)i;
 			}
 		}
 
-		if (textureIndex == 0.0f) 
-		{
-			if (s_Data.TextureSlotIndex >= Renderer2DData::MaxTextureSlots)
-				FlushAndReset();
+		if (s_Data.TextureSlotIndex >= Renderer2DData::MaxTextureSlots)
+			FlushAndReset();
 
-			textureIndex = (float)s_Data.TextureSlotIndex;
-			s_Data.TextureSlots[s_Data.TextureSlotIndex] = texture;
-			s_Data.TextureSlotIndex++;
-		}
+		textureIndex = (float)s_Data.TextureSlotIndex;
+		s_Data.TextureSlots[s_Data.TextureSlotIndex] = texture;
+		s_Data.TextureSlotIndex++;
 		return textureIndex;
 	}
 

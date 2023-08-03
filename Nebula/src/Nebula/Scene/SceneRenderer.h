@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Nebula/Renderer/Shader.h"
 #include "Nebula/Events/Window_Event.h"
 
 namespace Nebula
@@ -17,6 +16,7 @@ namespace Nebula
 		static void Render();
 		static void CleanUp();
 		
+		static void OnEvent(Event& e);
 		static bool OnWindowResize(WindowResizeEvent& e);
 	private:
 		static Settings m_Settings;
