@@ -312,7 +312,6 @@ namespace Nebula {
 
 		Vulkan_Context* context = (Vulkan_Context*)Application::Get().GetWindow().GetContext();
 		auto& image = m_ColourAttachments[attachmentIndex][context->m_ImageIndex]->GetImage();
-		VulkanAPI::TransitionImageLayout(image, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
 		VkCommandBuffer commandBuffer = VulkanAPI::BeginSingleUseCommand();
 		
@@ -323,10 +322,11 @@ namespace Nebula {
 		subResourceRange.baseArrayLayer = 0;
 		subResourceRange.layerCount = 1;
 
+		VulkanAPI::TransitionImageLayout(image, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, commandBuffer);
 		vkCmdClearColorImage(commandBuffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearValue, 1, &subResourceRange);
-		VulkanAPI::EndSingleUseCommand(commandBuffer);
+		VulkanAPI::TransitionImageLayout(image, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, commandBuffer);
 
-		VulkanAPI::TransitionImageLayout(image, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+		VulkanAPI::EndSingleUseCommand(commandBuffer);
 	}
 
 	void Vulkan_FrameBuffer::ClearAttachment(uint32_t attachmentIndex, int value) 
@@ -348,8 +348,6 @@ namespace Nebula {
 		auto& image = m_DepthAttachment->GetImage();
 		VkImageAspectFlags aspectFlags = m_DepthAttachment->GetAspectFlags();
 
-		VulkanAPI::TransitionImageLayout(image, aspectFlags, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-
 		VkCommandBuffer commandBuffer = VulkanAPI::BeginSingleUseCommand();
 		VkClearDepthStencilValue clearValue = { 1.0f, value };
 
@@ -360,9 +358,10 @@ namespace Nebula {
 		subResourceRange.baseArrayLayer = 0;
 		subResourceRange.layerCount = 1;
 
+		VulkanAPI::TransitionImageLayout(image, aspectFlags, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, commandBuffer);
 		vkCmdClearDepthStencilImage(commandBuffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearValue, 1, &subResourceRange);
-		VulkanAPI::EndSingleUseCommand(commandBuffer);
+		VulkanAPI::TransitionImageLayout(image, aspectFlags, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, commandBuffer);
 
-		VulkanAPI::TransitionImageLayout(image, aspectFlags, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+		VulkanAPI::EndSingleUseCommand(commandBuffer);
 	}
 }

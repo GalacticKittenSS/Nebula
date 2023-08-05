@@ -19,7 +19,7 @@ namespace Nebula
 		static void EndCommandRecording();
 
 		static uint32_t FindMemoryType(uint32_t filter, VkMemoryPropertyFlags properties);
-		static void TransitionImageLayout(VkImage image, VkImageAspectFlags imageAspect, VkImageLayout oldLayout, VkImageLayout newLayout);
+		static void TransitionImageLayout(VkImage image, VkImageAspectFlags imageAspect, VkImageLayout oldLayout, VkImageLayout newLayout, VkCommandBuffer commandBuffer = VK_NULL_HANDLE);
 		static void AllocateDescriptorSet(VkDescriptorSet& descriptorSet, const VkDescriptorSetLayout& layout);
 
 		static inline const VkInstance& GetInstance() { return s_Instance; }

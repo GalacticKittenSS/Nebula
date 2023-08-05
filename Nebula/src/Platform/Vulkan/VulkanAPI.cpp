@@ -471,9 +471,11 @@ namespace Nebula
 		return VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 	}
 
-	void VulkanAPI::TransitionImageLayout(VkImage image, VkImageAspectFlags imageAspect, VkImageLayout oldLayout, VkImageLayout newLayout)
+	void VulkanAPI::TransitionImageLayout(VkImage image, VkImageAspectFlags imageAspect, VkImageLayout oldLayout, VkImageLayout newLayout, VkCommandBuffer commandBuffer)
 	{
-		VkCommandBuffer commandBuffer = BeginSingleUseCommand();
+		bool createCommandBuffer = commandBuffer == VK_NULL_HANDLE;
+		if (createCommandBuffer)
+			commandBuffer = BeginSingleUseCommand();
 
 		VkImageMemoryBarrier barrier{};
 		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -494,7 +496,9 @@ namespace Nebula
 		VkPipelineStageFlags destinationStage = GetStageFlags(newLayout);
 
 		vkCmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-		VulkanAPI::EndSingleUseCommand(commandBuffer);
+		
+		if (createCommandBuffer)
+			VulkanAPI::EndSingleUseCommand(commandBuffer);
 	}
 
 	void VulkanAPI::AllocateDescriptorSet(VkDescriptorSet& descriptorSet, const VkDescriptorSetLayout& layout)
@@ -651,7 +655,7 @@ namespace Nebula
 
 	VulkanImageArray VulkanImage::CreateImageArray(std::vector<VkImage> images, std::vector<VkImageView> imageViews)
 	{
-		float arraySize = glm::max(images.size(), imageViews.size());
+		size_t arraySize = glm::max(images.size(), imageViews.size());
 		VulkanImageArray imageArray(arraySize);
 
 		for (uint32_t i = 0; i < arraySize; i++)
