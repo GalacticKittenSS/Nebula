@@ -47,7 +47,8 @@ namespace Nebula {
 					return format;
 			}
 
-			NB_ASSERT(false, "Failed to find supported format!")
+			NB_ASSERT(false, "Failed to find supported format!");
+			return VK_FORMAT_UNDEFINED;
 		}
 
 		VkFormat FindDepthFormat()
@@ -77,7 +78,7 @@ namespace Nebula {
 	Vulkan_FrameBuffer::Vulkan_FrameBuffer(const FrameBufferSpecification& specifications) 
 		: m_Specifications(specifications) 
 	{
-		for (auto spec : m_Specifications.Attachments.Attachments) 
+		for (const auto& spec : m_Specifications.Attachments.Attachments) 
 		{
 			if (!Utils::IsDepthFormat(spec.TextureFormat))
 				m_ColourAttachmentSpecs.push_back(spec);
@@ -254,7 +255,7 @@ namespace Nebula {
 		renderPassInfo.renderArea.offset = { 0, 0 };
 		renderPassInfo.renderArea.extent = extent;
 
-		uint32_t attachmentCount = s_BindedInstance->m_ColourAttachments.size();
+		size_t attachmentCount = s_BindedInstance->m_ColourAttachments.size();
 		if (s_BindedInstance->m_DepthAttachment)
 			attachmentCount++;
 
@@ -303,6 +304,7 @@ namespace Nebula {
 	int Vulkan_FrameBuffer::ReadPixel(uint32_t attachmentIndex, int x, int y) 
 	{
 		NB_ASSERT(attachmentIndex < m_ColourAttachments.size(), "Index is greater than Attachment Size");
+		// TODO: Implement Read Pixel
 		return 0;
 	}
 
@@ -331,7 +333,7 @@ namespace Nebula {
 
 	void Vulkan_FrameBuffer::ClearAttachment(uint32_t attachmentIndex, int value) 
 	{
-		VkClearColorValue clearValue = { value };
+		VkClearColorValue clearValue = { (float)value };
 		ClearAttachment(attachmentIndex, clearValue);
 	}
 	
@@ -349,7 +351,7 @@ namespace Nebula {
 		VkImageAspectFlags aspectFlags = m_DepthAttachment->GetAspectFlags();
 
 		VkCommandBuffer commandBuffer = VulkanAPI::BeginSingleUseCommand();
-		VkClearDepthStencilValue clearValue = { 1.0f, value };
+		VkClearDepthStencilValue clearValue = { 1.0f, (uint32_t)value };
 
 		VkImageSubresourceRange subResourceRange = {};
 		subResourceRange.aspectMask = aspectFlags;

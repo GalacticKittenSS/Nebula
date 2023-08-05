@@ -109,6 +109,7 @@ namespace Nebula
 		data.Watcher = CreateRef<FileWatcher>(path, AssetImporter::OnAssetChange);
 
 		m_AssetRegistry[handle] = data;
+		return true;
 	}
 	
 	bool AssetManagerBase::CreateAsset(AssetMetadata& metadata)
@@ -118,6 +119,7 @@ namespace Nebula
 			return false;
 
 		m_AssetRegistry[metadata.Handle] = metadata;
+		return true;
 	}
 
 	AssetHandle AssetManagerBase::CreateMemoryAsset(Ref<Asset> asset)
@@ -144,6 +146,7 @@ namespace Nebula
 
 		s_GlobalRegistry[s_GlobalIndex] = metadata;
 		s_GlobalIndex++;
+		return true;
 	}
 	
 	AssetHandle AssetManagerBase::CreateGlobalAsset(const std::filesystem::path& path, const std::filesystem::path& relativePath)
@@ -244,13 +247,13 @@ namespace Nebula
 		NB_PROFILE_FUNCTION();
 		static AssetMetadata s_NullMetadata;
 
-		for (auto [handle, metadata] : m_AssetRegistry)
+		for (const auto& [handle, metadata] : m_AssetRegistry)
 		{
 			if (metadata.Path == path || metadata.RelativePath == path)
 				return metadata;
 		}
 		
-		for (auto [handle, metadata] : s_GlobalRegistry)
+		for (const auto& [handle, metadata] : s_GlobalRegistry)
 		{
 			if (metadata.Path == path || metadata.RelativePath == path)
 				return metadata;
@@ -356,5 +359,7 @@ namespace Nebula
 			metadata.Type = Utils::AssetTypeFromString(type);
 			metadata.Watcher = CreateRef<FileWatcher>(assetPath, AssetImporter::OnAssetChange);
 		}
+
+		return true;
 	}
 }

@@ -35,8 +35,8 @@ namespace Nebula {
 	private:
 		struct UniformData
 		{
-			uint32_t descriptorSet = -1u;
-			uint32_t binding = -1u;
+			uint32_t descriptorSet = (uint32_t)-1;
+			uint32_t binding = (uint32_t)-1;
 			uint32_t arrayCount = 0;
 		};
 	private:

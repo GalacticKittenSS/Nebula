@@ -85,9 +85,6 @@ namespace Nebula
 		size_t m_AlignedSize = 0;
 	};
 
-	class VulkanImage;
-	using VulkanImageArray = std::vector<Ref<VulkanImage>>;
-
 	class VulkanImage
 	{
 	public:
@@ -95,8 +92,8 @@ namespace Nebula
 		VulkanImage(VkFormat format, VkImageUsageFlags usage, VkImageAspectFlags aspect, int samples, uint32_t width, uint32_t height);
 		~VulkanImage();
 
-		static VulkanImageArray CreateImageArray(VkFormat format, VkImageUsageFlags usage, VkImageAspectFlags aspect, int samples, uint32_t width, uint32_t height);
-		static VulkanImageArray CreateImageArray(std::vector<VkImage> images, std::vector<VkImageView> imageViews);
+		static std::vector<Ref<VulkanImage>> CreateImageArray(VkFormat format, VkImageUsageFlags usage, VkImageAspectFlags aspect, int samples, uint32_t width, uint32_t height);
+		static std::vector<Ref<VulkanImage>> CreateImageArray(std::vector<VkImage> images, std::vector<VkImageView> imageViews);
 
 		const VkImage& GetImage() const { return m_Image; }
 		const VkImageView& GetImageView() const { return m_ImageView; }
@@ -114,4 +111,6 @@ namespace Nebula
 		VkImageAspectFlags m_AspectFlags;
 		bool m_OwnsImages = true;
 	};
+
+	using VulkanImageArray = std::vector<Ref<VulkanImage>>;
 }

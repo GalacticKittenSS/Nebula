@@ -45,7 +45,7 @@ namespace Nebula
 
 		s_VKData.Texture = TextureImporter::CreateTexture2D("Resources/Vulkan/Texture.jpg");
 		s_VKData.camera = EditorCamera(60.0f, 16.0f / 9.0f, 0.01f, 1000.0f);
-		s_VKData.camera.SetViewPortSize(window.GetWidth(), window.GetHeight());
+		s_VKData.camera.SetViewPortSize((float)window.GetWidth(), (float)window.GetHeight());
 
 		RenderCommand::SetClearColour({ 0.1f, 0.1f, 0.1f, 1.0f });
 		RenderCommand::SetBackfaceCulling(false);
@@ -62,7 +62,7 @@ namespace Nebula
 		s_VKData.framebufferResize = true;
 		s_VKData.width = e.GetWidth();
 		s_VKData.height = e.GetHeight(); 
-		s_VKData.camera.SetViewPortSize(e.GetWidth(), e.GetHeight());
+		s_VKData.camera.SetViewPortSize((float)e.GetWidth(), (float)e.GetHeight());
 		return false;
 	}
 

@@ -144,8 +144,11 @@ namespace Nebula {
 		if (data.Size != bufferSize)
 		{
 			// Add Alpha Padding
-			uint64_t offset = 0;
-			for (uint64_t i = 0; i < data.Size; i += data.Size / (m_Width * m_Height))
+			uint32_t offset = 0;
+			uint32_t channels = (uint32_t)(data.Size / (m_Width * m_Height));
+			NB_ASSERT(channels >= 3, "Texture2D::SetData() => Expected 3 or more Channels");
+
+			for (uint32_t i = 0; i < data.Size; i += channels)
 			{
 				unsigned char padded[] = { data.Data[i] , data.Data[i + 1], data.Data[i + 2], 255 };
 				stagingBuffer.SetData(padded, sizeof(padded), offset);
@@ -154,7 +157,7 @@ namespace Nebula {
 		}
 		else
 		{
-			stagingBuffer.SetData(data.Data, data.Size);
+			stagingBuffer.SetData(data.Data, (uint32_t)data.Size);
 		}
 
 		VulkanAPI::TransitionImageLayout(m_Image->GetImage(), VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);

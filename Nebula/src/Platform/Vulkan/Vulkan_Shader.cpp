@@ -553,7 +553,7 @@ namespace Nebula
 	void Vulkan_Shader::SetUniformBuffer(const std::string& name, Ref<UniformBuffer> uniformBuffer)
 	{
 		UniformData uniform = GetUniformFromName(name);
-		if (uniform.binding == -1u)
+		if (uniform.binding == (uint32_t)-1)
 			return;
 
 		Ref<Vulkan_UniformBuffer> buffer = std::static_pointer_cast<Vulkan_UniformBuffer>(uniformBuffer);
