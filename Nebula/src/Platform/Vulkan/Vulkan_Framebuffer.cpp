@@ -86,6 +86,7 @@ namespace Nebula {
 		}
 
 		Invalidate();
+		s_BindedInstance = this;
 	}
 
 	Vulkan_FrameBuffer::~Vulkan_FrameBuffer() 
@@ -137,7 +138,6 @@ namespace Nebula {
 			if (m_Specifications.SwapChainTarget && format == *(VkFormat*)context->GetImageFormat())
 			{
 				m_ColourAttachments[i] = VulkanImage::CreateImageArray(context->m_Images, context->m_ImageViews);
-				colourAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 			}
 			else
 			{
@@ -234,7 +234,53 @@ namespace Nebula {
 		s_BindedInstance = this;
 	}
 
-	void Vulkan_FrameBuffer::Unbind() 
+	void Vulkan_FrameBuffer::BeginRenderPass()
+	{
+		//VulkanAPI::BeginFrame();
+
+		Vulkan_Context* context = (Vulkan_Context*)Application::Get().GetWindow().GetContext();
+		uint32_t imageIndex = context->m_ImageIndex;
+		if (imageIndex == (uint32_t)-1)
+			return;
+
+		VkExtent2D extent;
+		extent.width = s_BindedInstance->m_Specifications.Width;
+		extent.height = s_BindedInstance->m_Specifications.Height;
+
+		VkRenderPassBeginInfo renderPassInfo{};
+		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		renderPassInfo.renderPass = s_BindedInstance->m_RenderPass;
+		renderPassInfo.framebuffer = s_BindedInstance->m_Framebuffer[imageIndex];
+		renderPassInfo.renderArea.offset = { 0, 0 };
+		renderPassInfo.renderArea.extent = extent;
+
+		uint32_t attachmentCount = s_BindedInstance->m_ColourAttachments.size();
+		if (s_BindedInstance->m_DepthAttachment)
+			attachmentCount++;
+
+		std::vector<VkClearValue> clearValues(attachmentCount);
+		renderPassInfo.clearValueCount = (uint32_t)clearValues.size();
+		renderPassInfo.pClearValues = clearValues.data();
+
+		VkCommandBuffer commandBuffer = VulkanAPI::GetCommandBuffer();
+		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+		VkViewport viewport{};
+		viewport.x = 0.0f;
+		viewport.y = (float)extent.height;
+		viewport.width = (float)extent.width;
+		viewport.height = -(float)extent.height;
+		viewport.minDepth = 0.0f;
+		viewport.maxDepth = 1.0f;
+		vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+
+		VkRect2D scissor{};
+		scissor.offset = { 0, 0 };
+		scissor.extent = extent;
+		vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+	}
+
+	void Vulkan_FrameBuffer::Unbind()
 	{
 		s_BindedInstance = nullptr;
 	}

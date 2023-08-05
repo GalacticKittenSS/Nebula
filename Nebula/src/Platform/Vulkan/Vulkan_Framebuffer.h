@@ -22,6 +22,8 @@ namespace Nebula {
 		void Bind() override;
 		void Unbind() override;
 
+		static void BeginRenderPass();
+
 		uint32_t GetColourAttachmentRendererID(uint32_t index) const override { return -1; }
 
 		FrameBufferSpecification& GetFrameBufferSpecifications() override { return m_Specifications; }

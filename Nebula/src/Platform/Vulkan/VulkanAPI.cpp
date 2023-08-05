@@ -141,7 +141,9 @@ namespace Nebula
 
 	VkDescriptorPool VulkanAPI::s_DescriptorPool = VK_NULL_HANDLE;
 
-	uint8_t VulkanAPI::m_FrameIndex = 0;
+	uint8_t VulkanAPI::s_FrameIndex = 0;
+	bool VulkanAPI::s_FirstSubmit = true;
+	bool VulkanAPI::s_CommandBufferRecording = false;
 
 	void VulkanAPI::Init(PFN_vkDebugUtilsMessengerCallbackEXT debugCallback)
 	{
@@ -381,6 +383,50 @@ namespace Nebula
 		vkQueueWaitIdle(s_Queue);
 
 		vkFreeCommandBuffers(s_Device, s_CommandPool, 1, &commandBuffer);
+	}
+
+	void VulkanAPI::BeginCommandRecording()
+	{
+		vkWaitForFences(s_Device, 1, &GetFence(), VK_TRUE, UINT64_MAX);
+		vkResetFences(s_Device, 1, &GetFence());
+		vkResetCommandBuffer(GetCommandBuffer(), 0);
+
+		VkCommandBufferBeginInfo beginInfo{};
+		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+		VkResult result = vkBeginCommandBuffer(GetCommandBuffer(), &beginInfo);
+		NB_ASSERT(result == VK_SUCCESS, "Failed to begin recording command buffer!");
+
+		s_CommandBufferRecording = true;
+	}
+
+	void VulkanAPI::EndCommandRecording()
+	{
+		s_CommandBufferRecording = false;
+
+		VkResult result = vkEndCommandBuffer(GetCommandBuffer());
+		NB_ASSERT(result == VK_SUCCESS, "Failed to record command buffer!");
+		
+		VkSubmitInfo submitInfo{};
+		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+		VkSemaphore waitSemaphores[] = { s_FirstSubmit ? GetImageSemaphore() : GetRenderSemaphore() };
+		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+		submitInfo.waitSemaphoreCount = 1;
+		submitInfo.pWaitSemaphores = waitSemaphores;
+		submitInfo.pWaitDstStageMask = waitStages;
+		submitInfo.commandBufferCount = 1;
+		submitInfo.pCommandBuffers = &GetCommandBuffer();
+
+		VkSemaphore signalSemaphores[] = { GetRenderSemaphore() };
+		submitInfo.signalSemaphoreCount = 1;
+		submitInfo.pSignalSemaphores = signalSemaphores;
+
+		result = vkQueueSubmit(s_Queue, 1, &submitInfo, GetFence());
+		NB_ASSERT(result == VK_SUCCESS, "Failed to submit draw command buffer!");
+
+		s_FirstSubmit = false;
+		vkQueueWaitIdle(s_Queue);
 	}
 	
 	uint32_t VulkanAPI::FindMemoryType(uint32_t filter, VkMemoryPropertyFlags properties)

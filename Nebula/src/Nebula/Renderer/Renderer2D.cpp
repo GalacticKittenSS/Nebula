@@ -607,7 +607,11 @@ namespace Nebula {
 				s_Data.TextureSlots[i]->Bind(i);
 		}
 
+		RenderCommand::BeginRecording();
+
 		if (s_Data.TriIndexCount) {
+			s_Data.TextureShader->Bind();
+
 			uint32_t dataSize = (uint32_t)((uint8_t*)s_Data.TriVBPtr - (uint8_t*)s_Data.TriVBBase);
 			s_Data.TriangleVertexBuffer->SetData(s_Data.TriVBBase, dataSize);
 			
@@ -615,6 +619,8 @@ namespace Nebula {
 		}
 
 		if (s_Data.QuadIndexCount) {
+			s_Data.TextureShader->Bind();
+
 			uint32_t dataSize = (uint32_t)((uint8_t*)s_Data.QuadVBPtr - (uint8_t*)s_Data.QuadVBBase);
 			s_Data.QuadVertexBuffer->SetData(s_Data.QuadVBBase, dataSize);
 
@@ -646,6 +652,8 @@ namespace Nebula {
 
 			RenderCommand::DrawIndexed(s_Data.TextVertexArray, s_Data.TextIndexCount);
 		}
+
+		RenderCommand::EndRecording();
 	}
 
 	void Renderer2D::FlushAndReset() {

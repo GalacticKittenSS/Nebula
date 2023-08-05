@@ -188,6 +188,7 @@ namespace Nebula
 			Utils::AddResourceLayoutBinding(descriptorSetLayoutBindings, vertexCompiler, VK_SHADER_STAGE_VERTEX_BIT);
 			Utils::AddResourceLayoutBinding(descriptorSetLayoutBindings, fragmentCompiler, VK_SHADER_STAGE_FRAGMENT_BIT);
 
+			// Get the max descriptor set value
 			uint32_t vectorSize = descriptorSetLayoutBindings.rbegin()->first + 1;
 			m_DescriptorSets.resize(vectorSize);
 			m_DescriptorSetLayouts.resize(vectorSize);
@@ -239,22 +240,22 @@ namespace Nebula
 	void Vulkan_Shader::Bind() const
 	{
 		s_BindedInstance = this;
+
+		if (VulkanAPI::IsRecording())
+		{
+			vkCmdBindPipeline(VulkanAPI::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline);
+
+			for (uint32_t i = 0; i < m_DescriptorSets.size(); i++)
+			{
+				vkCmdBindDescriptorSets(VulkanAPI::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout,
+					i, 1, &m_DescriptorSets[i], 0, nullptr);
+			}
+		}
 	}
 	
 	void Vulkan_Shader::Unbind() const
 	{
-
-	}
-
-	void Vulkan_Shader::BindPipeline()
-	{
-		vkCmdBindPipeline(VulkanAPI::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, s_BindedInstance->m_GraphicsPipeline);
-
-		for (uint32_t i = 0; i < s_BindedInstance->m_DescriptorSets.size(); i++)
-		{
-			vkCmdBindDescriptorSets(VulkanAPI::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, s_BindedInstance->m_PipelineLayout, 
-				i, 1, &s_BindedInstance->m_DescriptorSets.at(i), 0, nullptr);
-		}
+		s_BindedInstance = nullptr;
 	}
 
 	std::string Vulkan_Shader::ReadFile(const std::string& filepath) {
@@ -411,8 +412,6 @@ namespace Nebula
 			pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 			pipelineLayoutInfo.setLayoutCount = (uint32_t)m_DescriptorSetLayouts.size();
 			pipelineLayoutInfo.pSetLayouts = m_DescriptorSetLayouts.data();
-
-			m_DescriptorSetLayouts.shrink_to_fit();
 
 			VkResult result = vkCreatePipelineLayout(VulkanAPI::GetDevice(), &pipelineLayoutInfo, nullptr, &m_PipelineLayout);
 			NB_ASSERT(result == VK_SUCCESS, "Failed to create pipeline layout");
@@ -578,8 +577,9 @@ namespace Nebula
 
 	void Vulkan_Shader::SetTextureArray(const std::string& name, Ref<Texture> texture)
 	{
-		UniformData uniform = GetUniformFromName(name);
+		NB_ASSERT(s_BindedInstance);
 
+		UniformData uniform = GetUniformFromName(name);
 		Ref<Vulkan_Texture2D> vulkanTexture = std::static_pointer_cast<Vulkan_Texture2D>(texture);
 
 		std::vector<VkDescriptorImageInfo> imageInfo(uniform.arrayCount);

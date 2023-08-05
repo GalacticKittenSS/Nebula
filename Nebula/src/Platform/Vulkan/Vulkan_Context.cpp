@@ -130,8 +130,10 @@ namespace Nebula {
 
 	void Vulkan_Context::SwapBuffers() 
 	{
+		VulkanAPI::TransitionImageLayout(m_Images[m_ImageIndex], VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 		PresentCurrentImage();
 		AcquireNextImage();
+		VulkanAPI::ResetFrame();
 	}
 
 	Vulkan_Context::SwapChainSupportDetails Vulkan_Context::QuerySwapChainSupport(VkPhysicalDevice device) 

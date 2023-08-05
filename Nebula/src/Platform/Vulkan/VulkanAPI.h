@@ -14,23 +14,28 @@ namespace Nebula
 
 		static VkCommandBuffer BeginSingleUseCommand();
 		static void EndSingleUseCommand(VkCommandBuffer commandBuffer);
-	
+		
+		static void BeginCommandRecording();
+		static void EndCommandRecording();
+
 		static uint32_t FindMemoryType(uint32_t filter, VkMemoryPropertyFlags properties);
 		static void TransitionImageLayout(VkImage image, VkImageAspectFlags imageAspect, VkImageLayout oldLayout, VkImageLayout newLayout);
 		static void AllocateDescriptorSet(VkDescriptorSet& descriptorSet, const VkDescriptorSetLayout& layout);
 
-		static const VkInstance& GetInstance() { return s_Instance; }
-		static const VkDevice& GetDevice() { return s_Device; }
-		static const VkPhysicalDevice& GetPhysicalDevice() { return s_PhysicalDevice; }
+		static inline const VkInstance& GetInstance() { return s_Instance; }
+		static inline const VkDevice& GetDevice() { return s_Device; }
+		static inline const VkPhysicalDevice& GetPhysicalDevice() { return s_PhysicalDevice; }
 		
-		static const VkQueue& GetQueue() { return s_Queue; }
-		static uint32_t GetQueueFamily() { return s_QueueFamily; }
+		static inline const VkQueue& GetQueue() { return s_Queue; }
+		static inline uint32_t GetQueueFamily() { return s_QueueFamily; }
 
-		static const VkCommandBuffer& GetCommandBuffer() { return s_CommandBuffers[m_FrameIndex]; }
+		static inline const VkCommandBuffer& GetCommandBuffer() { return s_CommandBuffers[s_FrameIndex]; }
+		static inline const VkSemaphore& GetRenderSemaphore() { return s_RenderSemaphores[s_FrameIndex]; }
+		static inline const VkSemaphore& GetImageSemaphore() { return s_ImageSemaphores[s_FrameIndex]; }
+		static inline const VkFence& GetFence() { return s_Fences[s_FrameIndex]; }
 
-		static const VkSemaphore& GetRenderSemaphore() { return s_RenderSemaphores[m_FrameIndex]; }
-		static const VkSemaphore& GetImageSemaphore() { return s_ImageSemaphores[m_FrameIndex]; }
-		static const VkFence& GetFence() { return s_Fences[m_FrameIndex]; }
+		static inline void ResetFrame() { s_FirstSubmit = true; }
+		static inline bool IsRecording() { return s_CommandBufferRecording; }
 	private:
 		static void CreateLogicalDevice();
 		static void CreateCommandBuffers();
@@ -54,7 +59,9 @@ namespace Nebula
 
 		static VkDescriptorPool s_DescriptorPool;
 
-		static uint8_t m_FrameIndex;
+		static bool s_FirstSubmit;
+		static uint8_t s_FrameIndex;
+		static bool s_CommandBufferRecording;
 
 		friend class Vulkan_RendererAPI;
 		friend class ImGuiLayer;

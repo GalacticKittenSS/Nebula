@@ -38,8 +38,7 @@ namespace Nebula
 		spec.SwapChainTarget = true;
 
 		s_VKData.frambuffer = FrameBuffer::Create(spec);
-		s_VKData.frambuffer->Bind();
-
+		
 		// Shader currently needs VkRenderPass object located in framebuffer
 		// without a framebuffer bound vulkan will throw errors
 		Renderer2D::Init();
@@ -104,7 +103,18 @@ namespace Nebula
 
 		Renderer2D::DrawQuad(4, vertices, texCoords, glm::mat4(1.0f), mat);
 		Renderer2D::EndScene();
+		
+		Renderer2D::BeginScene(s_VKData.camera);
+		
+		const glm::vec4 vertices2[] = {
+			{  0.5f,  0.5f, 0.0f, 1.0f },
+			{  1.5f,  0.5f, 0.0f, 1.0f },
+			{  1.5f,  1.5f, 0.0f, 1.0f },
+			{  0.5f,  1.5f, 0.0f, 1.0f }
+		}; 
 
+		Renderer2D::DrawQuad(4, vertices2, texCoords, glm::mat4(1.0f), mat);
+		Renderer2D::EndScene();
 		s_VKData.frambuffer->Unbind();
 		
 		// Frame Counter
