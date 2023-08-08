@@ -24,8 +24,6 @@ namespace Nebula {
 		m_Window = Window::Create(WindowProps(m_Specification.Name));
 		m_Window->SetEventCallback(BIND_EVENT(Application::OnEvent));
 
-		SceneRenderer::Setup();
-
 		m_ImGui = new ImGuiLayer();
 		PushOverlay(m_ImGui);
 	}
@@ -34,7 +32,6 @@ namespace Nebula {
 		NB_PROFILE_FUNCTION();
 
 		ScriptEngine::Shutdown();
-		SceneRenderer::CleanUp();
 		Renderer::Shutdown();
 		
 		//GLFW is still needed during Application Close
@@ -48,9 +45,7 @@ namespace Nebula {
 		{
 			NB_PROFILE_SCOPE("Frame - Application::run()");
 			
-			SceneRenderer::Render();
-
-			/*Time::Update();
+			Time::Update();
 			ExecuteMainThreadQueue();
 
 			if (!m_Minimized) {
@@ -58,7 +53,7 @@ namespace Nebula {
 					layer->Update(Time::DeltaTime());
 					layer->Render();
 				}
-			}*/
+			}
 
 			/*m_ImGui->Begin();
 			for (Layer* layer : m_LayerStack)

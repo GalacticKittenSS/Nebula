@@ -276,9 +276,9 @@ namespace Nebula {
 
 		//Shaders
 		s_Data.TextureShader = Shader::Create("Resources/shaders/Default.glsl");
-		//s_Data.CircleShader = Shader::Create("Resources/shaders/Circle.glsl");
 		//s_Data.LineShader = Shader::Create("Resources/shaders/Line.glsl");
-		//s_Data.TextShader = Shader::Create("Resources/shaders/Text.glsl");
+		s_Data.CircleShader = Shader::Create("Resources/shaders/Circle.glsl");
+		s_Data.TextShader = Shader::Create("Resources/shaders/Text.glsl");
 		
 		// OpenGL
 		{
@@ -296,6 +296,8 @@ namespace Nebula {
 		//Camera Uniform
 		s_Data.CameraUniformBuffer = UniformBuffer::Create(sizeof(Renderer2DData::CameraData), 0);
 		s_Data.TextureShader->SetUniformBuffer("u_ViewProjection", s_Data.CameraUniformBuffer);
+		s_Data.CircleShader->SetUniformBuffer("u_ViewProjection", s_Data.CameraUniformBuffer);
+		s_Data.TextShader->SetUniformBuffer("u_ViewProjection", s_Data.CameraUniformBuffer);
 	}
 
 	void Renderer2D::Shutdown() {
@@ -610,20 +612,18 @@ namespace Nebula {
 		RenderCommand::BeginRecording();
 
 		if (s_Data.TriIndexCount) {
-			s_Data.TextureShader->Bind();
-
 			uint32_t dataSize = (uint32_t)((uint8_t*)s_Data.TriVBPtr - (uint8_t*)s_Data.TriVBBase);
 			s_Data.TriangleVertexBuffer->SetData(s_Data.TriVBBase, dataSize);
 			
+			s_Data.TextureShader->Bind();
 			RenderCommand::DrawIndexed(s_Data.TriangleVertexArray, s_Data.TriIndexCount);
 		}
 
 		if (s_Data.QuadIndexCount) {
-			s_Data.TextureShader->Bind();
-
 			uint32_t dataSize = (uint32_t)((uint8_t*)s_Data.QuadVBPtr - (uint8_t*)s_Data.QuadVBBase);
 			s_Data.QuadVertexBuffer->SetData(s_Data.QuadVBBase, dataSize);
 
+			s_Data.TextureShader->Bind();
 			RenderCommand::DrawIndexed(s_Data.QuadVertexArray, s_Data.QuadIndexCount);
 		}
 		

@@ -206,7 +206,8 @@ namespace Nebula
 					
 					// TODO: Remove hardcoded uniform info (get name automatically)
 					m_Uniforms["u_ViewProjection"] = { 0, layoutBindings[0].binding, layoutBindings[0].descriptorCount};
-					m_Uniforms["u_Textures"] = { 0, layoutBindings[1].binding, layoutBindings[1].descriptorCount };
+					if (layoutBindings.size() >= 2)
+						m_Uniforms["u_Textures"] = { 0, layoutBindings[1].binding, layoutBindings[1].descriptorCount };
 				}
 
 				VkResult result = vkCreateDescriptorSetLayout(VulkanAPI::GetDevice(), &layoutInfo, nullptr, &m_DescriptorSetLayouts[i]);

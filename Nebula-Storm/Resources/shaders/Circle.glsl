@@ -25,14 +25,14 @@ layout (location = 0) out VertexOutput Output;
 layout (location = 4) out flat int v_EntityID;
 			
 void main() {
+	gl_Position = u_ViewProjection * vec4(position, 1.0);
+	
 	Output.LocalPosition = localPosition;
 	Output.Colour = colour;
 	Output.Thickness = thickness;
 	Output.Fade = fade;
 	
 	v_EntityID = entityID;
-
-	gl_Position = u_ViewProjection * vec4(position, 1.0);
 }
 
 #type fragment

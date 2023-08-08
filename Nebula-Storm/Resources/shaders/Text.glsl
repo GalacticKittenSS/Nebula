@@ -21,10 +21,10 @@ layout (location = 0) out VertexOutput Output;
 layout (location = 2) out flat int v_EntityID;
 			
 void main() {
+	gl_Position = u_ViewProjection * vec4(position, 1.0);
 	Output.Colour = colour;
 	Output.TexCoord = texCoord;
 	v_EntityID = entityID;
-	gl_Position = u_ViewProjection * vec4(position, 1.0);
 }
 
 #type fragment
@@ -42,7 +42,7 @@ struct VertexOutput
 layout (location = 0) in VertexOutput Input;
 layout (location = 2) in flat int v_EntityID;
 
-layout (binding = 0) uniform sampler2D u_FontAtlas;
+layout (binding = 1) uniform sampler2D u_FontAtlas;
 
 float screenPxRange() {
     const float pxRange = 2.0;

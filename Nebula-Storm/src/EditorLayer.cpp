@@ -106,13 +106,17 @@ namespace Nebula {
 		fbSpec.Attachments = { FramebufferTextureFormat::RGBA8, FramebufferTextureFormat::RED_INT, FramebufferTextureFormat::Depth };
 		fbSpec.Width = 1280;
 		fbSpec.Height = 720;
+		fbSpec.SwapChainTarget = true;
 		frameBuffer = FrameBuffer::Create(fbSpec);
 
+		// Shader currently needs VkRenderPass object located in framebuffer
+		// without a framebuffer bound vulkan will throw errors
+		Renderer2D::Init();
 		//Create New Scene
 		NewScene();
 
 		//Open Project on Startup
-#if true
+#if false
 		auto commandLineArgs = Application::Get().GetSpecification().CommandLineArgs;
 		if (commandLineArgs.Count > 1)
 			OpenProject(commandLineArgs[1]);
@@ -156,11 +160,13 @@ namespace Nebula {
 	void EditorLayer::Update(Timestep ts) {
 		NB_PROFILE_FUNCTION();
 
+		Window& window = Application::Get().GetWindow();
+		m_GameViewSize = { window.GetWidth(), window.GetHeight() };
 		Resize();
 
 		switch (m_SceneState) {
 			case SceneState::Edit:
-				if (!m_UsingGizmo && m_GameViewHovered)
+				if (!m_UsingGizmo)// && m_GameViewHovered)
 				{
 					m_EditorCam.Update();
 				
@@ -187,6 +193,7 @@ namespace Nebula {
 		m_Frames++; m_TotalFrames++;
 		if (Time::Elapsed() - m_LastTime >= 1.0f) 
 		{
+			NB_INFO(m_Frames);
 			m_LastTime = Time::Elapsed();
 			m_LastFrame = m_Frames;
 			m_Frames = 0;
