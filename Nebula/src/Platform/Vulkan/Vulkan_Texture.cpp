@@ -17,9 +17,9 @@ namespace Nebula {
 		static uint32_t VulkantoBPP(VkFormat format) {
 			switch (format)
 			{
-			case VK_FORMAT_R8_SRGB: return 1;
-			case VK_FORMAT_R8G8B8_SRGB: return 3;
-			case VK_FORMAT_R8G8B8A8_SRGB: return 4;
+			case VK_FORMAT_R8_UNORM: return 1;
+			case VK_FORMAT_R8G8B8_UNORM: return 3;
+			case VK_FORMAT_R8G8B8A8_UNORM: return 4;
 			}
 
 			NB_ASSERT(false, "Unknown Vulkan Format");
@@ -30,8 +30,8 @@ namespace Nebula {
 		{
 			switch (format)
 			{
-			case VK_FORMAT_R8G8B8_SRGB:		return "VK_FORMAT_R8G8B8_SRGB";
-			case VK_FORMAT_R8G8B8A8_SRGB:	return "VK_FORMAT_R8G8B8A8_SRGB";
+			case VK_FORMAT_R8G8B8_UNORM:	return "VK_FORMAT_R8G8B8_UNORM";
+			case VK_FORMAT_R8G8B8A8_UNORM:	return "VK_FORMAT_R8G8B8A8_UNORM";
 			}
 
 			return "Unknown";
@@ -57,12 +57,12 @@ namespace Nebula {
 			
 			switch (format)
 			{
-			case ImageFormat::RGB8:		RETURN_FORMAT_SUPPORTED(VK_FORMAT_R8G8B8_SRGB);
-			case ImageFormat::RGBA8:	RETURN_FORMAT_SUPPORTED(VK_FORMAT_R8G8B8A8_SRGB);
+			case ImageFormat::RGB8:		RETURN_FORMAT_SUPPORTED(VK_FORMAT_R8G8B8_UNORM);
+			case ImageFormat::RGBA8:	RETURN_FORMAT_SUPPORTED(VK_FORMAT_R8G8B8A8_UNORM);
 			}
 
-			NB_ASSERT(FormatSupported(VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_LINEAR, VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT), "Format is unknown or not supported!");
-			return VK_FORMAT_R8G8B8A8_SRGB;
+			NB_ASSERT(FormatSupported(VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_LINEAR, VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT), "Format is unknown or not supported!");
+			return VK_FORMAT_R8G8B8A8_UNORM;
 		}
 
 		static void CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)

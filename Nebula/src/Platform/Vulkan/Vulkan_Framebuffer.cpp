@@ -26,7 +26,7 @@ namespace Nebula {
 		static VkFormat NebulaFBFormattoVulkan(FramebufferTextureFormat format) {
 			switch (format)
 			{
-			case Nebula::FramebufferTextureFormat::RGBA8:	return VK_FORMAT_B8G8R8A8_SRGB;
+			case Nebula::FramebufferTextureFormat::RGBA8:	return VK_FORMAT_R8G8B8A8_UNORM;
 			case Nebula::FramebufferTextureFormat::RED_INT: return VK_FORMAT_R8_SINT;
 			}
 
@@ -237,8 +237,6 @@ namespace Nebula {
 
 	void Vulkan_FrameBuffer::BeginRenderPass()
 	{
-		//VulkanAPI::BeginFrame();
-
 		Vulkan_Context* context = (Vulkan_Context*)Application::Get().GetWindow().GetContext();
 		uint32_t imageIndex = context->m_ImageIndex;
 		if (imageIndex == (uint32_t)-1)
