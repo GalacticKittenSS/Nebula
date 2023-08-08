@@ -15,6 +15,7 @@ namespace Nebula
 		static VkCommandBuffer BeginSingleUseCommand();
 		static void EndSingleUseCommand(VkCommandBuffer commandBuffer);
 		
+		static void ResetFrame();
 		static void BeginCommandRecording();
 		static void EndCommandRecording();
 
@@ -34,7 +35,6 @@ namespace Nebula
 		static inline const VkSemaphore& GetImageSemaphore() { return s_ImageSemaphores[s_FrameIndex]; }
 		static inline const VkFence& GetFence() { return s_Fences[s_FrameIndex]; }
 
-		static inline void ResetFrame() { s_FirstSubmit = true; }
 		static inline bool IsRecording() { return s_CommandBufferRecording; }
 	private:
 		static void CreateLogicalDevice();

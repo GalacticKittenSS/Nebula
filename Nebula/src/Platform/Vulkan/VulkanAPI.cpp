@@ -428,6 +428,12 @@ namespace Nebula
 		s_FirstSubmit = false;
 		vkQueueWaitIdle(s_Queue);
 	}
+
+	void VulkanAPI::ResetFrame()
+	{
+		s_FirstSubmit = true; 
+		s_FrameIndex = (s_FrameIndex + 1) % g_MaxFrames;
+	}
 	
 	uint32_t VulkanAPI::FindMemoryType(uint32_t filter, VkMemoryPropertyFlags properties)
 	{
