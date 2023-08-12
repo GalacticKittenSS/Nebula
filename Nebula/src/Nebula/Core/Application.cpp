@@ -55,10 +55,10 @@ namespace Nebula {
 				}
 			}
 
-			/*m_ImGui->Begin();
+			m_ImGui->Begin();
 			for (Layer* layer : m_LayerStack)
 				layer->ImGuiRender();
-			m_ImGui->End();*/
+			m_ImGui->End();
 
 			m_Window->Update();
 		}

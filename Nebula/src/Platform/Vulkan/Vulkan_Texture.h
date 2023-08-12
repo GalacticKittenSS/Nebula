@@ -17,7 +17,7 @@ namespace Nebula {
 
 		uint32_t GetWidth() const override { return m_Width; }
 		uint32_t GetHeight() const override { return m_Height; }
-		uint32_t GetRendererID() const override { return -1; }
+		uint64_t GetRendererID() const override { return (uint64_t)m_ImguiDescriptor; }
 
 		void Bind(uint32_t slot) const;
 		void Unbind() const;
@@ -36,6 +36,8 @@ namespace Nebula {
 
 		Ref<VulkanImage> m_Image;
 		VkSampler m_Sampler;
+
+		VkDescriptorSet m_ImguiDescriptor = VK_NULL_HANDLE;
 
 		friend class Vulkan_Shader;
 	};

@@ -19,7 +19,7 @@ namespace Nebula {
 		void Bind() override;
 		void Unbind() override;
 
-		uint32_t GetColourAttachmentRendererID(uint32_t index) const override { NB_ASSERT(index < m_ColourAttachments.size(), "Index is greater than Array Size"); return m_ColourAttachments[index]; }
+		uint64_t GetColourAttachmentRendererID(uint32_t index) const override { NB_ASSERT(index < m_ColourAttachments.size(), "Index is greater than Array Size"); return m_ColourAttachments[index]; }
 
 		FrameBufferSpecification& GetFrameBufferSpecifications() override { return m_Specifications; }
 		const FrameBufferSpecification& GetFrameBufferSpecifications() const override { return m_Specifications; }

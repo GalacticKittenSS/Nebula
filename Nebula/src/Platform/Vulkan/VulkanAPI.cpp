@@ -205,6 +205,7 @@ namespace Nebula
 			poolInfo.poolSizeCount = (uint32_t)pool_sizes.size();
 			poolInfo.pPoolSizes = pool_sizes.data();
 			poolInfo.maxSets = 1000;
+			poolInfo.flags |= VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 
 			VkResult result = vkCreateDescriptorPool(VulkanAPI::GetDevice(), &poolInfo, nullptr, &s_DescriptorPool);
 			NB_ASSERT(result == VK_SUCCESS, "Failed to create descriptor pool!");

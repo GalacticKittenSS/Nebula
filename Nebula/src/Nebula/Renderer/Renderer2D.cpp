@@ -635,7 +635,7 @@ namespace Nebula {
 			RenderCommand::DrawIndexed(s_Data.CircleVertexArray, s_Data.CircleIndexCount);
 		}
 
-		if (s_Data.LineVertexCount) {
+		if (s_Data.LineVertexCount && false) {
 			uint32_t dataSize = (uint32_t)((uint8_t*)s_Data.LineVBPtr - (uint8_t*)s_Data.LineVBBase);
 			s_Data.LineVertexBuffer->SetData(s_Data.LineVBBase, dataSize);
 

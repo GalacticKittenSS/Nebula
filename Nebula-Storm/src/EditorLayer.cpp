@@ -106,12 +106,18 @@ namespace Nebula {
 		fbSpec.Attachments = { FramebufferTextureFormat::RGBA8, FramebufferTextureFormat::RED_INT, FramebufferTextureFormat::Depth };
 		fbSpec.Width = 1280;
 		fbSpec.Height = 720;
-		fbSpec.SwapChainTarget = true;
 		frameBuffer = FrameBuffer::Create(fbSpec);
 
 		// Shader currently needs VkRenderPass object located in framebuffer
 		// without a framebuffer bound vulkan will throw errors
 		Renderer2D::Init();
+		
+		RenderCommand::SetClearColour({ 0.1f, 0.1f, 0.1f, 1.0f });
+		RenderCommand::SetLineWidth(100.0f);
+		RenderCommand::SetBackfaceCulling(true);
+		
+		m_ShowColliders = true;
+
 		//Create New Scene
 		NewScene();
 
@@ -160,13 +166,11 @@ namespace Nebula {
 	void EditorLayer::Update(Timestep ts) {
 		NB_PROFILE_FUNCTION();
 
-		Window& window = Application::Get().GetWindow();
-		m_GameViewSize = { window.GetWidth(), window.GetHeight() };
 		Resize();
 
 		switch (m_SceneState) {
 			case SceneState::Edit:
-				if (!m_UsingGizmo)// && m_GameViewHovered)
+				if (!m_UsingGizmo && m_GameViewHovered)
 				{
 					m_EditorCam.Update();
 				
@@ -193,7 +197,6 @@ namespace Nebula {
 		m_Frames++; m_TotalFrames++;
 		if (Time::Elapsed() - m_LastTime >= 1.0f) 
 		{
-			NB_INFO(m_Frames);
 			m_LastTime = Time::Elapsed();
 			m_LastFrame = m_Frames;
 			m_Frames = 0;
@@ -277,7 +280,7 @@ namespace Nebula {
 			ImGui::Text("Total Frames: %i", m_TotalFrames);
 			ImGui::Text("Average FPS: %.1f", m_TotalFrames / (Time::Elapsed() - m_TimeSinceReset));
 
-			ImGui::SetCursorPosX(ImGui::GetContentRegionAvailWidth() / 2.0f);
+			ImGui::SetCursorPosX(ImGui::GetContentRegionAvail().x / 2.0f);
 			if (ImGui::Button("Reset")) {
 				m_TotalFrames = m_LastFrame;
 				m_TimeSinceReset = Time::Elapsed();
@@ -474,7 +477,7 @@ namespace Nebula {
 		m_GameViewSize = { panelSize.x, panelSize.y };
 
 		uint64_t textureID = frameBuffer->GetColourAttachmentRendererID();
-		ImGui::Image((void*)textureID, panelSize, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+		ImGui::Image((ImTextureID)textureID, panelSize, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
 
 		if (ImGui::BeginDragDropTarget()) 
 		{
@@ -566,7 +569,7 @@ namespace Nebula {
 		if (m_SceneState != SceneState::Simulate)
 		{
 			Ref<Texture2D> icon = editMode ? m_PlayIcon : m_StopIcon;
-			if (ImGui::ImageButton((ImTextureID)(uint64_t)icon->GetRendererID(), ImVec2(size, size), ImVec2(0, 0), ImVec2(1, 1), 0)) {
+			if (ImGui::ImageButton((ImTextureID)icon->GetRendererID(), ImVec2(size, size), ImVec2(0, 0), ImVec2(1, 1), 0)) {
 				if (editMode)
 					OnScenePlay();
 				else
@@ -578,7 +581,7 @@ namespace Nebula {
 		if (m_SceneState != SceneState::Play) 
 		{
 			Ref<Texture2D> icon = editMode ? m_SimulateIcon : m_StopIcon;
-			if (ImGui::ImageButton((ImTextureID)(uint64_t)icon->GetRendererID(), ImVec2(size, size), ImVec2(0, 0), ImVec2(1, 1), 0)) {
+			if (ImGui::ImageButton((ImTextureID)icon->GetRendererID(), ImVec2(size, size), ImVec2(0, 0), ImVec2(1, 1), 0)) {
 				if (editMode)
 					OnSceneSimulate();
 				else
@@ -591,14 +594,14 @@ namespace Nebula {
 		{
 			bool paused = m_ActiveScene->IsPaused();
 			Ref<Texture2D> icon = paused ? m_PlayIcon : m_PauseIcon;
-			if (ImGui::ImageButton((ImTextureID)(uint64_t)icon->GetRendererID(), ImVec2(size, size), ImVec2(0, 0), ImVec2(1, 1), 0)) {
+			if (ImGui::ImageButton((ImTextureID)icon->GetRendererID(), ImVec2(size, size), ImVec2(0, 0), ImVec2(1, 1), 0)) {
 				m_ActiveScene->SetPaused(!paused);
 			}
 
 			if (paused) {
 				ImGui::SameLine();
 				Ref<Texture2D> icon = m_StepIcon;
-				if (ImGui::ImageButton((ImTextureID)(uint64_t)icon->GetRendererID(), ImVec2(size, size), ImVec2(0, 0), ImVec2(1, 1), 0, ImVec4(0.0f, 0.0f, 0.0f, 0.0f))) {
+				if (ImGui::ImageButton((ImTextureID)icon->GetRendererID(), ImVec2(size, size), ImVec2(0, 0), ImVec2(1, 1), 0, ImVec4(0.0f, 0.0f, 0.0f, 0.0f))) {
 					m_ActiveScene->Step(10);
 				}
 			}

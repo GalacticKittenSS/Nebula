@@ -282,7 +282,7 @@ namespace Nebula {
 			UI::ScopedStyleVar rounding(ImGuiStyleVar_FrameRounding, 0.0f);
 			UI::ScopedStyleColor colour(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_WindowBg));
 
-			if (ImGui::BeginPopupContextItem())
+			if (ImGui::BeginPopupContextItem(0, ImGuiPopupFlags_MouseButtonRight))
 			{
 				if (AssetManager::GetTypeFromExtension(path.extension().string()) != AssetType::None)
 				{
@@ -420,7 +420,7 @@ namespace Nebula {
 			}
 
 			bool texture = false;
-			if (ImGui::Button(text.c_str(), ImVec2{ ImGui::GetContentRegionAvailWidth(), 0 }))
+			if (ImGui::Button(text.c_str(), ImVec2{ ImGui::GetContentRegionAvail().x, 0 }))
 			{
 				material->Texture = nullptr;
 				texture = true;
@@ -452,7 +452,7 @@ namespace Nebula {
 		case AssetType::Texture:
 		{
 			Ref<Texture2D> texture = AssetManager::GetAsset<Texture2D>(m_AssetPreview);
-			float buttonSize = ImGui::GetContentRegionAvailWidth();
+			float buttonSize = ImGui::GetContentRegionAvail().x;
 			ImGui::Image((ImTextureID)texture->GetRendererID(), ImVec2{ buttonSize, buttonSize }, { 0, 1 }, { 1, 0 });
 			break;
 		}
@@ -463,7 +463,7 @@ namespace Nebula {
 
 			if (atlasTexture)
 			{
-				float buttonSize = ImGui::GetContentRegionAvailWidth();
+				float buttonSize = ImGui::GetContentRegionAvail().x;
 				ImGui::Image((ImTextureID)atlasTexture->GetRendererID(), ImVec2{ buttonSize, buttonSize }, { 0, 1 }, { 1, 0 });
 			}
 
@@ -500,7 +500,7 @@ namespace Nebula {
 	void ContentBrowserPanel::CreateFilePopup()
 	{
 		bool open_popup = false;
-		if (ImGui::BeginPopupContextWindow(0, 1, false))
+		if (ImGui::BeginPopupContextWindow(0, ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverExistingPopup))
 		{
 			if (ImGui::BeginMenu("Create New..."))
 			{
@@ -550,7 +550,7 @@ namespace Nebula {
 			if (ImGui::InputText("##Name", buffer, sizeof(buffer)))
 				m_CreateFileName = std::string(buffer);
 
-			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvailWidth());
+			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 
 			if (ImGui::Button("Create File"))
 			{

@@ -6,6 +6,8 @@
 
 #include "Nebula/Scene/SceneRenderer.h"
 
+#include <backends/imgui_impl_vulkan.h>
+
 #define RETURN_FORMAT_SUPPORTED(format) \
 if (FormatSupported(format, VK_IMAGE_TILING_LINEAR, VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT))\
 	return format;\
@@ -124,12 +126,17 @@ namespace Nebula {
 			SetData(data);
 			m_IsLoaded = true;
 		}
+
+		m_ImguiDescriptor = ImGui_ImplVulkan_AddTexture(m_Sampler, m_Image->GetImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	}
 
 	Vulkan_Texture2D::~Vulkan_Texture2D() 
 	{
 		NB_PROFILE_FUNCTION();
 
+		vkDeviceWaitIdle(VulkanAPI::GetDevice());
+
+		//ImGui_ImplVulkan_RemoveTexture(m_ImguiDescriptor);
 		vkDestroySampler(VulkanAPI::GetDevice(), m_Sampler, nullptr);
 	}
 

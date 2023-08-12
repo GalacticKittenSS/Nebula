@@ -10,7 +10,7 @@
 	ignore = untracked
 [submodule "Nebula/Modules/imgui"]
 	path = Nebula/Modules/imgui
-	url = https://github.com/GalacticKittenSS/imgui
+	url = https://github.com/TheCherno/imgui
 	branch = docking
 	ignore = untracked
 [submodule "Nebula/Modules/yaml-cpp"]

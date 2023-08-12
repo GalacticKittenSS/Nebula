@@ -141,7 +141,7 @@ namespace Nebula {
 				char buffer[256];
 				strncpy_s(buffer, sizeof(buffer), layer->Name.c_str(), sizeof(buffer));
 
-				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvailWidth());
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 
 				if (ImGui::InputText("##Name", buffer, sizeof(buffer)))
 					layer->Name = std::string(buffer);
@@ -228,7 +228,7 @@ namespace Nebula {
 		if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered())
 			m_SelectionContext = {};
 
-		if (ImGui::BeginPopupContextWindow(0, 1, false)) {
+		if (ImGui::BeginPopupContextWindow(0, ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverExistingPopup)) {
 			DisplayCreateEntity();
 			ImGui::EndPopup();
 		}
@@ -371,7 +371,7 @@ namespace Nebula {
 		data->Parent = pcc.Parent;
 
 		if (index == 0)
-			elementSize.x = ImGui::GetContentRegionAvailWidth();
+			elementSize.x = ImGui::GetContentRegionAvail().x;
 
 		data->Rect = ImRect(windowPos.x + cursorPos.x, windowPos.y + cursorPos.y, windowPos.x + cursorPos.x + elementSize.x, windowPos.y + cursorPos.y + elementSize.y);
 		data->indexAbove = index;
@@ -718,7 +718,7 @@ namespace Nebula {
 			char buffer[256];
 			strncpy_s(buffer, sizeof(buffer), tag.c_str(), sizeof(buffer));
 
-			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvailWidth() - buttonWidth - GImGui->Style.ItemSpacing.x);
+			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - buttonWidth - GImGui->Style.ItemSpacing.x);
 
 			if (ImGui::InputText("##Tag", buffer, sizeof(buffer))) {
 				tag = std::string(buffer);
@@ -734,7 +734,7 @@ namespace Nebula {
 		{
 			auto& prop = entity.GetComponent<PropertiesComponent>();
 
-			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvailWidth() - 25.0f - GImGui->Style.ItemSpacing.x);
+			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - 25.0f - GImGui->Style.ItemSpacing.x);
 			if (ImGui::BeginCombo("##V", prop.Layer->Name.c_str()))
 			{
 				const ProjectConfig& pConfig = Project::GetActive()->GetConfig();
@@ -935,7 +935,7 @@ namespace Nebula {
 						}
 						
 						DrawLabel(name);
-						if (ImGui::Button(text.c_str(), ImVec2{ ImGui::GetContentRegionAvailWidth(), 0 }))
+						if (ImGui::Button(text.c_str(), ImVec2{ ImGui::GetContentRegionAvail().x, 0 }))
 							scriptInstance->SetFieldValueInternal(name, nullptr);
 
 						if (ImGui::BeginDragDropTarget())
@@ -965,7 +965,7 @@ namespace Nebula {
 							text = metadata.RelativePath.string();
 						
 						DrawLabel(name);
-						if (ImGui::Button(text.c_str(), ImVec2{ ImGui::GetContentRegionAvailWidth(), 0 }))
+						if (ImGui::Button(text.c_str(), ImVec2{ ImGui::GetContentRegionAvail().x, 0 }))
 							scriptInstance->SetFieldValueInternal(name, nullptr);
 
 						if (ImGui::BeginDragDropTarget()) 
@@ -993,7 +993,7 @@ namespace Nebula {
 			std::string text = metadata.RelativePath.empty() ? "Default" : metadata.RelativePath.string();
 
 			DrawLabel("Material");
-			if (ImGui::Button(text.c_str(), ImVec2{ ImGui::GetContentRegionAvailWidth(), 0 }))
+			if (ImGui::Button(text.c_str(), ImVec2{ ImGui::GetContentRegionAvail().x, 0 }))
 				component.Material = NULL;
 
 			if (ImGui::BeginDragDropTarget())
@@ -1027,7 +1027,7 @@ namespace Nebula {
 			}
 
 			bool texture = false;
-			if (ImGui::Button(text.c_str(), ImVec2{ ImGui::GetContentRegionAvailWidth(), 0 }))
+			if (ImGui::Button(text.c_str(), ImVec2{ ImGui::GetContentRegionAvail().x, 0 }))
 			{
 				material->Texture = nullptr;
 				texture = true;
