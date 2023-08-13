@@ -38,6 +38,7 @@ namespace Nebula {
 			uint32_t descriptorSet = (uint32_t)-1;
 			uint32_t binding = (uint32_t)-1;
 			uint32_t arrayCount = 0;
+			VkDescriptorType type = VK_DESCRIPTOR_TYPE_MAX_ENUM;
 		};
 	private:
 		std::string ReadFile(const std::string& filepath);
@@ -50,6 +51,7 @@ namespace Nebula {
 		void CreatePipeline(VkPipelineShaderStageCreateInfo shaderStages[]);
 
 		UniformData GetUniformFromName(const std::string& name) const;
+		UniformData GetUniformFromType(VkDescriptorType type) const;
 	private:
 		uint32_t m_RendererID;
 		std::string m_FilePath;

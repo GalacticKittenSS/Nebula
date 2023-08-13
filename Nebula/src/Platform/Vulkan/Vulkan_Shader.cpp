@@ -136,6 +136,33 @@ namespace Nebula
 				descriptorSetLayouts[descriptorSet].push_back(layout);
 			}
 		}
+
+		static std::vector<std::string> Split(std::string input, std::string delimiter, std::string mustContain = "")
+		{
+			std::vector<std::string> tokens;
+			size_t pos = 0;
+			std::string token;
+
+			while ((pos = input.find(delimiter)) != std::string::npos)
+			{
+				token = input.substr(0, pos);
+				input.erase(0, pos + delimiter.size());
+
+				if (!mustContain.empty() && token.find(mustContain) == std::string::npos)
+					continue;
+
+				token.erase(remove(token.begin(), token.end(), '\r'), token.end());
+				token.erase(remove(token.begin(), token.end(), '\n'), token.end());
+				token.erase(remove(token.begin(), token.end(), '\t'), token.end());
+				
+				tokens.push_back(token);
+			}
+			
+			if (mustContain.empty() || input.find(mustContain) != std::string::npos)
+				tokens.push_back(input);
+
+			return tokens;
+		}
 	}
 
 
@@ -204,10 +231,25 @@ namespace Nebula
 					layoutInfo.bindingCount = (uint32_t)layoutBindings.size();
 					layoutInfo.pBindings = layoutBindings.data();
 					
-					// TODO: Remove hardcoded uniform info (get name automatically)
-					m_Uniforms["u_ViewProjection"] = { 0, layoutBindings[0].binding, layoutBindings[0].descriptorCount};
-					if (layoutBindings.size() >= 2)
-						m_Uniforms["u_Textures"] = { 0, layoutBindings[1].binding, layoutBindings[1].descriptorCount };
+					for (auto& layout : layoutBindings)
+					{
+						std::vector<std::string> uniforms = Utils::Split(shaderSources[(VkShaderStageFlagBits)layout.stageFlags], ";", "uniform");
+						
+						// Find uniform with binding
+						uint16_t i = 0;
+						for (; i < uniforms.size(); i++)
+						{
+							std::string line = uniforms[i];
+							line.erase(remove(line.begin(), line.end(), ' '), line.end());
+
+							if (line.find("binding=" + std::to_string(layout.binding)) != std::string::npos)
+								break;
+						}
+
+						std::vector<std::string> words = Utils::Split(uniforms[i], " ");
+						std::string name = Utils::Split(words[words.size() - 1], "[")[0];
+						m_Uniforms[name] = { i, layout.binding, layout.descriptorCount, layout.descriptorType };
+					}
 				}
 
 				VkResult result = vkCreateDescriptorSetLayout(VulkanAPI::GetDevice(), &layoutInfo, nullptr, &m_DescriptorSetLayouts[i]);
@@ -548,6 +590,19 @@ namespace Nebula
 		if (it != m_Uniforms.end())
 			return it->second;
 
+		NB_ASSERT(false, "Could not find Uniform");
+		return {};
+	}
+
+	Vulkan_Shader::UniformData Vulkan_Shader::GetUniformFromType(VkDescriptorType type) const
+	{
+		for (auto& [name, info] : m_Uniforms)
+		{
+			if (info.type == type)
+				return info;
+		}
+
+		NB_ASSERT(false, "Could not find Uniform");
 		return {};
 	}
 
@@ -578,8 +633,6 @@ namespace Nebula
 
 	void Vulkan_Shader::SetTextureArray(const std::string& name, Ref<Texture> texture)
 	{
-		NB_ASSERT(s_BindedInstance);
-
 		UniformData uniform = GetUniformFromName(name);
 		Ref<Vulkan_Texture2D> vulkanTexture = std::static_pointer_cast<Vulkan_Texture2D>(texture);
 
@@ -605,8 +658,9 @@ namespace Nebula
 	
 	void Vulkan_Shader::SetTexture(uint32_t slot, VkDescriptorImageInfo info)
 	{
-		UniformData uniform = s_BindedInstance->GetUniformFromName("u_Textures");
-
+		NB_ASSERT(s_BindedInstance);
+		UniformData uniform = s_BindedInstance->GetUniformFromType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+		
 		VkWriteDescriptorSet descriptorWrite{};
 		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		descriptorWrite.dstSet = s_BindedInstance->m_DescriptorSets.at(uniform.descriptorSet);
