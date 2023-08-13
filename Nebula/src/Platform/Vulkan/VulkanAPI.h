@@ -77,6 +77,7 @@ namespace Nebula
 		void SetData(const void* data, uint32_t size, uint32_t offset = 0);
 		VkBuffer& GetBuffer() { return m_Buffer; }
 		VkDeviceSize GetSize() { return m_AlignedSize; }
+		void* GetMemory() { return m_MappedMemory; }
 	private:
 		VkBuffer m_Buffer = VK_NULL_HANDLE;
 		VkDeviceMemory m_BufferMemory = VK_NULL_HANDLE;
