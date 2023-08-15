@@ -134,17 +134,18 @@ namespace Nebula {
 	};
 	static Renderer2DData s_Data;
 	
-	static void SetupShape(const uint32_t Type, BufferLayout layout, uint32_t maxVertices, uint32_t maxIndices, 
-		uint32_t indicesPerShape, uint32_t verticesPerShape) {
-		Ref<VertexArray> vArray  = VertexArray::Create();
-		Ref<VertexBuffer> vBuffer = VertexBuffer::Create(maxVertices * sizeof(Vertex));
-		vBuffer->SetLayout(layout);
-		vArray->AddVertexBuffer(vBuffer); 
+	static void SetupBuffers(Ref<VertexArray>& vertexArray, Ref<VertexBuffer>& vertexBuffer, BufferLayout layout, uint32_t indicesPerShape, uint32_t verticesPerShape)
+	{
+		vertexArray = VertexArray::Create();
+		vertexBuffer = VertexBuffer::Create(s_Data.MaxVertices * sizeof(Vertex));
+		vertexBuffer->SetLayout(layout);
+		vertexArray->AddVertexBuffer(vertexBuffer);
 		
+		uint32_t maxIndices = s_Data.MaxSprites * indicesPerShape;
 		uint32_t* indices = new uint32_t[maxIndices];
 
 		uint32_t offset = 0;
-		for (uint32_t i = 0; i < maxIndices; i += 6) {
+		for (uint32_t i = 0; i < maxIndices; i += indicesPerShape) {
 			indices[i + 0] = offset + 0;
 			indices[i + 1] = offset + 1;
 			
@@ -161,31 +162,8 @@ namespace Nebula {
 		}
 
 		Ref<IndexBuffer> indexBuffer = IndexBuffer::Create(indices, maxIndices);
-		vArray->SetIndexBuffer(indexBuffer);
+		vertexArray->SetIndexBuffer(indexBuffer);
 		delete[] indices;
-
-		if (Type == NB_QUAD) {
-			s_Data.QuadVertexArray = vArray;
-			s_Data.QuadVertexBuffer = vBuffer;
-			s_Data.QuadVBBase = new Vertex[s_Data.MaxVertices];
-		} else if (Type == NB_TRI) {
-			s_Data.TriangleVertexArray = vArray;
-			s_Data.TriangleVertexBuffer = vBuffer;
-			s_Data.TriVBBase = new Vertex[s_Data.MaxVertices];
-		} else if (Type == NB_CIRCLE) {
-			s_Data.CircleVertexArray = vArray;
-			s_Data.CircleVertexBuffer = vBuffer;
-			s_Data.CircleVBBase = new CircleVertex[s_Data.MaxVertices];
-		} else if (Type == NB_LINE) { 
-			s_Data.LineVertexArray = vArray;
-			s_Data.LineVertexBuffer = vBuffer;
-			s_Data.LineVBBase = new LineVertex[s_Data.MaxVertices];
-		}
-		else if (Type == NB_STRING) {
-			s_Data.TextVertexArray = vArray;
-			s_Data.TextVertexBuffer = vBuffer;
-			s_Data.TextVBBase = new TextVertex[s_Data.MaxVertices];
-		}
 	}
 
 	static void ResetBatch() {
@@ -210,76 +188,110 @@ namespace Nebula {
 	void Renderer2D::Init() {
 		NB_PROFILE_FUNCTION();
 
+		//Camera Uniform
+		s_Data.CameraUniformBuffer = UniformBuffer::Create(sizeof(Renderer2DData::CameraData), 0);
+		
 		BufferLayout layout = {
-			{ShaderDataType::Float3, "position"},
-			{ShaderDataType::Float4, "colour"},
-			{ShaderDataType::Float2, "texCoord"},
-			{ShaderDataType::Float, "texIndex"},
-			{ShaderDataType::Float, "tilingFactor"},
-			{ShaderDataType::Int, "entityID"}
+			{ ShaderDataType::Float3, "position" },
+			{ ShaderDataType::Float4, "colour" },
+			{ ShaderDataType::Float2, "texCoord" },
+			{ ShaderDataType::Float, "texIndex" },
+			{ ShaderDataType::Float, "tilingFactor" },
+			{ ShaderDataType::Int, "entityID" }
 		};
 
-		BufferLayout CircleLayout = {
-			{ShaderDataType::Float3, "position"},
-			{ShaderDataType::Float3, "localPosition"},
-			{ShaderDataType::Float4, "colour"},
-			{ShaderDataType::Float, "thickness"},
-			{ShaderDataType::Float, "fade"},
-			{ShaderDataType::Int, "entityID"}
-		};
+		// Quad Setup
+		{
+			SetupBuffers(s_Data.QuadVertexArray, s_Data.QuadVertexBuffer, layout, 6, 4);
+			s_Data.QuadVBBase = new Vertex[s_Data.MaxVertices];
 
-		BufferLayout LineLayout = {
-			{ShaderDataType::Float3, "position"},
-			{ShaderDataType::Float4, "colour"},
-			{ShaderDataType::Int, "entityID"}
-		};
+			s_Data.QuadVertexPos[0] = { -0.5f, -0.5f, 0.0f, 1.0f };
+			s_Data.QuadVertexPos[1] = {  0.5f, -0.5f, 0.0f, 1.0f };
+			s_Data.QuadVertexPos[2] = {  0.5f,  0.5f, 0.0f, 1.0f };
+			s_Data.QuadVertexPos[3] = { -0.5f,  0.5f, 0.0f, 1.0f };
 
-		BufferLayout Textlayout = {
-			{ShaderDataType::Float3, "position"},
-			{ShaderDataType::Float4, "colour"},
-			{ShaderDataType::Float2, "texCoord"},
-			{ShaderDataType::Int, "entityID"}
-		};
+			s_Data.QuadTexCoords[0] = { 0.0f, 0.0f };
+			s_Data.QuadTexCoords[1] = { 1.0f, 0.0f };
+			s_Data.QuadTexCoords[2] = { 1.0f, 1.0f };
+			s_Data.QuadTexCoords[3] = { 0.0f, 1.0f };
+		}
+		
+		// Triangle Setup
+		{
+			SetupBuffers(s_Data.TriangleVertexArray, s_Data.TriangleVertexBuffer, layout, 3, 3);
+			s_Data.TriVBBase = new Vertex[s_Data.MaxVertices];
 
-		SetupShape(NB_QUAD, layout, s_Data.MaxVertices, s_Data.MaxIndices, 6, 4);
-		SetupShape(NB_TRI, layout, s_Data.MaxVertices, s_Data.MaxIndices, 3, 3);
-		SetupShape(NB_CIRCLE, CircleLayout, s_Data.MaxVertices, s_Data.MaxIndices, 6, 4);
-		SetupShape(NB_LINE, LineLayout, s_Data.MaxVertices, s_Data.MaxIndices, 2, 2);
-		SetupShape(NB_STRING, Textlayout, s_Data.MaxVertices, s_Data.MaxIndices, 6, 4);
+			s_Data.TriVertexPos[0] = { -0.5f, -0.5f, 0.0f, 1.0f };
+			s_Data.TriVertexPos[1] = {  0.5f, -0.5f, 0.0f, 1.0f };
+			s_Data.TriVertexPos[2] = {  0.5f,  0.5f, 0.0f, 1.0f };
 
-		s_Data.QuadVertexPos[0] = { -0.5f, -0.5f, 0.0f, 1.0f };
-		s_Data.QuadVertexPos[1] = {  0.5f, -0.5f, 0.0f, 1.0f };
-		s_Data.QuadVertexPos[2] = {  0.5f,  0.5f, 0.0f, 1.0f };
-		s_Data.QuadVertexPos[3] = { -0.5f,  0.5f, 0.0f, 1.0f };
+			s_Data.TriTexCoords[0] = { 0.0f, 0.0f };
+			s_Data.TriTexCoords[1] = { 1.0f, 0.0f };
+			s_Data.TriTexCoords[2] = { 0.5f, 0.5f };
+		}
+		
+		// Circle Setup
+		{
+			BufferLayout CircleLayout = {
+				{ ShaderDataType::Float3, "position" },
+				{ ShaderDataType::Float3, "localPosition" },
+				{ ShaderDataType::Float4, "colour" },
+				{ ShaderDataType::Float, "thickness" },
+				{ ShaderDataType::Float, "fade" },
+				{ ShaderDataType::Int, "entityID" }
+			};
 
-		s_Data.QuadTexCoords[0] = { 0.0f, 0.0f };
-		s_Data.QuadTexCoords[1] = { 1.0f, 0.0f };
-		s_Data.QuadTexCoords[2] = { 1.0f, 1.0f };
-		s_Data.QuadTexCoords[3] = { 0.0f, 1.0f };
+			SetupBuffers(s_Data.CircleVertexArray, s_Data.CircleVertexBuffer, CircleLayout, 6, 4);
+			s_Data.CircleVBBase = new CircleVertex[s_Data.MaxVertices];
 
-		s_Data.TriVertexPos[0] = { -0.5f, -0.5f, 0.0f, 1.0f };
-		s_Data.TriVertexPos[1] = {  0.5f, -0.5f, 0.0f, 1.0f };
-		s_Data.TriVertexPos[2] = {  0.5f,  0.5f, 0.0f, 1.0f };
+			s_Data.CircleShader = Shader::Create("Resources/shaders/Circle.glsl");
+			s_Data.CircleShader->SetUniformBuffer("u_ViewProjection", s_Data.CameraUniformBuffer);
+		}
+		
+		// Line Setup
+		{
+			BufferLayout LineLayout = {
+				{ ShaderDataType::Float3, "position" },
+				{ ShaderDataType::Float4, "colour" },
+				{ ShaderDataType::Int, "entityID" }
+			};
 
-		s_Data.TriTexCoords[0] = { 0.0f, 0.0f };
-		s_Data.TriTexCoords[1] = { 1.0f, 0.0f };
-		s_Data.TriTexCoords[2] = { 0.5f, 0.5f };
+			SetupBuffers(s_Data.LineVertexArray, s_Data.LineVertexBuffer, LineLayout, 2, 2);
+			s_Data.LineVBBase = new LineVertex[s_Data.MaxVertices];
+		
+			s_Data.LineVertexPos[0] = { -0.5f, 0.0f, 0.0f, 1.0f };
+			s_Data.LineVertexPos[1] = { 0.5f, 0.0f, 0.0f, 1.0f };
+			
+			s_Data.LineShader = Shader::Create("Resources/shaders/Line.glsl");
+			s_Data.LineShader->SetUniformBuffer("u_ViewProjection", s_Data.CameraUniformBuffer);
+		}
+		
+		// Text Setup
+		{
+			BufferLayout TextLayout = {
+				{ ShaderDataType::Float3, "position" },
+				{ ShaderDataType::Float4, "colour" },
+				{ ShaderDataType::Float2, "texCoord" },
+				{ ShaderDataType::Int, "entityID" }
+			};
 
-		s_Data.LineVertexPos[0] = { -0.5f, 0.0f, 0.0f, 1.0f };
-		s_Data.LineVertexPos[1] = {  0.5f, 0.0f, 0.0f, 1.0f };
-
+			SetupBuffers(s_Data.TextVertexArray, s_Data.TextVertexBuffer, TextLayout, 6, 4);
+			s_Data.TextVBBase = new TextVertex[s_Data.MaxVertices];
+		
+			s_Data.TextShader = Shader::Create("Resources/shaders/Text.glsl");
+			s_Data.TextShader->SetUniformBuffer("u_ViewProjection", s_Data.CameraUniformBuffer);
+		}
+		
 		//White Texture
 		s_Data.WhiteTexture = Texture2D::Create(TextureSpecification());
 		uint32_t whiteTextureData = 0xffffffff;
 		s_Data.WhiteTexture->SetData(Buffer(&whiteTextureData, sizeof(uint32_t)));
 		s_Data.TextureSlots[0] = s_Data.WhiteTexture;
 
-		//Shaders
+		// Texture Shader
 		s_Data.TextureShader = Shader::Create("Resources/shaders/Default.glsl");
-		//s_Data.LineShader = Shader::Create("Resources/shaders/Line.glsl");
-		s_Data.CircleShader = Shader::Create("Resources/shaders/Circle.glsl");
-		s_Data.TextShader = Shader::Create("Resources/shaders/Text.glsl");
-		
+		s_Data.TextureShader->SetUniformBuffer("u_ViewProjection", s_Data.CameraUniformBuffer);
+
 		// OpenGL
 		{
 			int32_t samplers[s_Data.MaxTextureSlots];
@@ -292,12 +304,6 @@ namespace Nebula {
 		
 		// Vulkan (Fill Texture Array with Default Texture)
 		s_Data.TextureShader->SetTextureArray("u_Textures", s_Data.WhiteTexture);
-
-		//Camera Uniform
-		s_Data.CameraUniformBuffer = UniformBuffer::Create(sizeof(Renderer2DData::CameraData), 0);
-		s_Data.TextureShader->SetUniformBuffer("u_ViewProjection", s_Data.CameraUniformBuffer);
-		s_Data.CircleShader->SetUniformBuffer("u_ViewProjection", s_Data.CameraUniformBuffer);
-		s_Data.TextShader->SetUniformBuffer("u_ViewProjection", s_Data.CameraUniformBuffer);
 	}
 
 	void Renderer2D::Shutdown() {
@@ -635,7 +641,7 @@ namespace Nebula {
 			RenderCommand::DrawIndexed(s_Data.CircleVertexArray, s_Data.CircleIndexCount);
 		}
 
-		if (s_Data.LineVertexCount && false) {
+		if (s_Data.LineVertexCount) {
 			uint32_t dataSize = (uint32_t)((uint8_t*)s_Data.LineVBPtr - (uint8_t*)s_Data.LineVBBase);
 			s_Data.LineVertexBuffer->SetData(s_Data.LineVBBase, dataSize);
 

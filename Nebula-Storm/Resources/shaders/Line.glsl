@@ -20,10 +20,9 @@ layout (location = 1) out flat int v_EntityID;
 
 void main()
 {
+	gl_Position = u_ViewProjection * vec4(position, 1.0);
 	Output.Colour = colour;
 	v_EntityID = EntityID;
-
-	gl_Position = u_ViewProjection * vec4(position, 1.0);
 }
 
 #type fragment

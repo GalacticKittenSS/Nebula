@@ -95,9 +95,6 @@ namespace Nebula {
 
 		m_EditorCam = EditorCamera(60.0f, 16.0f / 9.0f, 0.01f, 1000.0f);
 
-		RenderCommand::SetClearColour({ 0.1f, 0.1f, 0.1f, 1.0f });
-		RenderCommand::SetLineWidth(4.0f);
-
 		AssetManager::CreateGlobalFamily("Resources/fonts/OpenSans");
 		AssetManager::CreateGlobalFamily("Resources/fonts/Roboto");
 		
@@ -113,7 +110,7 @@ namespace Nebula {
 		Renderer2D::Init();
 		
 		RenderCommand::SetClearColour({ 0.1f, 0.1f, 0.1f, 1.0f });
-		RenderCommand::SetLineWidth(100.0f);
+		RenderCommand::SetLineWidth(5.0f);
 		RenderCommand::SetBackfaceCulling(true);
 		
 		m_ShowColliders = true;

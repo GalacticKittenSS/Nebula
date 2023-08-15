@@ -102,7 +102,8 @@ namespace Nebula
 			VkPhysicalDeviceFeatures supportedFeatures;
 			vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
 
-			return indices != (uint32_t)-1 && extensionsSupported && supportedFeatures.samplerAnisotropy && supportedFeatures.wideLines;
+			return indices != (uint32_t)-1 && extensionsSupported && supportedFeatures.samplerAnisotropy 
+				&& supportedFeatures.wideLines && supportedFeatures.fillModeNonSolid;
 		}
 
 		uint16_t RateDeviceSuitability(VkPhysicalDevice device)
@@ -272,6 +273,7 @@ namespace Nebula
 		VkPhysicalDeviceFeatures deviceFeatures{};
 		deviceFeatures.samplerAnisotropy = VK_TRUE;
 		deviceFeatures.wideLines = VK_TRUE;
+		deviceFeatures.fillModeNonSolid = VK_TRUE;
 		createInfo.pEnabledFeatures = &deviceFeatures;
 
 #ifdef NB_DEBUG
