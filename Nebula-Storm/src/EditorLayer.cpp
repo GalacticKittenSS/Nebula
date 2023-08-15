@@ -401,6 +401,18 @@ namespace Nebula {
 		Renderer2D::EndScene();
 	}
 
+	static bool hasRelationShip(Ref<Scene> scene, UUID entityA, UUID entityB)
+	{
+		if (entityA == entityB)
+			return true;
+		
+		auto& node = scene->GetEntityNode(entityA);
+		if (!node.Parent)
+			return false;
+
+		return hasRelationShip(scene, node.Parent, entityB);
+	}
+
 	void EditorLayer::RenderColliders() {
 		// Calculate z index for translation
 		float zIndex = 0.001f;
@@ -425,6 +437,12 @@ namespace Nebula {
 		for (auto entity : BoxView) {
 			auto [wtc, bc2d] = BoxView.get<WorldTransformComponent, BoxCollider2DComponent>(entity);
 
+			if (Entity selected = m_SceneHierarchy.GetSelectedEntity())
+			{
+				if (hasRelationShip(m_ActiveScene, Entity{ entity, m_ActiveScene.get() }.GetUUID(), selected.GetUUID()))
+					continue;
+			}
+
 			glm::vec3 wTranslation, wRotation, wScale;
 			Maths::DecomposeTransform(wtc.Transform, wTranslation, wRotation, wScale);
 
@@ -445,10 +463,17 @@ namespace Nebula {
 			|| selectedEntity.HasComponent<CircleRendererComponent>())
 		{
 			const WorldTransformComponent& wtc = selectedEntity.GetComponent<WorldTransformComponent>();
-			Renderer2D::DrawRect(wtc.Transform, Material{ glm::vec4(1.0f, 0.5f, 0.0f, 1.0f) });
+
+			float zIndex = 0.001f;
+			glm::vec3 cameraForwardDirection = m_EditorCam.GetForwardDirection();
+			glm::vec3 projectionCollider = cameraForwardDirection * glm::vec3(zIndex);
+
+			glm::mat4 transform = wtc.Transform * glm::translate(glm::vec3(0.0f, 0.0f, -projectionCollider.z));
+			Renderer2D::DrawRect(transform, Material{ glm::vec4(1.0f, 0.5f, 0.0f, 1.0f) });
 		}
 		
-		for (auto& id : m_ActiveScene->GetEntityNode(selectedEntity.GetUUID()).Children)
+		Scene::SceneNode node = m_ActiveScene->GetEntityNode(selectedEntity.GetUUID());
+		for (auto& id : node.Children)
 		{
 			Entity child = { id, selectedEntity };
 			RenderSelectionUI(child);
