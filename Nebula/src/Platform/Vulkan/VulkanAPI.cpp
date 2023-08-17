@@ -510,6 +510,17 @@ namespace Nebula
 			VulkanAPI::EndSingleUseCommand(commandBuffer);
 	}
 
+	void VulkanAPI::TransitionImageLayout(Ref<VulkanImage> image, VkImageLayout newLayout, VkCommandBuffer commandBuffer)
+	{
+
+		VkImageLayout& layout = image->GetLayout();
+		if (layout == newLayout)
+			return;
+
+		TransitionImageLayout(image->GetImage(), image->GetAspectFlags(), layout, newLayout, commandBuffer);
+		layout = newLayout;
+	}
+
 	void VulkanAPI::AllocateDescriptorSet(VkDescriptorSet& descriptorSet, const VkDescriptorSetLayout& layout)
 	{
 		NB_ASSERT(layout != VK_NULL_HANDLE);
@@ -673,6 +684,7 @@ namespace Nebula
 			imageArray[i]->m_Image = images[i];
 			imageArray[i]->m_ImageView = imageViews[i];
 			imageArray[i]->m_OwnsImages = false;
+			imageArray[i]->m_AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT; // Assume these images are coming from swapchain
 		}
 
 		return imageArray;

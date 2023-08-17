@@ -95,6 +95,9 @@ namespace Nebula {
 
 		m_EditorCam = EditorCamera(60.0f, 16.0f / 9.0f, 0.01f, 1000.0f);
 
+		RenderCommand::SetClearColour({ 0.1f, 0.1f, 0.1f, 1.0f });
+		RenderCommand::SetLineWidth(5.0f);
+		
 		AssetManager::CreateGlobalFamily("Resources/fonts/OpenSans");
 		AssetManager::CreateGlobalFamily("Resources/fonts/Roboto");
 		
@@ -103,17 +106,8 @@ namespace Nebula {
 		fbSpec.Attachments = { FramebufferTextureFormat::RGBA8, FramebufferTextureFormat::RED_INT, FramebufferTextureFormat::Depth };
 		fbSpec.Width = 1280;
 		fbSpec.Height = 720;
+		Renderer2D::BindRenderPass();
 		frameBuffer = FrameBuffer::Create(fbSpec);
-
-		// Shader currently needs VkRenderPass object located in framebuffer
-		// without a framebuffer bound vulkan will throw errors
-		Renderer2D::Init();
-		
-		RenderCommand::SetClearColour({ 0.1f, 0.1f, 0.1f, 1.0f });
-		RenderCommand::SetLineWidth(5.0f);
-		RenderCommand::SetBackfaceCulling(true);
-		
-		m_ShowColliders = true;
 
 		//Create New Scene
 		NewScene();

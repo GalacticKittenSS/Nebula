@@ -4,7 +4,7 @@
 #include "Nebula/Utils/Time.h"
 
 #include "VulkanAPI.h"
-#include "Vulkan_Framebuffer.h"
+#include "Vulkan_RenderPass.h"
 #include "Vulkan_UniformBuffer.h"
 #include "Vulkan_Texture.h"
 
@@ -576,7 +576,7 @@ namespace Nebula
 		pipelineInfo.pDepthStencilState = &depthStencil;
 		pipelineInfo.pDynamicState = &dynamicState;
 		pipelineInfo.layout = m_PipelineLayout;
-		pipelineInfo.renderPass = Vulkan_FrameBuffer::s_BindedInstance->m_RenderPass;
+		pipelineInfo.renderPass = Vulkan_RenderPass::GetVulkanRenderPass();
 		pipelineInfo.subpass = 0;
 		pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 		

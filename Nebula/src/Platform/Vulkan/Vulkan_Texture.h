@@ -17,7 +17,8 @@ namespace Nebula {
 
 		uint32_t GetWidth() const override { return m_Width; }
 		uint32_t GetHeight() const override { return m_Height; }
-		uint64_t GetRendererID() const override { return (uint64_t)m_ImguiDescriptor; }
+		uint64_t GetImage() const override { return (uint64_t)m_Image->GetImage(); }
+		uint64_t GetRendererID() const override { NB_ASSERT(m_Specification.ImGuiUsable); return (uint64_t)m_ImguiDescriptor; }
 
 		void Bind(uint32_t slot) const;
 		void Unbind() const;
@@ -25,7 +26,7 @@ namespace Nebula {
 		bool IsLoaded() const override { return m_IsLoaded; }
 
 		bool operator==(const Texture& other) const override {
-			return GetRendererID()  == other.GetRendererID();
+			return GetImage() == other.GetImage();
 		}
 	private:
 		TextureSpecification m_Specification;

@@ -127,7 +127,8 @@ namespace Nebula {
 			m_IsLoaded = true;
 		}
 
-		m_ImguiDescriptor = ImGui_ImplVulkan_AddTexture(m_Sampler, m_Image->GetImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		if (m_Specification.ImGuiUsable)
+			m_ImguiDescriptor = ImGui_ImplVulkan_AddTexture(m_Sampler, m_Image->GetImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	}
 
 	Vulkan_Texture2D::~Vulkan_Texture2D() 

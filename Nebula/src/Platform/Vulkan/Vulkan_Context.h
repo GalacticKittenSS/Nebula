@@ -54,6 +54,7 @@ namespace Nebula {
 
 		friend class Vulkan_RendererAPI;
 		friend class Vulkan_FrameBuffer;
+		friend class Vulkan_RenderPass;
 		friend class ImGuiLayer;
 	};
 }

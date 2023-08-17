@@ -5,6 +5,8 @@
 #include "Fonts.h"
 #include "Material.h"
 
+#include "FrameBuffer.h"
+
 #include "Nebula/Scene/Entity.h"
 
 #define NB_STRING	6
@@ -26,6 +28,8 @@ namespace Nebula {
 	public:
 		static void Init();
 		static void Shutdown();
+
+		static void BindRenderPass();
 
 		static void BeginScene(const Camera& camera, const glm::mat4& transform = glm::mat4(1.0f));
 		static void BeginScene(const EditorCamera& camera);

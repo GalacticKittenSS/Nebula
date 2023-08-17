@@ -1,11 +1,11 @@
 #include "nbpch.h"
 #include "Vulkan_Framebuffer.h"
 
-#include "Nebula/Renderer/Render_Command.h"
 #include "Nebula/Core/Application.h"
+
 #include "VulkanAPI.h"
 #include "Vulkan_Context.h"
-#include "VulkanAPI.h"
+#include "Vulkan_RenderPass.h"
 
 #include <backends/imgui_impl_vulkan.h>
 
@@ -16,7 +16,7 @@ namespace Nebula {
 
 	namespace Utils 
 	{
-		static bool IsDepthFormat(FramebufferTextureFormat format) {
+		bool IsDepthFormat(FramebufferTextureFormat format) {
 			switch (format)
 			{
 			case FramebufferTextureFormat::DEPTH24STENCIL8: return true;
@@ -25,10 +25,10 @@ namespace Nebula {
 			return false;
 		}
 
-		static VkFormat NebulaFBFormattoVulkan(FramebufferTextureFormat format) {
+		VkFormat NebulaFBFormattoVulkan(FramebufferTextureFormat format) {
 			switch (format)
 			{
-			case Nebula::FramebufferTextureFormat::RGBA8:	return VK_FORMAT_R8G8B8A8_UNORM;
+			case Nebula::FramebufferTextureFormat::RGBA8:	return VK_FORMAT_B8G8R8A8_UNORM;
 			case Nebula::FramebufferTextureFormat::RED_INT: return VK_FORMAT_R8_SINT;
 			}
 
@@ -130,7 +130,9 @@ namespace Nebula {
 			NB_ASSERT(result == VK_SUCCESS, "Failed to create texture sampler!");
 		}
 		
-		CreateRenderPass();
+		m_RenderPass = Vulkan_RenderPass::GetVulkanRenderPass();
+		//CreateRenderPass();
+
 		Invalidate();
 		s_BindedInstance = this;
 	}
@@ -142,8 +144,10 @@ namespace Nebula {
 			vkDestroyFramebuffer(VulkanAPI::GetDevice(), framebuffer, nullptr);
 		}
 		
-		vkDestroyRenderPass(VulkanAPI::GetDevice(), m_RenderPass, nullptr);
-		vkDestroySampler(VulkanAPI::GetDevice(), m_ImGuiSampler, nullptr);
+		//vkDestroyRenderPass(VulkanAPI::GetDevice(), m_RenderPass, nullptr);
+		
+		if (m_ImGuiSampler)
+			vkDestroySampler(VulkanAPI::GetDevice(), m_ImGuiSampler, nullptr);
 
 		for (auto& descriptor : m_ImGuiDescriptors)
 			ImGui_ImplVulkan_RemoveTexture(descriptor);
@@ -311,57 +315,24 @@ namespace Nebula {
 	void Vulkan_FrameBuffer::Bind() 
 	{
 		s_BindedInstance = this;
-	}
 
-	void Vulkan_FrameBuffer::BeginRenderPass()
-	{
 		Vulkan_Context* context = (Vulkan_Context*)Application::Get().GetWindow().GetContext();
-		uint32_t imageIndex = context->m_ImageIndex;
-		if (imageIndex == (uint32_t)-1)
-			return;
+		VkCommandBuffer commandBuffer = VulkanAPI::BeginSingleUseCommand();
 
-		VkExtent2D extent;
-		extent.width = s_BindedInstance->m_Specifications.Width;
-		extent.height = s_BindedInstance->m_Specifications.Height;
-
-		VkRenderPassBeginInfo renderPassInfo{};
-		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderPassInfo.renderPass = s_BindedInstance->m_RenderPass;
-		renderPassInfo.framebuffer = s_BindedInstance->m_Framebuffer[imageIndex];
-		renderPassInfo.renderArea.offset = { 0, 0 };
-		renderPassInfo.renderArea.extent = extent;
-
-		size_t attachmentCount = s_BindedInstance->m_ColourAttachments.size();
-		if (s_BindedInstance->m_DepthAttachment)
-			attachmentCount++;
-
-		std::vector<VkClearValue> clearValues(attachmentCount);
-		renderPassInfo.clearValueCount = (uint32_t)clearValues.size();
-		renderPassInfo.pClearValues = clearValues.data();
-
-		VkCommandBuffer commandBuffer = VulkanAPI::GetCommandBuffer();
-		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-		VkViewport viewport{};
-		viewport.x = 0.0f;
-		viewport.y = 0.0f;
-		viewport.width = (float)extent.width;
-		viewport.height = (float)extent.height;
-		viewport.minDepth = 0.0f;
-		viewport.maxDepth = 1.0f;
-
-		if (s_BindedInstance->m_Specifications.SwapChainTarget)
+		for (auto& attachment : m_ColourAttachments)
 		{
-			viewport.y = (float)extent.height;
-			viewport.height = -(float)extent.height;
+			Ref<VulkanImage>& image = attachment[context->m_ImageIndex];
+			
+			if (m_Specifications.SwapChainTarget && image->GetFormat() == VK_FORMAT_UNDEFINED) // Assume it's from swapchain
+			{
+				// Image doesn't know it's in VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+				image->GetLayout() = image->GetLayout() != VK_IMAGE_LAYOUT_UNDEFINED ? VK_IMAGE_LAYOUT_PRESENT_SRC_KHR : image->GetLayout();
+			}
+			
+			VulkanAPI::TransitionImageLayout(image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, commandBuffer);
 		}
 
-		vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
-
-		VkRect2D scissor{};
-		scissor.offset = { 0, 0 };
-		scissor.extent = extent;
-		vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+		VulkanAPI::EndSingleUseCommand(commandBuffer);
 	}
 
 	void Vulkan_FrameBuffer::Unbind()
@@ -468,8 +439,7 @@ namespace Nebula {
 	uint64_t Vulkan_FrameBuffer::GetColourAttachmentRendererID(uint32_t index) const
 	{
 		Vulkan_Context* context = (Vulkan_Context*)Application::Get().GetWindow().GetContext();
-		const VkImage& src = m_ColourAttachments[index][context->m_ImageIndex]->GetImage();
-		VulkanAPI::TransitionImageLayout(src, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		VulkanAPI::TransitionImageLayout(m_ColourAttachments[index][context->m_ImageIndex], VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 		return (uint64_t)m_ImGuiDescriptors[context->m_ImageIndex];
 	}
 }

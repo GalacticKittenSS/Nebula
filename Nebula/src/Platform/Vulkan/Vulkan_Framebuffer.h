@@ -22,12 +22,12 @@ namespace Nebula {
 		void Bind() override;
 		void Unbind() override;
 
-		static void BeginRenderPass();
-		
 		uint64_t GetColourAttachmentRendererID(uint32_t index) const override;
 
 		FrameBufferSpecification& GetFrameBufferSpecifications() override { return m_Specifications; }
 		const FrameBufferSpecification& GetFrameBufferSpecifications() const override { return m_Specifications; }
+
+		static Vulkan_FrameBuffer* GetActiveInstance() { return s_BindedInstance; }
 	private:
 		void CreateRenderPass();
 		void ClearAttachment(uint32_t attachmentIndex, VkClearColorValue clearValue);
@@ -42,13 +42,11 @@ namespace Nebula {
 		std::vector<VulkanImageArray> m_ColourAttachments;
 		Ref<VulkanImage> m_DepthAttachment;
 
-		VkSampler m_ImGuiSampler;
+		VkSampler m_ImGuiSampler = VK_NULL_HANDLE;
 		std::vector<VkDescriptorSet> m_ImGuiDescriptors;
 
 		static Vulkan_FrameBuffer* s_BindedInstance;
-		friend class Vulkan_RendererAPI;
-		friend class Vulkan_Context;
-		friend class Vulkan_Shader;
+		friend class Vulkan_RenderPass;
 		friend class ImGuiLayer;
 	};
 }

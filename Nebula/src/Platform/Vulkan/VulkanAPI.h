@@ -4,6 +4,8 @@
 
 namespace Nebula
 {
+	class VulkanImage;
+
 	class VulkanAPI
 	{
 	public:
@@ -21,6 +23,7 @@ namespace Nebula
 
 		static uint32_t FindMemoryType(uint32_t filter, VkMemoryPropertyFlags properties);
 		static void TransitionImageLayout(VkImage image, VkImageAspectFlags imageAspect, VkImageLayout oldLayout, VkImageLayout newLayout, VkCommandBuffer commandBuffer = VK_NULL_HANDLE);
+		static void TransitionImageLayout(Ref<VulkanImage> image, VkImageLayout newLayout, VkCommandBuffer commandBuffer = VK_NULL_HANDLE);
 		static void AllocateDescriptorSet(VkDescriptorSet& descriptorSet, const VkDescriptorSetLayout& layout);
 
 		static inline const VkInstance& GetInstance() { return s_Instance; }
@@ -63,7 +66,6 @@ namespace Nebula
 		static uint8_t s_FrameIndex;
 		static bool s_CommandBufferRecording;
 
-		friend class Vulkan_RendererAPI;
 		friend class ImGuiLayer;
 	};
 
@@ -100,7 +102,8 @@ namespace Nebula
 		const VkImageView& GetImageView() const { return m_ImageView; }
 		const VkFormat& GetFormat() const { return m_ImageFormat; }
 		const VkImageAspectFlags& GetAspectFlags() const { return m_AspectFlags; }
-	
+		VkImageLayout& GetLayout() { return m_ImageLayout; }
+
 		static VkSampleCountFlagBits GetSampleFlags(int samples);
 		static void CreateTextureImage(VkImageView& view, VkImage& image, VkDeviceMemory& memory, int samples, VkFormat format, VkImageUsageFlags usage, VkImageAspectFlags aspect, uint32_t width, uint32_t height);
 	private:
@@ -110,6 +113,7 @@ namespace Nebula
 
 		VkFormat m_ImageFormat;
 		VkImageAspectFlags m_AspectFlags;
+		VkImageLayout m_ImageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		bool m_OwnsImages = true;
 	};
 

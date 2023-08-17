@@ -84,7 +84,7 @@ namespace Nebula {
 
 	void Vulkan_RendererAPI::Clear() 
 	{
-		if (Vulkan_FrameBuffer* framebuffer = Vulkan_FrameBuffer::s_BindedInstance)
+		if (Vulkan_FrameBuffer* framebuffer = Vulkan_FrameBuffer::GetActiveInstance())
 		{
 			framebuffer->ClearAttachment(0, m_ClearColour);
 			framebuffer->ClearDepthAttachment(0);
@@ -132,15 +132,13 @@ namespace Nebula {
 	void Vulkan_RendererAPI::BeginRecording()
 	{
 		VulkanAPI::BeginCommandRecording();
-		Vulkan_FrameBuffer::BeginRenderPass();
-		
+
 		vkCmdSetLineWidth(VulkanAPI::GetCommandBuffer(), m_LineWidth);
 		vkCmdSetCullMode(VulkanAPI::GetCommandBuffer(), m_BackFaceCulling ? VK_CULL_MODE_BACK_BIT : VK_CULL_MODE_NONE);
 	}
 
 	void Vulkan_RendererAPI::EndRecording()
 	{
-		vkCmdEndRenderPass(VulkanAPI::GetCommandBuffer());
 		VulkanAPI::EndCommandRecording();
 	}
 	

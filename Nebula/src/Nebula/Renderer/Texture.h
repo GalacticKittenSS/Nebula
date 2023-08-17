@@ -24,6 +24,7 @@ namespace Nebula {
 		uint32_t Height = 1;
 		ImageFormat Format = ImageFormat::RGBA8;
 		bool GenerateMips = true;
+		bool ImGuiUsable = true;
 	};
 
 	class Texture : public Asset
@@ -36,6 +37,7 @@ namespace Nebula {
 		virtual uint32_t GetWidth() const = 0;
 		virtual uint32_t GetHeight() const = 0;
 		virtual uint64_t GetRendererID() const = 0;
+		virtual uint64_t GetImage() const { return GetRendererID(); };
 		
 		virtual void SetData(Buffer data) = 0;
 		virtual void SetFilterNearest(bool nearest = true) = 0;

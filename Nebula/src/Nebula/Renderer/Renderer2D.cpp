@@ -6,6 +6,7 @@
 #include "Shader.h"
 #include "Render_Command.h"
 #include "UniformBuffer.h"
+#include "RenderPass.h"
 
 #include "Nebula/AssetManager/AssetManager.h"
 #include "Nebula/Scene/Components.h"
@@ -63,6 +64,7 @@ namespace Nebula {
 		static const uint32_t MaxVertices  = MaxSprites * 4;
 		static const uint32_t MaxIndices   = MaxSprites * 6;
 		
+		Ref<RenderPass>    RenderPass;
 		Ref<Shader>		TextureShader;
 		Ref<Shader>		 CircleShader;
 		Ref<Shader>		   LineShader;
@@ -188,6 +190,16 @@ namespace Nebula {
 	void Renderer2D::Init() {
 		NB_PROFILE_FUNCTION();
 
+		//Render Pass
+		{
+			RenderPassSpecifications spec;
+			spec.Attachments = { FramebufferTextureFormat::RGBA8, FramebufferTextureFormat::RED_INT, FramebufferTextureFormat::Depth };
+			spec.ClearOnLoad = false;
+			spec.ShaderOnly = true;
+			s_Data.RenderPass = RenderPass::Create(spec);
+			s_Data.RenderPass->Bind();
+		}
+		
 		//Camera Uniform
 		s_Data.CameraUniformBuffer = UniformBuffer::Create(sizeof(Renderer2DData::CameraData), 0);
 		
@@ -283,11 +295,14 @@ namespace Nebula {
 		}
 		
 		//White Texture
-		s_Data.WhiteTexture = Texture2D::Create(TextureSpecification());
-		uint32_t whiteTextureData = 0xffffffff;
-		s_Data.WhiteTexture->SetData(Buffer(&whiteTextureData, sizeof(uint32_t)));
+		TextureSpecification textureSpec;
+		textureSpec.ImGuiUsable = false;
+		s_Data.WhiteTexture = Texture2D::Create(textureSpec);
 		s_Data.TextureSlots[0] = s_Data.WhiteTexture;
 
+		uint32_t whiteTextureData = 0xffffffff;
+		s_Data.WhiteTexture->SetData(Buffer(&whiteTextureData, sizeof(uint32_t)));
+		
 		// Texture Shader
 		s_Data.TextureShader = Shader::Create("Resources/shaders/Default.glsl");
 		s_Data.TextureShader->SetUniformBuffer("u_ViewProjection", s_Data.CameraUniformBuffer);
@@ -304,6 +319,11 @@ namespace Nebula {
 		
 		// Vulkan (Fill Texture Array with Default Texture)
 		s_Data.TextureShader->SetTextureArray("u_Textures", s_Data.WhiteTexture);
+	}
+
+	void Renderer2D::BindRenderPass()
+	{
+		s_Data.RenderPass->Bind();
 	}
 
 	void Renderer2D::Shutdown() {
@@ -616,6 +636,7 @@ namespace Nebula {
 		}
 
 		RenderCommand::BeginRecording();
+		s_Data.RenderPass->Bind();
 
 		if (s_Data.TriIndexCount) {
 			uint32_t dataSize = (uint32_t)((uint8_t*)s_Data.TriVBPtr - (uint8_t*)s_Data.TriVBBase);
@@ -659,6 +680,7 @@ namespace Nebula {
 			RenderCommand::DrawIndexed(s_Data.TextVertexArray, s_Data.TextIndexCount);
 		}
 
+		s_Data.RenderPass->Unbind();
 		RenderCommand::EndRecording();
 	}
 
