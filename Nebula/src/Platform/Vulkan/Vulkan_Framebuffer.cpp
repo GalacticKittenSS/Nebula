@@ -166,11 +166,14 @@ namespace Nebula {
 	{
 		if (!m_Framebuffer.empty()) 
 		{
-			for (auto& framebuffer : m_Framebuffer)
-				vkDestroyFramebuffer(VulkanAPI::GetDevice(), framebuffer, nullptr);
+			VulkanAPI::SubmitResource([framebuffers = m_Framebuffer, descriptorSets = m_ImGuiDescriptors]()
+			{
+				for (auto& framebuffer : framebuffers)
+					vkDestroyFramebuffer(VulkanAPI::GetDevice(), framebuffer, nullptr);
 
-			for (auto& descriptor : m_ImGuiDescriptors)
-				ImGui_ImplVulkan_RemoveTexture(descriptor);
+				for (auto& descriptor : descriptorSets)
+					ImGui_ImplVulkan_RemoveTexture(descriptor);
+			});
 			
 			m_ImGuiDescriptors.clear();
 			m_ColourAttachments.clear();

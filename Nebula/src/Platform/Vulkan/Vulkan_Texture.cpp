@@ -144,10 +144,13 @@ namespace Nebula {
 	{
 		NB_PROFILE_FUNCTION();
 
-		vkDeviceWaitIdle(VulkanAPI::GetDevice());
-
-		//ImGui_ImplVulkan_RemoveTexture(m_ImguiDescriptor);
-		vkDestroySampler(VulkanAPI::GetDevice(), m_Sampler, nullptr);
+		VulkanAPI::SubmitResource([imguiDescriptor = m_ImguiDescriptor, sampler = m_Sampler]()
+		{
+			if (imguiDescriptor)
+				vkFreeDescriptorSets(VulkanAPI::GetDevice(), VulkanAPI::s_DescriptorPool, 1, &imguiDescriptor);
+			
+			vkDestroySampler(VulkanAPI::GetDevice(), sampler, nullptr);
+		});
 	}
 
 	void Vulkan_Texture2D::SetData(Buffer data) 

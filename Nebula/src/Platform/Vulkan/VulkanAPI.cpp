@@ -140,6 +140,8 @@ namespace Nebula
 	std::vector<VkSemaphore> VulkanAPI::s_RenderSemaphores = {};
 	std::vector<VkFence> VulkanAPI::s_Fences = {};
 
+	std::vector<std::vector<std::function<void()>>> VulkanAPI::s_FreeResourceFuncs = {};
+
 	VkDescriptorPool VulkanAPI::s_DescriptorPool = VK_NULL_HANDLE;
 
 	uint8_t VulkanAPI::s_FrameIndex = 0;
@@ -210,7 +212,10 @@ namespace Nebula
 
 			VkResult result = vkCreateDescriptorPool(VulkanAPI::GetDevice(), &poolInfo, nullptr, &s_DescriptorPool);
 			NB_ASSERT(result == VK_SUCCESS, "Failed to create descriptor pool!");
+			
 		}
+		
+		s_FreeResourceFuncs.resize(g_MaxFrames);
 	}
 
 	VkDebugUtilsMessengerCreateInfoEXT VulkanAPI::PopulateDebugMessenger(PFN_vkDebugUtilsMessengerCallbackEXT debugCallback)
@@ -342,6 +347,14 @@ namespace Nebula
 	{
 		vkDeviceWaitIdle(s_Device);
 
+		// Free resources in queue
+		for (auto& queue : s_FreeResourceFuncs)
+		{
+			for (auto& func : queue)
+				func();
+		}
+		s_FreeResourceFuncs.clear();
+
 		for (size_t i = 0; i < g_MaxFrames; i++)
 		{
 			vkDestroySemaphore(s_Device, s_ImageSemaphores[i], nullptr);
@@ -392,6 +405,11 @@ namespace Nebula
 	{
 		vkWaitForFences(s_Device, 1, &GetFence(), VK_TRUE, UINT64_MAX);
 		vkResetFences(s_Device, 1, &GetFence());
+		
+		for (auto& func : s_FreeResourceFuncs[s_FrameIndex])
+			func();
+		s_FreeResourceFuncs[s_FrameIndex].clear();
+		
 		vkResetCommandBuffer(GetCommandBuffer(), 0);
 
 		VkCommandBufferBeginInfo beginInfo{};
@@ -535,6 +553,17 @@ namespace Nebula
 		NB_ASSERT(result == VK_SUCCESS, "Failed to allocate descriptor set!");
 	}
 
+	void VulkanAPI::SubmitResource(const std::function<void()>& func)
+	{
+		if (s_FreeResourceFuncs.empty())
+		{
+			func();
+			return;
+		}
+
+		s_FreeResourceFuncs[s_FrameIndex].emplace_back(func);
+	}
+	
 	VulkanBuffer::VulkanBuffer(uint32_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties)
 	{
 		VkBufferCreateInfo bufferInfo{};
@@ -564,8 +593,14 @@ namespace Nebula
 
 	VulkanBuffer::~VulkanBuffer()
 	{
-		vkDestroyBuffer(VulkanAPI::GetDevice(), m_Buffer, nullptr);
-		vkFreeMemory(VulkanAPI::GetDevice(), m_BufferMemory, nullptr);
+		VulkanAPI::SubmitResource([buffer = m_Buffer, memory = m_BufferMemory]()
+		{
+			vkDestroyBuffer(VulkanAPI::GetDevice(), buffer, nullptr);
+			vkFreeMemory(VulkanAPI::GetDevice(), memory, nullptr);
+		});
+
+		m_Buffer = nullptr;
+		m_BufferMemory = nullptr;
 	}
 
 	void VulkanBuffer::SetData(const void* data, uint32_t size, uint32_t offset)
@@ -588,9 +623,12 @@ namespace Nebula
 		if (!m_OwnsImages)
 			return;
 
-		vkFreeMemory(VulkanAPI::GetDevice(), m_ImageMemory, nullptr);
-		vkDestroyImage(VulkanAPI::GetDevice(), m_Image, nullptr);
-		vkDestroyImageView(VulkanAPI::GetDevice(), m_ImageView, nullptr);
+		VulkanAPI::SubmitResource([memory = m_ImageMemory, image = m_Image, view = m_ImageView]()
+		{
+			vkFreeMemory(VulkanAPI::GetDevice(), memory, nullptr);
+			vkDestroyImage(VulkanAPI::GetDevice(), image, nullptr);
+			vkDestroyImageView(VulkanAPI::GetDevice(), view, nullptr);
+		});
 
 		m_ImageMemory = nullptr;
 		m_Image = nullptr;

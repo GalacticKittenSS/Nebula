@@ -26,6 +26,8 @@ namespace Nebula
 		static void TransitionImageLayout(Ref<VulkanImage> image, VkImageLayout newLayout, VkCommandBuffer commandBuffer = VK_NULL_HANDLE);
 		static void AllocateDescriptorSet(VkDescriptorSet& descriptorSet, const VkDescriptorSetLayout& layout);
 
+		static void SubmitResource(const std::function<void()>& func);
+
 		static inline const VkInstance& GetInstance() { return s_Instance; }
 		static inline const VkDevice& GetDevice() { return s_Device; }
 		static inline const VkPhysicalDevice& GetPhysicalDevice() { return s_PhysicalDevice; }
@@ -39,6 +41,7 @@ namespace Nebula
 		static inline const VkFence& GetFence() { return s_Fences[s_FrameIndex]; }
 
 		static inline bool IsRecording() { return s_CommandBufferRecording; }
+		static VkDescriptorPool s_DescriptorPool;
 	private:
 		static void CreateLogicalDevice();
 		static void CreateCommandBuffers();
@@ -60,7 +63,7 @@ namespace Nebula
 		static std::vector<VkSemaphore> s_RenderSemaphores;
 		static std::vector<VkFence> s_Fences;
 
-		static VkDescriptorPool s_DescriptorPool;
+		static std::vector<std::vector<std::function<void()>>> s_FreeResourceFuncs;
 
 		static bool s_FirstSubmit;
 		static uint8_t s_FrameIndex;

@@ -130,7 +130,10 @@ namespace Nebula
 
 	Vulkan_RenderPass::~Vulkan_RenderPass()
 	{
-		vkDestroyRenderPass(VulkanAPI::GetDevice(), m_RenderPass, nullptr);
+		VulkanAPI::SubmitResource([renderPass = m_RenderPass]()
+		{
+			vkDestroyRenderPass(VulkanAPI::GetDevice(), renderPass, nullptr);
+		});
 	}
 
 	void Vulkan_RenderPass::Bind()
