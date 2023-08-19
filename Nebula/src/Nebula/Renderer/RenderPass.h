@@ -1,12 +1,34 @@
 #pragma once
 
-#include "Framebuffer.h"
-
 namespace Nebula
 {
-	struct RenderPassSpecifications
+	enum class AttachmentTextureFormat 
 	{
-		std::vector<FramebufferTextureSpecification> Attachments;
+		None = 0,
+
+		//Color
+		RGBA8,
+		RED_INT,
+
+		//Depth /Stencil
+		DEPTH24STENCIL8,
+
+		//Defaults
+		Depth = DEPTH24STENCIL8
+	};
+
+	struct AttachmentTextureSpecification 
+	{
+		AttachmentTextureSpecification() = default;
+		AttachmentTextureSpecification(AttachmentTextureFormat format) :
+			TextureFormat(format) { }
+
+		AttachmentTextureFormat TextureFormat = AttachmentTextureFormat::None;
+	};
+
+	struct RenderPassSpecification
+	{
+		std::vector<AttachmentTextureSpecification> Attachments;
 		bool ClearOnLoad = false;
 		bool ShaderOnly = true;
 	};
@@ -21,6 +43,9 @@ namespace Nebula
 		
 		virtual uint64_t GetRenderPass() const = 0;
 
-		static Ref<RenderPass> Create(const RenderPassSpecifications& attachments);
+		virtual RenderPassSpecification& GetRenderPassSpecifications() = 0;
+		virtual const RenderPassSpecification& GetRenderPassSpecifications() const = 0;
+
+		static Ref<RenderPass> Create(const RenderPassSpecification& attachments);
 	};
 }

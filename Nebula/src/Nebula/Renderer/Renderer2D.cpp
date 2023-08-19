@@ -192,8 +192,8 @@ namespace Nebula {
 
 		//Render Pass
 		{
-			RenderPassSpecifications spec;
-			spec.Attachments = { FramebufferTextureFormat::RGBA8, FramebufferTextureFormat::RED_INT, FramebufferTextureFormat::Depth };
+			RenderPassSpecification spec;
+			spec.Attachments = { AttachmentTextureFormat::RGBA8, AttachmentTextureFormat::RED_INT, AttachmentTextureFormat::Depth };
 			spec.ClearOnLoad = false;
 			spec.ShaderOnly = true;
 			s_Data.RenderPass = RenderPass::Create(spec);

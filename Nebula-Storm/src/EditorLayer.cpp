@@ -103,7 +103,7 @@ namespace Nebula {
 		
 		//Initialize Frame Buffer
 		FrameBufferSpecification fbSpec;
-		fbSpec.Attachments = { FramebufferTextureFormat::RGBA8, FramebufferTextureFormat::RED_INT, FramebufferTextureFormat::Depth };
+		fbSpec.Attachments = { AttachmentTextureFormat::RGBA8, AttachmentTextureFormat::RED_INT, AttachmentTextureFormat::Depth };
 		fbSpec.Width = 1280;
 		fbSpec.Height = 720;
 		Renderer2D::BindRenderPass();

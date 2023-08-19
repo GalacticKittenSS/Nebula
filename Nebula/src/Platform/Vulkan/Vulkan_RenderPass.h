@@ -12,7 +12,7 @@ namespace Nebula
 	class Vulkan_RenderPass : public RenderPass
 	{
 	public:
-		Vulkan_RenderPass(const RenderPassSpecifications& attachments);
+		Vulkan_RenderPass(const RenderPassSpecification& attachments);
 		~Vulkan_RenderPass();
 
 		void Bind() override;
@@ -22,8 +22,11 @@ namespace Nebula
 		
 		static VkRenderPass GetVulkanRenderPass() { NB_ASSERT(s_ActiveInstance); return (VkRenderPass)s_ActiveInstance->GetRenderPass(); }
 		static const Vulkan_RenderPass* GetActiveInstance() { return s_ActiveInstance; }
+
+		RenderPassSpecification& GetRenderPassSpecifications() override { return m_Specification; }
+		const RenderPassSpecification& GetRenderPassSpecifications() const override { return m_Specification; }
 	private:
-		RenderPassSpecifications m_Specification;
+		RenderPassSpecification m_Specification;
 		VkRenderPass m_RenderPass = nullptr;
 
 		static const Vulkan_RenderPass* s_ActiveInstance;

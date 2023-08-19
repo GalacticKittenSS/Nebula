@@ -3,40 +3,21 @@
 #include "Nebula/Core/API.h"
 #include "Nebula/Utils/Arrays.h"
 
+#include "RenderPass.h"
+
 namespace Nebula {
-	enum class FramebufferTextureFormat {
-		None = 0,
-
-		//Color
-		RGBA8, 
-		RED_INT,
-
-		//Depth /Stencil
-		DEPTH24STENCIL8,
-
-		//Defaults
-		Depth = DEPTH24STENCIL8
-	};
-
-	struct FramebufferTextureSpecification {
-		FramebufferTextureSpecification() = default;
-		FramebufferTextureSpecification(FramebufferTextureFormat format):
-			TextureFormat(format) { }
-
-		FramebufferTextureFormat TextureFormat = FramebufferTextureFormat::None;
-	};
-
 	struct FrameBufferAttachmentSpecification {
 		FrameBufferAttachmentSpecification() = default;
-		FrameBufferAttachmentSpecification(std::initializer_list<FramebufferTextureSpecification> attachments) :
+		FrameBufferAttachmentSpecification(std::initializer_list<AttachmentTextureSpecification> attachments) :
 			Attachments{ attachments } { }
 
-		Array<FramebufferTextureSpecification> Attachments;
+		Array<AttachmentTextureSpecification> Attachments;
 	};
 
 	struct FrameBufferSpecification {
 		uint32_t Width, Height;
 		FrameBufferAttachmentSpecification Attachments;
+		Ref<RenderPass> RenderPass = nullptr;
 		uint32_t samples = 1;
 
 		bool SwapChainTarget = false;

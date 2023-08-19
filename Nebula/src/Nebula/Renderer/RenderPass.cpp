@@ -7,7 +7,7 @@
 
 namespace Nebula
 {
-	Ref<RenderPass> RenderPass::Create(const RenderPassSpecifications& specification)
+	Ref<RenderPass> RenderPass::Create(const RenderPassSpecification& specification)
 	{
 		switch (RendererAPI::GetAPI())
 		{

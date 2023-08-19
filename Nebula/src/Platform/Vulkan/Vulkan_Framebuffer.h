@@ -33,12 +33,11 @@ namespace Nebula {
 		void ClearAttachment(uint32_t attachmentIndex, VkClearColorValue clearValue);
 	private:
 		FrameBufferSpecification m_Specifications;
-		Array<FramebufferTextureSpecification> m_ColourAttachmentSpecs;
-		FramebufferTextureSpecification m_DepthAttachmentSpec = FramebufferTextureFormat::None;
+		Array<AttachmentTextureSpecification> m_ColourAttachmentSpecs;
+		AttachmentTextureSpecification m_DepthAttachmentSpec = AttachmentTextureFormat::None;
 
 		std::vector<VkFramebuffer> m_Framebuffer;
-		VkRenderPass m_RenderPass = VK_NULL_HANDLE;
-
+		
 		std::vector<VulkanImageArray> m_ColourAttachments;
 		Ref<VulkanImage> m_DepthAttachment;
 

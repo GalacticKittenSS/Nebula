@@ -56,20 +56,20 @@ namespace Nebula {
 			glFramebufferTexture2D(GL_FRAMEBUFFER, attachmentType , TextureTarget(multisampled), id, 0);
 		}
 
-		static bool IsDepthFormat(FramebufferTextureFormat format) {
+		static bool IsDepthFormat(AttachmentTextureFormat format) {
 			switch (format)
 			{
-				case FramebufferTextureFormat::DEPTH24STENCIL8: return true;
+				case AttachmentTextureFormat::DEPTH24STENCIL8: return true;
 			}
 		
 			return false;
 		}
 
-		static GLenum NebulaFBFormattoGL(FramebufferTextureFormat format) {
+		static GLenum NebulaFBFormattoGL(AttachmentTextureFormat format) {
 			switch (format)
 			{
-				case Nebula::FramebufferTextureFormat::RGBA8:	return GL_RGBA8;
-				case Nebula::FramebufferTextureFormat::RED_INT: return GL_RED_INTEGER;
+				case Nebula::AttachmentTextureFormat::RGBA8:	return GL_RGBA8;
+				case Nebula::AttachmentTextureFormat::RED_INT: return GL_RED_INTEGER;
 			}
 
 			NB_ASSERT(false, "");
@@ -116,22 +116,22 @@ namespace Nebula {
 			for (size_t i = 0; i < m_ColourAttachments.size(); i++) {
 				Utils::BindTexture(multiSample, m_ColourAttachments[i]);
 				switch (m_ColourAttachmentSpecs[i].TextureFormat) {
-					case FramebufferTextureFormat::RGBA8:
+					case AttachmentTextureFormat::RGBA8:
 						Utils::AttachColourTexture(m_ColourAttachments[i], m_Specifications.samples, GL_RGBA8, GL_RGBA, m_Specifications.Width, m_Specifications.Height, (int)i);
 						break;
-					case FramebufferTextureFormat::RED_INT:
+					case AttachmentTextureFormat::RED_INT:
 						Utils::AttachColourTexture(m_ColourAttachments[i], m_Specifications.samples, GL_R32I, GL_RED_INTEGER, m_Specifications.Width, m_Specifications.Height, (int)i);
 						break;
 				}
 			}
 		}
 
-		if (m_DepthAttachmentSpec.TextureFormat != FramebufferTextureFormat::None) {
+		if (m_DepthAttachmentSpec.TextureFormat != AttachmentTextureFormat::None) {
 			Utils::CreateTextures(multiSample, &m_DepthAttachment, 1);
 			Utils::BindTexture(multiSample, m_DepthAttachment);
 			switch (m_DepthAttachmentSpec.TextureFormat)
 			{
-			case FramebufferTextureFormat::DEPTH24STENCIL8:
+			case AttachmentTextureFormat::DEPTH24STENCIL8:
 				Utils::AttachDepthTexture(m_DepthAttachment, m_Specifications.samples, GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL_ATTACHMENT, m_Specifications.Width, m_Specifications.Height);
 				break;
 			}
@@ -195,5 +195,6 @@ namespace Nebula {
 		NB_ASSERT(attachmentIndex < m_ColourAttachments.size(), "");
 
 		auto& spec = m_ColourAttachmentSpecs[attachmentIndex];
+		// TODO: Add glClearTexImage for vec4
 	}
 }

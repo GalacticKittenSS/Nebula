@@ -93,8 +93,8 @@ namespace Nebula {
 
 			// Create the Render Pass
 			{
-				RenderPassSpecifications spec;
-				spec.Attachments = { FramebufferTextureFormat::RGBA8 };
+				RenderPassSpecification spec;
+				spec.Attachments = { AttachmentTextureFormat::RGBA8 };
 				spec.ClearOnLoad = true;
 				spec.ShaderOnly = false;
 				m_RenderPass = RenderPass::Create(spec);
@@ -103,14 +103,13 @@ namespace Nebula {
 			// Framebuffer
 			{
 				FrameBufferSpecification spec;
-				spec.Attachments = { FramebufferTextureFormat::RGBA8 };
+				spec.Attachments = { AttachmentTextureFormat::RGBA8 };
 				spec.Width = win.GetWidth();
 				spec.Height = win.GetHeight();
 				spec.SwapChainTarget = true;
-				
-				m_RenderPass->Bind();
+				spec.RenderPass = m_RenderPass;
+
 				m_Framebuffer = FrameBuffer::Create(spec);
-				m_RenderPass->Unbind();
 			}
 			
 			ImGui_ImplGlfw_InitForVulkan(window, true);

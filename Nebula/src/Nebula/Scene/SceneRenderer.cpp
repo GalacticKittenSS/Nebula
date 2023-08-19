@@ -32,7 +32,7 @@ namespace Nebula
 		Window& window = Application::Get().GetWindow();
 
 		FrameBufferSpecification spec;
-		spec.Attachments = { FramebufferTextureFormat::RGBA8, FramebufferTextureFormat::RED_INT, FramebufferTextureFormat::DEPTH24STENCIL8 };
+		spec.Attachments = { AttachmentTextureFormat::RGBA8, AttachmentTextureFormat::RED_INT, AttachmentTextureFormat::DEPTH24STENCIL8 };
 		spec.Width = window.GetWidth();
 		spec.Height = window.GetHeight();
 		spec.SwapChainTarget = true;
