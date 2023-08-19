@@ -231,6 +231,8 @@ namespace Nebula {
 			for (uint32_t i = 0; i < context->GetImageCount(); i++)
 				m_ImGuiDescriptors[i] = ImGui_ImplVulkan_AddTexture(m_ImGuiSampler, m_ColourAttachments[0][i]->GetImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 		}
+
+		m_StagingBuffer = CreateScope<VulkanBuffer>(m_Specifications.Width * m_Specifications.Height, VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 	}
 
 	void Vulkan_FrameBuffer::Bind() 
@@ -283,16 +285,14 @@ namespace Nebula {
 		Vulkan_Context* context = (Vulkan_Context*)Application::Get().GetWindow().GetContext();
 		Ref<VulkanImage> image = m_ColourAttachments[attachmentIndex][context->m_ImageIndex];
 		
-		VulkanBuffer stagingBuffer = VulkanBuffer(m_Specifications.Width * m_Specifications.Height, VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-
 		VkCommandBuffer commandBuffer = VulkanAPI::BeginSingleUseCommand();
 		VulkanAPI::TransitionImageLayout(image->GetImage(), VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, commandBuffer);
-		Utils::CopyImageToBuffer(commandBuffer, stagingBuffer.GetBuffer(), image->GetImage(), m_Specifications.Width, m_Specifications.Height);
+		Utils::CopyImageToBuffer(commandBuffer, m_StagingBuffer->GetBuffer(), image->GetImage(), m_Specifications.Width, m_Specifications.Height);
 		VulkanAPI::TransitionImageLayout(image->GetImage(), VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, commandBuffer);
 		VulkanAPI::EndSingleUseCommand(commandBuffer);
 
 		unsigned int index = x + y * m_Specifications.Width;
-		int8_t* data = (int8_t*)stagingBuffer.GetMemory();
+		int8_t* data = (int8_t*)m_StagingBuffer->GetMemory();
 		int8_t pixel = data[index];
 		return pixel;
 	}

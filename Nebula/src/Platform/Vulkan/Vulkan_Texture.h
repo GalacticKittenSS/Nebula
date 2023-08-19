@@ -38,6 +38,10 @@ namespace Nebula {
 		Ref<VulkanImage> m_Image;
 		VkSampler m_Sampler;
 
+		VkDescriptorImageInfo m_ImageInfo;
+
+		Scope<VulkanBuffer> m_StagingBuffer = nullptr;
+
 		VkDescriptorSet m_ImguiDescriptor = VK_NULL_HANDLE;
 
 		friend class Vulkan_Shader;

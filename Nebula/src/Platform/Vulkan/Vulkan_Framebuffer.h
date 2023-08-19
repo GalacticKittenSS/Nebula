@@ -44,6 +44,8 @@ namespace Nebula {
 		VkSampler m_ImGuiSampler = VK_NULL_HANDLE;
 		std::vector<VkDescriptorSet> m_ImGuiDescriptors;
 
+		Scope<VulkanBuffer> m_StagingBuffer = nullptr;
+
 		static Vulkan_FrameBuffer* s_BindedInstance;
 		friend class Vulkan_RenderPass;
 		friend class ImGuiLayer;

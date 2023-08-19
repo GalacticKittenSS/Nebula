@@ -121,6 +121,15 @@ namespace Nebula {
 		VkResult result = vkCreateSampler(VulkanAPI::GetDevice(), &samplerInfo, nullptr, &m_Sampler);
 		NB_ASSERT(result == VK_SUCCESS, "Failed to create texture sampler!");
 
+		m_ImageInfo = {};
+		m_ImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		m_ImageInfo.imageView = m_Image->GetImageView();
+		m_ImageInfo.sampler = m_Sampler;
+
+		uint32_t bpp = Utils::VulkantoBPP(m_Format);
+		uint32_t bufferSize = m_Width * m_Height * bpp;
+		m_StagingBuffer = CreateScope<VulkanBuffer>(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+		
 		if (data)
 		{
 			SetData(data);
@@ -145,11 +154,7 @@ namespace Nebula {
 	{
 		NB_PROFILE_FUNCTION();
 
-		uint32_t bpp = Utils::VulkantoBPP(m_Format);
-		uint32_t bufferSize = m_Width * m_Height * bpp;
-		VulkanBuffer stagingBuffer = VulkanBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-		
-		if (data.Size != bufferSize)
+		if (data.Size != m_StagingBuffer->GetSize())
 		{
 			// Add Alpha Padding
 			uint32_t offset = 0;
@@ -159,17 +164,17 @@ namespace Nebula {
 			for (uint32_t i = 0; i < data.Size; i += channels)
 			{
 				unsigned char padded[] = { data.Data[i] , data.Data[i + 1], data.Data[i + 2], 255 };
-				stagingBuffer.SetData(padded, sizeof(padded), offset);
+				m_StagingBuffer->SetData(padded, sizeof(padded), offset);
 				offset += sizeof(padded);
 			}
 		}
 		else
 		{
-			stagingBuffer.SetData(data.Data, (uint32_t)data.Size);
+			m_StagingBuffer->SetData(data.Data, (uint32_t)data.Size);
 		}
 
 		VulkanAPI::TransitionImageLayout(m_Image->GetImage(), VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-		Utils::CopyBufferToImage(stagingBuffer.GetBuffer(), m_Image->GetImage(), m_Width, m_Height);
+		Utils::CopyBufferToImage(m_StagingBuffer->GetBuffer(), m_Image->GetImage(), m_Width, m_Height);
 		VulkanAPI::TransitionImageLayout(m_Image->GetImage(), VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	}
 
@@ -183,11 +188,7 @@ namespace Nebula {
 		NB_PROFILE_FUNCTION();
 
 		// Update Descriptor Set
-		VkDescriptorImageInfo imageInfo{};
-		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		imageInfo.imageView = m_Image->GetImageView();
-		imageInfo.sampler = m_Sampler;
-		Vulkan_Shader::SetTexture(slot, imageInfo);
+		Vulkan_Shader::SetTexture(slot, m_ImageInfo);
 	}
 
 	void Vulkan_Texture2D::Unbind() const 
