@@ -29,9 +29,16 @@ namespace Nebula {
 		void SetFloat3(const std::string& name, const glm::vec3& value) override;
 		void SetFloat4(const std::string& name, const glm::vec4& value) override;
 		void SetMat4(const std::string& name, const glm::mat4& value) override;
-		
+
+		size_t GetFragmentOutputCount() const override;
+
+		void GetVulkanVertexInputInfo(std::vector<VkVertexInputAttributeDescription>& attributeDescriptions, uint32_t& offset) const;
+		inline const std::array<VkPipelineShaderStageCreateInfo, 2>& GetVulkanShaderStages() const { return m_ShaderStages; }
+		inline const std::vector<VkDescriptorSetLayout>& GetVulkanDescriptorSetLayouts() const { return m_DescriptorSetLayouts; }
+		inline const std::vector<VkDescriptorSet>& GetVulkanDescriptorSets() const { return m_DescriptorSets; }
+		inline void SetPipelineLayout(VkPipelineLayout layout) { m_PipelineLayout = layout; }
+
 		static void SetTexture(uint32_t slot, VkDescriptorImageInfo info);
-		static void BindPipeline();
 	private:
 		struct UniformData
 		{
@@ -48,8 +55,7 @@ namespace Nebula {
 		void Reflect(VkShaderStageFlagBits stage, const std::vector<uint32_t>& shaderData);
 
 		VkShaderModule CreateShaderModule(const std::vector<uint32_t>& code);
-		void CreatePipeline(VkPipelineShaderStageCreateInfo shaderStages[]);
-
+		
 		UniformData GetUniformFromName(const std::string& name) const;
 		UniformData GetUniformFromType(VkDescriptorType type) const;
 	private:
@@ -60,17 +66,14 @@ namespace Nebula {
 		std::unordered_map<VkShaderStageFlagBits, std::vector<uint32_t>> m_VulkanSPIRV;
 		std::unordered_map<VkShaderStageFlagBits, std::vector<char>> m_ShaderCode;
 
-		VkPipeline m_GraphicsPipeline;
+		std::array<VkPipelineShaderStageCreateInfo, 2> m_ShaderStages;
+
 		VkPipelineLayout m_PipelineLayout;
 		
 		std::vector<VkDescriptorSet> m_DescriptorSets;
 		std::vector<VkDescriptorSetLayout> m_DescriptorSetLayouts;
 
 		std::map<std::string, UniformData> m_Uniforms;
-
-		friend class Vulkan_RendererAPI;
-		friend class Vulkan_UniformBuffer;
-		friend class Vulkan_Texture2D;
 
 		static const Vulkan_Shader* s_BindedInstance;
 	};
