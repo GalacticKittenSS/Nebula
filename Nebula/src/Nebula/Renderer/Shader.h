@@ -20,8 +20,11 @@ namespace Nebula {
 		static Ref<Shader> Create(const std::string& name, const std::string& vertSrc, const std::string& fragSrc);
 
 		// Initialize Array of sampler2D to a default texture
-		virtual void SetTextureArray(const std::string& name, Ref<Texture> texture) {};
-		virtual void SetUniformBuffer(const std::string& name, Ref<UniformBuffer> uniformBuffer) {};
+		virtual void SetTextureArray(const std::string& name, Ref<Texture> texture) {}
+		virtual void SetUniformBuffer(const std::string& name, Ref<UniformBuffer> uniformBuffer) {}
+
+		// Allocate new descriptor set while previous is still in use
+		virtual void ResetDescriptorSet(uint32_t set) {}
 
 		virtual void SetInt(const std::string& name, const int value) = 0;
 		virtual void SetIntArray(const std::string& name, int* values, uint32_t count) = 0;

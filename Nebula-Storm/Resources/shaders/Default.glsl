@@ -50,7 +50,7 @@ layout (location = 0) in VertexOutput Input;
 layout (location = 3) in flat float v_TexIndex;
 layout (location = 4) in flat int v_EntityID;
 
-layout (binding = 1) uniform sampler2D u_Textures[32];
+layout (set = 1, binding = 1) uniform sampler2D u_Textures[32];
 
 void main() {
 	vec4 texColour = Input.Colour;

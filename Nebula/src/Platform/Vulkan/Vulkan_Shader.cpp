@@ -220,14 +220,14 @@ namespace Nebula
 			m_DescriptorSets.resize(vectorSize);
 			m_DescriptorSetLayouts.resize(vectorSize);
 
-			for (uint32_t i = 0; i < vectorSize; i++)
+			for (uint32_t setIndex = 0; setIndex < vectorSize; setIndex++)
 			{
 				VkDescriptorSetLayoutCreateInfo layoutInfo{};
 				layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 				
-				if (descriptorSetLayoutBindings.find(i) != descriptorSetLayoutBindings.end())
+				if (descriptorSetLayoutBindings.find(setIndex) != descriptorSetLayoutBindings.end())
 				{
-					auto& layoutBindings = descriptorSetLayoutBindings.at(i);
+					auto& layoutBindings = descriptorSetLayoutBindings.at(setIndex);
 					layoutInfo.bindingCount = (uint32_t)layoutBindings.size();
 					layoutInfo.pBindings = layoutBindings.data();
 					
@@ -248,14 +248,14 @@ namespace Nebula
 
 						std::vector<std::string> words = Utils::Split(uniforms[i], " ");
 						std::string name = Utils::Split(words[words.size() - 1], "[")[0];
-						m_Uniforms[name] = { i, layout.binding, layout.descriptorCount, layout.descriptorType };
+						m_Uniforms[name] = { setIndex, layout.binding, layout.descriptorCount, layout.descriptorType };
 					}
 				}
 
-				VkResult result = vkCreateDescriptorSetLayout(VulkanAPI::GetDevice(), &layoutInfo, nullptr, &m_DescriptorSetLayouts[i]);
+				VkResult result = vkCreateDescriptorSetLayout(VulkanAPI::GetDevice(), &layoutInfo, nullptr, &m_DescriptorSetLayouts[setIndex]);
 				NB_ASSERT(result == VK_SUCCESS, "Failed to create descriptor set layout!");
 
-				VulkanAPI::AllocateDescriptorSet(m_DescriptorSets[i], m_DescriptorSetLayouts[i]);
+				VulkanAPI::AllocateDescriptorSet(m_DescriptorSets[setIndex], m_DescriptorSetLayouts[setIndex]);
 			}
 		}
 	}
@@ -493,8 +493,8 @@ namespace Nebula
 	void Vulkan_Shader::SetTextureArray(const std::string& name, Ref<Texture> texture)
 	{
 		UniformData uniform = GetUniformFromName(name);
-		Ref<Vulkan_Texture2D> vulkanTexture = std::static_pointer_cast<Vulkan_Texture2D>(texture);
 
+		Ref<Vulkan_Texture2D> vulkanTexture = std::static_pointer_cast<Vulkan_Texture2D>(texture);
 		std::vector<VkDescriptorImageInfo> imageInfo(uniform.arrayCount, vulkanTexture->m_Image->GetVulkanImageInfo());
 
 		VkWriteDescriptorSet descriptorWrite{};
@@ -526,6 +526,14 @@ namespace Nebula
 		vkUpdateDescriptorSets(VulkanAPI::GetDevice(), 1, &descriptorWrite, 0, nullptr);
 	}
 
+	void Vulkan_Shader::ResetDescriptorSet(uint32_t set)
+	{
+		VulkanAPI::SubmitResource([descriptorSet = m_DescriptorSets.at(set)]() {
+			vkFreeDescriptorSets(VulkanAPI::GetDevice(), VulkanAPI::s_DescriptorPool, 1, &descriptorSet);
+		});
+		VulkanAPI::AllocateDescriptorSet(m_DescriptorSets.at(set), m_DescriptorSetLayouts.at(set));
+	}
+	
 	void Vulkan_Shader::GetVulkanVertexInputInfo(std::vector<VkVertexInputAttributeDescription>& attributeDescriptions, uint32_t& offset) const
 	{
 		spirv_cross::Compiler vertexCompiler(m_VulkanSPIRV.at(VK_SHADER_STAGE_VERTEX_BIT));

@@ -657,6 +657,9 @@ namespace Nebula {
 		s_Data.RenderPass->Bind();
 
 		if (s_Data.QuadIndexCount || s_Data.TriIndexCount) {
+			s_Data.TextureShader->ResetDescriptorSet(1);
+			s_Data.TextureShader->SetTextureArray("u_Textures", s_Data.WhiteTexture);
+
 			s_Data.TexturePipeline->Bind();
 			s_Data.TextureShader->Bind();
 		

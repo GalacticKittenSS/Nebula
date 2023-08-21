@@ -448,7 +448,6 @@ namespace Nebula
 		NB_ASSERT(result == VK_SUCCESS, "Failed to submit draw command buffer!");
 
 		s_FirstSubmit = false;
-		vkQueueWaitIdle(s_Queue);
 	}
 
 	void VulkanAPI::ResetFrame()

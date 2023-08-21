@@ -21,7 +21,8 @@ namespace Nebula {
 
 		void SetTextureArray(const std::string& name, Ref<Texture> texture) override;
 		void SetUniformBuffer(const std::string& name, Ref<UniformBuffer> uniformBuffer) override;
-		
+		void ResetDescriptorSet(uint32_t set) override;
+
 		void SetInt(const std::string& name, int value) override;
 		void SetIntArray(const std::string& name, int* values, uint32_t count) override;
 		void SetFloat(const std::string& name, float value) override;
