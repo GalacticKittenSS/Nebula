@@ -103,7 +103,7 @@ namespace Nebula {
 		
 		//Initialize Frame Buffer
 		FrameBufferSpecification fbSpec;
-		fbSpec.Attachments = { AttachmentTextureFormat::RGBA8, AttachmentTextureFormat::RED_INT, AttachmentTextureFormat::Depth };
+		fbSpec.Attachments = { ImageFormat::RGBA8, ImageFormat::RED_INT, ImageFormat::Depth };
 		fbSpec.Width = 1280;
 		fbSpec.Height = 720;
 		Renderer2D::BindRenderPass();
@@ -492,8 +492,8 @@ namespace Nebula {
 		ImVec2 panelSize = ImGui::GetContentRegionAvail();
 		m_GameViewSize = { panelSize.x, panelSize.y };
 
-		uint64_t textureID = frameBuffer->GetColourAttachmentRendererID();
-		ImGui::Image((ImTextureID)textureID, panelSize, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+		Ref<Image2D> texture = frameBuffer->GetColourAttachmentRendererID();
+		ImGui::Image((ImTextureID)texture->GetDescriptorSet(), panelSize, ImVec2{0, 1}, ImVec2{1, 0});
 
 		if (ImGui::BeginDragDropTarget()) 
 		{

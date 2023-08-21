@@ -1,29 +1,16 @@
 #pragma once
 
+#include "Image.h"
+
 namespace Nebula
 {
-	enum class AttachmentTextureFormat 
-	{
-		None = 0,
-
-		//Color
-		RGBA8,
-		RED_INT,
-
-		//Depth /Stencil
-		DEPTH24STENCIL8,
-
-		//Defaults
-		Depth = DEPTH24STENCIL8
-	};
-
 	struct AttachmentTextureSpecification 
 	{
 		AttachmentTextureSpecification() = default;
-		AttachmentTextureSpecification(AttachmentTextureFormat format) :
+		AttachmentTextureSpecification(ImageFormat format) :
 			TextureFormat(format) { }
 
-		AttachmentTextureFormat TextureFormat = AttachmentTextureFormat::None;
+		ImageFormat TextureFormat = ImageFormat::None;
 	};
 
 	struct RenderPassSpecification

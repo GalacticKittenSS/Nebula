@@ -2,6 +2,7 @@
 #include "VulkanAPI.h"
 
 #include "Nebula/Core/Window.h"
+#include "Vulkan_Image.h"
 
 #include <map>
 #include <set>
@@ -528,15 +529,13 @@ namespace Nebula
 			VulkanAPI::EndSingleUseCommand(commandBuffer);
 	}
 
-	void VulkanAPI::TransitionImageLayout(Ref<VulkanImage> image, VkImageLayout newLayout, VkCommandBuffer commandBuffer)
+	void VulkanAPI::TransitionImageLayout(Ref<Vulkan_Image> image, VkImageLayout newLayout, VkCommandBuffer commandBuffer)
 	{
-
-		VkImageLayout& layout = image->GetLayout();
-		if (layout == newLayout)
+		if (image->ImageLayout == newLayout)
 			return;
 
-		TransitionImageLayout(image->GetImage(), image->GetAspectFlags(), layout, newLayout, commandBuffer);
-		layout = newLayout;
+		TransitionImageLayout(image->GetVulkanImage(), image->GetAspectFlags(), image->ImageLayout, newLayout, commandBuffer);
+		image->ImageLayout = newLayout;
 	}
 
 	void VulkanAPI::AllocateDescriptorSet(VkDescriptorSet& descriptorSet, const VkDescriptorSetLayout& layout)
@@ -610,121 +609,5 @@ namespace Nebula
 		char* memOffset = (char*)m_MappedMemory;
 		memOffset += offset;
 		memcpy(memOffset, data, size);
-	}
-	
-	VulkanImage::VulkanImage(VkFormat format, VkImageUsageFlags usage, VkImageAspectFlags aspect, int samples, uint32_t width, uint32_t height)
-		: m_ImageFormat(format), m_AspectFlags(aspect)
-	{
-		CreateTextureImage(m_ImageView, m_Image, m_ImageMemory, samples, format, usage, aspect, width, height);
-	}
-
-	VulkanImage::~VulkanImage()
-	{
-		if (!m_OwnsImages)
-			return;
-
-		VulkanAPI::SubmitResource([memory = m_ImageMemory, image = m_Image, view = m_ImageView]()
-		{
-			vkFreeMemory(VulkanAPI::GetDevice(), memory, nullptr);
-			vkDestroyImage(VulkanAPI::GetDevice(), image, nullptr);
-			vkDestroyImageView(VulkanAPI::GetDevice(), view, nullptr);
-		});
-
-		m_ImageMemory = nullptr;
-		m_Image = nullptr;
-		m_ImageView = nullptr;
-	}
-
-	VkSampleCountFlagBits VulkanImage::GetSampleFlags(int samples)
-	{
-		switch (samples)
-		{
-		case 1: return VK_SAMPLE_COUNT_1_BIT;
-		case 2: return VK_SAMPLE_COUNT_2_BIT;
-		case 4: return VK_SAMPLE_COUNT_4_BIT;
-		case 8: return VK_SAMPLE_COUNT_8_BIT;
-		case 16: return VK_SAMPLE_COUNT_16_BIT;
-		case 32: return VK_SAMPLE_COUNT_32_BIT;
-		case 64: return VK_SAMPLE_COUNT_64_BIT;
-		}
-
-		NB_ASSERT(false);
-		return VK_SAMPLE_COUNT_1_BIT;
-	}
-
-	void VulkanImage::CreateTextureImage(VkImageView& view, VkImage& image, VkDeviceMemory& memory, int samples,
-		VkFormat format, VkImageUsageFlags usage, VkImageAspectFlags aspect, uint32_t width, uint32_t height)
-	{
-		VkImageCreateInfo imageInfo{};
-		imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-		imageInfo.imageType = VK_IMAGE_TYPE_2D;
-		imageInfo.extent.width = width;
-		imageInfo.extent.height = height;
-		imageInfo.extent.depth = 1;
-		imageInfo.mipLevels = 1;
-		imageInfo.arrayLayers = 1;
-		imageInfo.format = format;
-		imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-		imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		imageInfo.usage = usage;
-		imageInfo.samples = GetSampleFlags(samples);
-		imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-		
-		VkResult result = vkCreateImage(VulkanAPI::GetDevice(), &imageInfo, nullptr, &image);
-		NB_ASSERT(result == VK_SUCCESS, "Failed to create image!");
-
-		VkMemoryRequirements memRequirements;
-		vkGetImageMemoryRequirements(VulkanAPI::GetDevice(), image, &memRequirements);
-
-		VkMemoryAllocateInfo allocInfo{};
-		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		allocInfo.allocationSize = memRequirements.size;
-		allocInfo.memoryTypeIndex = VulkanAPI::FindMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-		result = vkAllocateMemory(VulkanAPI::GetDevice(), &allocInfo, nullptr, &memory);
-		NB_ASSERT(result == VK_SUCCESS, "Failed to allocate image memory!");
-
-		vkBindImageMemory(VulkanAPI::GetDevice(), image, memory, 0);
-
-		VkImageViewCreateInfo createInfo{};
-		createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		createInfo.image = image;
-		createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		createInfo.format = format;
-		createInfo.subresourceRange.aspectMask = aspect;
-		createInfo.subresourceRange.baseMipLevel = 0;
-		createInfo.subresourceRange.levelCount = 1;
-		createInfo.subresourceRange.baseArrayLayer = 0;
-		createInfo.subresourceRange.layerCount = 1;
-
-		result = vkCreateImageView(VulkanAPI::GetDevice(), &createInfo, nullptr, &view);
-		NB_ASSERT(result == VK_SUCCESS, "Failed to create image view!");
-	}
-
-	VulkanImageArray VulkanImage::CreateImageArray(VkFormat format, VkImageUsageFlags usage, VkImageAspectFlags aspect, int samples, uint32_t width, uint32_t height)
-	{
-		VulkanImageArray imageArray(g_MaxFrames);
-
-		for (uint32_t i = 0; i < g_MaxFrames; i++)
-			imageArray[i] = CreateRef<VulkanImage>(format, usage, aspect, samples, width, height);
-
-		return imageArray;
-	}
-
-	VulkanImageArray VulkanImage::CreateImageArray(std::vector<VkImage> images, std::vector<VkImageView> imageViews)
-	{
-		size_t arraySize = glm::max(images.size(), imageViews.size());
-		VulkanImageArray imageArray(arraySize);
-
-		for (uint32_t i = 0; i < arraySize; i++)
-		{
-			imageArray[i] = CreateRef<VulkanImage>();
-			imageArray[i]->m_Image = images[i];
-			imageArray[i]->m_ImageView = imageViews[i];
-			imageArray[i]->m_OwnsImages = false;
-			imageArray[i]->m_AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT; // Assume these images are coming from swapchain
-		}
-
-		return imageArray;
 	}
 }

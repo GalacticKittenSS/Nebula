@@ -4,7 +4,7 @@
 
 namespace Nebula
 {
-	class VulkanImage;
+	class Vulkan_Image;
 
 	class VulkanAPI
 	{
@@ -23,7 +23,7 @@ namespace Nebula
 
 		static uint32_t FindMemoryType(uint32_t filter, VkMemoryPropertyFlags properties);
 		static void TransitionImageLayout(VkImage image, VkImageAspectFlags imageAspect, VkImageLayout oldLayout, VkImageLayout newLayout, VkCommandBuffer commandBuffer = VK_NULL_HANDLE);
-		static void TransitionImageLayout(Ref<VulkanImage> image, VkImageLayout newLayout, VkCommandBuffer commandBuffer = VK_NULL_HANDLE);
+		static void TransitionImageLayout(Ref<Vulkan_Image> image, VkImageLayout newLayout, VkCommandBuffer commandBuffer = VK_NULL_HANDLE);
 		static void AllocateDescriptorSet(VkDescriptorSet& descriptorSet, const VkDescriptorSetLayout& layout);
 
 		static void SubmitResource(const std::function<void()>& func);
@@ -90,35 +90,4 @@ namespace Nebula
 
 		size_t m_AlignedSize = 0;
 	};
-
-	class VulkanImage
-	{
-	public:
-		VulkanImage() = default;
-		VulkanImage(VkFormat format, VkImageUsageFlags usage, VkImageAspectFlags aspect, int samples, uint32_t width, uint32_t height);
-		~VulkanImage();
-
-		static std::vector<Ref<VulkanImage>> CreateImageArray(VkFormat format, VkImageUsageFlags usage, VkImageAspectFlags aspect, int samples, uint32_t width, uint32_t height);
-		static std::vector<Ref<VulkanImage>> CreateImageArray(std::vector<VkImage> images, std::vector<VkImageView> imageViews);
-
-		const VkImage& GetImage() const { return m_Image; }
-		const VkImageView& GetImageView() const { return m_ImageView; }
-		const VkFormat& GetFormat() const { return m_ImageFormat; }
-		const VkImageAspectFlags& GetAspectFlags() const { return m_AspectFlags; }
-		VkImageLayout& GetLayout() { return m_ImageLayout; }
-
-		static VkSampleCountFlagBits GetSampleFlags(int samples);
-		static void CreateTextureImage(VkImageView& view, VkImage& image, VkDeviceMemory& memory, int samples, VkFormat format, VkImageUsageFlags usage, VkImageAspectFlags aspect, uint32_t width, uint32_t height);
-	private:
-		VkImage m_Image = VK_NULL_HANDLE;
-		VkImageView m_ImageView = VK_NULL_HANDLE;
-		VkDeviceMemory m_ImageMemory = VK_NULL_HANDLE;
-
-		VkFormat m_ImageFormat;
-		VkImageAspectFlags m_AspectFlags;
-		VkImageLayout m_ImageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		bool m_OwnsImages = true;
-	};
-
-	using VulkanImageArray = std::vector<Ref<VulkanImage>>;
 }

@@ -19,7 +19,7 @@ namespace Nebula {
 		void Bind() override;
 		void Unbind() override;
 
-		uint64_t GetColourAttachmentRendererID(uint32_t index) const override { NB_ASSERT(index < m_ColourAttachments.size(), "Index is greater than Array Size"); return m_ColourAttachments[index]; }
+		Ref<Image2D> GetColourAttachmentRendererID(uint32_t index) const override { NB_ASSERT(index < m_ColourAttachments.size(), "Index is greater than Array Size"); return nullptr; }
 
 		FrameBufferSpecification& GetFrameBufferSpecifications() override { return m_Specifications; }
 		const FrameBufferSpecification& GetFrameBufferSpecifications() const override { return m_Specifications; }
@@ -28,7 +28,7 @@ namespace Nebula {
 		FrameBufferSpecification m_Specifications;
 
 		Array<AttachmentTextureSpecification> m_ColourAttachmentSpecs;
-		AttachmentTextureSpecification m_DepthAttachmentSpec = AttachmentTextureFormat::None;
+		AttachmentTextureSpecification m_DepthAttachmentSpec = ImageFormat::None;
 
 		std::vector<uint32_t> m_ColourAttachments;
 		uint32_t m_DepthAttachment = 0;

@@ -1,23 +1,12 @@
 #pragma once
 
-#include <string>
-
-#include "Nebula/Core/Buffer.h"
+#include "Image.h"
 
 #include "Nebula/AssetManager/Asset.h"
-#include "Nebula/Core/API.h"
+#include "Nebula/Core/Buffer.h"
 #include "Nebula/Maths/Maths.h"
 
 namespace Nebula {
-	enum class ImageFormat
-	{
-		None = 0,
-		R8,
-		RGB8,
-		RGBA8,
-		RGBA32F
-	};
-
 	struct TextureSpecification
 	{
 		uint32_t Width = 1;
@@ -37,7 +26,7 @@ namespace Nebula {
 		virtual uint32_t GetWidth() const = 0;
 		virtual uint32_t GetHeight() const = 0;
 		virtual uint64_t GetRendererID() const = 0;
-		virtual uint64_t GetImage() const { return GetRendererID(); };
+		virtual Ref<Image2D> GetImage() const { return nullptr; };
 		
 		virtual void SetData(Buffer data) = 0;
 		virtual void SetFilterNearest(bool nearest = true) = 0;

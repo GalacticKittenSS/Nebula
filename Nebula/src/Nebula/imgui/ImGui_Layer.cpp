@@ -91,10 +91,10 @@ namespace Nebula {
 			wd->ImageCount = ImGui_ImplVulkanH_GetMinImageCountFromPresentMode(wd->PresentMode);
 			wd->ClearEnable = true;
 
-			// Create the Render Pass
+			// Render Pass
 			{
 				RenderPassSpecification spec;
-				spec.Attachments = { AttachmentTextureFormat::RGBA8 };
+				spec.Attachments = { ImageFormat::BGRA8 };
 				spec.ClearOnLoad = true;
 				spec.ShaderOnly = false;
 				m_RenderPass = RenderPass::Create(spec);
@@ -103,7 +103,7 @@ namespace Nebula {
 			// Framebuffer
 			{
 				FrameBufferSpecification spec;
-				spec.Attachments = { AttachmentTextureFormat::RGBA8 };
+				spec.Attachments = { ImageFormat::BGRA8 };
 				spec.Width = win.GetWidth();
 				spec.Height = win.GetHeight();
 				spec.SwapChainTarget = true;

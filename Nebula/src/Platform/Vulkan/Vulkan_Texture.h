@@ -3,6 +3,7 @@
 #include "Nebula/renderer/Texture.h"
 
 #include "VulkanAPI.h"
+#include "Vulkan_Image.h"
 
 namespace Nebula {
 	class Vulkan_Texture2D : public Texture2D {
@@ -17,8 +18,8 @@ namespace Nebula {
 
 		uint32_t GetWidth() const override { return m_Width; }
 		uint32_t GetHeight() const override { return m_Height; }
-		uint64_t GetImage() const override { return (uint64_t)m_Image->GetImage(); }
-		uint64_t GetRendererID() const override { NB_ASSERT(m_Specification.ImGuiUsable); return (uint64_t)m_ImguiDescriptor; }
+		Ref<Image2D> GetImage() const override { return m_Image; }
+		uint64_t GetRendererID() const override { return m_Image->GetDescriptorSet(); }
 
 		void Bind(uint32_t slot) const;
 		void Unbind() const;
@@ -33,16 +34,9 @@ namespace Nebula {
 
 		bool m_IsLoaded = false;
 		uint32_t m_Width, m_Height;
-		VkFormat m_Format;
-
-		Ref<VulkanImage> m_Image;
-		VkSampler m_Sampler;
-
-		VkDescriptorImageInfo m_ImageInfo;
-
+		
+		Ref<Vulkan_Image> m_Image;
 		Scope<VulkanBuffer> m_StagingBuffer = nullptr;
-
-		VkDescriptorSet m_ImguiDescriptor = VK_NULL_HANDLE;
 
 		friend class Vulkan_Shader;
 	};

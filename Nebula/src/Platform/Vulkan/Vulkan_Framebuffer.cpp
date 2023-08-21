@@ -7,8 +7,6 @@
 #include "Vulkan_Context.h"
 #include "Vulkan_RenderPass.h"
 
-#include <backends/imgui_impl_vulkan.h>
-
 namespace Nebula {
 
 	static const uint32_t s_MaxFrameBufferSize = 8192;
@@ -16,65 +14,16 @@ namespace Nebula {
 
 	namespace Utils 
 	{
-		bool IsDepthFormat(AttachmentTextureFormat  format) {
+		bool IsDepthFormat(ImageFormat  format) {
 			switch (format)
 			{
-			case AttachmentTextureFormat::DEPTH24STENCIL8: return true;
+			case ImageFormat::DEPTH24STENCIL8: return true;
 			}
 
 			return false;
 		}
 
-		VkFormat NebulaFBFormattoVulkan(AttachmentTextureFormat  format) {
-			switch (format)
-			{
-			case Nebula::AttachmentTextureFormat::RGBA8:	return VK_FORMAT_B8G8R8A8_UNORM;
-			case Nebula::AttachmentTextureFormat::RED_INT: return VK_FORMAT_R8_SINT;
-			}
-
-			NB_ASSERT(false);
-			return VK_FORMAT_R8G8B8_UINT;
-		}
-
-		VkFormat FindSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features)
-		{
-			for (VkFormat format : candidates)
-			{
-				VkFormatProperties props;
-				vkGetPhysicalDeviceFormatProperties(VulkanAPI::GetPhysicalDevice(), format, &props);
-
-				if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features)
-					return format;
-				else if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features)
-					return format;
-			}
-
-			NB_ASSERT(false, "Failed to find supported format!");
-			return VK_FORMAT_UNDEFINED;
-		}
-
-		VkFormat FindDepthFormat()
-		{
-			return FindSupportedFormat(
-				{ VK_FORMAT_D24_UNORM_S8_UINT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D32_SFLOAT },
-				VK_IMAGE_TILING_OPTIMAL,
-				VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
-			);
-		}
-
-		bool HasStencilComponent(VkFormat format)
-		{
-			return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
-		}
-
-		VkImageAspectFlags GetDepthAspectFlags(VkFormat format)
-		{
-			VkImageAspectFlags aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT;
-			if (Utils::HasStencilComponent(format))
-				aspectFlags |= VK_IMAGE_ASPECT_STENCIL_BIT;
-
-			return aspectFlags;
-		}
+		VkFormat NebulaToVKImageFormat(ImageFormat format);
 
 		static void CopyImageToBuffer(VkCommandBuffer commandBuffer, VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
 		{
@@ -106,30 +55,6 @@ namespace Nebula {
 				m_DepthAttachmentSpec = spec;
 		}
 
-		if (!m_Specifications.SwapChainTarget)
-		{
-			VkPhysicalDeviceProperties properties{};
-			vkGetPhysicalDeviceProperties(VulkanAPI::GetPhysicalDevice(), &properties);
-
-			VkSamplerCreateInfo samplerInfo{};
-			samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-			samplerInfo.magFilter = VK_FILTER_LINEAR;
-			samplerInfo.minFilter = VK_FILTER_LINEAR;
-			samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-			samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-			samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-			samplerInfo.anisotropyEnable = VK_TRUE;
-			samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
-			samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-			samplerInfo.unnormalizedCoordinates = VK_FALSE;
-			samplerInfo.compareEnable = VK_FALSE;
-			samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
-			samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-
-			VkResult result = vkCreateSampler(VulkanAPI::GetDevice(), &samplerInfo, nullptr, &m_ImGuiSampler);
-			NB_ASSERT(result == VK_SUCCESS, "Failed to create texture sampler!");
-		}
-		
 		CreateRenderPass();
 
 		Invalidate();
@@ -142,12 +67,6 @@ namespace Nebula {
 		{
 			vkDestroyFramebuffer(VulkanAPI::GetDevice(), framebuffer, nullptr);
 		}
-		
-		if (m_ImGuiSampler)
-			vkDestroySampler(VulkanAPI::GetDevice(), m_ImGuiSampler, nullptr);
-
-		for (auto& descriptor : m_ImGuiDescriptors)
-			ImGui_ImplVulkan_RemoveTexture(descriptor);
 	}
 
 	void Vulkan_FrameBuffer::CreateRenderPass()
@@ -166,16 +85,12 @@ namespace Nebula {
 	{
 		if (!m_Framebuffer.empty()) 
 		{
-			VulkanAPI::SubmitResource([framebuffers = m_Framebuffer, descriptorSets = m_ImGuiDescriptors]()
+			VulkanAPI::SubmitResource([framebuffers = m_Framebuffer]()
 			{
 				for (auto& framebuffer : framebuffers)
 					vkDestroyFramebuffer(VulkanAPI::GetDevice(), framebuffer, nullptr);
-
-				for (auto& descriptor : descriptorSets)
-					ImGui_ImplVulkan_RemoveTexture(descriptor);
 			});
 			
-			m_ImGuiDescriptors.clear();
 			m_ColourAttachments.clear();
 			m_DepthAttachment = nullptr;
 		}
@@ -185,24 +100,36 @@ namespace Nebula {
 
 		for (uint32_t i = 0; i < m_ColourAttachments.size(); i++)
 		{
-			VkFormat format = Utils::NebulaFBFormattoVulkan(m_ColourAttachmentSpecs[i].TextureFormat);
+			VkFormat format = Utils::NebulaToVKImageFormat(m_ColourAttachmentSpecs[i].TextureFormat);
 
 			if (m_Specifications.SwapChainTarget && format == *(VkFormat*)context->GetImageFormat())
 			{
-				m_ColourAttachments[i] = VulkanImage::CreateImageArray(context->m_Images, context->m_ImageViews);
+				m_ColourAttachments[i] = Vulkan_Image::CreateImageArray(context->m_Images, context->m_ImageViews);
 				continue;
 			}
 			
-			m_ColourAttachments[i] = VulkanImage::CreateImageArray(format, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_ASPECT_COLOR_BIT,
-				m_Specifications.samples, m_Specifications.Width, m_Specifications.Height);
+			ImageSpecification imageSpec;
+			imageSpec.Format = m_ColourAttachmentSpecs[i].TextureFormat;
+			imageSpec.Width = m_Specifications.Width;
+			imageSpec.Height = m_Specifications.Height;
+			imageSpec.Samples = m_Specifications.samples;
+			imageSpec.ShaderUsage = !m_Specifications.SwapChainTarget;
+			imageSpec.Usage = ImageUsage::ColourAttachment | ImageUsage::TransferDst | ImageUsage::TransferSrc | ImageUsage::Sampled;
+
+			m_ColourAttachments[i] = Vulkan_Image::CreateImageArray(imageSpec, context->GetImageCount());
 		}
 
-		if (m_DepthAttachmentSpec.TextureFormat != AttachmentTextureFormat::None)
+		if (m_DepthAttachmentSpec.TextureFormat != ImageFormat::None)
 		{
-			VkFormat format = Utils::FindDepthFormat();
+			ImageSpecification imageSpec;
+			imageSpec.Format = m_DepthAttachmentSpec.TextureFormat;
+			imageSpec.Width = m_Specifications.Width;
+			imageSpec.Height = m_Specifications.Height;
+			imageSpec.Samples = m_Specifications.samples;
+			imageSpec.ShaderUsage = false;
+			imageSpec.Usage = ImageUsage::DepthStencilAttachment | ImageUsage::TransferDst;
 
-			m_DepthAttachment = CreateRef<VulkanImage>(format, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
-				Utils::GetDepthAspectFlags(format), m_Specifications.samples, m_Specifications.Width, m_Specifications.Height);
+			m_DepthAttachment = CreateRef<Vulkan_Image>(imageSpec);
 		}
 
 		m_Framebuffer.resize(context->GetImageCount());
@@ -210,10 +137,10 @@ namespace Nebula {
 		{
 			std::vector<VkImageView> attachments(m_ColourAttachments.size());
 			for (uint32_t i = 0; i < attachments.size(); i++)
-				attachments[i] = m_ColourAttachments[i][imageIndex]->GetImageView();
+				attachments[i] = m_ColourAttachments[i][imageIndex]->GetVulkanImageView();
 
-			if (m_DepthAttachmentSpec.TextureFormat != AttachmentTextureFormat::None)
-				attachments.push_back(m_DepthAttachment->GetImageView());
+			if (m_DepthAttachmentSpec.TextureFormat != ImageFormat::None)
+				attachments.push_back(m_DepthAttachment->GetVulkanImageView());
 
 			VkFramebufferCreateInfo framebufferInfo{};
 			framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -228,13 +155,6 @@ namespace Nebula {
 			NB_ASSERT(result == VK_SUCCESS, "Failed to create framebuffer");
 		}
 
-		if (!m_Specifications.SwapChainTarget)
-		{
-			m_ImGuiDescriptors.resize(context->GetImageCount());
-			for (uint32_t i = 0; i < context->GetImageCount(); i++)
-				m_ImGuiDescriptors[i] = ImGui_ImplVulkan_AddTexture(m_ImGuiSampler, m_ColourAttachments[0][i]->GetImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-		}
-
 		m_StagingBuffer = CreateScope<VulkanBuffer>(m_Specifications.Width * m_Specifications.Height, VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 	}
 
@@ -247,12 +167,12 @@ namespace Nebula {
 
 		for (auto& attachment : m_ColourAttachments)
 		{
-			Ref<VulkanImage>& image = attachment[context->m_ImageIndex];
+			Ref<Vulkan_Image>& image = attachment[context->m_ImageIndex];
 			
 			if (m_Specifications.SwapChainTarget && image->GetFormat() == VK_FORMAT_UNDEFINED) // Assume it's from swapchain
 			{
 				// Image doesn't know it's in VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
-				image->GetLayout() = image->GetLayout() != VK_IMAGE_LAYOUT_UNDEFINED ? VK_IMAGE_LAYOUT_PRESENT_SRC_KHR : image->GetLayout();
+				image->ImageLayout = image->ImageLayout != VK_IMAGE_LAYOUT_UNDEFINED ? VK_IMAGE_LAYOUT_PRESENT_SRC_KHR : image->ImageLayout;
 			}
 			
 			VulkanAPI::TransitionImageLayout(image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, commandBuffer);
@@ -286,12 +206,12 @@ namespace Nebula {
 		NB_ASSERT(attachmentIndex < m_ColourAttachments.size(), "Index is greater than Attachment Size");
 
 		Vulkan_Context* context = (Vulkan_Context*)Application::Get().GetWindow().GetContext();
-		Ref<VulkanImage> image = m_ColourAttachments[attachmentIndex][context->m_ImageIndex];
+		Ref<Vulkan_Image> image = m_ColourAttachments[attachmentIndex][context->m_ImageIndex];
 		
 		VkCommandBuffer commandBuffer = VulkanAPI::BeginSingleUseCommand();
-		VulkanAPI::TransitionImageLayout(image->GetImage(), VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, commandBuffer);
-		Utils::CopyImageToBuffer(commandBuffer, m_StagingBuffer->GetBuffer(), image->GetImage(), m_Specifications.Width, m_Specifications.Height);
-		VulkanAPI::TransitionImageLayout(image->GetImage(), VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, commandBuffer);
+		VulkanAPI::TransitionImageLayout(image->GetVulkanImage(), VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, commandBuffer);
+		Utils::CopyImageToBuffer(commandBuffer, m_StagingBuffer->GetBuffer(), image->GetVulkanImage(), m_Specifications.Width, m_Specifications.Height);
+		VulkanAPI::TransitionImageLayout(image->GetVulkanImage(), VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, commandBuffer);
 		VulkanAPI::EndSingleUseCommand(commandBuffer);
 
 		unsigned int index = x + y * m_Specifications.Width;
@@ -305,7 +225,7 @@ namespace Nebula {
 		NB_ASSERT(attachmentIndex < m_ColourAttachments.size());
 
 		Vulkan_Context* context = (Vulkan_Context*)Application::Get().GetWindow().GetContext();
-		auto& image = m_ColourAttachments[attachmentIndex][context->m_ImageIndex]->GetImage();
+		auto& image = m_ColourAttachments[attachmentIndex][context->m_ImageIndex]->GetVulkanImage();
 
 		VkCommandBuffer commandBuffer = VulkanAPI::BeginSingleUseCommand();
 		
@@ -340,7 +260,7 @@ namespace Nebula {
 			return;
 
 		Vulkan_Context* context = (Vulkan_Context*)Application::Get().GetWindow().GetContext();
-		auto& image = m_DepthAttachment->GetImage();
+		auto& image = m_DepthAttachment->GetVulkanImage();
 		VkImageAspectFlags aspectFlags = m_DepthAttachment->GetAspectFlags();
 
 		VkCommandBuffer commandBuffer = VulkanAPI::BeginSingleUseCommand();
@@ -360,10 +280,12 @@ namespace Nebula {
 		VulkanAPI::EndSingleUseCommand(commandBuffer);
 	}
 
-	uint64_t Vulkan_FrameBuffer::GetColourAttachmentRendererID(uint32_t index) const
+	Ref<Image2D> Vulkan_FrameBuffer::GetColourAttachmentRendererID(uint32_t index) const
 	{
 		Vulkan_Context* context = (Vulkan_Context*)Application::Get().GetWindow().GetContext();
-		VulkanAPI::TransitionImageLayout(m_ColourAttachments[index][context->m_ImageIndex], VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-		return (uint64_t)m_ImGuiDescriptors[context->m_ImageIndex];
+		Ref<Vulkan_Image> image = m_ColourAttachments[index][context->m_ImageIndex];
+		
+		VulkanAPI::TransitionImageLayout(image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		return image;
 	}
 }

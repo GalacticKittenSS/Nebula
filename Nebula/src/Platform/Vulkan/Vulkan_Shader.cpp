@@ -495,13 +495,7 @@ namespace Nebula
 		UniformData uniform = GetUniformFromName(name);
 		Ref<Vulkan_Texture2D> vulkanTexture = std::static_pointer_cast<Vulkan_Texture2D>(texture);
 
-		std::vector<VkDescriptorImageInfo> imageInfo(uniform.arrayCount);
-		for (uint32_t i = 0; i < uniform.arrayCount; i++)
-		{
-			imageInfo[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			imageInfo[i].imageView = vulkanTexture->m_Image->GetImageView();
-			imageInfo[i].sampler = vulkanTexture->m_Sampler;
-		}
+		std::vector<VkDescriptorImageInfo> imageInfo(uniform.arrayCount, vulkanTexture->m_Image->GetVulkanImageInfo());
 
 		VkWriteDescriptorSet descriptorWrite{};
 		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;

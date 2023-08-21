@@ -3,6 +3,7 @@
 #include "Nebula/Renderer/FrameBuffer.h"
 
 #include "VulkanAPI.h"
+#include "Vulkan_Image.h"
 
 namespace Nebula {
 	class Vulkan_FrameBuffer : public FrameBuffer {
@@ -22,7 +23,7 @@ namespace Nebula {
 		void Bind() override;
 		void Unbind() override;
 
-		uint64_t GetColourAttachmentRendererID(uint32_t index) const override;
+		Ref<Image2D> GetColourAttachmentRendererID(uint32_t index) const override;
 
 		FrameBufferSpecification& GetFrameBufferSpecifications() override { return m_Specifications; }
 		const FrameBufferSpecification& GetFrameBufferSpecifications() const override { return m_Specifications; }
@@ -34,15 +35,12 @@ namespace Nebula {
 	private:
 		FrameBufferSpecification m_Specifications;
 		Array<AttachmentTextureSpecification> m_ColourAttachmentSpecs;
-		AttachmentTextureSpecification m_DepthAttachmentSpec = AttachmentTextureFormat::None;
+		AttachmentTextureSpecification m_DepthAttachmentSpec = ImageFormat::None;
 
 		std::vector<VkFramebuffer> m_Framebuffer;
 		
-		std::vector<VulkanImageArray> m_ColourAttachments;
-		Ref<VulkanImage> m_DepthAttachment;
-
-		VkSampler m_ImGuiSampler = VK_NULL_HANDLE;
-		std::vector<VkDescriptorSet> m_ImGuiDescriptors;
+		std::vector<Vulkan_Image::VulkanImageArray> m_ColourAttachments;
+		Ref<Vulkan_Image> m_DepthAttachment;
 
 		Scope<VulkanBuffer> m_StagingBuffer = nullptr;
 

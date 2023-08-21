@@ -3,15 +3,9 @@
 
 #include "VulkanAPI.h"
 #include "Vulkan_Shader.h"
+#include "Vulkan_Image.h"
 
 #include "Nebula/Scene/SceneRenderer.h"
-
-#include <backends/imgui_impl_vulkan.h>
-
-#define RETURN_FORMAT_SUPPORTED(format) \
-if (FormatSupported(format, VK_IMAGE_TILING_LINEAR, VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT))\
-	return format;\
-break\
 
 namespace Nebula {
 	namespace Utils 
@@ -19,52 +13,13 @@ namespace Nebula {
 		static uint32_t VulkantoBPP(VkFormat format) {
 			switch (format)
 			{
-			case VK_FORMAT_R8_UNORM: return 1;
+			case VK_FORMAT_R8_SINT: return 1;
 			case VK_FORMAT_R8G8B8_UNORM: return 3;
 			case VK_FORMAT_R8G8B8A8_UNORM: return 4;
 			}
 
 			NB_ASSERT(false, "Unknown Vulkan Format");
 			return 0;
-		}
-
-		static std::string VKFormatToString(VkFormat format)
-		{
-			switch (format)
-			{
-			case VK_FORMAT_R8G8B8_UNORM:	return "VK_FORMAT_R8G8B8_UNORM";
-			case VK_FORMAT_R8G8B8A8_UNORM:	return "VK_FORMAT_R8G8B8A8_UNORM";
-			}
-
-			return "Unknown";
-		}
-
-		static bool FormatSupported(VkFormat format, VkImageTiling tiling, VkFormatFeatureFlags features)
-		{
-			VkFormatProperties props;
-			vkGetPhysicalDeviceFormatProperties(VulkanAPI::GetPhysicalDevice(), format, &props);
-
-			if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features)
-				return true;
-
-			else if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features)
-				return true;
-
-			NB_TRACE("Format {} not supported", VKFormatToString(format));
-			return false;
-		}
-
-		static VkFormat NebulaToVKDataFormat(ImageFormat format)
-		{
-			
-			switch (format)
-			{
-			case ImageFormat::RGB8:		RETURN_FORMAT_SUPPORTED(VK_FORMAT_R8G8B8_UNORM);
-			case ImageFormat::RGBA8:	RETURN_FORMAT_SUPPORTED(VK_FORMAT_R8G8B8A8_UNORM);
-			}
-
-			NB_ASSERT(FormatSupported(VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_LINEAR, VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT), "Format is unknown or not supported!");
-			return VK_FORMAT_R8G8B8A8_UNORM;
 		}
 
 		static void CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
@@ -95,38 +50,16 @@ namespace Nebula {
 	{
 		NB_PROFILE_FUNCTION();
 
-		m_Format = Utils::NebulaToVKDataFormat(specification.Format);
+		ImageSpecification imageSpec;
+		imageSpec.Format = m_Specification.Format;
+		imageSpec.Usage = ImageUsage::TransferSrc | ImageUsage::TransferDst | ImageUsage::Sampled;
+		imageSpec.Samples = 1;
+		imageSpec.Width = m_Specification.Width;
+		imageSpec.Height = m_Specification.Height;
+		imageSpec.ImGuiUsage = m_Specification.ImGuiUsable;
+		m_Image = CreateRef<Vulkan_Image>(imageSpec);
 
-		m_Image = CreateRef<VulkanImage>(m_Format, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_ASPECT_COLOR_BIT,
-			1, m_Specification.Width, m_Specification.Height);
-
-		VkPhysicalDeviceProperties properties{};
-		vkGetPhysicalDeviceProperties(VulkanAPI::GetPhysicalDevice(), &properties);
-		
-		VkSamplerCreateInfo samplerInfo{};
-		samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-		samplerInfo.magFilter = VK_FILTER_LINEAR;
-		samplerInfo.minFilter = VK_FILTER_LINEAR;
-		samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-		samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-		samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-		samplerInfo.anisotropyEnable = VK_TRUE;
-		samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
-		samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-		samplerInfo.unnormalizedCoordinates = VK_FALSE;
-		samplerInfo.compareEnable = VK_FALSE;
-		samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
-		samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-
-		VkResult result = vkCreateSampler(VulkanAPI::GetDevice(), &samplerInfo, nullptr, &m_Sampler);
-		NB_ASSERT(result == VK_SUCCESS, "Failed to create texture sampler!");
-
-		m_ImageInfo = {};
-		m_ImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		m_ImageInfo.imageView = m_Image->GetImageView();
-		m_ImageInfo.sampler = m_Sampler;
-
-		uint32_t bpp = Utils::VulkantoBPP(m_Format);
+		uint32_t bpp = Utils::VulkantoBPP(m_Image->GetFormat());
 		uint32_t bufferSize = m_Width * m_Height * bpp;
 		m_StagingBuffer = CreateScope<VulkanBuffer>(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 		
@@ -135,22 +68,11 @@ namespace Nebula {
 			SetData(data);
 			m_IsLoaded = true;
 		}
-
-		if (m_Specification.ImGuiUsable)
-			m_ImguiDescriptor = ImGui_ImplVulkan_AddTexture(m_Sampler, m_Image->GetImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	}
 
 	Vulkan_Texture2D::~Vulkan_Texture2D() 
 	{
 		NB_PROFILE_FUNCTION();
-
-		VulkanAPI::SubmitResource([imguiDescriptor = m_ImguiDescriptor, sampler = m_Sampler]()
-		{
-			if (imguiDescriptor)
-				vkFreeDescriptorSets(VulkanAPI::GetDevice(), VulkanAPI::s_DescriptorPool, 1, &imguiDescriptor);
-			
-			vkDestroySampler(VulkanAPI::GetDevice(), sampler, nullptr);
-		});
 	}
 
 	void Vulkan_Texture2D::SetData(Buffer data) 
@@ -176,9 +98,9 @@ namespace Nebula {
 			m_StagingBuffer->SetData(data.Data, (uint32_t)data.Size);
 		}
 
-		VulkanAPI::TransitionImageLayout(m_Image->GetImage(), VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-		Utils::CopyBufferToImage(m_StagingBuffer->GetBuffer(), m_Image->GetImage(), m_Width, m_Height);
-		VulkanAPI::TransitionImageLayout(m_Image->GetImage(), VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		VulkanAPI::TransitionImageLayout(m_Image->GetVulkanImage(), VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+		Utils::CopyBufferToImage(m_StagingBuffer->GetBuffer(), m_Image->GetVulkanImage(), m_Width, m_Height);
+		VulkanAPI::TransitionImageLayout(m_Image->GetVulkanImage(), VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	}
 
 	void Vulkan_Texture2D::SetFilterNearest(bool nearest) 
@@ -191,7 +113,7 @@ namespace Nebula {
 		NB_PROFILE_FUNCTION();
 
 		// Update Descriptor Set
-		Vulkan_Shader::SetTexture(slot, m_ImageInfo);
+		Vulkan_Shader::SetTexture(slot, m_Image->GetVulkanImageInfo());
 	}
 
 	void Vulkan_Texture2D::Unbind() const 

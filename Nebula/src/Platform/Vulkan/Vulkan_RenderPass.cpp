@@ -11,8 +11,8 @@ namespace Nebula
 {
 	namespace Utils
 	{
-		bool IsDepthFormat(AttachmentTextureFormat format);
-		VkFormat NebulaFBFormattoVulkan(AttachmentTextureFormat format);
+		bool IsDepthFormat(ImageFormat format);
+		VkFormat NebulaToVKImageFormat(ImageFormat format);
 		VkFormat FindDepthFormat();
 	}
 
@@ -40,7 +40,7 @@ namespace Nebula
 
 		for (uint32_t i = 0; i < colourAttachments.size(); i++)
 		{
-			VkFormat format = Utils::NebulaFBFormattoVulkan(colourAttachments[i].TextureFormat);
+			VkFormat format = Utils::NebulaToVKImageFormat(colourAttachments[i].TextureFormat);
 
 			VkAttachmentDescription colourAttachment;
 			colourAttachment.format = format;
@@ -62,7 +62,7 @@ namespace Nebula
 
 		VkAttachmentReference* depthReference = nullptr;
 
-		if (depthAttachment.TextureFormat != AttachmentTextureFormat::None)
+		if (depthAttachment.TextureFormat != ImageFormat::None)
 		{
 			VkFormat format = Utils::FindDepthFormat();
 
@@ -107,7 +107,7 @@ namespace Nebula
 			dependency.srcAccessMask = 0;
 		}
 
-		if (depthAttachment.TextureFormat != AttachmentTextureFormat::None)
+		if (depthAttachment.TextureFormat != ImageFormat::None)
 		{
 			dependency.dstStageMask |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
 			dependency.dstAccessMask |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
