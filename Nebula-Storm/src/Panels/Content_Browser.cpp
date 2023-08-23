@@ -490,7 +490,7 @@ namespace Nebula {
 			{
 				currentPath /= p;
 
-				uint32_t index = m_TreeNodes.find(currentPath);
+				size_t index = m_TreeNodes.find(currentPath);
 				if (index >= m_TreeNodes.size())
 					m_TreeNodes.push_back(currentPath);
 			}

@@ -74,7 +74,7 @@ namespace Nebula {
 
 			Vulkan_Context* context = (Vulkan_Context*)win.GetContext();
 			ImGui_ImplVulkanH_Window* wd = &vulkan_window;
-			wd->Surface = context->m_Surface;
+			wd->Surface = (VkSurfaceKHR)context->GetSurface();
 
 			// Select Surface Format
 			const VkFormat requestSurfaceImageFormat[] = { VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_B8G8R8_UNORM, VK_FORMAT_R8G8B8_UNORM };
@@ -97,6 +97,7 @@ namespace Nebula {
 				spec.Attachments = { ImageFormat::BGRA8 };
 				spec.ClearOnLoad = true;
 				spec.ShaderOnly = false;
+				spec.SingleWrite = true;
 				m_RenderPass = RenderPass::Create(spec);
 			}
 			
@@ -137,6 +138,7 @@ namespace Nebula {
 			ImGui_ImplOpenGL3_Shutdown();
 			break;
 		case RendererAPI::API::Vulkan:
+			vkQueueWaitIdle(VulkanAPI::GetQueue());
 			ImGui_ImplVulkan_Shutdown();
 			break;
 		}

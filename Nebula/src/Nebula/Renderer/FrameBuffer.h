@@ -38,8 +38,9 @@ namespace Nebula {
 		virtual void ClearAttachment(uint32_t attachmentIndex, const glm::vec4& value) = 0;
 		virtual void ClearDepthAttachment(int value) {}
 
-		virtual Ref<Image2D> GetColourAttachmentRendererID(uint32_t index = 0) const = 0;
-
+		virtual Ref<Image2D> GetColourAttachmentImage(uint32_t index = 0) const = 0;
+		virtual uint64_t GetColourAttachmentRendererID(uint32_t index = 0) const = 0;
+		
 		virtual FrameBufferSpecification& GetFrameBufferSpecifications() = 0;
 		virtual const FrameBufferSpecification& GetFrameBufferSpecifications() const = 0;
 

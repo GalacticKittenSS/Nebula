@@ -88,8 +88,14 @@ namespace Nebula {
 	{
 		NB_PROFILE_FUNCTION();
 
-		CleanUpSwapChain();
-		vkDestroySurfaceKHR(VulkanAPI::GetInstance(), m_Surface, nullptr);
+		VulkanAPI::SubmitResource([imageViews = m_ImageViews, swapchain = m_SwapChain, surface = m_Surface]()
+		{
+			for (auto imageView : imageViews)
+				vkDestroyImageView(VulkanAPI::GetDevice(), imageView, nullptr);
+
+			vkDestroySwapchainKHR(VulkanAPI::GetDevice(), swapchain, nullptr);
+			vkDestroySurfaceKHR(VulkanAPI::GetInstance(), surface, nullptr);
+		});
 	}
 
 	bool Vulkan_Context::AcquireNextImage()
@@ -130,7 +136,6 @@ namespace Nebula {
 
 	void Vulkan_Context::SwapBuffers() 
 	{
-		VulkanAPI::TransitionImageLayout(m_Images[m_ImageIndex], VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 		PresentCurrentImage();
 
 		VulkanAPI::ResetFrame();
@@ -281,13 +286,12 @@ namespace Nebula {
 
 	void Vulkan_Context::CleanUpSwapChain()
 	{
-		VkDevice device = VulkanAPI::GetDevice();
-		vkDeviceWaitIdle(device);
-
-		for (auto imageView : m_ImageViews) {
-			vkDestroyImageView(device, imageView, nullptr);
-		}
-
-		vkDestroySwapchainKHR(device, m_SwapChain, nullptr);
+		VulkanAPI::SubmitResource([imageViews = m_ImageViews, swapchain = m_SwapChain]()
+		{
+			for (auto imageView : imageViews)
+				vkDestroyImageView(VulkanAPI::GetDevice(), imageView, nullptr);
+			
+			vkDestroySwapchainKHR(VulkanAPI::GetDevice(), swapchain, nullptr);
+		});	
 	}
 }

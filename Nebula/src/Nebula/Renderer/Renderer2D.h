@@ -29,8 +29,6 @@ namespace Nebula {
 		static void Init();
 		static void Shutdown();
 
-		static void BindRenderPass();
-
 		static void BeginScene(const Camera& camera, const glm::mat4& transform = glm::mat4(1.0f));
 		static void BeginScene(const EditorCamera& camera);
 		static void EndScene();

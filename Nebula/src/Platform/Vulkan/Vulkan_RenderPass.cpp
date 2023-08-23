@@ -50,7 +50,9 @@ namespace Nebula
 			colourAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 			colourAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 			colourAttachment.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-			colourAttachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			colourAttachment.finalLayout = m_Specification.SingleWrite ?
+				m_Specification.ShaderOnly ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_PRESENT_SRC_KHR 
+				: VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 			colourAttachment.flags = 0;
 			attachmentDesc[i] = colourAttachment;
 
@@ -144,11 +146,7 @@ namespace Nebula
 		if (!VulkanAPI::IsRecording() || !framebuffer)
 			return;
 
-		Vulkan_Context* context = (Vulkan_Context*)Application::Get().GetWindow().GetContext();
-		uint32_t imageIndex = context->m_ImageIndex;
-		if (imageIndex == (uint32_t)-1)
-			return;
-
+		framebuffer->PrepareImages();
 		FrameBufferSpecification spec = framebuffer->GetFrameBufferSpecifications();
 
 		VkExtent2D extent;
@@ -158,7 +156,7 @@ namespace Nebula
 		VkRenderPassBeginInfo renderPassInfo{};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 		renderPassInfo.renderPass = m_RenderPass;
-		renderPassInfo.framebuffer = framebuffer->m_Framebuffer[imageIndex];
+		renderPassInfo.framebuffer = framebuffer->GetFrameBuffer();
 		renderPassInfo.renderArea.offset = { 0, 0 };
 		renderPassInfo.renderArea.extent = extent;
 
@@ -196,8 +194,6 @@ namespace Nebula
 		s_ActiveInstance = nullptr;
 
 		if (VulkanAPI::IsRecording())
-		{
 			vkCmdEndRenderPass(VulkanAPI::GetCommandBuffer());
-		}
 	}
 }

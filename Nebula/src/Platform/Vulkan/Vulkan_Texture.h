@@ -27,8 +27,10 @@ namespace Nebula {
 		bool IsLoaded() const override { return m_IsLoaded; }
 
 		bool operator==(const Texture& other) const override {
-			return GetImage() == other.GetImage();
+			return m_Image == other.GetImage();
 		}
+
+		VkDescriptorImageInfo GetVulkanImageInfo() { return m_Image->GetVulkanImageInfo(); }
 	private:
 		TextureSpecification m_Specification;
 
@@ -37,7 +39,5 @@ namespace Nebula {
 		
 		Ref<Vulkan_Image> m_Image;
 		Scope<VulkanBuffer> m_StagingBuffer = nullptr;
-
-		friend class Vulkan_Shader;
 	};
 }

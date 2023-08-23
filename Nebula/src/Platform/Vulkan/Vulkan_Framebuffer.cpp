@@ -2,6 +2,7 @@
 #include "Vulkan_Framebuffer.h"
 
 #include "Nebula/Core/Application.h"
+#include "Nebula/Renderer/Render_Command.h"
 
 #include "VulkanAPI.h"
 #include "Vulkan_Context.h"
@@ -14,7 +15,7 @@ namespace Nebula {
 
 	namespace Utils 
 	{
-		bool IsDepthFormat(ImageFormat  format) {
+		bool IsDepthFormat(ImageFormat format) {
 			switch (format)
 			{
 			case ImageFormat::DEPTH24STENCIL8: return true;
@@ -63,10 +64,11 @@ namespace Nebula {
 
 	Vulkan_FrameBuffer::~Vulkan_FrameBuffer() 
 	{
-		for (auto& framebuffer : m_Framebuffer)
+		VulkanAPI::SubmitResource([framebuffers = m_Framebuffer]()
 		{
-			vkDestroyFramebuffer(VulkanAPI::GetDevice(), framebuffer, nullptr);
-		}
+			for (auto& framebuffer : framebuffers)
+				vkDestroyFramebuffer(VulkanAPI::GetDevice(), framebuffer, nullptr);
+		});
 	}
 
 	void Vulkan_FrameBuffer::CreateRenderPass()
@@ -102,7 +104,7 @@ namespace Nebula {
 		{
 			VkFormat format = Utils::NebulaToVKImageFormat(m_ColourAttachmentSpecs[i].TextureFormat);
 
-			if (m_Specifications.SwapChainTarget && format == *(VkFormat*)context->GetImageFormat())
+			if (m_Specifications.SwapChainTarget && format == context->GetImageFormat())
 			{
 				m_ColourAttachments[i] = Vulkan_Image::CreateImageArray(context->m_Images, context->m_ImageViews);
 				continue;
@@ -161,29 +163,45 @@ namespace Nebula {
 	void Vulkan_FrameBuffer::Bind() 
 	{
 		s_BindedInstance = this;
+		m_PrepareNeeded = true;
+	}
 
+	void Vulkan_FrameBuffer::PrepareImages()
+	{
 		Vulkan_Context* context = (Vulkan_Context*)Application::Get().GetWindow().GetContext();
-		VkCommandBuffer commandBuffer = VulkanAPI::BeginSingleUseCommand();
+		if (!m_PrepareNeeded)
+			return;
+		
+		if (!m_CommandBuffer)
+			m_CommandBuffer = VulkanAPI::BeginSingleUseCommand();
 
 		for (auto& attachment : m_ColourAttachments)
 		{
-			Ref<Vulkan_Image>& image = attachment[context->m_ImageIndex];
-			
+			Ref<Vulkan_Image>& image = attachment[context->GetImageIndex()];
+
 			if (m_Specifications.SwapChainTarget && image->GetFormat() == VK_FORMAT_UNDEFINED) // Assume it's from swapchain
 			{
 				// Image doesn't know it's in VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
 				image->ImageLayout = image->ImageLayout != VK_IMAGE_LAYOUT_UNDEFINED ? VK_IMAGE_LAYOUT_PRESENT_SRC_KHR : image->ImageLayout;
 			}
-			
-			VulkanAPI::TransitionImageLayout(image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, commandBuffer);
+
+			VulkanAPI::TransitionImageLayout(image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, m_CommandBuffer);
 		}
 
-		VulkanAPI::EndSingleUseCommand(commandBuffer);
+		VulkanAPI::EndSingleUseCommand(m_CommandBuffer);
+		m_CommandBuffer = nullptr;
+		m_PrepareNeeded = false;
 	}
 
 	void Vulkan_FrameBuffer::Unbind()
 	{
 		s_BindedInstance = nullptr;
+
+		if (m_CommandBuffer)
+		{
+			VulkanAPI::EndSingleUseCommand(m_CommandBuffer);
+			m_CommandBuffer = nullptr;
+		}
 	}
 
 	void Vulkan_FrameBuffer::Resize(uint32_t width, uint32_t height) 
@@ -200,13 +218,12 @@ namespace Nebula {
 		Invalidate();
 	}
 
-
 	int Vulkan_FrameBuffer::ReadPixel(uint32_t attachmentIndex, int x, int y) 
 	{
 		NB_ASSERT(attachmentIndex < m_ColourAttachments.size(), "Index is greater than Attachment Size");
 
 		Vulkan_Context* context = (Vulkan_Context*)Application::Get().GetWindow().GetContext();
-		Ref<Vulkan_Image> image = m_ColourAttachments[attachmentIndex][context->m_ImageIndex];
+		Ref<Vulkan_Image> image = m_ColourAttachments[attachmentIndex][context->GetImageIndex()];
 		
 		VkCommandBuffer commandBuffer = VulkanAPI::BeginSingleUseCommand();
 		VulkanAPI::TransitionImageLayout(image->GetVulkanImage(), VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, commandBuffer);
@@ -223,12 +240,10 @@ namespace Nebula {
 	void Vulkan_FrameBuffer::ClearAttachment(uint32_t attachmentIndex, VkClearColorValue clearValue)
 	{
 		NB_ASSERT(attachmentIndex < m_ColourAttachments.size());
-
-		Vulkan_Context* context = (Vulkan_Context*)Application::Get().GetWindow().GetContext();
-		auto& image = m_ColourAttachments[attachmentIndex][context->m_ImageIndex]->GetVulkanImage();
-
-		VkCommandBuffer commandBuffer = VulkanAPI::BeginSingleUseCommand();
 		
+		Vulkan_Context* context = (Vulkan_Context*)Application::Get().GetWindow().GetContext();
+		auto& image = m_ColourAttachments[attachmentIndex][context->GetImageIndex()];// ->GetVulkanImage();
+
 		VkImageSubresourceRange subResourceRange = {};
 		subResourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		subResourceRange.baseMipLevel = 0;
@@ -236,11 +251,12 @@ namespace Nebula {
 		subResourceRange.baseArrayLayer = 0;
 		subResourceRange.layerCount = 1;
 
-		VulkanAPI::TransitionImageLayout(image, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, commandBuffer);
-		vkCmdClearColorImage(commandBuffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearValue, 1, &subResourceRange);
-		VulkanAPI::TransitionImageLayout(image, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, commandBuffer);
+		if (!m_CommandBuffer)
+			m_CommandBuffer = VulkanAPI::BeginSingleUseCommand();
 
-		VulkanAPI::EndSingleUseCommand(commandBuffer);
+		VulkanAPI::TransitionImageLayout(image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, m_CommandBuffer);
+		vkCmdClearColorImage(m_CommandBuffer, image->GetVulkanImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearValue, 1, &subResourceRange);
+		m_PrepareNeeded = true;
 	}
 
 	void Vulkan_FrameBuffer::ClearAttachment(uint32_t attachmentIndex, int value) 
@@ -263,7 +279,6 @@ namespace Nebula {
 		auto& image = m_DepthAttachment->GetVulkanImage();
 		VkImageAspectFlags aspectFlags = m_DepthAttachment->GetAspectFlags();
 
-		VkCommandBuffer commandBuffer = VulkanAPI::BeginSingleUseCommand();
 		VkClearDepthStencilValue clearValue = { 1.0f, (uint32_t)value };
 
 		VkImageSubresourceRange subResourceRange = {};
@@ -273,19 +288,26 @@ namespace Nebula {
 		subResourceRange.baseArrayLayer = 0;
 		subResourceRange.layerCount = 1;
 
-		VulkanAPI::TransitionImageLayout(image, aspectFlags, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, commandBuffer);
-		vkCmdClearDepthStencilImage(commandBuffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearValue, 1, &subResourceRange);
-		VulkanAPI::TransitionImageLayout(image, aspectFlags, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, commandBuffer);
+		if (!m_CommandBuffer)
+			m_CommandBuffer = VulkanAPI::BeginSingleUseCommand();
 
-		VulkanAPI::EndSingleUseCommand(commandBuffer);
+		VulkanAPI::TransitionImageLayout(image, aspectFlags, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, m_CommandBuffer);
+		vkCmdClearDepthStencilImage(m_CommandBuffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearValue, 1, &subResourceRange);
+		VulkanAPI::TransitionImageLayout(image, aspectFlags, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, m_CommandBuffer);
 	}
 
-	Ref<Image2D> Vulkan_FrameBuffer::GetColourAttachmentRendererID(uint32_t index) const
+	Ref<Image2D> Vulkan_FrameBuffer::GetColourAttachmentImage(uint32_t index) const
 	{
 		Vulkan_Context* context = (Vulkan_Context*)Application::Get().GetWindow().GetContext();
-		Ref<Vulkan_Image> image = m_ColourAttachments[index][context->m_ImageIndex];
+		Ref<Vulkan_Image> image = m_ColourAttachments[index][context->GetImageIndex()];
 		
 		VulkanAPI::TransitionImageLayout(image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 		return image;
+	}
+
+	VkFramebuffer Vulkan_FrameBuffer::GetFrameBuffer()
+	{
+		Vulkan_Context* context = (Vulkan_Context*)Application::Get().GetWindow().GetContext();
+		return m_Framebuffer[context->GetImageIndex()];
 	}
 }

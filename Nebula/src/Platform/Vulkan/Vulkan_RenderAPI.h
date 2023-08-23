@@ -35,7 +35,5 @@ namespace Nebula {
 		glm::vec4 m_ClearColour;
 		float m_LineWidth = 1.0f;
 		bool m_BackFaceCulling = false;
-		
-		friend class Vulkan_Context;
 	};
 }

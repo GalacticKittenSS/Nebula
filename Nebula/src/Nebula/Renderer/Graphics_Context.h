@@ -9,8 +9,7 @@ namespace Nebula {
 		virtual void Shutdown() = 0;
 		virtual void SwapBuffers() = 0;
 		virtual const void* GetSurface() const = 0;
-		virtual const void* GetImageFormat() const = 0;
-
+		
 		static Scope<GraphicsContext> Create(void* window);
 	};
 }

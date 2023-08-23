@@ -23,7 +23,5 @@ namespace Nebula {
 	private:
 		uint32_t m_Binding;
 		std::vector<Scope<VulkanBuffer>> m_Buffers;
-
-		friend class Vulkan_RendererAPI;
 	};
 }

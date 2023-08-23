@@ -92,13 +92,10 @@ namespace Nebula {
 		}
 
 		Vulkan_Context* context = (Vulkan_Context*)Application::Get().GetWindow().GetContext();
-		auto& image = context->m_Images[context->m_ImageIndex];
+		auto& image = context->GetImage();
 		
 		VkCommandBuffer commandBuffer = VulkanAPI::BeginSingleUseCommand();
-
-		VulkanAPI::TransitionImageLayout(image, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-
-		commandBuffer = VulkanAPI::BeginSingleUseCommand();
+		
 		VkClearColorValue clearValue = { 0.0f, 0.0f, 0.0f, 1.0f };
 
 		VkImageSubresourceRange subResourceRange = {};
@@ -108,10 +105,11 @@ namespace Nebula {
 		subResourceRange.baseArrayLayer = 0;
 		subResourceRange.layerCount = 1;
 
+		VulkanAPI::TransitionImageLayout(image, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, commandBuffer);
 		vkCmdClearColorImage(commandBuffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearValue, 1, &subResourceRange);
+		VulkanAPI::TransitionImageLayout(image, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, commandBuffer);
+		
 		VulkanAPI::EndSingleUseCommand(commandBuffer);
-
-		VulkanAPI::TransitionImageLayout(image, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 	}
 
 	void Vulkan_RendererAPI::SetClearColour(float r, float g, float b, float a) 

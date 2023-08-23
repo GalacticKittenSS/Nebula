@@ -16,10 +16,12 @@ namespace Nebula {
 		
 		void SwapBuffers() override;
 		
-		uint32_t GetNextImage() { return m_ImageIndex; }
+		uint32_t GetImageIndex() { return m_ImageIndex; }
 		uint32_t GetImageCount() { return m_SwapChainImageCount; }
 		const void* GetSurface() const override { return m_Surface; }
-		const void* GetImageFormat() const override { return &m_ImageFormat; }
+
+		const VkFormat& GetImageFormat() const { return m_ImageFormat; }
+		const VkImage& GetImage() const { return m_Images[m_ImageIndex]; }
 	private:
 		struct SwapChainSupportDetails {
 			VkSurfaceCapabilitiesKHR capabilities;
@@ -52,9 +54,6 @@ namespace Nebula {
 		uint32_t m_ImageIndex = 0;
 		uint32_t m_SwapChainImageCount;
 
-		friend class Vulkan_RendererAPI;
 		friend class Vulkan_FrameBuffer;
-		friend class Vulkan_RenderPass;
-		friend class ImGuiLayer;
 	};
 }

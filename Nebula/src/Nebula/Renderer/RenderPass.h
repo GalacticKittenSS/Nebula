@@ -16,6 +16,7 @@ namespace Nebula
 	struct RenderPassSpecification
 	{
 		std::vector<AttachmentTextureSpecification> Attachments;
+		bool SingleWrite = false;
 		bool ClearOnLoad = false;
 		bool ShaderOnly = true;
 	};

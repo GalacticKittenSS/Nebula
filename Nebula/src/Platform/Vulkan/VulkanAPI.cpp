@@ -406,11 +406,7 @@ namespace Nebula
 	{
 		vkWaitForFences(s_Device, 1, &GetFence(), VK_TRUE, UINT64_MAX);
 		vkResetFences(s_Device, 1, &GetFence());
-		
-		for (auto& func : s_FreeResourceFuncs[s_FrameIndex])
-			func();
-		s_FreeResourceFuncs[s_FrameIndex].clear();
-		
+
 		vkResetCommandBuffer(GetCommandBuffer(), 0);
 
 		VkCommandBufferBeginInfo beginInfo{};
@@ -452,7 +448,11 @@ namespace Nebula
 
 	void VulkanAPI::ResetFrame()
 	{
-		s_FirstSubmit = true; 
+		for (auto& func : s_FreeResourceFuncs[s_FrameIndex])
+			func();
+		s_FreeResourceFuncs[s_FrameIndex].clear();
+		
+		s_FirstSubmit = true;
 		s_FrameIndex = (s_FrameIndex + 1) % g_MaxFrames;
 	}
 	

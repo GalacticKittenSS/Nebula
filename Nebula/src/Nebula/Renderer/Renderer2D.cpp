@@ -204,7 +204,6 @@ namespace Nebula {
 			spec.ClearOnLoad = false;
 			spec.ShaderOnly = true;
 			s_Data.RenderPass = RenderPass::Create(spec);
-			s_Data.RenderPass->Bind();
 		}
 		
 		PipelineSpecification pipelineSpec;
@@ -344,11 +343,6 @@ namespace Nebula {
 		
 		// Vulkan (Fill Texture Array with Default Texture)
 		s_Data.TextureShader->SetTextureArray("u_Textures", s_Data.WhiteTexture);
-	}
-
-	void Renderer2D::BindRenderPass()
-	{
-		s_Data.RenderPass->Bind();
 	}
 
 	void Renderer2D::Shutdown() {

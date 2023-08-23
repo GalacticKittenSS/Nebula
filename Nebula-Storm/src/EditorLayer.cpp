@@ -106,7 +106,6 @@ namespace Nebula {
 		fbSpec.Attachments = { ImageFormat::RGBA8, ImageFormat::RED_INT, ImageFormat::Depth };
 		fbSpec.Width = 1280;
 		fbSpec.Height = 720;
-		Renderer2D::BindRenderPass();
 		frameBuffer = FrameBuffer::Create(fbSpec);
 
 		//Create New Scene
@@ -265,15 +264,16 @@ namespace Nebula {
 		{
 			ImGui::Begin("Debug Profiling", &m_ShowDebug);
 			ImGui::Text("Time since last Frame: %.3fms", Time::DeltaTime() * 1000.0f);
-			ImGui::Text("FPS: %.3f", m_Frames / (Time::Elapsed() - m_LastTime));
+			ImGui::Text("FPS: %.3f", 1 / Time::DeltaTime());
+			ImGui::Text("Last Frame Count: %i", m_LastFrame);
 			ImGui::Text("");
 			ImGui::Text("Time Elapsed: %.3f", Time::Elapsed() - m_TimeSinceReset);
 			ImGui::Text("Total Frames: %i", m_TotalFrames);
 			ImGui::Text("Average FPS: %.1f", m_TotalFrames / (Time::Elapsed() - m_TimeSinceReset));
 
-			ImGui::SetCursorPosX(ImGui::GetContentRegionAvail().x / 2.0f);
+			ImGui::SetCursorPosX(ImGui::GetContentRegionAvail().x * 0.5f);
 			if (ImGui::Button("Reset")) {
-				m_TotalFrames = m_LastFrame;
+				m_TotalFrames = 0;
 				m_TimeSinceReset = Time::Elapsed();
 			}
 
@@ -492,7 +492,7 @@ namespace Nebula {
 		ImVec2 panelSize = ImGui::GetContentRegionAvail();
 		m_GameViewSize = { panelSize.x, panelSize.y };
 
-		Ref<Image2D> texture = frameBuffer->GetColourAttachmentRendererID();
+		Ref<Image2D> texture = frameBuffer->GetColourAttachmentImage();
 		ImGui::Image((ImTextureID)texture->GetDescriptorSet(), panelSize, ImVec2{0, 1}, ImVec2{1, 0});
 
 		if (ImGui::BeginDragDropTarget()) 
