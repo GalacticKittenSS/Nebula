@@ -177,9 +177,6 @@ namespace Nebula {
 
 		glfwDestroyWindow(m_Window);
 		--s_GLFWWindowCount;
-
-		if (s_GLFWWindowCount == 0)
-			Window::ShutdownAPI();
 	}
 
 	void Win_Window::Update() {

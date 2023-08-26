@@ -38,11 +38,12 @@ namespace Nebula {
 	Application::~Application() {
 		NB_PROFILE_FUNCTION();
 
+		m_LayerStack.~LayerStack();
+		m_Window = nullptr;
+
 		ScriptEngine::Shutdown();
 		Renderer::Shutdown();
-		
-		//GLFW is still needed during Application Close
-		//Window::ShutdownAPI();
+		Window::ShutdownAPI();
 	}
 
 	void Application::run() {
