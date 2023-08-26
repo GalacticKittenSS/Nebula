@@ -18,7 +18,8 @@ namespace Nebula {
 		uint32_t GetWidth() const override { return m_Width; }
 		uint32_t GetHeight() const override { return m_Height; }
 		uint64_t GetRendererID() const override { return m_RendererID; }
-		
+		Ref<Image2D> GetImage() const override { return m_Image; };
+
 		void Bind(uint32_t slot) const;
 		void Unbind() const;
 
@@ -29,6 +30,7 @@ namespace Nebula {
 		}
 	private:
 		TextureSpecification m_Specification;
+		Ref<Image2D> m_Image;
 
 		bool m_IsLoaded = false;
 		uint32_t m_Width, m_Height;

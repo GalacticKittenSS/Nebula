@@ -27,7 +27,7 @@ namespace Nebula
 	public:
 		~Pipeline() = default;
 
-		virtual void Bind() const = 0;
+		virtual void Bind() const {};
 
 		static Ref<Pipeline> Create(const PipelineSpecification& specification);
 	};

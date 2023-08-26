@@ -18,12 +18,19 @@ namespace Nebula {
 
 		Time::Init();
 		Window::InitAPI();
-		Renderer::Init();
 		ScriptEngine::Init();
+
+		// Vulkan Graphics Context (in window) requires instance
+		if (RendererAPI::GetAPI() == RendererAPI::API::Vulkan)
+			Renderer::Init();
 
 		m_Window = Window::Create(WindowProps(m_Specification.Name));
 		m_Window->SetEventCallback(BIND_EVENT(Application::OnEvent));
 
+		// OpenGL init requires active window
+		if (RendererAPI::GetAPI() == RendererAPI::API::OpenGL)
+			Renderer::Init();
+		
 		m_ImGui = new ImGuiLayer();
 		PushOverlay(m_ImGui);
 	}

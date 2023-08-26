@@ -1,6 +1,8 @@
 #include "nbpch.h"
 #include "OpenGL_Texture.h"
 
+#include "OpenGL_Image.h"
+
 #include <glad/glad.h>
 
 namespace Nebula {
@@ -58,6 +60,8 @@ namespace Nebula {
 
 		glTextureParameteri(m_RendererID, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTextureParameteri(m_RendererID, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+		m_Image = CreateRef<OpenGL_Image>(m_RendererID);
 
 		if (data)
 		{

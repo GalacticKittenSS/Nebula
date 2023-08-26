@@ -13,6 +13,7 @@ namespace Nebula
 		{
 		case RendererAPI::API::None:	NB_ASSERT(false, "RendererAPI::None is currently not supported!"); return nullptr;
 		case RendererAPI::API::Vulkan: return CreateRef<Vulkan_Pipeline>(specifications);
+		case RendererAPI::API::OpenGL: return CreateRef<Pipeline>();
 		}
 
 		NB_ASSERT(false, "Unknown Renderer API!");

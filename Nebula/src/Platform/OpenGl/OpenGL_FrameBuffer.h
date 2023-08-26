@@ -2,6 +2,8 @@
 
 #include "Nebula/Renderer/FrameBuffer.h"
 
+#include "OpenGL_Image.h"
+
 namespace Nebula {
 	class OpenGL_FrameBuffer : public FrameBuffer {
 	public:
@@ -19,7 +21,7 @@ namespace Nebula {
 		void Bind() override;
 		void Unbind() override;
 
-		Ref<Image2D> GetColourAttachmentImage(uint32_t index) const override { NB_ASSERT(index < m_ColourAttachments.size(), "Index is greater than Array Size"); return nullptr; }
+		Ref<Image2D> GetColourAttachmentImage(uint32_t index) const override { NB_ASSERT(index < m_ColourAttachments.size(), "Index is greater than Array Size"); return CreateRef<OpenGL_Image>(m_ColourAttachments[index]); }
 		uint64_t GetColourAttachmentRendererID(uint32_t index) const override { NB_ASSERT(index < m_ColourAttachments.size(), "Index is greater than Array Size"); return m_ColourAttachments[index]; }
 
 		FrameBufferSpecification& GetFrameBufferSpecifications() override { return m_Specifications; }

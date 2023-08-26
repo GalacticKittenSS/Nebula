@@ -26,14 +26,16 @@ namespace Nebula
 	public:
 		virtual ~RenderPass() = default;
 
-		virtual void Bind() = 0;
-		virtual void Unbind() = 0;
+		virtual void Bind() {};
+		virtual void Unbind() {};
 		
-		virtual uint64_t GetRenderPass() const = 0;
+		virtual uint64_t GetRenderPass() const { return -1; };
 
-		virtual RenderPassSpecification& GetRenderPassSpecifications() = 0;
-		virtual const RenderPassSpecification& GetRenderPassSpecifications() const = 0;
+		virtual RenderPassSpecification& GetRenderPassSpecifications() { return s_DefaultSpecification; }
+		virtual const RenderPassSpecification& GetRenderPassSpecifications() const { return s_DefaultSpecification; }
 
 		static Ref<RenderPass> Create(const RenderPassSpecification& attachments);
+	private:
+		static RenderPassSpecification s_DefaultSpecification;
 	};
 }

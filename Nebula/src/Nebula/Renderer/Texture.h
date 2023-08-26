@@ -26,7 +26,7 @@ namespace Nebula {
 		virtual uint32_t GetWidth() const = 0;
 		virtual uint32_t GetHeight() const = 0;
 		virtual uint64_t GetRendererID() const = 0;
-		virtual Ref<Image2D> GetImage() const { return nullptr; };
+		virtual Ref<Image2D> GetImage() const = 0;
 		
 		virtual void SetData(Buffer data) = 0;
 		virtual void SetFilterNearest(bool nearest = true) = 0;

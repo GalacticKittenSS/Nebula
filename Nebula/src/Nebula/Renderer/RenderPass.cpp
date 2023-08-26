@@ -7,11 +7,14 @@
 
 namespace Nebula
 {
+	RenderPassSpecification RenderPass::s_DefaultSpecification = {};
+
 	Ref<RenderPass> RenderPass::Create(const RenderPassSpecification& specification)
 	{
 		switch (RendererAPI::GetAPI())
 		{
 			case RendererAPI::API::None:	NB_ASSERT(false, "RendererAPI::None is currently not supported!"); return nullptr;
+			case RendererAPI::API::OpenGL:	return CreateRef<RenderPass>();
 			case RendererAPI::API::Vulkan:	return CreateRef<Vulkan_RenderPass>(specification);
 		}
 
