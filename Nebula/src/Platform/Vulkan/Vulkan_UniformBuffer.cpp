@@ -15,7 +15,7 @@ namespace Nebula
 		m_Buffers.resize(2);
 		for (uint32_t i = 0; i < m_Buffers.size(); i++)
 		{
-			m_Buffers[i] = CreateScope<VulkanBuffer>(size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			m_Buffers[i] = CreateScope<VulkanBuffer>(size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
 		}
 	}
 

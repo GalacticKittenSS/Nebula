@@ -2,6 +2,12 @@
 
 #include <vulkan/vulkan.h>
 
+extern "C"
+{
+	typedef struct VmaAllocator_T* VmaAllocator;
+	typedef struct VmaAllocation_T* VmaAllocation;
+}
+
 namespace Nebula
 {
 	class Vulkan_Image;
@@ -42,6 +48,7 @@ namespace Nebula
 
 		static inline bool IsRecording() { return s_CommandBufferRecording; }
 		static VkDescriptorPool s_DescriptorPool;
+		static VmaAllocator s_Allocator;
 	private:
 		static void CreateLogicalDevice();
 		static void CreateCommandBuffers();
@@ -76,7 +83,7 @@ namespace Nebula
 	{
 	public:
 		VulkanBuffer() = default;
-		VulkanBuffer(uint32_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties);
+		VulkanBuffer(uint32_t size, VkBufferUsageFlags usage, bool hostAccess = true);
 		~VulkanBuffer();
 		
 		void SetData(const void* data, uint32_t size, uint32_t offset = 0);
@@ -85,9 +92,9 @@ namespace Nebula
 		void* GetMemory() { return m_MappedMemory; }
 	private:
 		VkBuffer m_Buffer = VK_NULL_HANDLE;
-		VkDeviceMemory m_BufferMemory = VK_NULL_HANDLE;
 		void* m_MappedMemory = nullptr;
 
+		VmaAllocation m_Allocation;
 		size_t m_AlignedSize = 0;
 	};
 }

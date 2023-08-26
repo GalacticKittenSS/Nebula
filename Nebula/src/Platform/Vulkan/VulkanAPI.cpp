@@ -7,6 +7,9 @@
 #include <map>
 #include <set>
 
+#define VMA_IMPLEMENTATION
+#include "vk_mem_alloc.h"
+
 namespace Nebula
 {
 	static const uint32_t g_MaxFrames = 3;
@@ -149,6 +152,8 @@ namespace Nebula
 	bool VulkanAPI::s_FirstSubmit = true;
 	bool VulkanAPI::s_CommandBufferRecording = false;
 
+	VmaAllocator VulkanAPI::s_Allocator = nullptr;
+
 	void VulkanAPI::Init(PFN_vkDebugUtilsMessengerCallbackEXT debugCallback)
 	{
 		VkApplicationInfo appInfo = {};
@@ -213,10 +218,18 @@ namespace Nebula
 
 			VkResult result = vkCreateDescriptorPool(VulkanAPI::GetDevice(), &poolInfo, nullptr, &s_DescriptorPool);
 			NB_ASSERT(result == VK_SUCCESS, "Failed to create descriptor pool!");
-			
 		}
 		
 		s_FreeResourceFuncs.resize(g_MaxFrames);
+
+		{
+			VmaAllocatorCreateInfo allocatorInfo{};
+			allocatorInfo.instance = VulkanAPI::GetInstance();
+			allocatorInfo.physicalDevice = VulkanAPI::GetPhysicalDevice();
+			allocatorInfo.device = VulkanAPI::GetDevice();
+
+			vmaCreateAllocator(&allocatorInfo, &s_Allocator);
+		}
 	}
 
 	VkDebugUtilsMessengerCreateInfoEXT VulkanAPI::PopulateDebugMessenger(PFN_vkDebugUtilsMessengerCallbackEXT debugCallback)
@@ -562,7 +575,7 @@ namespace Nebula
 		s_FreeResourceFuncs[s_FrameIndex].emplace_back(func);
 	}
 	
-	VulkanBuffer::VulkanBuffer(uint32_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties)
+	VulkanBuffer::VulkanBuffer(uint32_t size, VkBufferUsageFlags usage, bool hostAccess)
 	{
 		VkBufferCreateInfo bufferInfo{};
 		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -570,35 +583,27 @@ namespace Nebula
 		bufferInfo.usage = usage;
 		bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-		VkResult result = vkCreateBuffer(VulkanAPI::GetDevice(), &bufferInfo, nullptr, &m_Buffer);
+		VmaAllocationCreateInfo allocInfo{};
+		allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
+		allocInfo.flags = hostAccess ? VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT : NULL;
+
+		VkResult result = vmaCreateBuffer(VulkanAPI::s_Allocator, &bufferInfo, &allocInfo, &m_Buffer, &m_Allocation, nullptr);
 		NB_ASSERT(result == VK_SUCCESS, "Failed to create vertex buffer!");
 
-		VkMemoryRequirements memRequirements;
-		vkGetBufferMemoryRequirements(VulkanAPI::GetDevice(), m_Buffer, &memRequirements);
-		m_AlignedSize = memRequirements.size;
-
-		VkMemoryAllocateInfo allocInfo{};
-		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		allocInfo.allocationSize = memRequirements.size;
-		allocInfo.memoryTypeIndex = VulkanAPI::FindMemoryType(memRequirements.memoryTypeBits, properties);
-
-		result = vkAllocateMemory(VulkanAPI::GetDevice(), &allocInfo, nullptr, &m_BufferMemory);
-		NB_ASSERT(result == VK_SUCCESS, "Failed to create vertex buffer memory!");
-
-		vkBindBufferMemory(VulkanAPI::GetDevice(), m_Buffer, m_BufferMemory, 0);
-		vkMapMemory(VulkanAPI::GetDevice(), m_BufferMemory, 0, m_AlignedSize, 0, &m_MappedMemory);
+		vmaMapMemory(VulkanAPI::s_Allocator, m_Allocation, &m_MappedMemory);
+		m_AlignedSize = m_Allocation->GetSize();
 	}
 
 	VulkanBuffer::~VulkanBuffer()
 	{
-		VulkanAPI::SubmitResource([buffer = m_Buffer, memory = m_BufferMemory]()
+		VulkanAPI::SubmitResource([buffer = m_Buffer, memory = m_Allocation]()
 		{
-			vkDestroyBuffer(VulkanAPI::GetDevice(), buffer, nullptr);
-			vkFreeMemory(VulkanAPI::GetDevice(), memory, nullptr);
+			vmaUnmapMemory(VulkanAPI::s_Allocator, memory);
+			vmaDestroyBuffer(VulkanAPI::s_Allocator, buffer, memory);
 		});
 
 		m_Buffer = nullptr;
-		m_BufferMemory = nullptr;
+		m_Allocation = nullptr;
 	}
 
 	void VulkanBuffer::SetData(const void* data, uint32_t size, uint32_t offset)

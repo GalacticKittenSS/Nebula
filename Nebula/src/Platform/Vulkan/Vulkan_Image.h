@@ -38,13 +38,13 @@ namespace Nebula
 		void CreateSampler();
 	private:
 		ImageSpecification m_Specification;
-		bool m_OwnsImages = true;
-
+		
 		VkImage m_Image;
 		VkImageView m_ImageView;
-		VkDeviceMemory m_ImageMemory;
 		VkSampler m_Sampler = VK_NULL_HANDLE;
 		
+		VmaAllocation m_Allocation;
+
 		VkDescriptorImageInfo m_ImageInfo;
 		VkDescriptorSet m_ImGuiDescriptor = VK_NULL_HANDLE;
 

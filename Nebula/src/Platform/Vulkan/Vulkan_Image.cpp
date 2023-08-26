@@ -1,6 +1,8 @@
 #include "nbpch.h"
 #include "Vulkan_Image.h"
 
+#include "vk_mem_alloc.h"
+
 #include <backends/imgui_impl_vulkan.h>
 
 #define RETURN_FORMAT_SUPPORTED(format) \
@@ -114,7 +116,7 @@ namespace Nebula
 	}
 
 	Vulkan_Image::Vulkan_Image()
-		: m_ImageFormat(VK_FORMAT_UNDEFINED), m_AspectFlags(VK_IMAGE_ASPECT_NONE), m_ImageMemory(nullptr)
+		: m_ImageFormat(VK_FORMAT_UNDEFINED), m_AspectFlags(VK_IMAGE_ASPECT_NONE), m_Allocation(nullptr)
 	{
 	}
 
@@ -142,13 +144,12 @@ namespace Nebula
 
 	Vulkan_Image::~Vulkan_Image()
 	{
-		if (!m_OwnsImages)
+		if (!m_Allocation)
 			return;
 
-		VulkanAPI::SubmitResource([memory = m_ImageMemory, image = m_Image, view = m_ImageView, sampler = m_Sampler, descriptor = m_ImGuiDescriptor]()
+		VulkanAPI::SubmitResource([memory = m_Allocation, image = m_Image, view = m_ImageView, sampler = m_Sampler, descriptor = m_ImGuiDescriptor]()
 		{
-			vkFreeMemory(VulkanAPI::GetDevice(), memory, nullptr);
-			vkDestroyImage(VulkanAPI::GetDevice(), image, nullptr);
+			vmaDestroyImage(VulkanAPI::s_Allocator, image, memory);
 			vkDestroyImageView(VulkanAPI::GetDevice(), view, nullptr);
 			vkDestroySampler(VulkanAPI::GetDevice(), sampler, nullptr);
 			
@@ -156,7 +157,7 @@ namespace Nebula
 				vkFreeDescriptorSets(VulkanAPI::GetDevice(), VulkanAPI::s_DescriptorPool, 1, &descriptor);
 		});
 
-		m_ImageMemory = nullptr;
+		m_Allocation = nullptr;
 		m_Image = nullptr;
 		m_ImageView = nullptr;
 		m_Sampler = nullptr;
@@ -182,24 +183,11 @@ namespace Nebula
 			imageInfo.samples = Utils::GetSampleFlags(samples);
 			imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-			VkResult result = vkCreateImage(VulkanAPI::GetDevice(), &imageInfo, nullptr, &m_Image);
+			VmaAllocationCreateInfo allocInfo{};
+			allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+
+			VkResult result = vmaCreateImage(VulkanAPI::s_Allocator, &imageInfo, &allocInfo, &m_Image, &m_Allocation, nullptr);
 			NB_ASSERT(result == VK_SUCCESS, "Failed to create image!");
-		}
-		
-		// Memory
-		{
-			VkMemoryRequirements memRequirements;
-			vkGetImageMemoryRequirements(VulkanAPI::GetDevice(), m_Image, &memRequirements);
-
-			VkMemoryAllocateInfo allocInfo{};
-			allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-			allocInfo.allocationSize = memRequirements.size;
-			allocInfo.memoryTypeIndex = VulkanAPI::FindMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-			VkResult result = vkAllocateMemory(VulkanAPI::GetDevice(), &allocInfo, nullptr, &m_ImageMemory);
-			NB_ASSERT(result == VK_SUCCESS, "Failed to allocate image memory!");
-
-			vkBindImageMemory(VulkanAPI::GetDevice(), m_Image, m_ImageMemory, 0);
 		}
 		
 		// Image View
@@ -263,7 +251,6 @@ namespace Nebula
 			imageArray[i] = CreateRef<Vulkan_Image>();
 			imageArray[i]->m_Image = images[i];
 			imageArray[i]->m_ImageView = imageViews[i];
-			imageArray[i]->m_OwnsImages = false;
 			imageArray[i]->m_AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT; // Assume these images are coming from swapchain
 		}
 
