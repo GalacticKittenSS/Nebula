@@ -11,6 +11,7 @@
 #include "Nebula/Renderer/Renderer.h"
 
 #include "Platform/OpenGl/OpenGL_Context.h"
+#include "Platform/Vulkan/Vulkan_Context.h"
 
 #define VK_USE_PLATFORM_WIN32_KHR
 #include <vulkan/vulkan.h>
@@ -183,19 +184,15 @@ namespace Nebula {
 		NB_PROFILE_FUNCTION();
 		
 		glfwPollEvents();
-		m_Context->SwapBuffers();
+
+		if (m_Data.Width != 0 && m_Data.Height != 0)
+			m_Context->SwapBuffers();
 	}
 
-	void Win_Window::SetVSync(bool enabled) {
-		if (Renderer::GetAPI() != RendererAPI::API::Vulkan)
-		{
-			if (enabled)
-				glfwSwapInterval(1);
-			else
-				glfwSwapInterval(0);
-
-			m_Data.Vsync = enabled;
-		}
+	void Win_Window::SetVSync(bool enabled) 
+	{
+		m_Context->SetVsync(enabled);
+		m_Data.Vsync = enabled;
 	}
 
 	bool Win_Window::IsVSync() const {

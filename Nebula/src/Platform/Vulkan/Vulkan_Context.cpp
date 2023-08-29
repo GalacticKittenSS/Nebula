@@ -37,7 +37,9 @@ namespace Nebula {
 		}
 	}
 
-	Vulkan_Context::Vulkan_Context(GLFWwindow* windowHandle) : m_WindowHandle(windowHandle) {
+	Vulkan_Context::Vulkan_Context(GLFWwindow* windowHandle) 
+		: m_WindowHandle(windowHandle)
+	{
 		NB_ASSERT(windowHandle, "Window Handle is NULL!");
 	}
 
@@ -105,8 +107,7 @@ namespace Nebula {
 
 		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
 		{
-			RecreateSwapChain();
-			m_ImageIndex = -1;
+			m_RecreateSwapChain = true;
 			return false;
 		}
 
@@ -127,7 +128,7 @@ namespace Nebula {
 		VkResult result = vkQueuePresentKHR(VulkanAPI::GetQueue(), &presentInfo);
 		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
 		{
-			RecreateSwapChain();
+			m_RecreateSwapChain = true;
 			return;
 		}
 
@@ -136,10 +137,27 @@ namespace Nebula {
 
 	void Vulkan_Context::SwapBuffers() 
 	{
+		m_RecreateSwapChain = false;
+
 		PresentCurrentImage();
 
 		VulkanAPI::ResetFrame();
 		AcquireNextImage();
+
+		if (m_RecreateSwapChain)
+		{
+			RecreateSwapChain();
+			AcquireNextImage();
+			VulkanAPI::TransitionImageLayout(m_Images[m_ImageIndex], VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+		}
+	}
+
+	void Vulkan_Context::SetVsync(bool vsync)
+	{
+		m_PresentMode = vsync ? VK_PRESENT_MODE_MAILBOX_KHR : VK_PRESENT_MODE_IMMEDIATE_KHR;
+		RecreateSwapChain();
+		AcquireNextImage();
+		m_RecreateSwapChain = true;
 	}
 
 	Vulkan_Context::SwapChainSupportDetails Vulkan_Context::QuerySwapChainSupport(VkPhysicalDevice device) 
@@ -166,21 +184,23 @@ namespace Nebula {
 		return details;
 	}
 
-	VkSurfaceFormatKHR Vulkan_Context::ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats) {
-		for (const auto& availableFormat : availableFormats) {
-			if (availableFormat.format == VK_FORMAT_B8G8R8A8_UNORM && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+	VkSurfaceFormatKHR Vulkan_Context::ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
+	{
+		for (const auto& availableFormat : availableFormats)
+		{
+			if (availableFormat.format == VK_FORMAT_B8G8R8A8_UNORM && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
 				return availableFormat;
-			}
 		}
 
 		return availableFormats[0];
 	}
 
-	VkPresentModeKHR Vulkan_Context::ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes) {
-		for (const auto& availablePresentMode : availablePresentModes) {
-			if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
-				return availablePresentMode;
-			}
+	VkPresentModeKHR Vulkan_Context::ChooseSwapPresentMode(VkPresentModeKHR targetPresentMode, const std::vector<VkPresentModeKHR>& availablePresentModes)
+	{
+		for (const auto& availablePresentMode : availablePresentModes)
+		{
+			if (availablePresentMode == targetPresentMode)
+				return targetPresentMode;
 		}
 
 		return VK_PRESENT_MODE_FIFO_KHR;
@@ -209,13 +229,13 @@ namespace Nebula {
 		SwapChainSupportDetails swapChainSupport = QuerySwapChainSupport(VulkanAPI::GetPhysicalDevice());
 
 		VkSurfaceFormatKHR surfaceFormat = ChooseSwapSurfaceFormat(swapChainSupport.formats);
-		VkPresentModeKHR presentMode = ChooseSwapPresentMode(swapChainSupport.presentModes);
+		VkPresentModeKHR presentMode = ChooseSwapPresentMode(m_PresentMode, swapChainSupport.presentModes);
 		VkExtent2D extent = ChooseSwapExtent(swapChainSupport.capabilities);
 
-		m_SwapChainImageCount = swapChainSupport.capabilities.minImageCount + 1;
+		uint32_t minImageCount = swapChainSupport.capabilities.minImageCount + 1;
 
 		if (swapChainSupport.capabilities.maxImageCount > 0 && m_SwapChainImageCount > swapChainSupport.capabilities.maxImageCount)
-			m_SwapChainImageCount = swapChainSupport.capabilities.maxImageCount;
+			minImageCount = swapChainSupport.capabilities.maxImageCount;
 		
 		VkBool32 presentSupport = false;
 		vkGetPhysicalDeviceSurfaceSupportKHR(VulkanAPI::GetPhysicalDevice(), VulkanAPI::GetQueueFamily(), m_Surface, &presentSupport);
@@ -224,7 +244,7 @@ namespace Nebula {
 		VkSwapchainCreateInfoKHR createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 		createInfo.surface = m_Surface;
-		createInfo.minImageCount = m_SwapChainImageCount;
+		createInfo.minImageCount = minImageCount;
 		createInfo.imageFormat = surfaceFormat.format;
 		createInfo.imageColorSpace = surfaceFormat.colorSpace;
 		createInfo.imageArrayLayers = 1;
@@ -235,7 +255,7 @@ namespace Nebula {
 		createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 		createInfo.presentMode = presentMode;
 		createInfo.clipped = VK_TRUE;
-		createInfo.oldSwapchain = VK_NULL_HANDLE;
+		createInfo.oldSwapchain = m_SwapChain;
 
 		VkDevice device = VulkanAPI::GetDevice();
 		VkResult result = vkCreateSwapchainKHR(device, &createInfo, nullptr, &m_SwapChain);
@@ -288,6 +308,8 @@ namespace Nebula {
 	{
 		VulkanAPI::SubmitResource([imageViews = m_ImageViews, swapchain = m_SwapChain]()
 		{
+			vkDeviceWaitIdle(VulkanAPI::GetDevice());
+
 			for (auto imageView : imageViews)
 				vkDestroyImageView(VulkanAPI::GetDevice(), imageView, nullptr);
 			

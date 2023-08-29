@@ -164,6 +164,11 @@ namespace Nebula {
 	{
 		s_BindedInstance = this;
 		m_PrepareNeeded = true;
+
+		// Resize if swaphchain was recreated but no resize
+		Vulkan_Context* context = (Vulkan_Context*)Application::Get().GetWindow().GetContext();
+		if (m_Specifications.SwapChainTarget && context->m_RecreateSwapChain)
+			Invalidate();
 	}
 
 	void Vulkan_FrameBuffer::PrepareImages()

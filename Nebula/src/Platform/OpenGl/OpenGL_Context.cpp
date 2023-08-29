@@ -41,4 +41,12 @@ namespace Nebula {
 
 		glfwSwapBuffers(m_WindowHandle);
 	}
+
+	void OpenGL_Context::SetVsync(bool vsync)
+	{
+		if (vsync)
+			glfwSwapInterval(1);
+		else
+			glfwSwapInterval(0);
+	}
 }
