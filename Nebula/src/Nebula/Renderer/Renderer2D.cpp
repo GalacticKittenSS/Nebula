@@ -659,6 +659,8 @@ namespace Nebula {
 		
 			for (uint32_t i = 0; i < s_Data.TextureSlotIndex; i++)
 				s_Data.TextureSlots[i]->Bind(i);
+
+			s_Data.TexturePipeline->BindDescriptorSet();
 		}
 
 		if (s_Data.TriIndexCount) {
@@ -677,8 +679,10 @@ namespace Nebula {
 			uint32_t dataSize = (uint32_t)((uint8_t*)s_Data.CircleVBPtr - (uint8_t*)s_Data.CircleVBBase);
 			s_Data.CircleVertexBuffer->SetData(s_Data.CircleVBBase, dataSize);
 			
-			s_Data.CirclePipeline->Bind();
 			s_Data.CircleShader->Bind();
+			s_Data.CirclePipeline->Bind();
+			s_Data.CirclePipeline->BindDescriptorSet();
+			
 			RenderCommand::DrawIndexed(s_Data.CircleVertexArray, s_Data.CircleIndexCount);
 		}
 
@@ -686,8 +690,10 @@ namespace Nebula {
 			uint32_t dataSize = (uint32_t)((uint8_t*)s_Data.LineVBPtr - (uint8_t*)s_Data.LineVBBase);
 			s_Data.LineVertexBuffer->SetData(s_Data.LineVBBase, dataSize);
 
-			s_Data.LinePipeline->Bind();
 			s_Data.LineShader->Bind();
+			s_Data.LinePipeline->Bind();
+			s_Data.LinePipeline->BindDescriptorSet();
+
 			RenderCommand::DrawLines(s_Data.LineVertexArray, s_Data.LineVertexCount);
 		}
 
@@ -698,6 +704,7 @@ namespace Nebula {
 			s_Data.TextShader->Bind();
 			s_Data.TextPipeline->Bind();
 			s_Data.FontAtlasTexture->Bind();
+			s_Data.TextPipeline->BindDescriptorSet();
 
 			RenderCommand::DrawIndexed(s_Data.TextVertexArray, s_Data.TextIndexCount);
 		}

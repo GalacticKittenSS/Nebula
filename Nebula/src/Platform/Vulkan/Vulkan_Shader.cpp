@@ -234,6 +234,7 @@ namespace Nebula
 					for (auto& layout : layoutBindings)
 					{
 						std::vector<std::string> uniforms = Utils::Split(shaderSources[(VkShaderStageFlagBits)layout.stageFlags], ";", "uniform");
+						layout.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 						
 						// Find uniform with binding
 						uint16_t i = 0;
@@ -281,15 +282,6 @@ namespace Nebula
 	void Vulkan_Shader::Bind() const
 	{
 		s_BindedInstance = this;
-
-		if (VulkanAPI::IsRecording())
-		{
-			for (uint32_t i = 0; i < m_DescriptorSets.size(); i++)
-			{
-				vkCmdBindDescriptorSets(VulkanAPI::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout,
-					i, 1, &m_DescriptorSets[i], 0, nullptr);
-			}
-		}
 	}
 	
 	void Vulkan_Shader::Unbind() const

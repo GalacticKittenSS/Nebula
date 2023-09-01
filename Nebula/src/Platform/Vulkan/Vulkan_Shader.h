@@ -37,10 +37,9 @@ namespace Nebula {
 		inline const std::array<VkPipelineShaderStageCreateInfo, 2>& GetVulkanShaderStages() const { return m_ShaderStages; }
 		inline const std::vector<VkDescriptorSetLayout>& GetVulkanDescriptorSetLayouts() const { return m_DescriptorSetLayouts; }
 		inline const std::vector<VkDescriptorSet>& GetVulkanDescriptorSets() const { return m_DescriptorSets; }
-		inline void SetPipelineLayout(VkPipelineLayout layout) { m_PipelineLayout = layout; }
-
+		
 		static void SetTexture(uint32_t slot, VkDescriptorImageInfo info);
-	private:
+	
 		struct UniformData
 		{
 			uint32_t descriptorSet = (uint32_t)-1;
@@ -48,6 +47,9 @@ namespace Nebula {
 			uint32_t arrayCount = 0;
 			VkDescriptorType type = VK_DESCRIPTOR_TYPE_MAX_ENUM;
 		};
+
+		UniformData GetUniformFromName(const std::string& name) const;
+		UniformData GetUniformFromType(VkDescriptorType type) const;
 	private:
 		std::string ReadFile(const std::string& filepath);
 		std::unordered_map<VkShaderStageFlagBits, std::string> PreProcess(const std::string& source);
@@ -56,9 +58,6 @@ namespace Nebula {
 		void Reflect(VkShaderStageFlagBits stage, const std::vector<uint32_t>& shaderData);
 
 		VkShaderModule CreateShaderModule(const std::vector<uint32_t>& code);
-		
-		UniformData GetUniformFromName(const std::string& name) const;
-		UniformData GetUniformFromType(VkDescriptorType type) const;
 	private:
 		uint32_t m_RendererID;
 		std::string m_FilePath;

@@ -16,12 +16,16 @@ namespace Nebula {
 		virtual ~Vulkan_UniformBuffer();
 
 		virtual void SetData(const void* data, uint32_t size, uint32_t offset = 0) override;
-
+		
 		VkBuffer GetBuffer() { return m_Buffers[0]->GetBuffer(); }
 		VkDeviceSize GetSize() { return m_Buffers[0]->GetSize(); }
 		uint32_t GetBinding() { return m_Binding; }
+		const VkDescriptorSet& GetDescriptorSet() { return m_DescriptorSet; }
 	private:
 		uint32_t m_Binding;
 		std::vector<Scope<VulkanBuffer>> m_Buffers;
+
+		VkDescriptorSet m_DescriptorSet;
+		VkDescriptorSetLayout m_DescriptorSetLayout;
 	};
 }

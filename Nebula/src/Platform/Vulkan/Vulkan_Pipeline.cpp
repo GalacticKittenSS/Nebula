@@ -2,6 +2,7 @@
 #include "Vulkan_Pipeline.h"
 
 #include "Vulkan_Shader.h"
+#include "Vulkan_UniformBuffer.h"
 
 namespace Nebula
 {
@@ -48,8 +49,6 @@ namespace Nebula
 
 			VkResult result = vkCreatePipelineLayout(VulkanAPI::GetDevice(), &pipelineLayoutInfo, nullptr, &m_Layout);
 			NB_ASSERT(result == VK_SUCCESS, "Failed to create pipeline layout");
-		
-			shader->SetPipelineLayout(m_Layout);
 		}
 
 		uint32_t stride;
@@ -63,8 +62,8 @@ namespace Nebula
 
 		VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 		vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-		vertexInputInfo.vertexBindingDescriptionCount = 1;
-		vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+		vertexInputInfo.vertexBindingDescriptionCount = attributeDescriptions.size() > 0 ? 1 : 0;
+		vertexInputInfo.pVertexBindingDescriptions = attributeDescriptions.size() > 0 ? &bindingDescription : nullptr;
 		vertexInputInfo.vertexAttributeDescriptionCount = (uint32_t)attributeDescriptions.size();
 		vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
 
@@ -169,5 +168,25 @@ namespace Nebula
 	void Vulkan_Pipeline::Bind() const 
 	{
 		vkCmdBindPipeline(VulkanAPI::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
+	}
+
+	void Vulkan_Pipeline::BindDescriptorSet(uint32_t descriptorSet, Ref<UniformBuffer> uniformBuffer) const
+	{
+		Ref<Vulkan_UniformBuffer> vulkanBuffer = std::static_pointer_cast<Vulkan_UniformBuffer>(uniformBuffer);
+		vkCmdBindDescriptorSets(VulkanAPI::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_Layout,
+			descriptorSet, 1, &vulkanBuffer->GetDescriptorSet(), 0, nullptr);
+	}
+
+	void Vulkan_Pipeline::BindDescriptorSet(uint32_t descriptorSet) const
+	{
+		Ref<Vulkan_Shader> vulkanShader = std::static_pointer_cast<Vulkan_Shader>(m_Specification.Shader);
+		const auto& descriptorSets = vulkanShader->GetVulkanDescriptorSets();
+
+		if (descriptorSet == (uint32_t)-1)
+			vkCmdBindDescriptorSets(VulkanAPI::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_Layout,
+				0, (uint32_t)descriptorSets.size(), descriptorSets.data(), 0, nullptr);
+		else
+			vkCmdBindDescriptorSets(VulkanAPI::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_Layout,
+				descriptorSet, 1, &descriptorSets[descriptorSet], 0, nullptr);
 	}
 }

@@ -13,6 +13,8 @@ namespace Nebula
 		~Vulkan_Pipeline();
 
 		void Bind() const override;
+		void BindDescriptorSet(uint32_t descriptorSet) const override;
+		void BindDescriptorSet(uint32_t descriptorSet, Ref<UniformBuffer> uniformBuffer) const override;
 	private:
 		PipelineSpecification m_Specification;
 		VkPipeline m_Pipeline;
