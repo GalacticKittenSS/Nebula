@@ -34,6 +34,10 @@ namespace Nebula {
 		virtual void Resize(uint32_t width, uint32_t height) = 0;
 		virtual int ReadPixel(uint32_t attachmentIndex, int x, int y) = 0;
 
+		// Optimisation to group clear commands into a single (vulkan) command buffer
+		virtual void BeginClear() {};
+		virtual void EndClear() {};
+
 		virtual void ClearAttachment(uint32_t attachmentIndex, int value) = 0;
 		virtual void ClearAttachment(uint32_t attachmentIndex, const glm::vec4& value) = 0;
 		virtual void ClearDepthAttachment(int value) {}

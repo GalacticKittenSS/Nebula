@@ -49,11 +49,19 @@ namespace Nebula
 			colourAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 			colourAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 			colourAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-			colourAttachment.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-			colourAttachment.finalLayout = m_Specification.SingleWrite ?
-				m_Specification.ShaderOnly ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_PRESENT_SRC_KHR 
-				: VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 			colourAttachment.flags = 0;
+
+			if (m_Specification.SingleWrite)
+			{
+				colourAttachment.initialLayout = m_Specification.ClearOnLoad ? VK_IMAGE_LAYOUT_UNDEFINED : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+				colourAttachment.finalLayout = m_Specification.ShaderOnly ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+			}
+			else
+			{
+				colourAttachment.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+				colourAttachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			}
+
 			attachmentDesc[i] = colourAttachment;
 
 			VkAttachmentReference reference;
@@ -91,12 +99,21 @@ namespace Nebula
 		subpass.pColorAttachments = attachmentRef.data();
 		subpass.pDepthStencilAttachment = depthReference;
 
+		VkAccessFlags attachmentAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		VkPipelineStageFlags attachmentStagFlags = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+
+		if (depthAttachment.TextureFormat != ImageFormat::None)
+		{
+			attachmentStagFlags |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+			attachmentAccessMask |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+		}
+
 		VkSubpassDependency dependency{};
 		dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
 		dependency.dstSubpass = 0;
-		dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		
+		dependency.dstStageMask = attachmentStagFlags;
+		dependency.dstAccessMask = attachmentAccessMask;
+
 		if (m_Specification.ShaderOnly)
 		{
 			dependency.srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
@@ -105,14 +122,8 @@ namespace Nebula
 		}
 		else
 		{
-			dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			dependency.srcStageMask = attachmentStagFlags;
 			dependency.srcAccessMask = 0;
-		}
-
-		if (depthAttachment.TextureFormat != ImageFormat::None)
-		{
-			dependency.dstStageMask |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-			dependency.dstAccessMask |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 		}
 
 		VkRenderPassCreateInfo renderPassInfo{};

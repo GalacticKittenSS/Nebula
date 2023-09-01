@@ -13,6 +13,9 @@ namespace Nebula {
 
 		void Resize(uint32_t width, uint32_t height) override;
 		int ReadPixel(uint32_t attachmentIndex, int x, int y) override;
+		
+		void BeginClear() override;
+		void EndClear() override;
 
 		void ClearAttachment(uint32_t attachmentIndex, int value) override;
 		void ClearAttachment(uint32_t attachmentIndex, const glm::vec4& value) override;
@@ -41,13 +44,10 @@ namespace Nebula {
 		AttachmentTextureSpecification m_DepthAttachmentSpec = ImageFormat::None;
 
 		std::vector<VkFramebuffer> m_Framebuffer;
-		
-		VkCommandBuffer m_CommandBuffer = nullptr;
-		bool m_PrepareNeeded = false;
-
 		std::vector<Vulkan_Image::VulkanImageArray> m_ColourAttachments;
 		Ref<Vulkan_Image> m_DepthAttachment;
 
+		VkCommandBuffer m_CommandBuffer = nullptr;
 		Scope<VulkanBuffer> m_StagingBuffer = nullptr;
 
 		static Vulkan_FrameBuffer* s_BindedInstance;

@@ -197,9 +197,11 @@ namespace Nebula {
 		NB_PROFILE_FUNCTION();
 
 		frameBuffer->Bind();
-		RenderCommand::Clear();
 
+		frameBuffer->BeginClear();
+		RenderCommand::Clear();
 		frameBuffer->ClearAttachment(1, -1);
+		frameBuffer->EndClear();
 
 		switch (m_SceneState) {
 			case SceneState::Edit:
