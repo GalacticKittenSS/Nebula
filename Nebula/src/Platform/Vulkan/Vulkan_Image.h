@@ -20,6 +20,8 @@ namespace Nebula
 		uint64_t GetImage() const override { return (uint64_t)m_Image; }
 		uint64_t GetImageView() const override { return (uint64_t)m_ImageView; }
 		uint64_t GetDescriptorSet() const override { return (uint64_t)m_ImGuiDescriptor; }
+
+		void TransitionImageLayout(ImageLayout oldLayout, ImageLayout newlayout) override;
 		
 		inline const VkImage& GetVulkanImage() const { return m_Image; }
 		inline const VkImageView& GetVulkanImageView() const { return m_ImageView; }

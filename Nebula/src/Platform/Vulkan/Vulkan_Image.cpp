@@ -256,4 +256,12 @@ namespace Nebula
 
 		return imageArray;
 	}
+	
+	typedef ImageLayout ImageLayout_t;
+	void Vulkan_Image::TransitionImageLayout(ImageLayout_t oldLayout, ImageLayout_t newlayout)
+	{
+		VkCommandBuffer commandBuffer = VulkanAPI::IsRecording() ? VulkanAPI::GetCommandBuffer() : nullptr;
+		VulkanAPI::TransitionImageLayout(m_Image, m_AspectFlags, (VkImageLayout)oldLayout, (VkImageLayout)newlayout, commandBuffer);
+		ImageLayout = (VkImageLayout)newlayout;
+	}
 }

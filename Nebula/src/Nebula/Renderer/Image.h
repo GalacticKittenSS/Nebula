@@ -74,6 +74,8 @@ namespace Nebula
 		virtual uint64_t GetImageView() const = 0;
 		virtual uint64_t GetDescriptorSet() const = 0;
 
+		virtual void TransitionImageLayout(ImageLayout oldLayout, ImageLayout newlayout) = 0;
+
 		virtual bool operator==(const Image2D& other) const = 0;
 
 		static Ref<Image2D> Create(const ImageSpecification& specifications);
