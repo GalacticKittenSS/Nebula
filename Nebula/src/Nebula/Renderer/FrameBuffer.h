@@ -7,21 +7,17 @@
 #include "Image.h"
 
 namespace Nebula {
-	struct FrameBufferAttachmentSpecification {
-		FrameBufferAttachmentSpecification() = default;
-		FrameBufferAttachmentSpecification(std::initializer_list<AttachmentTextureSpecification> attachments) :
-			Attachments{ attachments } { }
-
-		Array<AttachmentTextureSpecification> Attachments;
-	};
-
-	struct FrameBufferSpecification {
+	struct FrameBufferSpecification 
+	{
 		uint32_t Width, Height;
-		FrameBufferAttachmentSpecification Attachments;
-		Ref<RenderPass> RenderPass = nullptr;
-		uint32_t samples = 1;
+		uint32_t Samples = 1;
+
+		std::vector<AttachmentTextureSpecification> Attachments;
+		glm::vec4 ClearColour;
+		float DepthClearValue;
 
 		bool SwapChainTarget = false;
+		Ref<RenderPass> RenderPass = nullptr;
 	};
 
 	class FrameBuffer {

@@ -26,13 +26,9 @@ namespace Nebula
 		for (auto& spec : m_Specification.Attachments)
 		{
 			if (Utils::IsDepthFormat(spec.TextureFormat))
-			{
 				depthAttachment = spec;
-			}
 			else
-			{
 				colourAttachments.push_back(spec);
-			}
 		}
 
 		std::vector<VkAttachmentDescription> attachmentDesc(colourAttachments.size());
@@ -40,8 +36,18 @@ namespace Nebula
 
 		for (uint32_t i = 0; i < colourAttachments.size(); i++)
 		{
-			VkFormat format = Utils::NebulaToVKImageFormat(colourAttachments[i].TextureFormat);
+			AttachmentTextureSpecification specification = colourAttachments[i];
+			VkFormat format = Utils::NebulaToVKImageFormat(specification.TextureFormat);
 
+			VkImageLayout originalLayout = (VkImageLayout)specification.OriginalLayout;
+			VkImageLayout finalLayout = (VkImageLayout)specification.FinalLayout;
+
+			if (originalLayout == VK_IMAGE_LAYOUT_UNDEFINED)
+				originalLayout = m_Specification.ClearOnLoad ? VK_IMAGE_LAYOUT_UNDEFINED : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			
+			if (finalLayout == VK_IMAGE_LAYOUT_UNDEFINED)
+				finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			
 			VkAttachmentDescription colourAttachment;
 			colourAttachment.format = format;
 			colourAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -50,17 +56,8 @@ namespace Nebula
 			colourAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 			colourAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 			colourAttachment.flags = 0;
-
-			if (m_Specification.SingleWrite)
-			{
-				colourAttachment.initialLayout = m_Specification.ClearOnLoad ? VK_IMAGE_LAYOUT_UNDEFINED : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-				colourAttachment.finalLayout = m_Specification.ShaderOnly ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-			}
-			else
-			{
-				colourAttachment.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-				colourAttachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-			}
+			colourAttachment.initialLayout = originalLayout;
+			colourAttachment.finalLayout = finalLayout;
 
 			attachmentDesc[i] = colourAttachment;
 
@@ -113,19 +110,9 @@ namespace Nebula
 		dependency.dstSubpass = 0;
 		dependency.dstStageMask = attachmentStagFlags;
 		dependency.dstAccessMask = attachmentAccessMask;
-
-		if (m_Specification.ShaderOnly)
-		{
-			dependency.srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-			dependency.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-			dependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-		}
-		else
-		{
-			dependency.srcStageMask = attachmentStagFlags;
-			dependency.srcAccessMask = 0;
-		}
-
+		dependency.srcStageMask = attachmentStagFlags;
+		dependency.srcAccessMask = 0;
+		
 		VkRenderPassCreateInfo renderPassInfo{};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 		renderPassInfo.attachmentCount = (uint32_t)attachmentDesc.size();
@@ -171,7 +158,15 @@ namespace Nebula
 		renderPassInfo.renderArea.offset = { 0, 0 };
 		renderPassInfo.renderArea.extent = extent;
 
-		std::vector<VkClearValue> clearValues(m_Specification.Attachments.size());
+		std::vector<VkClearValue> clearValues;
+		for (auto& value : m_Specification.Attachments)
+		{
+			if (Utils::IsDepthFormat(value.TextureFormat))
+				clearValues.push_back({ spec.DepthClearValue });
+			else
+				clearValues.push_back({ spec.ClearColour.r, spec.ClearColour.g, spec.ClearColour.b, spec.ClearColour.a });
+		}
+
 		renderPassInfo.clearValueCount = (uint32_t)clearValues.size();
 		renderPassInfo.pClearValues = clearValues.data();
 

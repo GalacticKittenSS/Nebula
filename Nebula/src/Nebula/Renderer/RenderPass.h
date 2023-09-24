@@ -9,8 +9,12 @@ namespace Nebula
 		AttachmentTextureSpecification() = default;
 		AttachmentTextureSpecification(ImageFormat format) :
 			TextureFormat(format) { }
+		AttachmentTextureSpecification(ImageFormat format, ImageLayout original, ImageLayout _final) :
+			TextureFormat(format), OriginalLayout(original), FinalLayout(_final) { }
 
 		ImageFormat TextureFormat = ImageFormat::None;
+		ImageLayout OriginalLayout = ImageLayout::Undefined;
+		ImageLayout FinalLayout = ImageLayout::Undefined;
 	};
 
 	struct RenderPassSpecification
@@ -18,7 +22,6 @@ namespace Nebula
 		std::vector<AttachmentTextureSpecification> Attachments;
 		bool SingleWrite = false;
 		bool ClearOnLoad = false;
-		bool ShaderOnly = true;
 	};
 
 	class RenderPass

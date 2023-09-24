@@ -78,7 +78,7 @@ namespace Nebula {
 	}
 
 	OpenGL_FrameBuffer::OpenGL_FrameBuffer(const FrameBufferSpecification& specifications): m_Specifications(specifications) {
-		for (auto spec : m_Specifications.Attachments.Attachments) {
+		for (auto spec : m_Specifications.Attachments) {
 			if (!Utils::IsDepthFormat(spec.TextureFormat))
 				m_ColourAttachmentSpecs.push_back(spec);
 			else
@@ -107,7 +107,7 @@ namespace Nebula {
 		glCreateFramebuffers(1, &m_RendererID);
 		glBindFramebuffer(GL_FRAMEBUFFER, m_RendererID);
 
-		bool multiSample = m_Specifications.samples > 1;
+		bool multiSample = m_Specifications.Samples > 1;
 
 		if (m_ColourAttachmentSpecs.size()) {
 			m_ColourAttachments.resize(m_ColourAttachmentSpecs.size());
@@ -117,10 +117,10 @@ namespace Nebula {
 				Utils::BindTexture(multiSample, m_ColourAttachments[i]);
 				switch (m_ColourAttachmentSpecs[i].TextureFormat) {
 					case ImageFormat::RGBA8:
-						Utils::AttachColourTexture(m_ColourAttachments[i], m_Specifications.samples, GL_RGBA8, GL_RGBA, m_Specifications.Width, m_Specifications.Height, (int)i);
+						Utils::AttachColourTexture(m_ColourAttachments[i], m_Specifications.Samples, GL_RGBA8, GL_RGBA, m_Specifications.Width, m_Specifications.Height, (int)i);
 						break;
 					case ImageFormat::RED_INT:
-						Utils::AttachColourTexture(m_ColourAttachments[i], m_Specifications.samples, GL_R32I, GL_RED_INTEGER, m_Specifications.Width, m_Specifications.Height, (int)i);
+						Utils::AttachColourTexture(m_ColourAttachments[i], m_Specifications.Samples, GL_R32I, GL_RED_INTEGER, m_Specifications.Width, m_Specifications.Height, (int)i);
 						break;
 				}
 			}
@@ -132,7 +132,7 @@ namespace Nebula {
 			switch (m_DepthAttachmentSpec.TextureFormat)
 			{
 			case ImageFormat::DEPTH24STENCIL8:
-				Utils::AttachDepthTexture(m_DepthAttachment, m_Specifications.samples, GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL_ATTACHMENT, m_Specifications.Width, m_Specifications.Height);
+				Utils::AttachDepthTexture(m_DepthAttachment, m_Specifications.Samples, GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL_ATTACHMENT, m_Specifications.Width, m_Specifications.Height);
 				break;
 			}
 		}

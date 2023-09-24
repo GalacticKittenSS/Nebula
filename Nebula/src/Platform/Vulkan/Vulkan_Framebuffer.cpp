@@ -48,7 +48,7 @@ namespace Nebula {
 	Vulkan_FrameBuffer::Vulkan_FrameBuffer(const FrameBufferSpecification& specifications) 
 		: m_Specifications(specifications) 
 	{
-		for (const auto& spec : m_Specifications.Attachments.Attachments) 
+		for (const auto& spec : m_Specifications.Attachments) 
 		{
 			if (!Utils::IsDepthFormat(spec.TextureFormat))
 				m_ColourAttachmentSpecs.push_back(spec);
@@ -77,9 +77,8 @@ namespace Nebula {
 			return;
 
 		RenderPassSpecification spec;
-		spec.Attachments = m_Specifications.Attachments.Attachments;
+		spec.Attachments = m_Specifications.Attachments;
 		spec.ClearOnLoad = false;
-		spec.ShaderOnly = !m_Specifications.SwapChainTarget;
 		m_Specifications.RenderPass = RenderPass::Create(spec);
 	}
 
@@ -114,7 +113,7 @@ namespace Nebula {
 			imageSpec.Format = m_ColourAttachmentSpecs[i].TextureFormat;
 			imageSpec.Width = m_Specifications.Width;
 			imageSpec.Height = m_Specifications.Height;
-			imageSpec.Samples = m_Specifications.samples;
+			imageSpec.Samples = m_Specifications.Samples;
 			imageSpec.ShaderUsage = !m_Specifications.SwapChainTarget;
 			imageSpec.Usage = ImageUsage::ColourAttachment | ImageUsage::TransferDst | ImageUsage::TransferSrc | ImageUsage::Sampled;
 
@@ -127,7 +126,7 @@ namespace Nebula {
 			imageSpec.Format = m_DepthAttachmentSpec.TextureFormat;
 			imageSpec.Width = m_Specifications.Width;
 			imageSpec.Height = m_Specifications.Height;
-			imageSpec.Samples = m_Specifications.samples;
+			imageSpec.Samples = m_Specifications.Samples;
 			imageSpec.ShaderUsage = false;
 			imageSpec.Usage = ImageUsage::DepthStencilAttachment | ImageUsage::TransferDst;
 
@@ -255,13 +254,17 @@ namespace Nebula {
 		subResourceRange.baseArrayLayer = 0;
 		subResourceRange.layerCount = 1;
 
-		VkCommandBuffer commandBuffer = m_CommandBuffer ? m_CommandBuffer : VulkanAPI::BeginSingleUseCommand();
+		VkCommandBuffer commandBuffer;
+		if (VulkanAPI::IsRecording())
+			commandBuffer = VulkanAPI::GetCommandBuffer();
+		else
+			commandBuffer = m_CommandBuffer ? m_CommandBuffer : VulkanAPI::BeginSingleUseCommand();
 
 		VulkanAPI::TransitionImageLayout(image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, commandBuffer);
 		vkCmdClearColorImage(commandBuffer, image->GetVulkanImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearValue, 1, &subResourceRange);
 		VulkanAPI::TransitionImageLayout(image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, commandBuffer);
 		
-		if (!m_CommandBuffer)
+		if (!m_CommandBuffer && !VulkanAPI::IsRecording())
 			VulkanAPI::EndSingleUseCommand(commandBuffer);
 	}
 
@@ -294,13 +297,17 @@ namespace Nebula {
 		subResourceRange.baseArrayLayer = 0;
 		subResourceRange.layerCount = 1;
 
-		VkCommandBuffer commandBuffer = m_CommandBuffer ? m_CommandBuffer : VulkanAPI::BeginSingleUseCommand();
+		VkCommandBuffer commandBuffer;
+		if (VulkanAPI::IsRecording())
+			commandBuffer = VulkanAPI::GetCommandBuffer();
+		else
+			commandBuffer = m_CommandBuffer ? m_CommandBuffer : VulkanAPI::BeginSingleUseCommand();
 
 		VulkanAPI::TransitionImageLayout(image, aspectFlags, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, commandBuffer);
 		vkCmdClearDepthStencilImage(commandBuffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearValue, 1, &subResourceRange);
 		VulkanAPI::TransitionImageLayout(image, aspectFlags, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, commandBuffer);
 		
-		if (!m_CommandBuffer)
+		if (!m_CommandBuffer && !VulkanAPI::IsRecording())
 			VulkanAPI::EndSingleUseCommand(commandBuffer);
 	}
 

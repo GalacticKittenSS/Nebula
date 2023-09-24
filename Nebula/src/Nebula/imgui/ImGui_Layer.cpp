@@ -94,9 +94,8 @@ namespace Nebula {
 			// Render Pass
 			{
 				RenderPassSpecification spec;
-				spec.Attachments = { ImageFormat::BGRA8 };
+				spec.Attachments = { { ImageFormat::BGRA8, ImageLayout::Undefined, ImageLayout::PresentSrcKHR } };
 				spec.ClearOnLoad = true;
-				spec.ShaderOnly = false;
 				spec.SingleWrite = true;
 				m_RenderPass = RenderPass::Create(spec);
 			}

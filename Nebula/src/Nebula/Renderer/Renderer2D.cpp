@@ -202,7 +202,6 @@ namespace Nebula {
 			RenderPassSpecification spec;
 			spec.Attachments = { ImageFormat::RGBA8, ImageFormat::RED_INT, ImageFormat::Depth };
 			spec.ClearOnLoad = false;
-			spec.ShaderOnly = true;
 			s_Data.RenderPass = RenderPass::Create(spec);
 		}
 		
