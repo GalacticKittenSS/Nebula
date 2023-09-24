@@ -27,8 +27,7 @@ namespace Nebula {
 		bool OnWindowDrop(WindowDropEvent& e);
 
 		void RenderSelectionUI(Entity selectedEntity);
-		void RenderColliders();
-
+		
 		void Resize();
 		void GetPixelData();
 
@@ -57,7 +56,6 @@ namespace Nebula {
 	private:
 		bool m_GameViewFocus = false, m_GameViewHovered = false;
 		bool m_UsingGizmo = false;
-		bool m_ShowColliders = false;
 		bool m_ShowGrid = false;
 
 		bool m_ShowDebug = false;
@@ -71,8 +69,8 @@ namespace Nebula {
 		glm::vec2 m_ViewPortBounds[2];
 
 		Ref<Scene> m_ActiveScene, m_EditorScene;
+		Ref<SceneRenderer> m_SceneRenderer;
 		std::string m_ScenePath;
-		Ref<FrameBuffer> frameBuffer;
 		Timer timer;
 
 		Entity m_Camera;

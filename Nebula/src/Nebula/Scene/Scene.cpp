@@ -616,63 +616,6 @@ namespace Nebula {
 
 	void Scene::UpdateEditor() { }
 
-	void Scene::RenderRuntime() 
-	{
-		NB_PROFILE_FUNCTION();
-
-		if (!mainCam) return;
-
-		Renderer2D::BeginScene(*mainCam, mainCamTransform);
-		RenderComponents();
-		Renderer2D::EndScene();
-	}
-
-	void Scene::Render(EditorCamera& camera) 
-	{
-		NB_PROFILE_FUNCTION();
-
-		Renderer2D::BeginScene(camera);
-		RenderComponents();
-		Renderer2D::EndScene();
-	}
-
-	void Scene::Render(const Camera& camera, const glm::mat4& transform) 
-	{
-		NB_PROFILE_FUNCTION();
-
-		Renderer2D::BeginScene(camera, transform);
-		RenderComponents();
-		Renderer2D::EndScene();
-	}
-
-	void Scene::RenderComponents()
-	{
-		auto spriteGroup = m_Registry.group<WorldTransformComponent, MaterialComponent>(entt::get<SpriteRendererComponent>);
-		for (auto id : spriteGroup)
-		{
-			auto [transform, material, sprite] = spriteGroup.get<WorldTransformComponent, MaterialComponent, SpriteRendererComponent>(id);
-
-			Ref<Material> mat = AssetManager::GetAsset<Material>(material.Material);
-			Renderer2D::Draw(sprite, transform.Transform, Material::Get(mat), (int)id);
-		}
-
-		auto circleGroup = m_Registry.view<WorldTransformComponent, MaterialComponent, CircleRendererComponent>();
-		for (auto id : circleGroup)
-		{
-			auto [transform, material, circle] = circleGroup.get<WorldTransformComponent, MaterialComponent, CircleRendererComponent>(id);
-
-			Ref<Material> mat = AssetManager::GetAsset<Material>(material.Material);
-			Renderer2D::Draw(circle, transform.Transform, Material::Get(mat), (int)id);
-		}
-
-		auto stringGroup = m_Registry.view<WorldTransformComponent, StringRendererComponent>();
-		for (auto id : stringGroup)
-		{
-			auto [transform, string] = stringGroup.get<WorldTransformComponent, StringRendererComponent>(id);
-			Renderer2D::Draw(string, transform.Transform, (int)id);
-		}
-	}
-
 	void Scene::OnViewportResize(uint32_t width, uint32_t height) {
 		NB_PROFILE_FUNCTION();
 

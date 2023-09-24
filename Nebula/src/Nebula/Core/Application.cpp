@@ -30,6 +30,8 @@ namespace Nebula {
 		// OpenGL init requires active window
 		if (RendererAPI::GetAPI() == RendererAPI::API::OpenGL)
 			Renderer::Init();
+
+		SceneRenderer::Setup();
 		
 		m_ImGui = new ImGuiLayer();
 		PushOverlay(m_ImGui);
@@ -42,6 +44,7 @@ namespace Nebula {
 		m_Window = nullptr;
 
 		ScriptEngine::Shutdown();
+		SceneRenderer::Shutdown();
 		Renderer::Shutdown();
 		Window::ShutdownAPI();
 	}
@@ -124,8 +127,6 @@ namespace Nebula {
 		dispatcher.Dispatch<WindowResizeEvent>(BIND_EVENT(Application::OnWindowResize));
 		dispatcher.Dispatch<KeyPressedEvent>(BIND_EVENT(Application::OnKeyPressed));
 
-		SceneRenderer::OnEvent(e);
-
 		for (auto it = m_LayerStack.rbegin(); it != m_LayerStack.rend(); ++it) {
 			if (e.Handled)
 				break;
@@ -149,8 +150,7 @@ namespace Nebula {
 
 		m_Minimized = false;
 		Renderer::OnWindowResize(e.GetWidth(), e.GetHeight());
-		SceneRenderer::OnWindowResize(e);
-
+		
 		return false;
 	}
 

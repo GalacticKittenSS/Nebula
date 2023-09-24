@@ -10,7 +10,7 @@ namespace Nebula
 		return CreateTexture2D(metadata.Path.string());
 	}
 
-	Ref<Texture2D> TextureImporter::CreateTexture2D(std::string_view path)
+	Ref<Texture2D> TextureImporter::CreateTexture2D(std::string_view path, bool imgui_usable)
 	{
 		NB_PROFILE_FUNCTION();
 
@@ -30,6 +30,8 @@ namespace Nebula
 		TextureSpecification spec;
 		spec.Width = width;
 		spec.Height = height;
+		spec.GenerateMips = true;
+		spec.ImGuiUsable = imgui_usable;
 
 		switch (channels)
 		{

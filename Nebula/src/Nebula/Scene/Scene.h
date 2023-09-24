@@ -52,10 +52,6 @@ namespace Nebula {
 		void UpdateEditor();
 		void UpdateRuntime();
 
-		void RenderRuntime();
-		void Render(EditorCamera& camera);
-		void Render(const Camera& camera, const glm::mat4& transform);
-		
 		void OnViewportResize(uint32_t width, uint32_t height);
 
 		Entity GetPrimaryCamera();
@@ -79,8 +75,6 @@ namespace Nebula {
 	private:
 		void CreateBox2DBody(Entity entity);
 		void UpdateBox2DBody(Entity entity);
-
-		void RenderComponents();
 
 		void InitPhysics();
 		void UpdatePhysics();
@@ -108,9 +102,8 @@ namespace Nebula {
 		Camera* mainCam = nullptr;
 		glm::mat4 mainCamTransform;
 
-		SceneRenderer m_Renderer;
-
 		friend class Entity;
+		friend class SceneRenderer;
 		friend class SceneHierarchyPanel;
 		friend class SceneSerializer;
 		friend class PrefabSerializer;

@@ -101,12 +101,7 @@ namespace Nebula {
 		AssetManager::CreateGlobalFamily("Resources/fonts/OpenSans");
 		AssetManager::CreateGlobalFamily("Resources/fonts/Roboto");
 		
-		//Initialize Frame Buffer
-		FrameBufferSpecification fbSpec;
-		fbSpec.Attachments = { ImageFormat::RGBA8, ImageFormat::RED_INT, ImageFormat::Depth };
-		fbSpec.Width = 1280;
-		fbSpec.Height = 720;
-		frameBuffer = FrameBuffer::Create(fbSpec);
+		m_SceneRenderer = CreateRef<SceneRenderer>();
 
 		//Create New Scene
 		NewScene();
@@ -130,12 +125,13 @@ namespace Nebula {
 	}
 
 	void EditorLayer::Resize() {
-		FrameBufferSpecification spec = frameBuffer->GetFrameBufferSpecifications();
+		glm::vec2 framebufferSize = m_SceneRenderer->GetFramebufferSize();
 		if (m_GameViewSize.x > 0.0f && m_GameViewSize.y > 0.0f
-			&& (spec.Width != m_GameViewSize.x || spec.Height != m_GameViewSize.y))
+			&& framebufferSize != m_GameViewSize)
 		{
-			frameBuffer->Resize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
+			//frameBuffer->Resize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
 			m_ActiveScene->OnViewportResize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
+			m_SceneRenderer->Resize(m_GameViewSize.x, m_GameViewSize.y);
 			m_EditorCam.SetViewPortSize(m_GameViewSize.x, m_GameViewSize.y);
 		}
 	}
@@ -148,7 +144,7 @@ namespace Nebula {
 		my = viewportSize.y - my;
 
 		if (mx >= 0 && my >= 0 && mx < viewportSize.x && my < viewportSize.y) {
-			int pixelData = frameBuffer->ReadPixel(1, (int)mx, (int)my);
+			int pixelData = m_SceneRenderer->ReadImage(mx, my);
 			m_HoveredEntity = pixelData == -1 ? Entity() : Entity((entt::entity)pixelData, m_ActiveScene.get());
 		}
 	}
@@ -196,35 +192,24 @@ namespace Nebula {
 	void EditorLayer::Render() {
 		NB_PROFILE_FUNCTION();
 
-		frameBuffer->Bind();
-
-		frameBuffer->BeginClear();
-		RenderCommand::Clear();
-		frameBuffer->ClearAttachment(1, -1);
-		frameBuffer->EndClear();
-
 		switch (m_SceneState) {
 			case SceneState::Edit:
-				m_ActiveScene->Render(m_EditorCam);
-				OnOverlayRender();
-
+				m_SceneRenderer->Render(m_EditorCam);
+				
 				GetPixelData();
 				break;
 
 			case SceneState::Simulate:
-				m_ActiveScene->Render(m_EditorCam);
-				OnOverlayRender();
-
+				m_SceneRenderer->Render(m_EditorCam);
+				
 				GetPixelData();
 				break;
 			
 			case SceneState::Play:
-				m_ActiveScene->RenderRuntime();
-				OnOverlayRender();
+				//m_ActiveScene->RenderRuntime();
+				//OnOverlayRender();
 				break;
 		}
-
-		frameBuffer->Unbind();
 	}
 
 	void EditorLayer::ImGuiRender() {
@@ -312,10 +297,12 @@ namespace Nebula {
 				ImGui::EndMenu();
 			}
 
-			if (ImGui::BeginMenu("Settings")) {
-				if (ImGui::MenuItem("Show Physics Colliders", NULL, m_ShowColliders))
-					m_ShowColliders = !m_ShowColliders;
-
+			if (ImGui::BeginMenu("Settings")) 
+			{
+				SceneRenderer::Settings& settings = m_SceneRenderer->m_Settings;
+				if (ImGui::MenuItem("Show Physics Colliders", NULL, settings.ShowColliders))
+					settings.ShowColliders = !settings.ShowColliders;
+				
 				if (ImGui::MenuItem("Show Grid", NULL, m_ShowGrid))
 					m_ShowGrid = !m_ShowGrid;
 
@@ -364,6 +351,7 @@ namespace Nebula {
 
 	void EditorLayer::OnOverlayRender()  {
 		NB_PROFILE_FUNCTION();
+		return;
 
 		if (m_SceneState == SceneState::Play) 
 		{
@@ -391,9 +379,6 @@ namespace Nebula {
 				RenderSelectionUI(selectedEntity);
 		}
 
-		if (m_ShowColliders)
-			RenderColliders();
-		
 		Renderer2D::EndScene();
 	}
 
@@ -407,47 +392,6 @@ namespace Nebula {
 			return false;
 
 		return hasRelationShip(scene, node.Parent, entityB);
-	}
-
-	void EditorLayer::RenderColliders() {
-		// Calculate z index for translation
-		float zIndex = 0.001f;
-		glm::vec3 cameraForwardDirection = m_EditorCam.GetForwardDirection();
-		glm::vec3 projectionCollider = cameraForwardDirection * glm::vec3(zIndex);
-
-		auto CircleView = m_ActiveScene->GetAllEntitiesWith<WorldTransformComponent, CircleColliderComponent>();
-		for (auto entity : CircleView) {
-			auto [wtc, cc] = CircleView.get<WorldTransformComponent, CircleColliderComponent>(entity);
-
-			glm::vec3 wTranslation, wRotation, wScale;
-			Maths::DecomposeTransform(wtc.Transform, wTranslation, wRotation, wScale);
-
-			glm::vec3 Scale = wScale.x * glm::vec3(cc.Radius * 2.0f);
-
-			glm::mat4 transform = glm::translate(wTranslation) * glm::toMat4(glm::quat(wRotation))
-				* glm::translate(glm::vec3(cc.Offset, -projectionCollider.z)) * glm::scale(Scale);
-			Renderer2D::DrawCircle(transform, Material{ glm::vec4(0.0f, 1.0f, 0.0f, 1.0f) }, 0.05f);
-		}
-
-		auto BoxView = m_ActiveScene->GetAllEntitiesWith<WorldTransformComponent, BoxCollider2DComponent>();
-		for (auto entity : BoxView) {
-			auto [wtc, bc2d] = BoxView.get<WorldTransformComponent, BoxCollider2DComponent>(entity);
-
-			if (Entity selected = m_SceneHierarchy.GetSelectedEntity())
-			{
-				if (hasRelationShip(m_ActiveScene, Entity{ entity, m_ActiveScene.get() }.GetUUID(), selected.GetUUID()))
-					continue;
-			}
-
-			glm::vec3 wTranslation, wRotation, wScale;
-			Maths::DecomposeTransform(wtc.Transform, wTranslation, wRotation, wScale);
-
-			glm::vec3 Scale = wScale * glm::vec3(bc2d.Size, 0.0f) * 2.0f;
-
-			glm::mat4 transform = glm::translate(wTranslation) * glm::toMat4(glm::quat(wRotation)) *
-				glm::translate(glm::vec3(bc2d.Offset, zIndex)) * glm::scale(Scale);
-			Renderer2D::DrawRect(transform, Material{ glm::vec4(0.0f, 1.0f, 0.0f, 1.0f) });
-		}
 	}
 
 	void EditorLayer::RenderSelectionUI(Entity selectedEntity) 
@@ -494,7 +438,7 @@ namespace Nebula {
 		ImVec2 panelSize = ImGui::GetContentRegionAvail();
 		m_GameViewSize = { panelSize.x, panelSize.y };
 
-		Ref<Image2D> texture = frameBuffer->GetColourAttachmentImage();
+		Ref<Image2D> texture = m_SceneRenderer->GetFinalImage();
 		ImGui::Image((ImTextureID)texture->GetDescriptorSet(), panelSize, ImVec2{0, 1}, ImVec2{1, 0});
 
 		if (ImGui::BeginDragDropTarget()) 
@@ -785,7 +729,8 @@ namespace Nebula {
 		m_ContentBrowser.SetSceneContext(m_EditorScene);
 
 		m_ActiveScene = m_EditorScene;
-		
+		m_SceneRenderer->SetContext(m_ActiveScene);
+
 		m_HoveredEntity = { };
 		m_ScenePath = "";
 	}
@@ -835,6 +780,7 @@ namespace Nebula {
 			m_ContentBrowser.SetSceneContext(m_EditorScene);
 
 			m_ActiveScene = m_EditorScene;
+			m_SceneRenderer->SetContext(m_ActiveScene);
 		}
 
 		m_ScenePath = path.string();
