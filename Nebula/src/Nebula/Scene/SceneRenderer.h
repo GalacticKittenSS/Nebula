@@ -35,7 +35,8 @@ namespace Nebula
 		
 		void SetContext(Ref<Scene> scene) { m_Context = scene; }
 
-		void Render(EditorCamera& camera);
+		void Render(const EditorCamera& camera);
+		void Render(const Camera& camera, const glm::mat4& transform);
 		void Resize(uint32_t width, uint32_t height);
 
 		glm::vec2 GetFramebufferSize();
@@ -50,20 +51,21 @@ namespace Nebula
 		void RenderCircleCollider(glm::mat4& transform, const CircleColliderComponent& circleCollider, const glm::vec3& projectionCollider, int entityID);
 		void RenderBoxCollider(glm::mat4& transform, const BoxCollider2DComponent& boxCollider, float zIndex, int entityID);
 
-		void GeometryPrePass();
-		void ColliderPrePass(EditorCamera& camera);
-		
 		void SkyPrePass(glm::vec3 position);
+		void GeometryPrePass();
+		void ColliderPrePass(glm::vec3 forward);
+		
+		void SkyPass();
 		void GeometryPass();
 		void ColliderPass();
 
-		void Flush();
 		void FlushAndReset();
 		float GetTextureIndex(const Ref<Texture2D>& texture);
 	private:
 		struct RenderData
 		{
 			Ref<FrameBuffer> Frambuffer;
+			Ref<RenderPass> SkyPass;
 			Ref<RenderPass> GeometryPass;
 			Ref<RenderPass> ColliderPass;
 			

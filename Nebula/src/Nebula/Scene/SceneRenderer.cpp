@@ -70,6 +70,10 @@ namespace Nebula
 		std::array<Ref<Texture2D>, 32> TextureSlots;
 		uint32_t TextureSlotIndex = 1; // 0 = White Texture 
 
+		//Sky
+		Ref<VertexArray>	   SkyVertexArray;
+		Ref<VertexBuffer>	  SkyVertexBuffer;
+
 		//Quad
 		Ref<VertexArray>	   QuadVertexArray;
 		Ref<VertexBuffer>	  QuadVertexBuffer;
@@ -288,13 +292,16 @@ namespace Nebula
 			spec.ClearOnLoad = true;
 			spec.SingleWrite = true;
 			spec.Attachments = {
-				{ ImageFormat::RGBA8, ImageLayout::Undefined, ImageLayout::ColourAttachmentOptimal }, 
+				{ ImageFormat::RGBA8, ImageLayout::Undefined, ImageLayout::ColourAttachment }, 
 				ImageFormat::RED_INT, ImageFormat::DEPTH24STENCIL8 
 			};
-			m_Data.GeometryPass = RenderPass::Create(spec);
+			m_Data.SkyPass = RenderPass::Create(spec);
 		
-			spec.Attachments[0] = { ImageFormat::RGBA8, ImageLayout::ColourAttachmentOptimal, ImageLayout::ShaderReadOnlyOptimal };
+			spec.Attachments[0] = { ImageFormat::RGBA8, ImageLayout::ColourAttachment, ImageLayout::ColourAttachment };
 			spec.ClearOnLoad = false;
+			m_Data.GeometryPass = RenderPass::Create(spec);
+
+			spec.Attachments[0] = { ImageFormat::RGBA8, ImageLayout::ColourAttachment, ImageLayout::ShaderReadOnly };
 			m_Data.ColliderPass = RenderPass::Create(spec);
 		}
 
@@ -320,6 +327,7 @@ namespace Nebula
 
 		// Quad Setup
 		SetupBuffers(s_Data.QuadVertexArray, s_Data.QuadVertexBuffer, 6, 4);
+		SetupBuffers(s_Data.SkyVertexArray, s_Data.SkyVertexBuffer, 6, 4);
 		
 		// Circle Setup
 		{
@@ -617,13 +625,35 @@ namespace Nebula
 			s_Data.QuadVBPtr->TexCoord = s_Defaults.CubeTexCoords[i];
 			s_Data.QuadVBPtr->TexIndex = textureIndex;
 			s_Data.QuadVBPtr->TilingFactor = 1.0f;
-			s_Data.QuadVBPtr->EntityID = -1u;
+			s_Data.QuadVBPtr->EntityID = -1;
 			s_Data.QuadVBPtr++;
 		}
 
 		s_Data.QuadIndexCount += 36;
 	}
 	
+	void SceneRenderer::SkyPass()
+	{
+		m_Data.SkyPass->Bind();
+
+		m_Data.TextureShader->ResetDescriptorSet(1);
+		m_Data.TextureShader->SetTextureArray("u_Textures", s_Defaults.WhiteTexture);
+
+		m_Data.TextureShader->Bind();
+		m_Data.TexturePipeline->Bind();
+
+		for (uint32_t i = 0; i < s_Data.TextureSlotIndex; i++)
+			s_Data.TextureSlots[i]->Bind(i);
+
+		m_Data.TexturePipeline->BindDescriptorSet();
+
+		uint32_t dataSize = (uint32_t)((uint8_t*)s_Data.QuadVBPtr - (uint8_t*)s_Data.QuadVBBase);
+		s_Data.SkyVertexBuffer->SetData(s_Data.QuadVBBase, dataSize);
+		RenderCommand::DrawIndexed(s_Data.SkyVertexArray, s_Data.QuadIndexCount);
+		
+		m_Data.SkyPass->Unbind();
+	}
+
 	void SceneRenderer::GeometryPrePass()
 	{
 		auto spriteGroup = m_Context->m_Registry.group<WorldTransformComponent, MaterialComponent>(entt::get<SpriteRendererComponent>);
@@ -709,12 +739,11 @@ namespace Nebula
 		m_Data.GeometryPass->Unbind();
 	}
 
-	void SceneRenderer::ColliderPrePass(EditorCamera& camera)
+	void SceneRenderer::ColliderPrePass(glm::vec3 forward)
 	{
 		// Calculate z index for translation
 		float zIndex = 0.001f;
-		glm::vec3 cameraForwardDirection = camera.GetForwardDirection();
-		glm::vec3 projectionCollider = cameraForwardDirection * glm::vec3(zIndex);
+		glm::vec3 projectionCollider = forward * glm::vec3(zIndex);
 
 		auto circleGroup = m_Context->m_Registry.view<WorldTransformComponent, CircleColliderComponent>();
 		for (auto id : circleGroup)
@@ -760,7 +789,7 @@ namespace Nebula
 		m_Data.ColliderPass->Unbind();
 	}
 
-	void SceneRenderer::Render(EditorCamera& camera)
+	void SceneRenderer::Render(const EditorCamera& camera)
 	{
 		NB_ASSERT(m_Context);
 
@@ -771,38 +800,76 @@ namespace Nebula
 		
 		m_Data.Frambuffer->Bind();
 		RenderCommand::BeginRecording();
-		m_Data.Frambuffer->ClearDepthAttachment(0.0f);
+		m_Data.Frambuffer->ClearDepthAttachment(0);
 
-		SkyPrePass(camera.GetPosition());
+		if (m_Settings.ShowSky)
+		{
+			SkyPrePass(camera.GetPosition());
+			SkyPass();
+		}
+
 		GeometryPrePass();
 		GeometryPass();
 		
 		if (m_Settings.ShowColliders)
 		{
-			ColliderPrePass(camera);
+			ColliderPrePass(camera.GetForwardDirection());
 			ColliderPass();
 		}
 		else
 		{
 			Ref<Image2D> image = m_Data.Frambuffer->GetColourAttachmentImage(0);
-			image->TransitionImageLayout(ImageLayout::ColourAttachmentOptimal, ImageLayout::ShaderReadOnlyOptimal);
+			image->TransitionImageLayout(ImageLayout::ColourAttachment, ImageLayout::ShaderReadOnly);
 		}
 
 		RenderCommand::EndRecording();
 		m_Data.Frambuffer->Unbind();
 	}
 
-	void SceneRenderer::Flush()
+	void SceneRenderer::Render(const Camera& camera, const glm::mat4& transform)
 	{
-		//SkyPass();
-		//GeometryPass();
-		//OverlayPass();
+		NB_ASSERT(m_Context);
+
+		m_Data.CameraBuffer.ViewProjection = camera.GetProjection() * glm::inverse(transform);
+		m_Data.CameraUniformBuffer->SetData(&m_Data.CameraBuffer, sizeof(RenderData::CameraData));
+
+		ResetBatch();
+
+		m_Data.Frambuffer->Bind();
+		RenderCommand::BeginRecording();
+		m_Data.Frambuffer->ClearDepthAttachment(0);
+
+		if (m_Settings.ShowSky)
+		{
+			SkyPrePass(transform[3]);
+			SkyPass();
+		}
+		
+		GeometryPrePass();
+		GeometryPass();
+
+		if (m_Settings.ShowColliders)
+		{
+			ColliderPrePass({ 0.0f, 0.0f, 1.0f });
+			ColliderPass();
+		}
+		else
+		{
+			Ref<Image2D> image = m_Data.Frambuffer->GetColourAttachmentImage(0);
+			image->TransitionImageLayout(ImageLayout::ColourAttachment, ImageLayout::ShaderReadOnly);
+		}
+
+		RenderCommand::EndRecording();
+		m_Data.Frambuffer->Unbind();
 	}
 
 	void SceneRenderer::FlushAndReset() 
 	{
-		Flush();
+		GeometryPass();
 		ResetBatch();
+
+		RenderCommand::EndRecording();
+		RenderCommand::BeginRecording();
 	}
 
 	float SceneRenderer::GetTextureIndex(const Ref<Texture2D>& texture)
