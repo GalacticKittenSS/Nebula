@@ -82,8 +82,8 @@ namespace Nebula
 		rasterizer.depthClampEnable = VK_FALSE;
 		rasterizer.rasterizerDiscardEnable = VK_FALSE;
 		rasterizer.polygonMode = Utils::NBShapeToPolygonMode(m_Specification.Shape);
-		rasterizer.lineWidth = 1.0f;
-		rasterizer.cullMode = VK_CULL_MODE_NONE;
+		rasterizer.lineWidth = m_Specification.LineWidth;
+		rasterizer.cullMode = m_Specification.BackfaceCulling ? VK_CULL_MODE_BACK_BIT : VK_CULL_MODE_NONE;
 		rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
 		rasterizer.depthBiasEnable = VK_FALSE;
 
@@ -114,8 +114,8 @@ namespace Nebula
 
 		VkPipelineDepthStencilStateCreateInfo depthStencil{};
 		depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-		depthStencil.depthTestEnable = m_Specification.DepthTestEnable ? VK_TRUE : VK_FALSE;
-		depthStencil.depthWriteEnable = m_Specification.DepthTestEnable ? VK_TRUE : VK_FALSE;
+		depthStencil.depthTestEnable = m_Specification.DepthTest ? VK_TRUE : VK_FALSE;
+		depthStencil.depthWriteEnable = m_Specification.DepthWrite ? VK_TRUE : VK_FALSE;
 		depthStencil.depthCompareOp = VK_COMPARE_OP_LESS; // Specification?
 		depthStencil.depthBoundsTestEnable = VK_FALSE;
 		depthStencil.stencilTestEnable = VK_FALSE;

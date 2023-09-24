@@ -16,10 +16,14 @@ namespace Nebula
 
 	struct PipelineSpecification
 	{
-		PipelineShape Shape;
 		Ref<Shader> Shader;
 		Ref<RenderPass> RenderPass;
-		bool DepthTestEnable = true;
+		PipelineShape Shape;
+		
+		bool BackfaceCulling = true;
+		bool DepthTest = true;
+		bool DepthWrite = true;
+		float LineWidth = 1.0f;
 	};
 
 	class Pipeline
