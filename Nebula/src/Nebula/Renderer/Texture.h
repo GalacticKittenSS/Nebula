@@ -14,6 +14,9 @@ namespace Nebula {
 		ImageFormat Format = ImageFormat::RGBA8;
 		bool GenerateMips = true;
 		bool ImGuiUsable = true;
+
+		//Debug
+		std::string DebugName;
 	};
 
 	class Texture : public Asset

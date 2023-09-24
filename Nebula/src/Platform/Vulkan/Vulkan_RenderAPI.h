@@ -29,7 +29,6 @@ namespace Nebula {
 		void SetLineWidth(float width) override;
 	private:
 		void CreateDebugMessenger();
-		void recordCommandBuffer(Ref<VertexArray> array, VkCommandBuffer commandBuffer, uint32_t imageIndex);
 	private:
 		VkDebugUtilsMessengerEXT m_DebugMessenger;
 		glm::vec4 m_ClearColour;

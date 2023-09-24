@@ -19,6 +19,7 @@ namespace Nebula
 		static void Shutdown();
 
 		static VkDebugUtilsMessengerCreateInfoEXT PopulateDebugMessenger(PFN_vkDebugUtilsMessengerCallbackEXT debugCallback);
+		static void AttachDebugNameToObject(VkObjectType type, uint64_t object, std::string objectName);
 
 		static VkCommandBuffer BeginSingleUseCommand();
 		static void EndSingleUseCommand(VkCommandBuffer commandBuffer);

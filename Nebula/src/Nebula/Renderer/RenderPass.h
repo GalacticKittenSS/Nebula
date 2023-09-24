@@ -22,6 +22,9 @@ namespace Nebula
 		std::vector<AttachmentTextureSpecification> Attachments;
 		bool SingleWrite = false;
 		bool ClearOnLoad = false;
+
+		// Debug
+		std::string DebugName;
 	};
 
 	class RenderPass

@@ -63,6 +63,9 @@ namespace Nebula
 		int Samples = 1;
 		uint32_t Width;
 		uint32_t Height;
+
+		//Debug
+		std::string DebugName;
 	};
 
 	class Image2D

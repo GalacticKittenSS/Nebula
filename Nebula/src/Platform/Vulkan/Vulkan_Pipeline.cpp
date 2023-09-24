@@ -49,6 +49,8 @@ namespace Nebula
 
 			VkResult result = vkCreatePipelineLayout(VulkanAPI::GetDevice(), &pipelineLayoutInfo, nullptr, &m_Layout);
 			NB_ASSERT(result == VK_SUCCESS, "Failed to create pipeline layout");
+
+			VulkanAPI::AttachDebugNameToObject(VK_OBJECT_TYPE_PIPELINE_LAYOUT, (uint64_t)m_Layout, m_Specification.DebugName);
 		}
 
 		uint32_t stride;
@@ -154,6 +156,8 @@ namespace Nebula
 
 		VkResult result = vkCreateGraphicsPipelines(VulkanAPI::GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_Pipeline);
 		NB_ASSERT(result == VK_SUCCESS, "Failed to create graphics pipeline!");
+
+		VulkanAPI::AttachDebugNameToObject(VK_OBJECT_TYPE_PIPELINE, (uint64_t)m_Pipeline, m_Specification.DebugName);
 	}
 
 	Vulkan_Pipeline::~Vulkan_Pipeline()

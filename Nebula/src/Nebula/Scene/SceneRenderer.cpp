@@ -254,6 +254,7 @@ namespace Nebula
 		
 		{
 			TextureSpecification spec;
+			spec.DebugName = "White-Texture";
 			spec.ImGuiUsable = false;
 			s_Defaults.WhiteTexture = Texture2D::Create(spec);
 			
@@ -289,6 +290,7 @@ namespace Nebula
 		// Create Render Passes
 		{
 			RenderPassSpecification spec;
+			spec.DebugName = "Sky-RenderPass";
 			spec.ClearOnLoad = true;
 			spec.SingleWrite = true;
 			spec.Attachments = {
@@ -297,10 +299,12 @@ namespace Nebula
 			};
 			m_Data.SkyPass = RenderPass::Create(spec);
 		
+			spec.DebugName = "Geometry-RenderPass";
 			spec.Attachments[0] = { ImageFormat::RGBA8, ImageLayout::ColourAttachment, ImageLayout::ColourAttachment };
 			spec.ClearOnLoad = false;
 			m_Data.GeometryPass = RenderPass::Create(spec);
 
+			spec.DebugName = "Collider-RenderPass";
 			spec.Attachments[0] = { ImageFormat::RGBA8, ImageLayout::ColourAttachment, ImageLayout::ShaderReadOnly };
 			m_Data.ColliderPass = RenderPass::Create(spec);
 		}
@@ -308,6 +312,7 @@ namespace Nebula
 		// Create Framebuffer
 		{
 			FrameBufferSpecification spec;
+			spec.DebugName = "SceneRenderer-Framebuffer";
 			spec.Attachments = { ImageFormat::RGBA8, ImageFormat::RED_INT, ImageFormat::DEPTH24STENCIL8 };
 			spec.Width = window.GetWidth();
 			spec.Height = window.GetHeight();
@@ -337,6 +342,7 @@ namespace Nebula
 			m_Data.CircleShader->SetUniformBuffer("u_ViewProjection", m_Data.CameraUniformBuffer);
 
 			pipelineSpec.Shader = m_Data.CircleShader;
+			pipelineSpec.DebugName = "Circle-Pipeline";
 			m_Data.CirclePipeline = Pipeline::Create(pipelineSpec);
 		}
 
@@ -349,6 +355,7 @@ namespace Nebula
 
 			pipelineSpec.Shader = m_Data.LineShader;
 			pipelineSpec.Shape = PipelineShape::Lines;
+			pipelineSpec.DebugName = "Line-Pipeline";
 			m_Data.LinePipeline = Pipeline::Create(pipelineSpec);
 		}
 
@@ -361,6 +368,7 @@ namespace Nebula
 
 			pipelineSpec.Shader = m_Data.TextShader;
 			pipelineSpec.Shape = PipelineShape::Triangles;
+			pipelineSpec.DebugName = "Text-Pipeline";
 			m_Data.TextPipeline = Pipeline::Create(pipelineSpec);
 		}
 
@@ -369,6 +377,7 @@ namespace Nebula
 		m_Data.TextureShader->SetUniformBuffer("u_ViewProjection", m_Data.CameraUniformBuffer);
 
 		pipelineSpec.Shader = m_Data.TextureShader;
+		pipelineSpec.DebugName = "Texture-Pipeline";
 		m_Data.TexturePipeline = Pipeline::Create(pipelineSpec);
 		m_Data.TextureShader->SetTextureArray("u_Textures", s_Defaults.WhiteTexture);
 	}
@@ -396,7 +405,7 @@ namespace Nebula
 
 	void SceneRenderer::RenderSprite(const glm::mat4& transform, Ref<Material> mat, const SpriteRendererComponent& sprite, int entityID)
 	{
-		if (s_Data.QuadIndexCount >= Settings::MaxIndices)
+		if (s_Data.QuadIndexCount >= m_Settings.MaxIndices)
 			FlushAndReset();
 
 		float textureIndex = mat->Texture ? GetTextureIndex(mat->Texture) : 0.0f;
@@ -417,7 +426,7 @@ namespace Nebula
 
 	void SceneRenderer::RenderCircle(const glm::mat4& transform, Ref<Material> mat, const CircleRendererComponent& circle, int entityID)
 	{
-		if (s_Data.CircleIndexCount >= Settings::MaxIndices)
+		if (s_Data.CircleIndexCount >= m_Settings.MaxIndices)
 			FlushAndReset();
 
 		for (size_t i = 0; i < 4; i++)
@@ -436,14 +445,14 @@ namespace Nebula
 
 	void SceneRenderer::RenderString(const glm::mat4& transform, Ref<Font> font, const StringRendererComponent& string, int entityID)
 	{
-		if (s_Data.TextIndexCount >= Settings::MaxIndices)
-			FlushAndReset();
-
 		if (s_Data.FontAtlasTexture != font->GetAtlasTexture())
 		{
 			FlushAndReset();
 			s_Data.FontAtlasTexture = font->GetAtlasTexture();
 		}
+
+		if (s_Data.TextIndexCount >= m_Settings.MaxIndices)
+			FlushAndReset();
 
 		const auto& fontGeometry = font->GetMSDFData()->FontGeometry;
 		const auto& metrics = fontGeometry.getMetrics();
@@ -561,7 +570,7 @@ namespace Nebula
 		glm::mat4 new_transform = glm::translate(wTranslation) * glm::toMat4(glm::quat(wRotation))
 			* glm::translate(glm::vec3(circleCollider.Offset, -projectionCollider.z)) * glm::scale(scale);
 
-		if (s_Data.CircleIndexCount >= Settings::MaxIndices)
+		if (s_Data.CircleIndexCount >= m_Settings.MaxIndices)
 			FlushAndReset();
 
 		for (size_t i = 0; i < 4; i++)

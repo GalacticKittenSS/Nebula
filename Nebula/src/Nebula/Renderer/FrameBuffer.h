@@ -18,6 +18,9 @@ namespace Nebula {
 
 		bool SwapChainTarget = false;
 		Ref<RenderPass> RenderPass = nullptr;
+
+		//Debug
+		std::string DebugName;
 	};
 
 	class FrameBuffer {

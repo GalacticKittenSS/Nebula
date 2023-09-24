@@ -24,6 +24,9 @@ namespace Nebula
 		bool DepthTest = true;
 		bool DepthWrite = true;
 		float LineWidth = 1.0f;
+
+		//Debug
+		std::string DebugName;
 	};
 
 	class Pipeline

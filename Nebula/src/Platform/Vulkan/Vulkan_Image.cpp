@@ -188,6 +188,8 @@ namespace Nebula
 
 			VkResult result = vmaCreateImage(VulkanAPI::s_Allocator, &imageInfo, &allocInfo, &m_Image, &m_Allocation, nullptr);
 			NB_ASSERT(result == VK_SUCCESS, "Failed to create image!");
+
+			VulkanAPI::AttachDebugNameToObject(VK_OBJECT_TYPE_IMAGE, (uint64_t)m_Image, m_Specification.DebugName);
 		}
 		
 		// Image View
@@ -205,6 +207,8 @@ namespace Nebula
 
 			VkResult result = vkCreateImageView(VulkanAPI::GetDevice(), &createInfo, nullptr, &m_ImageView);
 			NB_ASSERT(result == VK_SUCCESS, "Failed to create image view!");
+			
+			VulkanAPI::AttachDebugNameToObject(VK_OBJECT_TYPE_IMAGE_VIEW, (uint64_t)m_ImageView, m_Specification.DebugName);
 		}
 	}
 

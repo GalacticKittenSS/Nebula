@@ -32,6 +32,7 @@ namespace Nebula
 		spec.Height = height;
 		spec.GenerateMips = true;
 		spec.ImGuiUsable = imgui_usable;
+		spec.DebugName = path;
 
 		switch (channels)
 		{

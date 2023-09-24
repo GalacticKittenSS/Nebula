@@ -79,6 +79,10 @@ namespace Nebula {
 		RenderPassSpecification spec;
 		spec.Attachments = m_Specifications.Attachments;
 		spec.ClearOnLoad = false;
+		
+		if (!m_Specifications.DebugName.empty())
+			spec.DebugName = m_Specifications.DebugName + "-RenderPass";
+		
 		m_Specifications.RenderPass = RenderPass::Create(spec);
 	}
 
@@ -117,6 +121,9 @@ namespace Nebula {
 			imageSpec.ShaderUsage = !m_Specifications.SwapChainTarget;
 			imageSpec.Usage = ImageUsage::ColourAttachment | ImageUsage::TransferDst | ImageUsage::TransferSrc | ImageUsage::Sampled;
 
+			if (!m_Specifications.DebugName.empty())
+				imageSpec.DebugName = m_Specifications.DebugName + "-Colour_Attachment_" + std::to_string(i);
+
 			m_ColourAttachments[i] = Vulkan_Image::CreateImageArray(imageSpec, context->GetImageCount());
 		}
 
@@ -129,6 +136,9 @@ namespace Nebula {
 			imageSpec.Samples = m_Specifications.Samples;
 			imageSpec.ShaderUsage = false;
 			imageSpec.Usage = ImageUsage::DepthStencilAttachment | ImageUsage::TransferDst;
+
+			if (!m_Specifications.DebugName.empty())
+				imageSpec.DebugName = m_Specifications.DebugName + "-Depth_Attachment";
 
 			m_DepthAttachment = CreateRef<Vulkan_Image>(imageSpec);
 		}
@@ -154,6 +164,8 @@ namespace Nebula {
 
 			VkResult result = vkCreateFramebuffer(VulkanAPI::GetDevice(), &framebufferInfo, nullptr, &m_Framebuffer[imageIndex]);
 			NB_ASSERT(result == VK_SUCCESS, "Failed to create framebuffer");
+
+			VulkanAPI::AttachDebugNameToObject(VK_OBJECT_TYPE_FRAMEBUFFER, (uint64_t)m_Framebuffer[imageIndex], m_Specifications.DebugName);
 		}
 
 		m_StagingBuffer = CreateScope<VulkanBuffer>(m_Specifications.Width * m_Specifications.Height, VK_BUFFER_USAGE_TRANSFER_DST_BIT);

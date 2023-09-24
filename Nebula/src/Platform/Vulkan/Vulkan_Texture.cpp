@@ -57,6 +57,10 @@ namespace Nebula {
 		imageSpec.Width = m_Specification.Width;
 		imageSpec.Height = m_Specification.Height;
 		imageSpec.ImGuiUsage = m_Specification.ImGuiUsable;
+
+		if (!m_Specification.DebugName.empty())
+			imageSpec.DebugName = m_Specification.DebugName + "-Image";
+
 		m_Image = CreateRef<Vulkan_Image>(imageSpec);
 
 		uint32_t bpp = Utils::VulkantoBPP(m_Image->GetFormat());

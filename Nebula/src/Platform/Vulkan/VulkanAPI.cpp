@@ -14,6 +14,8 @@ namespace Nebula
 {
 	static const uint32_t g_MaxFrames = 3;
 
+	static PFN_vkSetDebugUtilsObjectNameEXT pfnDebugMarkerSetObjectName;
+
 	namespace Utils
 	{
 		static std::vector<const char*> GetValidationLayers()
@@ -230,6 +232,8 @@ namespace Nebula
 
 			vmaCreateAllocator(&allocatorInfo, &s_Allocator);
 		}
+		
+		pfnDebugMarkerSetObjectName = (PFN_vkSetDebugUtilsObjectNameEXT)vkGetDeviceProcAddr(s_Device, "vkSetDebugUtilsObjectNameEXT");
 	}
 
 	VkDebugUtilsMessengerCreateInfoEXT VulkanAPI::PopulateDebugMessenger(PFN_vkDebugUtilsMessengerCallbackEXT debugCallback)
@@ -381,6 +385,19 @@ namespace Nebula
 		vkDestroyInstance(s_Instance, nullptr);
 	}
 
+	void VulkanAPI::AttachDebugNameToObject(VkObjectType type, uint64_t object, std::string name)
+	{
+		if (!pfnDebugMarkerSetObjectName)
+			return;
+
+		VkDebugUtilsObjectNameInfoEXT nameInfo{};
+		nameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+		nameInfo.objectType = type;
+		nameInfo.objectHandle = object;
+		nameInfo.pObjectName = name.c_str();
+		pfnDebugMarkerSetObjectName(VulkanAPI::GetDevice(), &nameInfo);
+	}
+	
 	VkCommandBuffer VulkanAPI::BeginSingleUseCommand()
 	{
 		VkCommandBufferAllocateInfo allocInfo{};

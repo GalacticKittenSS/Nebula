@@ -126,6 +126,8 @@ namespace Nebula
 		NB_ASSERT(result == VK_SUCCESS, "Failed to create render pass!");
 
 		delete depthReference;
+
+		VulkanAPI::AttachDebugNameToObject(VK_OBJECT_TYPE_RENDER_PASS, (uint64_t)m_RenderPass, m_Specification.DebugName);
 	}
 
 	Vulkan_RenderPass::~Vulkan_RenderPass()
