@@ -109,7 +109,7 @@ namespace Nebula {
 
 			if (m_Specifications.SwapChainTarget && format == context->GetImageFormat())
 			{
-				m_ColourAttachments[i] = Vulkan_Image::CreateImageArray(context->m_Images, context->m_ImageViews);
+				m_ColourAttachments[i] = context->m_ImageArray;
 				continue;
 			}
 			
@@ -326,10 +326,7 @@ namespace Nebula {
 	Ref<Image2D> Vulkan_FrameBuffer::GetColourAttachmentImage(uint32_t index) const
 	{
 		Vulkan_Context* context = (Vulkan_Context*)Application::Get().GetWindow().GetContext();
-		Ref<Vulkan_Image> image = m_ColourAttachments[index][context->GetImageIndex()];
-		
-		VulkanAPI::TransitionImageLayout(image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-		return image;
+		return m_ColourAttachments[index][context->GetImageIndex()];
 	}
 
 	VkFramebuffer Vulkan_FrameBuffer::GetFrameBuffer()

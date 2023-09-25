@@ -2,7 +2,7 @@
 
 #include "Nebula/renderer/Graphics_Context.h"
 
-#include <vulkan/vulkan.h>
+#include "Vulkan_Image.h"
 
 struct GLFWwindow;
 
@@ -54,6 +54,8 @@ namespace Nebula {
 		VkFormat m_ImageFormat;
 		VkExtent2D m_Extent;
 		VkPresentModeKHR m_PresentMode = VK_PRESENT_MODE_MAILBOX_KHR;
+
+		Vulkan_Image::VulkanImageArray m_ImageArray;
 
 		uint32_t m_ImageIndex = 0;
 		uint32_t m_SwapChainImageCount;

@@ -302,6 +302,8 @@ namespace Nebula {
 
 		CreateSwapChain();
 		CreateImageViews();
+
+		m_ImageArray = Vulkan_Image::CreateImageArray(m_Images, m_ImageViews);
 	}
 
 	void Vulkan_Context::CleanUpSwapChain()
