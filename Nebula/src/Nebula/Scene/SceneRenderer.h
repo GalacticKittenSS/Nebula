@@ -1,6 +1,7 @@
 #pragma once
 
-#include "Components.h"
+#include "Scene.h"
+#include "Entity.h"
 
 #include "Nebula/Renderer/Camera.h"
 #include "Nebula/Renderer/Framebuffer.h"
@@ -11,8 +12,6 @@
 
 namespace Nebula
 {
-	class Scene;
-
 	class SceneRenderer
 	{
 	public:
@@ -20,6 +19,12 @@ namespace Nebula
 		{
 			bool ShowColliders = false;
 			bool ShowSky = true;
+
+			// Changing these values after setup will make no difference
+			bool PresentToScreen = false; // Note: This is not fully supported with vulkan
+			uint32_t InitialWidth = 1600, InitialHeight = 900;
+			float LineWidth = 1.0f;
+			glm::vec4 ClearColour = { 0.1f, 0.1f, 0.1f, 1.0f };
 
 			static const uint32_t MaxSprites = 10000;
 			static const uint32_t MaxTextureSlots = 32;
@@ -31,9 +36,10 @@ namespace Nebula
 		static void Setup();
 		static void Shutdown();
 
-		SceneRenderer();
+		SceneRenderer(Settings settings);
 		
 		void SetContext(Ref<Scene> scene) { m_Context = scene; }
+		void SetSelectedEntity(Entity entity) { m_SelectedEntity = entity; }
 
 		void Render(const EditorCamera& camera);
 		void Render(const Camera& camera, const glm::mat4& transform);
@@ -48,8 +54,11 @@ namespace Nebula
 		void RenderCircle(const glm::mat4& transform, Ref<Material> mat, const CircleRendererComponent& circle, int entityID);
 		void RenderString(const glm::mat4& transform, Ref<Font> font, const StringRendererComponent& string, int entityID);
 
+		void RenderRect(const glm::mat4& transform, const glm::vec4& colour, int id);
 		void RenderCircleCollider(glm::mat4& transform, const CircleColliderComponent& circleCollider, const glm::vec3& projectionCollider, int entityID);
 		void RenderBoxCollider(glm::mat4& transform, const BoxCollider2DComponent& boxCollider, float zIndex, int entityID);
+
+		void RenderSelectionUI(Entity selectedEntity, glm::vec3 cameraForward);
 
 		void SkyPrePass(glm::vec3 position);
 		void GeometryPrePass();
@@ -89,5 +98,6 @@ namespace Nebula
 		RenderData m_Data;
 
 		Ref<Scene> m_Context;
+		Entity m_SelectedEntity;
 	};
 }

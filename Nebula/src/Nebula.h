@@ -59,6 +59,7 @@
 #include "Nebula/Scene/Entity.h"
 #include "Nebula/Scene/Components.h"
 #include "Nebula/Scene/Scene_Serializer.h"
+#include "Nebula/Scene/SceneRenderer.h"
 //--------------------
 
 //----Application-----

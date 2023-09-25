@@ -3,7 +3,6 @@
 #include "entt.hpp"
 
 #include "Components.h"
-#include "SceneRenderer.h"
 
 #include "Nebula/Renderer/Camera.h"
 #include "Nebula/Core/UUID.h"

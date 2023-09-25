@@ -3,6 +3,7 @@
 
 #include "Nebula/Renderer/Renderer.h"
 #include "Nebula/Scripting/ScriptEngine.h"
+#include "Nebula/Scene/SceneRenderer.h"
 
 namespace Nebula {
 	Application* Application::s_Instance = nullptr;

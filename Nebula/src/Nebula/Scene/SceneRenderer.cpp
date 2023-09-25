@@ -4,7 +4,6 @@
 #include "Nebula/Core/Application.h"
 #include "Nebula/AssetManager/TextureImporter.h"
 
-#include "Nebula/Scene/Scene.h"
 #include "Nebula/Renderer/MSDFData.h"
 #include "Nebula/Renderer/Render_Command.h"
 
@@ -30,8 +29,8 @@ namespace Nebula
 		glm::vec3 Position;
 		glm::vec4 Colour;
 		glm::vec2 TexCoord;
-		float TexIndex;
 		float TilingFactor;
+		float TexIndex;
 
 		//Editor Only
 		int EntityID;
@@ -283,10 +282,9 @@ namespace Nebula
 		delete[] s_Defaults.TextureCoords;
 	}
 
-	SceneRenderer::SceneRenderer()
+	SceneRenderer::SceneRenderer(Settings settings)
+		: m_Settings(settings)
 	{
-		Window& window = Application::Get().GetWindow();
-
 		// Create Render Passes
 		{
 			RenderPassSpecification spec;
@@ -294,18 +292,20 @@ namespace Nebula
 			spec.ClearOnLoad = true;
 			spec.SingleWrite = true;
 			spec.Attachments = {
-				{ ImageFormat::RGBA8, ImageLayout::Undefined, ImageLayout::ColourAttachment }, 
+				{ ImageFormat::BGRA8, ImageLayout::Undefined, ImageLayout::ColourAttachment },
 				ImageFormat::RED_INT, ImageFormat::DEPTH24STENCIL8 
 			};
 			m_Data.SkyPass = RenderPass::Create(spec);
 		
 			spec.DebugName = "Geometry-RenderPass";
-			spec.Attachments[0] = { ImageFormat::RGBA8, ImageLayout::ColourAttachment, ImageLayout::ColourAttachment };
+			spec.Attachments[0] = { ImageFormat::BGRA8, ImageLayout::ColourAttachment, ImageLayout::ColourAttachment };
 			spec.ClearOnLoad = false;
 			m_Data.GeometryPass = RenderPass::Create(spec);
 
+			ImageLayout finalLayout = m_Settings.PresentToScreen ? ImageLayout::PresentSrcKHR : ImageLayout::ShaderReadOnly;
+
 			spec.DebugName = "Collider-RenderPass";
-			spec.Attachments[0] = { ImageFormat::RGBA8, ImageLayout::ColourAttachment, ImageLayout::ShaderReadOnly };
+			spec.Attachments[0] = { ImageFormat::BGRA8, ImageLayout::ColourAttachment, finalLayout };
 			m_Data.ColliderPass = RenderPass::Create(spec);
 		}
 
@@ -313,12 +313,12 @@ namespace Nebula
 		{
 			FrameBufferSpecification spec;
 			spec.DebugName = "SceneRenderer-Framebuffer";
-			spec.Attachments = { ImageFormat::RGBA8, ImageFormat::RED_INT, ImageFormat::DEPTH24STENCIL8 };
-			spec.Width = window.GetWidth();
-			spec.Height = window.GetHeight();
-			spec.SwapChainTarget = false;
+			spec.Attachments = { ImageFormat::BGRA8, ImageFormat::RED_INT, ImageFormat::DEPTH24STENCIL8 };
+			spec.Width = m_Settings.InitialWidth;
+			spec.Height = m_Settings.InitialHeight;
+			spec.SwapChainTarget = m_Settings.PresentToScreen;
 			spec.RenderPass = m_Data.GeometryPass;
-			spec.ClearColour = { 0.1f, 0.1f, 0.1f, 1.0f };
+			spec.ClearColour = m_Settings.ClearColour;
 			spec.DepthClearValue = 0.0f;
 			m_Data.Frambuffer = FrameBuffer::Create(spec);
 		}
@@ -326,6 +326,7 @@ namespace Nebula
 		PipelineSpecification pipelineSpec;
 		pipelineSpec.RenderPass = m_Data.GeometryPass;
 		pipelineSpec.Shape = PipelineShape::Triangles;
+		pipelineSpec.LineWidth = m_Settings.LineWidth;
 
 		//Camera Uniform
 		m_Data.CameraUniformBuffer = UniformBuffer::Create(sizeof(RenderData::CameraData), 0);
@@ -408,15 +409,16 @@ namespace Nebula
 		if (s_Data.QuadIndexCount >= m_Settings.MaxIndices)
 			FlushAndReset();
 
-		float textureIndex = mat->Texture ? GetTextureIndex(mat->Texture) : 0.0f;
+		Material material = Material::Get(mat);
+		float textureIndex = material.Texture ? GetTextureIndex(mat->Texture) : 0.0f;
 
 		for (size_t i = 0; i < 4; i++)
 		{
 			s_Data.QuadVBPtr->Position = transform * s_Defaults.QuadVertexPos[i];
-			s_Data.QuadVBPtr->Colour = mat->Colour;
+			s_Data.QuadVBPtr->Colour = material.Colour;
 			s_Data.QuadVBPtr->TexCoord = s_Defaults.TextureCoords[i];
 			s_Data.QuadVBPtr->TexIndex = textureIndex;
-			s_Data.QuadVBPtr->TilingFactor = mat->Tiling;
+			s_Data.QuadVBPtr->TilingFactor = material.Tiling;
 			s_Data.QuadVBPtr->EntityID = entityID;
 			s_Data.QuadVBPtr++;
 		}
@@ -429,11 +431,13 @@ namespace Nebula
 		if (s_Data.CircleIndexCount >= m_Settings.MaxIndices)
 			FlushAndReset();
 
+		Material material = Material::Get(mat);
+		
 		for (size_t i = 0; i < 4; i++)
 		{
 			s_Data.CircleVBPtr->Position = transform * s_Defaults.QuadVertexPos[i];
 			s_Data.CircleVBPtr->LocalPosition = s_Defaults.QuadVertexPos[i] * 2.0f;
-			s_Data.CircleVBPtr->Colour = mat->Colour;
+			s_Data.CircleVBPtr->Colour = material.Colour;
 			s_Data.CircleVBPtr->Thickness = circle.Thickness;
 			s_Data.CircleVBPtr->Fade = circle.Fade;
 			s_Data.CircleVBPtr->EntityID = entityID;
@@ -602,6 +606,19 @@ namespace Nebula
 		s_Data.LineVertexCount += 2;
 	}
 
+	void SceneRenderer::RenderRect(const glm::mat4& transform, const glm::vec4& colour, int id)
+	{
+		glm::vec3 p0 = transform * s_Defaults.QuadVertexPos[0];
+		glm::vec3 p1 = transform * s_Defaults.QuadVertexPos[1];
+		glm::vec3 p2 = transform * s_Defaults.QuadVertexPos[2];
+		glm::vec3 p3 = transform * s_Defaults.QuadVertexPos[3];
+
+		DrawLine(p0, p1, colour, id);
+		DrawLine(p1, p2, colour, id);
+		DrawLine(p2, p3, colour, id);
+		DrawLine(p3, p0, colour, id);
+	}
+
 	void SceneRenderer::RenderBoxCollider(glm::mat4& transform, const BoxCollider2DComponent& boxCollider, float zIndex, int entityID)
 	{
 		glm::vec3 wTranslation, wRotation, wScale;
@@ -610,16 +627,8 @@ namespace Nebula
 		glm::vec3 scale = wScale * glm::vec3(boxCollider.Size, 0.0f) * 2.0f;
 		glm::mat4 new_transform = glm::translate(wTranslation) * glm::toMat4(glm::quat(wRotation)) *
 			glm::translate(glm::vec3(boxCollider.Offset, zIndex)) * glm::scale(scale);
-		
-		glm::vec3 p0 = new_transform * s_Defaults.QuadVertexPos[0];
-		glm::vec3 p1 = new_transform * s_Defaults.QuadVertexPos[1];
-		glm::vec3 p2 = new_transform * s_Defaults.QuadVertexPos[2];
-		glm::vec3 p3 = new_transform * s_Defaults.QuadVertexPos[3];
 
-		DrawLine(p0, p1, { 0.0f, 1.0f, 0.0f, 1.0f }, entityID);
-		DrawLine(p1, p2, { 0.0f, 1.0f, 0.0f, 1.0f }, entityID);
-		DrawLine(p2, p3, { 0.0f, 1.0f, 0.0f, 1.0f }, entityID);
-		DrawLine(p3, p0, { 0.0f, 1.0f, 0.0f, 1.0f }, entityID);
+		RenderRect(new_transform, { 0.0f, 1.0f, 0.0f, 1.0f }, entityID);
 	}
 
 	void SceneRenderer::SkyPrePass(glm::vec3 position)
@@ -748,6 +757,18 @@ namespace Nebula
 		m_Data.GeometryPass->Unbind();
 	}
 
+	static bool hasRelationShip(Ref<Scene> scene, UUID entityA, UUID entityB)
+	{
+		if (entityA == entityB)
+			return true;
+
+		auto& node = scene->GetEntityNode(entityA);
+		if (!node.Parent)
+			return false;
+
+		return hasRelationShip(scene, node.Parent, entityB);
+	}
+
 	void SceneRenderer::ColliderPrePass(glm::vec3 forward)
 	{
 		// Calculate z index for translation
@@ -765,6 +786,13 @@ namespace Nebula
 		for (auto id : boxGroup)
 		{
 			auto [wtc, bc2d] = boxGroup.get<WorldTransformComponent, BoxCollider2DComponent>(id);
+
+			if (m_SelectedEntity)
+			{
+				if (hasRelationShip(m_Context, Entity{ id, m_Context.get() }.GetUUID(), m_SelectedEntity.GetUUID()))
+					continue;
+			}
+
 			RenderBoxCollider(wtc.Transform, bc2d, zIndex, (int)id);
 		}
 	}
@@ -798,6 +826,31 @@ namespace Nebula
 		m_Data.ColliderPass->Unbind();
 	}
 
+	void SceneRenderer::RenderSelectionUI(Entity selectedEntity, glm::vec3 cameraForward)
+	{
+		if (!selectedEntity.IsEnabled())
+			return;
+
+		if (selectedEntity.HasComponent<SpriteRendererComponent>()
+			|| selectedEntity.HasComponent<CircleRendererComponent>())
+		{
+			const WorldTransformComponent& wtc = selectedEntity.GetComponent<WorldTransformComponent>();
+
+			float zIndex = 0.001f;
+			glm::vec3 projectionCollider = cameraForward * glm::vec3(zIndex);
+
+			glm::mat4 transform = wtc.Transform * glm::translate(glm::vec3(0.0f, 0.0f, -projectionCollider.z));
+			RenderRect(transform, { 1.0f, 0.5f, 0.0f, 1.0f }, (int)selectedEntity);
+		}
+
+		Scene::SceneNode node = m_Context->GetEntityNode(selectedEntity.GetUUID());
+		for (auto& id : node.Children)
+		{
+			Entity child = { id, selectedEntity };
+			RenderSelectionUI(child, cameraForward);
+		}
+	}
+
 	void SceneRenderer::Render(const EditorCamera& camera)
 	{
 		NB_ASSERT(m_Context);
@@ -815,20 +868,26 @@ namespace Nebula
 		{
 			SkyPrePass(camera.GetPosition());
 			SkyPass();
+
+			s_Data.TextureSlotIndex = 1;
 		}
 
 		GeometryPrePass();
 		GeometryPass();
 		
+		if (m_SelectedEntity)
+			RenderSelectionUI(m_SelectedEntity, camera.GetForwardDirection());
+
 		if (m_Settings.ShowColliders)
-		{
 			ColliderPrePass(camera.GetForwardDirection());
+		
+		if (m_SelectedEntity || m_Settings.ShowColliders)
 			ColliderPass();
-		}
 		else
 		{
 			Ref<Image2D> image = m_Data.Frambuffer->GetColourAttachmentImage(0);
-			image->TransitionImageLayout(ImageLayout::ColourAttachment, ImageLayout::ShaderReadOnly);
+			ImageLayout layout = m_Settings.PresentToScreen ? ImageLayout::PresentSrcKHR : ImageLayout::ShaderReadOnly;
+			image->TransitionImageLayout(ImageLayout::ColourAttachment, layout);
 		}
 
 		RenderCommand::EndRecording();

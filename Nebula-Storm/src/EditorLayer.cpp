@@ -7,82 +7,8 @@
 #include <imgui.h>
 #include <ImGuizmo.h>
 
-namespace Nebula {
-	static glm::vec4 s_CubeVertexPos[] = {
-		//Front
-		{ -0.5f, -0.5f, -0.5f, 1 },
-		{  0.5f, -0.5f, -0.5f, 1 },
-		{  0.5f,  0.5f, -0.5f, 1 },
-		{ -0.5f,  0.5f, -0.5f, 1 },
-
-		//Left
-		{  0.5f, -0.5f, -0.5f, 1 },
-		{  0.5f, -0.5f,  0.5f, 1 },
-		{  0.5f,  0.5f,  0.5f, 1 },
-		{  0.5f,  0.5f, -0.5f, 1 },
-
-		//Top
-		{ -0.5f,  0.5f, -0.5f, 1 },
-		{  0.5f,  0.5f, -0.5f, 1 },
-		{  0.5f,  0.5f,  0.5f, 1 },
-		{ -0.5f,  0.5f,  0.5f, 1 },
-
-		//Right
-		{ -0.5f, -0.5f,  0.5f, 1 },
-		{ -0.5f, -0.5f, -0.5f, 1 },
-		{ -0.5f,  0.5f, -0.5f, 1 },
-		{ -0.5f,  0.5f,  0.5f, 1 },
-
-		//Back
-		{ -0.5f, -0.5f,  0.5f, 1 },
-		{  0.5f, -0.5f,  0.5f, 1 },
-		{  0.5f,  0.5f,  0.5f, 1 },
-		{ -0.5f,  0.5f,  0.5f, 1 },
-
-		//Bottom
-		{ -0.5f, -0.5f, -0.5f, 1 },
-		{  0.5f, -0.5f, -0.5f, 1 },
-		{  0.5f, -0.5f,  0.5f, 1 },
-		{ -0.5f, -0.5f,  0.5f, 1 }
-	};
-	static glm::vec2 s_CubeTexturePos[] = {
-		//Front
-		{ 0.50f, 0.345f },
-		{ 0.25f, 0.345f },
-		{ 0.25f, 0.66f },
-		{ 0.50f, 0.66f },
-
-		//Left
-		{ 0.25f, 0.345f },
-		{ 0.00f, 0.345f },
-		{ 0.00f, 0.66f },
-		{ 0.25f, 0.66f },
-
-		//Top
-		{ 0.49f, 0.66f },
-		{ 0.26f, 0.66f },
-		{ 0.26f, 1.00f },
-		{ 0.49f, 1.00f },
-
-		//Right
-		{ 0.75f, 0.345f },
-		{ 0.50f, 0.345f },
-		{ 0.50f, 0.66f },
-		{ 0.75f, 0.66f },
-
-		//Back
-		{ 0.75f, 0.345f },
-		{ 1.00f, 0.345f },
-		{ 1.00f, 0.66f },
-		{ 0.75f, 0.66f },
-
-		//Bottom
-		{ 0.499f, 0.345f },
-		{ 0.256f, 0.345f },
-		{ 0.256f, 0.00f },
-		{ 0.499f, 0.00f }
-	};
-
+namespace Nebula 
+{
 	void EditorLayer::Attach() {
 		NB_PROFILE_FUNCTION();
 
@@ -100,8 +26,16 @@ namespace Nebula {
 		
 		AssetManager::CreateGlobalFamily("Resources/fonts/OpenSans");
 		AssetManager::CreateGlobalFamily("Resources/fonts/Roboto");
-		
-		m_SceneRenderer = CreateRef<SceneRenderer>();
+
+		SceneRenderer::Settings settings;
+		settings.PresentToScreen = false;
+		settings.ShowColliders = false;
+		settings.ShowSky = true;
+		settings.ClearColour = { 0.1f, 0.1f, 0.1f, 1.0f };
+		settings.LineWidth = 5.0f;
+		settings.InitialWidth = 1600;
+		settings.InitialHeight = 900;
+		m_SceneRenderer = CreateRef<SceneRenderer>(settings);
 
 		//Create New Scene
 		NewScene();
@@ -131,7 +65,7 @@ namespace Nebula {
 		{
 			//frameBuffer->Resize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
 			m_ActiveScene->OnViewportResize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
-			m_SceneRenderer->Resize(m_GameViewSize.x, m_GameViewSize.y);
+			m_SceneRenderer->Resize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
 			m_EditorCam.SetViewPortSize(m_GameViewSize.x, m_GameViewSize.y);
 		}
 	}
@@ -144,7 +78,7 @@ namespace Nebula {
 		my = viewportSize.y - my;
 
 		if (mx >= 0 && my >= 0 && mx < viewportSize.x && my < viewportSize.y) {
-			int pixelData = m_SceneRenderer->ReadImage(mx, my);
+			int pixelData = m_SceneRenderer->ReadImage((uint32_t)mx, (uint32_t)my);
 			m_HoveredEntity = pixelData == -1 ? Entity() : Entity((entt::entity)pixelData, m_ActiveScene.get());
 		}
 	}
@@ -191,6 +125,8 @@ namespace Nebula {
 
 	void EditorLayer::Render() {
 		NB_PROFILE_FUNCTION();
+
+		m_SceneRenderer->SetSelectedEntity(m_SceneHierarchy.GetSelectedEntity());
 
 		if (m_SceneState == SceneState::Edit || m_SceneState == SceneState::Simulate)
 		{
@@ -344,77 +280,6 @@ namespace Nebula {
 			}
 
 			ImGui::EndMenuBar();
-		}
-	}
-
-	void EditorLayer::OnOverlayRender()  {
-		NB_PROFILE_FUNCTION();
-		return;
-
-		if (m_SceneState == SceneState::Play) 
-		{
-			Entity camera = m_ActiveScene->GetPrimaryCamera();
-			if (!camera)
-				return;
-
-			const CameraComponent& cc = camera.GetComponent<CameraComponent>();
-			const WorldTransformComponent& wtc = camera.GetComponent<WorldTransformComponent>();
-			Renderer2D::BeginScene(cc.Camera, wtc.Transform);
-		}
-		else 
-		{
-			Renderer2D::BeginScene(m_EditorCam);
-
-			{
-				uint32_t vertexCount = sizeof(s_CubeVertexPos) / sizeof(glm::vec4);
-				glm::mat4 transform = glm::translate(m_EditorCam.GetPosition()) * glm::scale(glm::vec3(1000.0f));
-
-				Renderer2D::DrawQuad(vertexCount, s_CubeVertexPos, s_CubeTexturePos,
-					transform, Material{glm::vec4(1.0f), m_Backdrop, 1.0f});
-			}
-
-			if (Entity selectedEntity = m_SceneHierarchy.GetSelectedEntity())
-				RenderSelectionUI(selectedEntity);
-		}
-
-		Renderer2D::EndScene();
-	}
-
-	static bool hasRelationShip(Ref<Scene> scene, UUID entityA, UUID entityB)
-	{
-		if (entityA == entityB)
-			return true;
-		
-		auto& node = scene->GetEntityNode(entityA);
-		if (!node.Parent)
-			return false;
-
-		return hasRelationShip(scene, node.Parent, entityB);
-	}
-
-	void EditorLayer::RenderSelectionUI(Entity selectedEntity) 
-	{
-		if (!selectedEntity.IsEnabled())
-			return;
-
-		if (selectedEntity.HasComponent<SpriteRendererComponent>()
-			|| selectedEntity.HasComponent<CircleRendererComponent>())
-		{
-			const WorldTransformComponent& wtc = selectedEntity.GetComponent<WorldTransformComponent>();
-
-			float zIndex = 0.001f;
-			glm::vec3 cameraForwardDirection = m_EditorCam.GetForwardDirection();
-			glm::vec3 projectionCollider = cameraForwardDirection * glm::vec3(zIndex);
-
-			glm::mat4 transform = wtc.Transform * glm::translate(glm::vec3(0.0f, 0.0f, -projectionCollider.z));
-			Renderer2D::DrawRect(transform, Material{ glm::vec4(1.0f, 0.5f, 0.0f, 1.0f) });
-		}
-		
-		Scene::SceneNode node = m_ActiveScene->GetEntityNode(selectedEntity.GetUUID());
-		for (auto& id : node.Children)
-		{
-			Entity child = { id, selectedEntity };
-			RenderSelectionUI(child);
 		}
 	}
 
