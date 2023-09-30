@@ -169,18 +169,26 @@ namespace Nebula {
 			out << YAML::EndMap; // ScriptComponent
 		}
 		
-		if (entity.HasComponent<MaterialComponent>()) {
+		auto& materialComponent = entity.GetComponent<MaterialComponent>();
+		const AssetMetadata& materialMetadata = AssetManager::GetAssetMetadata(materialComponent.Material);
+		if (materialMetadata.Type != AssetType::MemoryAsset) {
 			out << YAML::Key << "MaterialComponent";
 			out << YAML::BeginMap; // MaterialComponent
 
-			auto& component = entity.GetComponent<MaterialComponent>();
-			out << YAML::Key << "Material" << YAML::Value << component.Material;
+			out << YAML::Key << "Material" << YAML::Value << materialComponent.Material;
 			out << YAML::EndMap; // MaterialComponent
 		}
 
 		if (entity.HasComponent<SpriteRendererComponent>()) {
 			out << YAML::Key << "SpriteRendererComponent";
 			out << YAML::BeginMap; // SpriteRendererComponent
+
+			if (materialMetadata.Type == AssetType::MemoryAsset)
+			{
+				Ref<Material> material = AssetManager::GetAsset<Material>(materialComponent.Material);
+				out << YAML::Key << "Colour" << YAML::Value << material->Colour;
+				out << YAML::Key << "Tiling" << YAML::Value << material->Tiling;
+			}
 
 			auto& component = entity.GetComponent<SpriteRendererComponent>();
 			out << YAML::Key << "Offset" << YAML::Value << component.SubTextureOffset;
