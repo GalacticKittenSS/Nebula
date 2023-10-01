@@ -40,6 +40,8 @@ namespace Nebula {
 		layers.SetStyle(YAML::EmitterStyle::Flow);
 
 		out << YAML::Key << "Gravity" << YAML::Value << config.Gravity;
+		out << YAML::Key << "ClearColour" << YAML::Value << config.ClearColour;
+		out << YAML::Key << "ShowSky" << YAML::Value << config.ShowSky;
 		out << YAML::Key << "Layers" << YAML::Value << layers;
 		out << YAML::EndMap; // Scene
 
@@ -84,6 +86,8 @@ namespace Nebula {
 		if (auto sceneNode = data["Scene"])
 		{
 			DeserializeValue(config.Gravity, sceneNode["Gravity"]);
+			DeserializeValue(config.ClearColour, sceneNode["ClearColour"]);
+			DeserializeValue(config.ShowSky, sceneNode["ShowSky"]);
 
 			if (auto layers = sceneNode["Layers"])
 			{

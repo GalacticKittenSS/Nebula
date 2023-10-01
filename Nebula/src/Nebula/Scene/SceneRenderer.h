@@ -40,6 +40,8 @@ namespace Nebula
 		
 		void SetContext(Ref<Scene> scene) { m_Context = scene; }
 		void SetSelectedEntity(Entity entity) { m_SelectedEntity = entity; }
+		
+		void SetClearColour(const glm::vec4& colour);
 
 		void Render(const EditorCamera& camera);
 		void Render(const Camera& camera, const glm::mat4& transform);

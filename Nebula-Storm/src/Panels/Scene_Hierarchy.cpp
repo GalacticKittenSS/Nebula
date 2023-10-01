@@ -82,6 +82,8 @@ namespace Nebula {
 
 	static bool DrawVec2Control(const std::string& label, glm::vec2& values, const glm::vec2& min = glm::vec2(0.0f), const glm::vec2& max = glm::vec2(0.0f),
 		const glm::vec2& resetvalue = glm::vec2(0.0f));
+	static bool DrawBool(const std::string& label, bool& values);
+	static bool DrawColourEdit(const std::string& label, glm::vec4& colour);
 
 	SceneHierarchyPanel::SceneHierarchyPanel(const Ref<Scene>& scene) {
 		SetContext(scene);
@@ -127,6 +129,9 @@ namespace Nebula {
 
 		ProjectConfig& pConfig = Project::GetActive()->GetConfig();
 		DrawVec2Control("Gravity", pConfig.Gravity, glm::vec2(0.0f), glm::vec2(0.0f), glm::vec2(0.0f, -9.81f));
+
+		DrawColourEdit("Background Colour", pConfig.ClearColour);
+		DrawBool("Show Sky", pConfig.ShowSky);
 
 		ImGui::Separator();
 		

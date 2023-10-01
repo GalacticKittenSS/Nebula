@@ -126,12 +126,16 @@ namespace Nebula
 	void EditorLayer::Render() {
 		NB_PROFILE_FUNCTION();
 
+		GetPixelData();
 		m_SceneRenderer->SetSelectedEntity(m_SceneHierarchy.GetSelectedEntity());
+
+		ProjectConfig& pConfig = Project::GetActive()->GetConfig();
+		m_SceneRenderer->SetClearColour(pConfig.ClearColour);
+		m_SceneRenderer->m_Settings.ShowSky = pConfig.ShowSky;
 
 		if (m_SceneState == SceneState::Edit || m_SceneState == SceneState::Simulate)
 		{
 			m_SceneRenderer->Render(m_EditorCam);
-			GetPixelData();
 		}
 		else
 		{

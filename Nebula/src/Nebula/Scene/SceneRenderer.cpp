@@ -383,6 +383,12 @@ namespace Nebula
 		m_Data.TextureShader->SetTextureArray("u_Textures", s_Defaults.WhiteTexture);
 	}
 
+	void SceneRenderer::SetClearColour(const glm::vec4& colour)
+	{
+		FrameBufferSpecification& spec = m_Data.Frambuffer->GetFrameBufferSpecifications();
+		spec.ClearColour = colour;
+	}
+	
 	void SceneRenderer::Resize(uint32_t width, uint32_t height)
 	{
 		m_Data.Frambuffer->Resize(width, height);
@@ -862,14 +868,20 @@ namespace Nebula
 		
 		m_Data.Frambuffer->Bind();
 		RenderCommand::BeginRecording();
-		m_Data.Frambuffer->ClearDepthAttachment(0);
 
 		if (m_Settings.ShowSky)
 		{
+			m_Data.Frambuffer->ClearDepthAttachment(0);
 			SkyPrePass(camera.GetPosition());
 			SkyPass();
 
 			s_Data.TextureSlotIndex = 1;
+		}
+		else
+		{
+
+			RenderCommand::Clear();
+			m_Data.Frambuffer->ClearDepthAttachment(0);
 		}
 
 		GeometryPrePass();

@@ -19,6 +19,10 @@ namespace Nebula {
 		// Scene
 		glm::vec2 Gravity = { 0.0f, -9.81f };
 		std::map<uint16_t, Ref<ProjectLayer>> Layers;
+
+		// Scene Renderer
+		glm::vec4 ClearColour = { 0.1f, 0.1f, 0.1f, 1.0f };
+		bool ShowSky = true;
 	};
 
 	class Project
