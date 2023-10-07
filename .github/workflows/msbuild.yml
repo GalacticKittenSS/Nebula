@@ -1,0 +1,60 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+name: MSBuild
+
+on:
+  push:
+    branches: [ "Workflow-Test" ]
+  pull_request:
+    branches: [ "Workflow-Test" ]
+
+env:
+  # Path to the solution file relative to the root of the project.
+  SOLUTION_FILE_PATH: "Nebula.sln"
+  
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: [Windows, self-hosted]
+    strategy:
+      fail-fast: false
+      matrix:
+        build-configuration: [Debug, Release, Dist]
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        repositry: GalacticKittenSS/Nebula
+        submodules: true
+        lfs: true
+
+    - name: Set Exuction Policy
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
+        
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+
+    - name: Add MSBuild to PATH
+      uses: microsoft/setup-msbuild@v1.1
+      with:
+        msbuild-architecture: x64
+    
+    - name: Setup
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: |
+        pip install requests
+        cd scripts
+        python Setup.py
+
+    - name: Build
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      # Add additional options to the MSBuild command line here (like platform or verbosity level).
+      # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
+      run: msbuild /m /p:Configuration=${{matrix.build-configuration}} ${{env.SOLUTION_FILE_PATH}}
