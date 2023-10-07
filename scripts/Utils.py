@@ -78,9 +78,7 @@ def DownloadFile(url, filepath):
                 if (avgKBPerSecond > 1024):
                     avgMBPerSecond = avgKBPerSecond / 1024
                     avgSpeedString = '{:.2f} MB/s'.format(avgMBPerSecond)
-                sys.stdout.write('\r[{}{}] {:.2f}% ({})     '.format('█' * done, '.' * (50-done), percentage, avgSpeedString))
-                sys.stdout.flush()
-    sys.stdout.write('\n')
+                print(percentage, avgSpeedString)
 
 def UnzipFile(filepath, deleteZipFile=True):
     zipFilePath = os.path.abspath(filepath) # get full path of files
@@ -117,9 +115,6 @@ def UnzipFile(filepath, deleteZipFile=True):
             if (avgKBPerSecond > 1024):
                 avgMBPerSecond = avgKBPerSecond / 1024
                 avgSpeedString = '{:.2f} MB/s'.format(avgMBPerSecond)
-            sys.stdout.write('\r[{}{}] {:.2f}% ({})     '.format('█' * done, '.' * (50-done), percentage, avgSpeedString))
-            sys.stdout.flush()
-    sys.stdout.write('\n')
-
+            print(percentage, avgSpeedString)
     if deleteZipFile:
         os.remove(zipFilePath) # delete zip file
