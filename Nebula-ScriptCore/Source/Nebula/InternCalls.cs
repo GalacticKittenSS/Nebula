@@ -11,6 +11,9 @@ namespace Nebula
         #region Application
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static bool Application_GetWindowSize(out Vector2 size);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static ulong Application_GetHoveredEntity();
         #endregion
 
         #region Mathf

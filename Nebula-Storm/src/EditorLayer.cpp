@@ -3,6 +3,7 @@
 #include <Nebula/Utils/UI.h>
 #include <Nebula/AssetManager/AssetManager.h>
 #include <Nebula/AssetManager/TextureImporter.h>
+#include <Nebula/Scripting/ScriptGlue.h>
 
 #include <imgui.h>
 #include <ImGuizmo.h>
@@ -63,7 +64,6 @@ namespace Nebula
 		if (m_GameViewSize.x > 0.0f && m_GameViewSize.y > 0.0f
 			&& framebufferSize != m_GameViewSize)
 		{
-			//frameBuffer->Resize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
 			m_ActiveScene->OnViewportResize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
 			m_SceneRenderer->Resize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
 			m_EditorCam.SetViewPortSize(m_GameViewSize.x, m_GameViewSize.y);
@@ -77,9 +77,11 @@ namespace Nebula
 		glm::vec2 viewportSize = m_ViewPortBounds[1] - m_ViewPortBounds[0];
 		my = viewportSize.y - my;
 
-		if (mx >= 0 && my >= 0 && mx < viewportSize.x && my < viewportSize.y) {
+		if (mx >= 0 && my >= 0 && mx < viewportSize.x && my < viewportSize.y) 
+		{
 			int pixelData = m_SceneRenderer->ReadImage((uint32_t)mx, (uint32_t)my);
 			m_HoveredEntity = pixelData == -1 ? Entity() : Entity((entt::entity)pixelData, m_ActiveScene.get());
+			ScriptFunctionData::HoveredEntity = m_HoveredEntity ? m_HoveredEntity.GetUUID() : NULL;
 		}
 	}
 	
@@ -127,18 +129,20 @@ namespace Nebula
 		NB_PROFILE_FUNCTION();
 
 		GetPixelData();
-		m_SceneRenderer->SetSelectedEntity(m_SceneHierarchy.GetSelectedEntity());
-
+		
 		ProjectConfig& pConfig = Project::GetActive()->GetConfig();
 		m_SceneRenderer->SetClearColour(pConfig.ClearColour);
 		m_SceneRenderer->m_Settings.ShowSky = pConfig.ShowSky;
 
 		if (m_SceneState == SceneState::Edit || m_SceneState == SceneState::Simulate)
 		{
+			m_SceneRenderer->SetSelectedEntity(m_SceneHierarchy.GetSelectedEntity());
 			m_SceneRenderer->Render(m_EditorCam);
 		}
 		else
 		{
+			m_SceneRenderer->SetSelectedEntity({});
+			
 			Entity camera = m_ActiveScene->GetPrimaryCamera();
 			if (!camera)
 				return;
@@ -305,6 +309,9 @@ namespace Nebula
 		ImVec2 panelSize = ImGui::GetContentRegionAvail();
 		m_GameViewSize = { panelSize.x, panelSize.y };
 
+		ScriptFunctionData::WindowOffset = { ImGui::GetWindowPos().x, ImGui::GetWindowPos().y };
+		ScriptFunctionData::WindowSize = { ImGui::GetWindowSize().x, ImGui::GetWindowSize().y };
+		
 		Ref<Image2D> texture = m_SceneRenderer->GetFinalImage();
 		ImGui::Image((ImTextureID)texture->GetDescriptorSet(), panelSize, ImVec2{0, 1}, ImVec2{1, 0});
 

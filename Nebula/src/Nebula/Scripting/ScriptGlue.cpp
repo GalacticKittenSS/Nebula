@@ -18,6 +18,9 @@
 #include <box2d/b2_body.h>
 
 namespace Nebula {
+	UUID ScriptFunctionData::HoveredEntity = NULL;
+	glm::vec2 ScriptFunctionData::WindowOffset = { 0.0f, 0.0f };
+	glm::vec2 ScriptFunctionData::WindowSize = { 0.0f, 0.0f };
 
 #define NB_ADD_INTERNAL_CALL(Name) mono_add_internal_call("Nebula.InternalCalls::" #Name, Name);
 	static std::unordered_map<MonoType*, std::function<bool(Entity)>> s_EntityHasComponentFuncs;
@@ -52,8 +55,20 @@ namespace Nebula {
 #pragma region Application
 	static void Application_GetWindowSize(glm::vec2* size)
 	{
-		Window& window = Application::Get().GetWindow();
-		*size = { (float)window.GetHeight(), (float)window.GetHeight() };
+		if (ScriptFunctionData::WindowSize != glm::vec2(0.0f))
+		{
+			*size = ScriptFunctionData::WindowSize;
+		}
+		else
+		{
+			Window& window = Application::Get().GetWindow();
+			*size = { (float)window.GetHeight(), (float)window.GetHeight() };
+		}
+	}
+
+	static uint64_t Application_GetHoveredEntity()
+	{
+		return ScriptFunctionData::HoveredEntity;
 	}
 #pragma endregion
 
@@ -125,6 +140,7 @@ namespace Nebula {
 	static void Input_GetMousePos(glm::vec2* out)
 	{
 		*out = { Input::GetMouseX(), Input::GetMouseY() };
+		*out -= ScriptFunctionData::WindowOffset;
 	}
 #pragma endregion
 
@@ -1413,6 +1429,7 @@ namespace Nebula {
 		NB_ADD_INTERNAL_CALL(Native_Log);
 
 		NB_ADD_INTERNAL_CALL(Application_GetWindowSize);
+		NB_ADD_INTERNAL_CALL(Application_GetHoveredEntity);
 
 		NB_ADD_INTERNAL_CALL(Mathf_ToDegrees);
 		NB_ADD_INTERNAL_CALL(Mathf_ToRadians);

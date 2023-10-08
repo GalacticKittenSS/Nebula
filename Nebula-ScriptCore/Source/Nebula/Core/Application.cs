@@ -7,5 +7,14 @@
             InternalCalls.Application_GetWindowSize(out Vector2 size);
             return size;
         }
+        
+        public static Entity GetHoveredEntity()
+        {
+            ulong entityID = InternalCalls.Application_GetHoveredEntity();
+            if (entityID == 0)
+                return null;
+
+            return new Entity(entityID);
+        }
     }
 }
