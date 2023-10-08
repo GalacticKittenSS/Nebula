@@ -298,14 +298,14 @@ namespace Nebula
 			m_Data.SkyPass = RenderPass::Create(spec);
 		
 			spec.DebugName = "Geometry-RenderPass";
-			spec.Attachments[0] = { ImageFormat::BGRA8, ImageLayout::ColourAttachment, ImageLayout::ColourAttachment };
+			spec.Attachments[0].OriginalLayout = ImageLayout::ColourAttachment;
 			spec.ClearOnLoad = false;
 			m_Data.GeometryPass = RenderPass::Create(spec);
 
 			ImageLayout finalLayout = m_Settings.PresentToScreen ? ImageLayout::PresentSrcKHR : ImageLayout::ShaderReadOnly;
 
 			spec.DebugName = "Collider-RenderPass";
-			spec.Attachments[0] = { ImageFormat::BGRA8, ImageLayout::ColourAttachment, finalLayout };
+			spec.Attachments[0].FinalLayout = finalLayout;
 			m_Data.ColliderPass = RenderPass::Create(spec);
 		}
 
@@ -417,12 +417,21 @@ namespace Nebula
 
 		Material material = Material::Get(mat);
 		float textureIndex = material.Texture ? GetTextureIndex(mat->Texture) : 0.0f;
+		
+		Ref<SubTexture2D> subTexture;
+		glm::vec2* textureCoords = s_Defaults.CubeTexCoords;
+
+		if (mat && mat->Texture && mat->Texture->IsLoaded())
+		{
+			subTexture = SubTexture2D::CreateFromCoords(mat->Texture, sprite.SubTextureOffset, sprite.SubTextureCellSize, sprite.SubTextureCellNum);
+			textureCoords = subTexture->GetTextureCoords();
+		}
 
 		for (size_t i = 0; i < 4; i++)
 		{
 			s_Data.QuadVBPtr->Position = transform * s_Defaults.QuadVertexPos[i];
 			s_Data.QuadVBPtr->Colour = material.Colour;
-			s_Data.QuadVBPtr->TexCoord = s_Defaults.TextureCoords[i];
+			s_Data.QuadVBPtr->TexCoord = textureCoords[i];
 			s_Data.QuadVBPtr->TexIndex = textureIndex;
 			s_Data.QuadVBPtr->TilingFactor = material.Tiling;
 			s_Data.QuadVBPtr->EntityID = entityID;
@@ -660,48 +669,63 @@ namespace Nebula
 	{
 		m_Data.SkyPass->Bind();
 
-		m_Data.TextureShader->ResetDescriptorSet(1);
-		m_Data.TextureShader->SetTextureArray("u_Textures", s_Defaults.WhiteTexture);
+		if (s_Data.QuadIndexCount)
+		{
+			m_Data.TextureShader->ResetDescriptorSet(1);
+			m_Data.TextureShader->SetTextureArray("u_Textures", s_Defaults.WhiteTexture);
 
-		m_Data.TextureShader->Bind();
-		m_Data.TexturePipeline->Bind();
+			m_Data.TextureShader->Bind();
+			m_Data.TexturePipeline->Bind();
 
-		for (uint32_t i = 0; i < s_Data.TextureSlotIndex; i++)
-			s_Data.TextureSlots[i]->Bind(i);
+			for (uint32_t i = 0; i < s_Data.TextureSlotIndex; i++)
+				s_Data.TextureSlots[i]->Bind(i);
 
-		m_Data.TexturePipeline->BindDescriptorSet();
+			m_Data.TexturePipeline->BindDescriptorSet();
 
-		uint32_t dataSize = (uint32_t)((uint8_t*)s_Data.QuadVBPtr - (uint8_t*)s_Data.QuadVBBase);
-		s_Data.SkyVertexBuffer->SetData(s_Data.QuadVBBase, dataSize);
-		RenderCommand::DrawIndexed(s_Data.SkyVertexArray, s_Data.QuadIndexCount);
-		
+			uint32_t dataSize = (uint32_t)((uint8_t*)s_Data.QuadVBPtr - (uint8_t*)s_Data.QuadVBBase);
+			s_Data.SkyVertexBuffer->SetData(s_Data.QuadVBBase, dataSize);
+			RenderCommand::DrawIndexed(s_Data.SkyVertexArray, s_Data.QuadIndexCount);
+		}
+
 		m_Data.SkyPass->Unbind();
 	}
 
 	void SceneRenderer::GeometryPrePass()
 	{
-		auto spriteGroup = m_Context->m_Registry.group<WorldTransformComponent, MaterialComponent>(entt::get<SpriteRendererComponent>);
+		auto spriteGroup = m_Context->m_Registry.group<WorldTransformComponent, MaterialComponent, PropertiesComponent>(entt::get<SpriteRendererComponent>);
 		for (auto id : spriteGroup)
 		{
-			auto [transform, material, sprite] = spriteGroup.get<WorldTransformComponent, MaterialComponent, SpriteRendererComponent>(id);
-			Ref<Material> mat = AssetManager::GetAsset<Material>(material.Material);
-			RenderSprite(transform.Transform, mat, sprite, (int)id);
+			auto [transform, material, prop, sprite] = spriteGroup.get<WorldTransformComponent, MaterialComponent, PropertiesComponent, SpriteRendererComponent>(id);
+			
+			if (prop.Enabled)
+			{
+				Ref<Material> mat = AssetManager::GetAsset<Material>(material.Material);
+				RenderSprite(transform.Transform, mat, sprite, (int)id);
+			}
 		}
 
-		auto circleGroup = m_Context->m_Registry.view<WorldTransformComponent, MaterialComponent, CircleRendererComponent>();
+		auto circleGroup = m_Context->m_Registry.view<WorldTransformComponent, MaterialComponent, PropertiesComponent, CircleRendererComponent>();
 		for (auto id : circleGroup)
 		{
-			auto [transform, material, circle] = circleGroup.get<WorldTransformComponent, MaterialComponent, CircleRendererComponent>(id);
-			Ref<Material> mat = AssetManager::GetAsset<Material>(material.Material);
-			RenderCircle(transform.Transform, mat, circle, (int)id);
+			auto [transform, material, prop, circle] = circleGroup.get<WorldTransformComponent, MaterialComponent, PropertiesComponent, CircleRendererComponent>(id);
+			
+			if (prop.Enabled)
+			{
+				Ref<Material> mat = AssetManager::GetAsset<Material>(material.Material);
+				RenderCircle(transform.Transform, mat, circle, (int)id);
+			}
 		}
 
-		auto stringGroup = m_Context->m_Registry.view<WorldTransformComponent, StringRendererComponent>();
+		auto stringGroup = m_Context->m_Registry.view<WorldTransformComponent, PropertiesComponent, StringRendererComponent>();
 		for (auto id : stringGroup)
 		{
-			auto [transform, string] = stringGroup.get<WorldTransformComponent, StringRendererComponent>(id);
-			Ref<Font> font = string.GetFont();
-			RenderString(transform.Transform, font, string, (int)id);
+			auto [transform, prop, string] = stringGroup.get<WorldTransformComponent, PropertiesComponent, StringRendererComponent>(id);
+			
+			if (prop.Enabled)
+			{
+				Ref<Font> font = string.GetFont();
+				RenderString(transform.Transform, font, string, (int)id);
+			}
 		}
 	}
 
@@ -868,21 +892,13 @@ namespace Nebula
 		
 		m_Data.Frambuffer->Bind();
 		RenderCommand::BeginRecording();
+		m_Data.Frambuffer->ClearDepthAttachment(0);
 
 		if (m_Settings.ShowSky)
-		{
-			m_Data.Frambuffer->ClearDepthAttachment(0);
 			SkyPrePass(camera.GetPosition());
-			SkyPass();
-
-			s_Data.TextureSlotIndex = 1;
-		}
-		else
-		{
-
-			RenderCommand::Clear();
-			m_Data.Frambuffer->ClearDepthAttachment(0);
-		}
+		
+		SkyPass();
+		s_Data.TextureSlotIndex = 1;
 
 		GeometryPrePass();
 		GeometryPass();
@@ -920,10 +936,10 @@ namespace Nebula
 		m_Data.Frambuffer->ClearDepthAttachment(0);
 
 		if (m_Settings.ShowSky)
-		{
 			SkyPrePass(transform[3]);
-			SkyPass();
-		}
+		
+		SkyPass();
+		s_Data.TextureSlotIndex = 1;
 		
 		GeometryPrePass();
 		GeometryPass();
@@ -936,7 +952,8 @@ namespace Nebula
 		else
 		{
 			Ref<Image2D> image = m_Data.Frambuffer->GetColourAttachmentImage(0);
-			image->TransitionImageLayout(ImageLayout::ColourAttachment, ImageLayout::ShaderReadOnly);
+			ImageLayout layout = m_Settings.PresentToScreen ? ImageLayout::PresentSrcKHR : ImageLayout::ShaderReadOnly;
+			image->TransitionImageLayout(ImageLayout::ColourAttachment, layout);
 		}
 
 		RenderCommand::EndRecording();
