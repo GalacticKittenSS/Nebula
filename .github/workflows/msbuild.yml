@@ -7,9 +7,9 @@ name: MSBuild
 
 on:
   push:
-    branches: [ "Workflow-Test" ]
+    branches: [ "Vulkan" ]
   pull_request:
-    branches: [ "Workflow-Test" ]
+    branches: [ "Vulkan" ]
 
 env:
   # Path to the solution file relative to the root of the project.
@@ -33,10 +33,6 @@ jobs:
         submodules: true
         lfs: true
 
-    - name: Set Exuction Policy
-      working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
-        
     - uses: actions/setup-python@v4
       with:
         python-version: '3.12'
