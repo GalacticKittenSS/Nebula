@@ -25,10 +25,12 @@ includedir["VulkanSDK"] = "	 %{VULKAN_SDK}/Include"
 
 LibraryDir = {}
 LibraryDir["VulkanSDK"] = "%{VULKAN_SDK}/Lib"
-LibraryDir["mono"] = "%{wks.location}/Nebula/Modules/Mono/lib/%{cfg.buildcfg}"
+LibraryDir["mono_Debug"] = "%{wks.location}/Nebula/Modules/Mono/lib/Debug"
+LibraryDir["mono_Release"] = "%{wks.location}/Nebula/Modules/Mono/lib/Release"
 
 Library = {}
-Library["mono"] = "%{LibraryDir.mono}/libmono-static-sgen.lib"
+Library["mono_Debug"] = "%{LibraryDir.mono_Debug}/libmono-static-sgen.lib"
+Library["mono_Release"] = "%{LibraryDir.mono_Release}/libmono-static-sgen.lib"
 
 Library["Vulkan"] = "%{LibraryDir.VulkanSDK}/vulkan-1.lib"
 Library["VulkanUtils"] = "%{LibraryDir.VulkanSDK}/VkLayer_utils.lib"

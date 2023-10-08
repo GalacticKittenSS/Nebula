@@ -58,7 +58,6 @@ project "Nebula"
 		"yaml-cpp",
 		"opengl32.lib",
 
-		"%{Library.mono}",
 		"%{Library.Vulkan}"
 	}
 	
@@ -87,6 +86,7 @@ project "Nebula"
 		symbols "on"
 		
 		links {
+			"%{Library.mono_Debug}",
 			"%{Library.ShaderC_Debug}",
 			"%{Library.SPIRV_Cross_Debug}",
 			"%{Library.SPIRV_Cross_GLSL_Debug}"
@@ -100,6 +100,7 @@ project "Nebula"
 		optimize "on"
 
 		links {
+			"%{Library.mono_Release}",
 			"%{Library.ShaderC_Release}",
 			"%{Library.SPIRV_Cross_Release}",
 			"%{Library.SPIRV_Cross_GLSL_Release}"
@@ -111,6 +112,7 @@ project "Nebula"
 		optimize "on"
 		
 		links {
+			"%{Library.mono_Release}",
 			"%{Library.ShaderC_Release}",
 			"%{Library.SPIRV_Cross_Release}",
 			"%{Library.SPIRV_Cross_GLSL_Release}"
