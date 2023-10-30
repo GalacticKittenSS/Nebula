@@ -11,6 +11,7 @@
 
 #include "../Modules/imgui/misc/cpp/imgui_stdlib.h"
 #include "../../Modules/Box2D/include/box2d/b2_body.h"
+#include "../../Modules/Box2D/include/box2d/b2_fixture.h"
 
 namespace Nebula {
 	static float s_TextColumnWidth	= 100.0f;
@@ -713,6 +714,28 @@ namespace Nebula {
 			UpdateChildProperties(scene, child, enabled);
 		}
 	}
+	
+	static void UpdateChildProperties(Ref<Scene> scene, Entity entity, Ref<ProjectLayer> layer)
+	{
+		if (entity.HasComponent<BoxCollider2DComponent>())
+		{
+			if (b2Fixture* fixture = (b2Fixture*)entity.GetComponent<BoxCollider2DComponent>().RuntimeFixture)
+			{
+				b2Filter filter = fixture->GetFilterData();
+				filter.categoryBits = layer->Identity;
+				fixture->SetFilterData(filter);
+			}
+		}
+		
+		auto& pcc = scene->GetEntityNode(entity.GetUUID());
+		for (UUID id : pcc.Children)
+		{
+			Entity child = { id, entity };
+			auto& prop = child.GetComponent<PropertiesComponent>();
+			prop.Layer = layer;
+			UpdateChildProperties(scene, child, layer);
+		}
+	}
 
 	void SceneHierarchyPanel::DrawComponents(Entity entity) {
 		float buttonWidth = ImGui::CalcTextSize("Add Component").x + GImGui->Style.ItemSpacing.x * 2;
@@ -749,7 +772,10 @@ namespace Nebula {
 					bool isSelected = prop.Layer == layer;
 					
 					if (ImGui::Selectable(layer->Name.c_str(), isSelected))
+					{
 						prop.Layer = pConfig.Layers.at(l);
+						UpdateChildProperties(m_Context, entity, prop.Layer);
+					}
 					
 					if (isSelected)
 						ImGui::SetItemDefaultFocus();
