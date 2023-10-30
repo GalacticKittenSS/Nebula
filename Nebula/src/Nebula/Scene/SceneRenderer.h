@@ -75,7 +75,7 @@ namespace Nebula
 	private:
 		struct RenderData
 		{
-			Ref<FrameBuffer> Frambuffer;
+			Ref<FrameBuffer> Framebuffer;
 			Ref<RenderPass> SkyPass;
 			Ref<RenderPass> GeometryPass;
 			Ref<RenderPass> ColliderPass;
