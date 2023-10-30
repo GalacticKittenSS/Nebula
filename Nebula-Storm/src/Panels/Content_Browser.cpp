@@ -11,7 +11,8 @@ namespace Nebula {
 	static float s_TextColumnWidth = 105.0f;
 	static float s_MaxItemWidth = 425.0f;
 	
-	ContentBrowserPanel::ContentBrowserPanel()
+	ContentBrowserPanel::ContentBrowserPanel(Ref<Project> project)
+		: m_Project(project), m_BaseDirectory(project->GetAssetDirectory()), m_CurrentDirectory(m_BaseDirectory)
 	{
 		m_DirectoryIcon = TextureImporter::CreateTexture2D("Resources/Icons/ContentBrowser/DirectoryIcon.png");
 		m_FileIcon = TextureImporter::CreateTexture2D("Resources/Icons/ContentBrowser/FileIcon.png");
@@ -19,16 +20,18 @@ namespace Nebula {
 		m_FontIcon = TextureImporter::CreateTexture2D("Resources/Icons/ContentBrowser/FontIcon.png");
 		m_MaterialIcon = TextureImporter::CreateTexture2D("Resources/Icons/ContentBrowser/MaterialIcon.png");
 		m_ScriptIcon = TextureImporter::CreateTexture2D("Resources/Icons/ContentBrowser/ScriptIcon.png");
-	}
 
-	void ContentBrowserPanel::SetContext(const std::filesystem::path& assetsPath)
-	{
-		m_BaseDirectory = assetsPath;
-		m_CurrentDirectory = m_BaseDirectory;
 		RefreshAssetTree();
+		m_ThumbnailCache = CreateRef<ThumbnailCache>(m_Project);
 	}
 
-	void ContentBrowserPanel::SetSceneContext(const Ref<Scene>& scene)
+	ContentBrowserPanel::ContentBrowserPanel()
+		: m_Project(nullptr), m_BaseDirectory(""), m_CurrentDirectory(m_BaseDirectory)
+	{
+
+	}
+
+	void ContentBrowserPanel::SetContext(const Ref<Scene>& scene)
 	{
 		m_Scene = scene;
 	}
@@ -132,11 +135,6 @@ namespace Nebula {
 		case AssetType::Font: return m_FontIcon;
 		case AssetType::Script: return m_ScriptIcon;
 		case AssetType::Material: return m_MaterialIcon;
-		case AssetType::Texture:
-		{
-			AssetHandle handle = AssetManager::GetHandleFromPath(path);
-			return AssetManager::GetAsset<Texture2D>(handle);
-		}
 		}
 		
 		return m_FileIcon;
@@ -206,9 +204,12 @@ namespace Nebula {
 
 		ImGui::Columns(columCount, 0, false);
 		
+		if (!std::filesystem::exists(m_CurrentDirectory))
+			m_CurrentDirectory = m_BaseDirectory;
+
 		for (auto& directoryEntry : std::filesystem::directory_iterator(m_CurrentDirectory))
 		{
-			std::filesystem::path path = std::filesystem::relative(directoryEntry, Project::GetAssetDirectory());
+			std::filesystem::path path = std::filesystem::relative(directoryEntry, m_Project->GetAssetDirectory());
 			std::string filename = path.filename().string();
 
 			bool isAsset = m_TreeNodes.find(path) < m_TreeNodes.size();
@@ -217,9 +218,13 @@ namespace Nebula {
 
 			ImGui::PushID(filename.c_str());
 			
-			Ref<Texture2D> icon = m_DirectoryIcon;
+			Ref<Texture2D> thumbnail = m_DirectoryIcon;
 			if (!directoryEntry.is_directory())
-				icon = GetIcon(path);
+			{
+				thumbnail = m_ThumbnailCache->GetorCreateThumbnail(directoryEntry);
+				if (!thumbnail)
+					thumbnail = GetIcon(directoryEntry);
+			}
 
 			ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, isAsset ? 1.0f : 0.5f);
 			if (AssetManager::GetTypeFromExtension(path.extension().string()) == AssetType::Material)
@@ -232,7 +237,7 @@ namespace Nebula {
 
 			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
 			
-			if (ImGui::ImageButton((ImTextureID)(uint64_t)icon->GetRendererID(), { thumbnailSize, thumbnailSize }, { 0, 1 }, { 1, 0 }, -1, ImVec4(), tint))
+			if (ImGui::ImageButton((ImTextureID)(uint64_t)thumbnail->GetRendererID(), { thumbnailSize, thumbnailSize }, { 0, 1 }, { 1, 0 }, -1, ImVec4(), tint))
 			{
 				if (!directoryEntry.is_directory())
 				{
@@ -263,7 +268,7 @@ namespace Nebula {
 					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
 					{
 						std::filesystem::path filepath = (const wchar_t*)payload->Data;
-						std::filesystem::rename(Project::GetAssetDirectory() / filepath, directoryEntry / filepath.filename());
+						std::filesystem::rename(m_Project->GetAssetDirectory() / filepath, directoryEntry / filepath.filename());
 					}
 
 					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENTITY"))
@@ -393,6 +398,14 @@ namespace Nebula {
 
 		ImGui::Separator();
 		ImGui::Separator();
+
+		Ref<Texture2D> thumbnail = m_ThumbnailCache->GetorCreateThumbnail(m_SelectedFile);
+		if (thumbnail)
+		{
+			float buttonSize = ImGui::GetContentRegionAvail().x;
+			ImGui::Image((ImTextureID)thumbnail->GetRendererID(), ImVec2{ buttonSize, buttonSize }, { 0, 1 }, { 1, 0 });
+			return;
+		}
 
 		if (!m_AssetPreview)
 		{

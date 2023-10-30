@@ -2,6 +2,8 @@
 
 #include <Nebula.h>
 
+#include "ThumbnailCache.h"
+
 #include <filesystem>
 #include <map>
 
@@ -9,21 +11,24 @@ namespace Nebula {
 	class ContentBrowserPanel {
 	public:
 		ContentBrowserPanel();
+		ContentBrowserPanel(Ref<Project> project);
 
 		void OnImGuiRender();
 
 		void RenderProperties();
 
 		// For Creating Prefabs
-		void SetSceneContext(const Ref<Scene>& scene);
-		void SetContext(const std::filesystem::path& assetsPath);
+		void SetContext(const Ref<Scene>& scene);
 	private:
 		void RenderBrowser();
 		void RefreshAssetTree();
 		void CreateFilePopup();
 		Ref<Texture2D> GetIcon(const std::filesystem::path& extension);
 	private:
+		Ref<Project> m_Project;
 		Ref<Scene> m_Scene;
+		Ref<ThumbnailCache> m_ThumbnailCache;
+
 		std::filesystem::path m_BaseDirectory;
 		std::filesystem::path m_CurrentDirectory;
 		std::filesystem::path m_SelectedFile;

@@ -88,8 +88,8 @@ namespace Nebula {
 		SceneState m_SceneState = SceneState::Edit;
 
 		//Panels
-		SceneHierarchyPanel m_SceneHierarchy;
-		ContentBrowserPanel m_ContentBrowser;
+		Ref<SceneHierarchyPanel> m_SceneHierarchy;
+		Ref<ContentBrowserPanel> m_ContentBrowser;
 
 		//Editor Resources
 		Ref<Texture2D> m_PlayIcon, m_SimulateIcon, 

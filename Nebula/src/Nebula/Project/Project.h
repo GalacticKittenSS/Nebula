@@ -31,39 +31,46 @@ namespace Nebula {
 		Project();
 		ProjectConfig& GetConfig() { return m_Config; }
 
-		static const std::filesystem::path& GetProjectDirectory()
+		const std::filesystem::path& GetProjectDirectory() { return m_ProjectDirectory; }
+		const std::filesystem::path& GetProjectFilePath() { return m_ProjectFile; }
+		std::filesystem::path GetAssetDirectory() { return GetProjectDirectory() / m_Config.AssetDirectory; }
+		std::filesystem::path GetScriptModulePath() { return GetProjectDirectory() / m_Config.ScriptModulePath; }
+		std::filesystem::path GetAssetRegistryPath() { return GetProjectDirectory() / m_Config.AssetRegistryPath; }
+		
+		static const std::filesystem::path& GetActiveProjectDirectory()
 		{
 			NB_ASSERT(s_ActiveProject);
-			return s_ActiveProject->m_ProjectDirectory;
+			return s_ActiveProject->GetProjectDirectory();
 		}
 
-		static std::filesystem::path GetAssetDirectory()
+		static const std::filesystem::path& GetActiveProjectFilePath()
 		{
 			NB_ASSERT(s_ActiveProject);
-			return GetProjectDirectory() / s_ActiveProject->m_Config.AssetDirectory;
+			return s_ActiveProject->GetProjectFilePath();
 		}
 
-		static std::filesystem::path GetScriptModulePath()
+		static std::filesystem::path GetActiveAssetDirectory()
 		{
 			NB_ASSERT(s_ActiveProject);
-			return GetProjectDirectory() / s_ActiveProject->m_Config.ScriptModulePath;
+			return s_ActiveProject->GetAssetDirectory();
+		}
+
+		static std::filesystem::path GetActiveScriptModulePath()
+		{
+			NB_ASSERT(s_ActiveProject);
+			return s_ActiveProject->GetScriptModulePath();
 		}
 		
-		static std::filesystem::path GetAssetRegistryPath()
+		static std::filesystem::path GetActiveAssetRegistryPath()
 		{
 			NB_ASSERT(s_ActiveProject);
-			return GetProjectDirectory() / s_ActiveProject->m_Config.AssetRegistryPath;
+			return s_ActiveProject->GetAssetRegistryPath();
 		}
 
-		static std::filesystem::path GetAssetFileSystemPath(const std::filesystem::path& path)
+		static std::filesystem::path GetAssetPath(const std::filesystem::path& path)
 		{
 			NB_ASSERT(s_ActiveProject);
-			return GetAssetDirectory() / path;
-		}
-
-		static std::filesystem::path GetProjectFile() {
-			NB_ASSERT(s_ActiveProject);
-			return s_ActiveProject->m_ProjectFile;
+			return s_ActiveProject->GetAssetDirectory() / path;
 		}
 
 		static Ref<Project> GetActive() { return s_ActiveProject; }

@@ -52,7 +52,7 @@ namespace Nebula
 			else if (extension == ".cs")		return AssetType::Script;
 			else if (extension == ".mat")		return AssetType::Material;
 			else if (extension == ".ttf" || extension == ".TTF")  return AssetType::Font;
-			else if (extension == ".png" || extension == ".jpeg") return AssetType::Texture;
+			else if (extension == ".png" || extension == ".jpeg" || extension == ".jpg") return AssetType::Texture;
 
 			return AssetType::None;
 		}
@@ -80,7 +80,7 @@ namespace Nebula
 		if (const AssetMetadata& data = GetAssetMetadata(path))
 			return data.Handle;
 
-		std::filesystem::path relativePath = std::filesystem::relative(path, Project::GetAssetDirectory());
+		std::filesystem::path relativePath = std::filesystem::relative(path, Project::GetActiveAssetDirectory());
 		AssetHandle handle = AssetHandle();
 		
 		if (!CreateAsset(handle, path, relativePath))

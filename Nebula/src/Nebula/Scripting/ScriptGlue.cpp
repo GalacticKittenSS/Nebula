@@ -148,7 +148,7 @@ namespace Nebula {
 	static uint64_t Asset_GetOrCreateHandle(MonoString* path)
 	{
 		std::string pathString = Utils::GetStringFromMono(path);
-		std::filesystem::path assetPath = Project::GetAssetFileSystemPath(pathString);
+		std::filesystem::path assetPath = Project::GetAssetPath(pathString);
 
 		AssetHandle handle = AssetManager::CreateAsset(assetPath);
 		return handle;
@@ -157,7 +157,7 @@ namespace Nebula {
 	static uint64_t Asset_GetHandleFromPath(MonoString* path)
 	{
 		std::string pathString = Utils::GetStringFromMono(path);
-		std::filesystem::path assetPath = Project::GetAssetFileSystemPath(pathString);
+		std::filesystem::path assetPath = Project::GetAssetPath(pathString);
 
 		AssetHandle handle = AssetManager::GetHandleFromPath(assetPath);
 		return handle;

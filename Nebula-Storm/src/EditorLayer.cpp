@@ -28,6 +28,9 @@ namespace Nebula
 		AssetManager::CreateGlobalFamily("Resources/fonts/OpenSans");
 		AssetManager::CreateGlobalFamily("Resources/fonts/Roboto");
 
+		m_SceneHierarchy = CreateRef<SceneHierarchyPanel>();
+		m_ContentBrowser = CreateRef<ContentBrowserPanel>();
+
 		SceneRenderer::Settings settings;
 		settings.PresentToScreen = false;
 		settings.ShowColliders = false;
@@ -136,7 +139,7 @@ namespace Nebula
 
 		if (m_SceneState == SceneState::Edit || m_SceneState == SceneState::Simulate)
 		{
-			m_SceneRenderer->SetSelectedEntity(m_SceneHierarchy.GetSelectedEntity());
+			m_SceneRenderer->SetSelectedEntity(m_SceneHierarchy->GetSelectedEntity());
 			m_SceneRenderer->Render(m_EditorCam);
 		}
 		else
@@ -183,8 +186,8 @@ namespace Nebula
 		
 		UI_MenuBar();
 
-		m_SceneHierarchy.OnImGuiRender();
-		m_ContentBrowser.OnImGuiRender();
+		m_SceneHierarchy->OnImGuiRender();
+		m_ContentBrowser->OnImGuiRender();
 
 		UI_GameView();
 		UI_Toolbar();
@@ -269,7 +272,7 @@ namespace Nebula
 			}
 
 			if (ImGui::BeginMenu("Scene")) {
-				m_SceneHierarchy.DisplayCreateEntity();
+				m_SceneHierarchy->DisplayCreateEntity();
 				ImGui::EndMenu();
 			}
 
@@ -320,7 +323,7 @@ namespace Nebula
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) 
 			{
 				const wchar_t* path = (const wchar_t*)payload->Data;
-				LoadScene(Project::GetAssetFileSystemPath(path));
+				LoadScene(Project::GetAssetPath(path));
 			}
 			
 			ImGui::EndDragDropTarget();
@@ -343,7 +346,7 @@ namespace Nebula
 			if (m_ShowGrid)
 				ImGuizmo::DrawGrid(glm::value_ptr(cameraView), glm::value_ptr(cameraProj), glm::value_ptr(glm::mat4(1.0f)), 50.0f);
 
-			Entity selectedEntity = m_SceneHierarchy.GetSelectedEntity();
+			Entity selectedEntity = m_SceneHierarchy->GetSelectedEntity();
 			if (selectedEntity && m_GizmoType != -1) 
 			{
 				auto& wc = selectedEntity.GetComponent<WorldTransformComponent>();
@@ -485,36 +488,36 @@ namespace Nebula
 			if (Application::Get().GetImGuiLayer()->GetActiveWidgetID() == 0)
 			{
 				if (control)
-					m_SceneHierarchy.SetSelectedEntity(DuplicateEntity());
+					m_SceneHierarchy->SetSelectedEntity(DuplicateEntity());
 			}
 			break;
 
 		case KeyCode::Backspace:
 			if (Application::Get().GetImGuiLayer()->GetActiveWidgetID() == 0)
 			{
-				if (m_SceneHierarchy.GetSelectedEntity())
+				if (m_SceneHierarchy->GetSelectedEntity())
 				{
-					m_EditorScene->DestroyEntity(m_SceneHierarchy.GetSelectedEntity());
-					m_SceneHierarchy.SetSelectedEntity({});
+					m_EditorScene->DestroyEntity(m_SceneHierarchy->GetSelectedEntity());
+					m_SceneHierarchy->SetSelectedEntity({});
 				}
 			}
 			break;
 
 		//Gizmos
 		case KeyCode::Q:
-			if (!m_UsingGizmo && (!m_GameViewFocus || !m_SceneHierarchy.IsFocused()))
+			if (!m_UsingGizmo && (!m_GameViewFocus || !m_SceneHierarchy->IsFocused()))
 				m_GizmoType = -1;
 			break;
 		case KeyCode::W:
-			if (!m_UsingGizmo && (!m_GameViewFocus || !m_SceneHierarchy.IsFocused()))
+			if (!m_UsingGizmo && (!m_GameViewFocus || !m_SceneHierarchy->IsFocused()))
 				m_GizmoType = ImGuizmo::OPERATION::TRANSLATE;
 			break;
 		case KeyCode::E:
-			if (!m_UsingGizmo && (!m_GameViewFocus || !m_SceneHierarchy.IsFocused()))
+			if (!m_UsingGizmo && (!m_GameViewFocus || !m_SceneHierarchy->IsFocused()))
 				m_GizmoType = ImGuizmo::OPERATION::ROTATE;
 			break;
 		case KeyCode::R:
-			if (!m_UsingGizmo && (!m_GameViewFocus || !m_SceneHierarchy.IsFocused()))
+			if (!m_UsingGizmo && (!m_GameViewFocus || !m_SceneHierarchy->IsFocused()))
 				m_GizmoType = ImGuizmo::OPERATION::SCALE;
 			break;
 		}
@@ -527,7 +530,7 @@ namespace Nebula
 		bool canSelect = m_TimeCameraMoved <= 0.05f && !ImGuizmo::IsOver() && m_GameViewHovered;
 
 		if (e.GetMouseButton() == Mouse::Button0 && canSelect && !sceneStatePlay)
-			m_SceneHierarchy.SetSelectedEntity(m_HoveredEntity);
+			m_SceneHierarchy->SetSelectedEntity(m_HoveredEntity);
 
 		m_TimeCameraMoved = 0.0f;
 
@@ -567,8 +570,11 @@ namespace Nebula
 
 	void EditorLayer::SaveProject()
 	{
-		if (Project::GetActive() && !Project::GetProjectFile().empty())
-			Project::SaveActive(Project::GetProjectFile());
+		if (Ref<Project> active = Project::GetActive())
+		{
+			if (active->GetProjectFilePath().empty())
+				Project::SaveActive(active->GetProjectFilePath());
+		}
 	}
 
 	void EditorLayer::OpenProject()
@@ -584,10 +590,10 @@ namespace Nebula
 		if (Project::Load(path))
 		{
 			ScriptEngine::ReloadAssembly();
-			m_ContentBrowser.SetContext(Project::GetAssetDirectory());
 			
-			std::filesystem::path startScenePath = Project::GetAssetFileSystemPath(Project::GetActive()->GetConfig().StartScene);
+			std::filesystem::path startScenePath = Project::GetAssetPath(Project::GetActive()->GetConfig().StartScene);
 			LoadScene(startScenePath);
+			m_ContentBrowser = CreateRef<ContentBrowserPanel>(Project::GetActive());
 		}
 	}
 
@@ -599,14 +605,12 @@ namespace Nebula
 	
 		m_EditorScene = CreateRef<Scene>();
 		m_EditorScene->OnViewportResize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
-		
-		m_SceneHierarchy.SetContext(m_EditorScene);
-		m_ContentBrowser.SetSceneContext(m_EditorScene);
-		m_SceneRenderer->SetContext(m_EditorScene);
-
 		m_ActiveScene = m_EditorScene;
-		m_SceneRenderer->SetContext(m_ActiveScene);
 
+		m_SceneHierarchy->SetContext(m_EditorScene);
+		m_ContentBrowser->SetContext(m_EditorScene);
+		m_SceneRenderer->SetContext(m_EditorScene);
+		
 		m_HoveredEntity = { };
 		m_ScenePath = "";
 	}
@@ -651,10 +655,10 @@ namespace Nebula
 		Ref<Scene> empty = CreateRef<Scene>();
 		if (SceneSerializer(empty).Deserialize(path.string())) {
 			m_EditorScene = empty;
-			m_ActiveScene->OnViewportResize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
+			m_EditorScene->OnViewportResize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
 			
-			m_SceneHierarchy.SetContext(m_EditorScene);
-			m_ContentBrowser.SetSceneContext(m_EditorScene);
+			m_SceneHierarchy->SetContext(m_EditorScene);
+			m_ContentBrowser->SetContext(m_EditorScene);
 			m_SceneRenderer->SetContext(m_EditorScene);
 
 			m_ActiveScene = m_EditorScene;
@@ -676,8 +680,8 @@ namespace Nebula
 
 		m_ActiveScene->OnViewportResize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
 		
-		m_SceneHierarchy.SetContext(m_ActiveScene);
-		m_ContentBrowser.SetSceneContext(m_ActiveScene);
+		m_SceneHierarchy->SetContext(m_ActiveScene);
+		m_ContentBrowser->SetContext(m_ActiveScene);
 		m_SceneRenderer->SetContext(m_ActiveScene);
 		m_SceneState = SceneState::Play;
 	}
@@ -693,8 +697,8 @@ namespace Nebula
 
 		m_ActiveScene = m_EditorScene;
 
-		m_SceneHierarchy.SetContext(m_EditorScene);
-		m_ContentBrowser.SetSceneContext(m_EditorScene);
+		m_SceneHierarchy->SetContext(m_EditorScene);
+		m_ContentBrowser->SetContext(m_EditorScene);
 		m_SceneRenderer->SetContext(m_EditorScene);
 		m_SceneState = SceneState::Edit;
 	}
@@ -711,8 +715,8 @@ namespace Nebula
 
 		m_ActiveScene->OnViewportResize((uint32_t)m_GameViewSize.x, (uint32_t)m_GameViewSize.y);
 
-		m_SceneHierarchy.SetContext(m_ActiveScene);
-		m_ContentBrowser.SetSceneContext(m_ActiveScene);
+		m_SceneHierarchy->SetContext(m_ActiveScene);
+		m_ContentBrowser->SetContext(m_ActiveScene);
 		m_SceneRenderer->SetContext(m_ActiveScene);
 		m_SceneState = SceneState::Simulate;
 	}
@@ -721,7 +725,7 @@ namespace Nebula
 		if (m_SceneState != SceneState::Edit)
 			return {};
 		
-		if (Entity entity = m_SceneHierarchy.GetSelectedEntity())
+		if (Entity entity = m_SceneHierarchy->GetSelectedEntity())
 			return m_EditorScene->DuplicateEntity(entity);
 
 		return {};

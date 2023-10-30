@@ -208,7 +208,7 @@ namespace Nebula {
 		ScriptGlue::RegisterComponents();
 
 		// Only load if active project
-		status = Project::GetActive() && LoadAppAssembly(Project::GetScriptModulePath());
+		status = Project::GetActive() && LoadAppAssembly(Project::GetActiveScriptModulePath());
 		if (!status)
 		{
 			NB_WARN("[ScriptEngine] Could not load App Assembly");
@@ -280,7 +280,7 @@ namespace Nebula {
 		s_Data->AssetClass = ScriptClass("Nebula", "Asset", true);
 		ScriptGlue::RegisterComponents();
 
-		status = Project::GetActive() && LoadAppAssembly(Project::GetScriptModulePath());
+		status = Project::GetActive() && LoadAppAssembly(Project::GetActiveScriptModulePath());
 		if (!status)
 		{
 			NB_WARN("[ScriptEngine] Could not reload App Assembly");

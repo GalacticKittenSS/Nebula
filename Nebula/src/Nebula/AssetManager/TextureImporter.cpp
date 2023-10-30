@@ -18,7 +18,8 @@ namespace Nebula
 		stbi_set_flip_vertically_on_load(1);
 		
 		Buffer data;
-		data.Data = stbi_load(path.data(), &width, &height, &channels, 0);
+		data.Data = stbi_load(path.data(), &width, &height, &channels, 4);
+		channels = 4;
 		data.Size = width * height * channels;
 
 		if (!data)
