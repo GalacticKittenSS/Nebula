@@ -124,6 +124,8 @@ namespace Nebula {
 		ImGui::Begin("File Properties");
 		RenderProperties();
 		ImGui::End();
+
+		m_ThumbnailCache->Update();
 	}
 
 	Ref<Texture2D> ContentBrowserPanel::GetIcon(const std::filesystem::path& path)
@@ -174,10 +176,9 @@ namespace Nebula {
 		{
 			ImGuiIO& io = ImGui::GetIO();
 			ImFont* boldFont = io.Fonts->Fonts[0];
-			boldFont->Scale = size + 1;
-
 			ImGui::PushFont(boldFont);
-			float buttonSize = (size + 2) * 15.0f;
+			
+			float buttonSize = 30.0f;
 			if (ImGui::Button("<", ImVec2{ buttonSize, buttonSize }))
 				m_CurrentDirectory = m_CurrentDirectory.parent_path();
 			ImGui::PopFont();
@@ -207,157 +208,185 @@ namespace Nebula {
 		if (!std::filesystem::exists(m_CurrentDirectory))
 			m_CurrentDirectory = m_BaseDirectory;
 
-		for (auto& directoryEntry : std::filesystem::directory_iterator(m_CurrentDirectory))
+		uint32_t count = std::distance(std::filesystem::directory_iterator(m_CurrentDirectory), std::filesystem::directory_iterator{});
+		int rows = (int)glm::ceil((float)count / (float)columCount);
+		ImGuiListClipper clipper(rows);
+		
+		auto it = std::filesystem::directory_iterator(m_CurrentDirectory);
+		uint32_t x = 0;
+		bool first = true;
+
+		while (clipper.Step())
 		{
-			std::filesystem::path path = std::filesystem::relative(directoryEntry, m_Project->GetAssetDirectory());
-			std::string filename = path.filename().string();
-
-			bool isAsset = m_TreeNodes.find(path) < m_TreeNodes.size();
-			if (m_OnlyShowAssets && !isAsset)
-				continue;
-
-			ImGui::PushID(filename.c_str());
+			for (; x < clipper.DisplayStart; x++)
+				it++;
 			
-			Ref<Texture2D> thumbnail = m_DirectoryIcon;
-			if (!directoryEntry.is_directory())
+			for (uint32_t i = clipper.DisplayStart; i < clipper.DisplayEnd * columCount; i++, it++)
 			{
-				thumbnail = m_ThumbnailCache->GetorCreateThumbnail(directoryEntry);
-				if (!thumbnail)
-					thumbnail = GetIcon(directoryEntry);
-			}
+				if (it._At_end())
+					break;
 
-			ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, isAsset ? 1.0f : 0.5f);
-			if (AssetManager::GetTypeFromExtension(path.extension().string()) == AssetType::Material)
-			{
-				AssetHandle handle = AssetManager::GetHandleFromPath(path);
-				Ref<Material> mat = AssetManager::GetAsset<Material>(handle);
-				if (mat)
-					tint = ImVec4(mat->Colour.r, mat->Colour.g, mat->Colour.b, mat->Colour.a);
-			}
+				const auto& directoryEntry = *it;
 
-			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
-			
-			if (ImGui::ImageButton((ImTextureID)(uint64_t)thumbnail->GetRendererID(), { thumbnailSize, thumbnailSize }, { 0, 1 }, { 1, 0 }, -1, ImVec4(), tint))
-			{
+				std::filesystem::path path = std::filesystem::relative(directoryEntry, m_Project->GetAssetDirectory());
+				std::string filename = path.filename().string();
+
+				bool isAsset = m_TreeNodes.find(path) < m_TreeNodes.size();
+				if (m_OnlyShowAssets && !isAsset)
+					continue;
+
+				ImGui::PushID(filename.c_str());
+
+				Ref<Texture2D> thumbnail = m_DirectoryIcon;
 				if (!directoryEntry.is_directory())
 				{
-					m_SelectedFile = directoryEntry;
-					m_AssetPreview = AssetManager::GetHandleFromPath(m_SelectedFile);
+					thumbnail = m_ThumbnailCache->GetorCreateThumbnail(directoryEntry);
+					if (!thumbnail)
+						thumbnail = GetIcon(directoryEntry);
 				}
-			}
 
-			ImGui::PopStyleColor();
-
-			if (ImGui::BeginDragDropSource())
-			{
-				std::filesystem::path relativePath(path);
-				const wchar_t* itemPath = relativePath.c_str();
-				ImGui::SetDragDropPayload("CONTENT_BROWSER_ITEM", itemPath, (wcslen(itemPath) + 1) * sizeof(wchar_t), ImGuiCond_Once);
-				ImGui::EndDragDropSource();
-			}
-
-			if (directoryEntry.is_directory())
-			{
-				if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
-					m_CurrentDirectory /= filename;
-
-				if (ImGui::BeginDragDropTarget())
+				ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, isAsset ? 1.0f : 0.5f);
+				if (AssetManager::GetTypeFromExtension(path.extension().string()) == AssetType::Material)
 				{
-					m_DragDrop = true;
+					AssetHandle handle = AssetManager::GetHandleFromPath(path);
+					Ref<Material> mat = AssetManager::GetAsset<Material>(handle);
+					if (mat)
+						tint = ImVec4(mat->Colour.r, mat->Colour.g, mat->Colour.b, mat->Colour.a);
+				}
 
-					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
+				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+
+				float aspectRatio = (float)thumbnail->GetHeight() / (float)thumbnail->GetWidth();
+				float height = thumbnailSize * aspectRatio;
+
+				if (ImGui::ImageButton((ImTextureID)(uint64_t)thumbnail->GetRendererID(), { thumbnailSize, height }, { 0, 1 }, { 1, 0 }, -1, ImVec4(), tint))
+				{
+					if (!directoryEntry.is_directory())
 					{
-						std::filesystem::path filepath = (const wchar_t*)payload->Data;
-						std::filesystem::rename(m_Project->GetAssetDirectory() / filepath, directoryEntry / filepath.filename());
-					}
-
-					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENTITY"))
-					{
-						const UUID entityID = *(const UUID*)payload->Data;
-
-						Entity entity = { entityID, m_Scene.get() };
-						std::filesystem::path filepath = directoryEntry / (entity.GetName() + ".prefab");
-
-						PrefabSerializer serializer(m_Scene.get());
-						serializer.Serialize(entity, filepath.string());
+						m_SelectedFile = directoryEntry;
+						m_AssetPreview = AssetManager::GetHandleFromPath(m_SelectedFile);
 					}
 				}
-			}
 
-			UI::ScopedStyleVar rounding(ImGuiStyleVar_FrameRounding, 0.0f);
-			UI::ScopedStyleColor colour(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_WindowBg));
+				ImGui::PopStyleColor();
 
-			if (ImGui::BeginPopupContextItem(0, ImGuiPopupFlags_MouseButtonRight))
-			{
-				if (AssetManager::GetTypeFromExtension(path.extension().string()) != AssetType::None)
+				if (ImGui::BeginDragDropSource())
 				{
-					if (!isAsset)
+					std::filesystem::path relativePath(path);
+					const wchar_t* itemPath = relativePath.c_str();
+					ImGui::SetDragDropPayload("CONTENT_BROWSER_ITEM", itemPath, (wcslen(itemPath) + 1) * sizeof(wchar_t), ImGuiCond_Once);
+					ImGui::EndDragDropSource();
+				}
+
+				if (directoryEntry.is_directory())
+				{
+					if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+						m_CurrentDirectory /= filename;
+
+					if (ImGui::BeginDragDropTarget())
 					{
-						if (ImGui::Button("Import Asset"))
+						m_DragDrop = true;
+
+						if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
 						{
-							AssetManager::CreateAsset(directoryEntry);
-							RefreshAssetTree();
+							std::filesystem::path filepath = (const wchar_t*)payload->Data;
+							std::filesystem::rename(m_Project->GetAssetDirectory() / filepath, directoryEntry / filepath.filename());
+						}
+
+						if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENTITY"))
+						{
+							const UUID entityID = *(const UUID*)payload->Data;
+
+							Entity entity = { entityID, m_Scene.get() };
+							std::filesystem::path filepath = directoryEntry / (entity.GetName() + ".prefab");
+
+							PrefabSerializer serializer(m_Scene.get());
+							serializer.Serialize(entity, filepath.string());
 						}
 					}
-					else
+				}
+
+				UI::ScopedStyleVar rounding(ImGuiStyleVar_FrameRounding, 0.0f);
+				UI::ScopedStyleColor colour(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_WindowBg));
+
+				if (ImGui::BeginPopupContextItem(0, ImGuiPopupFlags_MouseButtonRight))
+				{
+					if (AssetManager::GetTypeFromExtension(path.extension().string()) != AssetType::None)
 					{
-						if (ImGui::Button("Remove Asset"))
+						if (!isAsset)
+						{
+							if (ImGui::Button("Import Asset"))
+							{
+								AssetManager::CreateAsset(directoryEntry);
+								RefreshAssetTree();
+							}
+						}
+						else
+						{
+							if (ImGui::Button("Remove Asset"))
+							{
+								AssetHandle handle = AssetManager::GetHandleFromPath(directoryEntry);
+								AssetManager::DeleteAsset(handle);
+								RefreshAssetTree();
+							}
+						}
+					}
+
+					if (ImGui::Button("Delete"))
+						ImGui::OpenPopup("DeleteFile");
+
+					if (ImGui::BeginPopup("DeleteFile"))
+					{
+						ImGui::Text("Are you sure you want to delete?");
+
+						if (ImGui::Button("Delete"))
 						{
 							AssetHandle handle = AssetManager::GetHandleFromPath(directoryEntry);
 							AssetManager::DeleteAsset(handle);
 							RefreshAssetTree();
+
+							if (directoryEntry.is_directory())
+								std::filesystem::remove_all(directoryEntry);
+							else
+								std::filesystem::remove(directoryEntry);
 						}
-					}
-				}
 
-				if (ImGui::Button("Delete"))
-					ImGui::OpenPopup("DeleteFile");
+						ImGui::SameLine();
 
-				if (ImGui::BeginPopup("DeleteFile"))
-				{
-					ImGui::Text("Are you sure you want to delete?");
-					
-					if (ImGui::Button("Delete"))
-					{
-						AssetHandle handle = AssetManager::GetHandleFromPath(directoryEntry);
-						AssetManager::DeleteAsset(handle);
-						RefreshAssetTree();
+						if (ImGui::Button("Cancel"))
+							ImGui::CloseCurrentPopup();
 
-						if (directoryEntry.is_directory())
-							std::filesystem::remove_all(directoryEntry);
-						else
-							std::filesystem::remove(directoryEntry);
+						ImGui::EndPopup();
 					}
 
-					ImGui::SameLine();
-
-					if (ImGui::Button("Cancel"))
-						ImGui::CloseCurrentPopup();
-					
 					ImGui::EndPopup();
 				}
 
-				ImGui::EndPopup();
+				float text_width = ImGui::CalcTextSize(filename.c_str()).x;
+				float text_indentation = (cellSize - text_width) * 0.5f;
+
+				if (text_width > cellSize)
+				{
+					ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + cellSize - GImGui->Style.ItemSpacing.x);
+					ImGui::TextWrapped(filename.c_str());
+					ImGui::PopTextWrapPos();
+				}
+				else
+				{
+					ImGui::SetCursorPosX(ImGui::GetCursorPosX() + text_indentation - GImGui->Style.ItemSpacing.x);
+					ImGui::Text(filename.c_str());
+				}
+
+				ImGui::NextColumn();
+
+				ImGui::PopID();
 			}
 
-			float text_width = ImGui::CalcTextSize(filename.c_str()).x;
-			float text_indentation = (cellSize - text_width) * 0.5f;
-
-			if (text_width > cellSize)
+			if (first)
 			{
-				ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + cellSize - GImGui->Style.ItemSpacing.x);
-				ImGui::TextWrapped(filename.c_str());
-				ImGui::PopTextWrapPos();
+				ImGui::NewLine();
+				first = false;
 			}
-			else
-			{
-				ImGui::SetCursorPosX(ImGui::GetCursorPosX() + text_indentation - GImGui->Style.ItemSpacing.x);
-				ImGui::Text(filename.c_str());
-			}
-
-			ImGui::NextColumn();
-
-			ImGui::PopID();
 		}
 
 		CreateFilePopup();
