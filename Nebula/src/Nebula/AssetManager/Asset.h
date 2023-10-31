@@ -3,13 +3,11 @@
 #include "Nebula/Core/UUID.h"
 
 #include <filesystem>
-#include "../filewatch/FileWatch.hpp"
 
 namespace Nebula 
 {
 	using AssetHandle = UUID;
-	using FileWatcher = filewatch::FileWatch<std::filesystem::path>;
-
+	
 	enum class AssetType : uint16_t
 	{
 		None = 0,
@@ -29,9 +27,8 @@ namespace Nebula
 		AssetType Type;
 		std::filesystem::path Path;
 		std::filesystem::path RelativePath;
+		uint64_t Timestamp;
 		bool isGlobal = false;
-
-		Ref<FileWatcher> Watcher = nullptr;
 
 		operator bool() const { return Type != AssetType::None; }
 	};

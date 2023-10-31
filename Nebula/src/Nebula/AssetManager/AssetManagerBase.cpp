@@ -106,7 +106,10 @@ namespace Nebula
 		data.Type = type;
 		data.Path = path;
 		data.RelativePath = relativePath;
-		data.Watcher = CreateRef<FileWatcher>(path, AssetImporter::OnAssetChange);
+
+		std::filesystem::file_time_type lastWriteTime = std::filesystem::last_write_time(path);
+		uint64_t seconds = std::chrono::duration_cast<std::chrono::seconds>(lastWriteTime.time_since_epoch()).count();
+		data.Timestamp = seconds;
 
 		m_AssetRegistry[handle] = data;
 		return true;
@@ -167,6 +170,10 @@ namespace Nebula
 		data.RelativePath = relativePath;
 		data.isGlobal = true;
 
+		std::filesystem::file_time_type lastWriteTime = std::filesystem::last_write_time(path);
+		uint64_t seconds = std::chrono::duration_cast<std::chrono::seconds>(lastWriteTime.time_since_epoch()).count();
+		data.Timestamp = seconds;
+
 		s_GlobalRegistry[s_GlobalIndex] = data;
 		s_GlobalIndex++;
 
@@ -214,10 +221,20 @@ namespace Nebula
 		if (!IsHandleValid(handle))
 			return nullptr;
 
-		if (IsAssetLoaded(handle))
-			return FindAsset(handle);
-		
 		const AssetMetadata& metadata = GetAssetMetadata(handle);
+
+		if (IsAssetLoaded(handle))
+		{
+			if (metadata.Path.empty())
+				return FindAsset(handle);
+
+			std::filesystem::file_time_type lastWriteTime = std::filesystem::last_write_time(metadata.Path);
+			uint64_t seconds = std::chrono::duration_cast<std::chrono::seconds>(lastWriteTime.time_since_epoch()).count();
+
+			if (metadata.Timestamp == seconds)
+				return FindAsset(handle);
+		}
+		
 		Ref<Asset> asset = AssetImporter::ImportAsset(handle, metadata);
 		
 		if (!asset)
@@ -357,7 +374,10 @@ namespace Nebula
 			metadata.Path = assetPath;
 			metadata.RelativePath = node["RelativePath"].as<std::string>();
 			metadata.Type = Utils::AssetTypeFromString(type);
-			metadata.Watcher = CreateRef<FileWatcher>(assetPath, AssetImporter::OnAssetChange);
+
+			std::filesystem::file_time_type lastWriteTime = std::filesystem::last_write_time(metadata.Path);
+			uint64_t seconds = std::chrono::duration_cast<std::chrono::seconds>(lastWriteTime.time_since_epoch()).count();
+			metadata.Timestamp = seconds;
 		}
 
 		return true;
