@@ -1092,10 +1092,21 @@ namespace Nebula {
 			}
 		}, false);
 
-		DrawComponent<SpriteRendererComponent>("Sprite Renderer", entity, [](auto& component) {
-			DrawVec2Control("Offset", component.SubTextureOffset, glm::vec2(0.0f));
-			DrawVec2Control("Cell Size", component.SubTextureCellSize, glm::vec2(0.1f));
-			DrawVec2Control("Cell Number", component.SubTextureCellNum, glm::vec2(0.1f));
+		DrawComponent<SpriteRendererComponent>("Sprite Renderer", entity, [entity](auto& component) mutable {
+			glm::vec2 maxCellSize = glm::vec2(0.0f);
+
+			if (AssetHandle mat = entity.GetComponent<MaterialComponent>().Material)
+			{
+				if (Ref<Texture2D> texture = AssetManager::GetAsset<Material>(mat)->Texture)
+				{
+					maxCellSize = glm::vec2(texture->GetWidth(), texture->GetHeight());
+					component.SubTextureCellSize = glm::min(component.SubTextureCellSize, maxCellSize);
+				}
+			}
+			
+			DrawVec2Control("Offset", component.SubTextureOffset);
+			DrawVec2Control("Cell Size", component.SubTextureCellSize, glm::vec2(0.1f), maxCellSize, maxCellSize);
+			DrawVec2Control("Cell Number", component.SubTextureCellNum, glm::vec2(0.1f), glm::vec2(0.0f), glm::vec2(1.0f));
 		}, true);
 
 		DrawComponent<CircleRendererComponent>("Circle Renderer", entity, [](auto& component) {
