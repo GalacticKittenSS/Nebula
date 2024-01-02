@@ -29,12 +29,12 @@
         {
             get
             {
-                InternalCalls.Material_GetColour(AssetHandle, out Vector4 colour);
+                InternalCalls.Material_GetColour(ID, out Vector4 colour);
                 return colour;
             }
             set
             {
-                InternalCalls.Material_SetColour(AssetHandle, EntityID, ref value);
+                InternalCalls.Material_SetColour(ID, EntityID, ref value);
             }
         }
 
@@ -42,7 +42,7 @@
         {
             get
             {
-                ulong handle = InternalCalls.Material_GetTexture(AssetHandle);
+                ulong handle = InternalCalls.Material_GetTexture(ID);
                 if (handle == 0)
                     return null;
 
@@ -50,14 +50,14 @@
             }
             set
             {
-                InternalCalls.Material_SetTexture(AssetHandle, EntityID, value.AssetHandle);
+                InternalCalls.Material_SetTexture(ID, EntityID, value.ID);
             }
         }
 
         public float Tiling
         {
-            get => InternalCalls.Material_GetTiling(AssetHandle);
-            set => InternalCalls.Material_SetTiling(AssetHandle, EntityID, value);
+            get => InternalCalls.Material_GetTiling(ID);
+            set => InternalCalls.Material_SetTiling(ID, EntityID, value);
         }
 
         public static implicit operator string(Material material) => material.FilePath;

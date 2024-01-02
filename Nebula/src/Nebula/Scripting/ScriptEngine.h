@@ -29,13 +29,70 @@ namespace Nebula {
 		Asset, Prefab, Font, Texture, Material
 	};
 
-	struct ScriptField
+	class ScriptInstance;
+
+	class ScriptField
 	{
+	public:
 		ScriptFieldType Type;
 		std::string Name;
-		MonoClassField* ClassField;
+		MonoClassField* ClassField = nullptr;
+	public:
+		ScriptField() {
+			memset(m_Buffer, 0, sizeof(m_Buffer));
+		}
+
+		template<typename T>
+		T GetValue()
+		{
+			static_assert(sizeof(T) <= 16, "Type too large!");
+
+			if (!m_ScriptInstance.expired())
+			{
+				static uint8_t s_StaticBuffer[16];
+
+				Ref<ScriptInstance> instance = m_ScriptInstance.lock();
+				bool success = instance->GetFieldValueInternal(ClassField, s_StaticBuffer);
+				if (!success)
+					return T();
+
+				return *(T*)s_StaticBuffer;
+			}
+
+			return *(T*)m_Buffer;
+		}
+
+		template<typename T>
+		void SetValue(T value)
+		{
+			static_assert(sizeof(T) <= 16, "Type too large");
+
+			if (!m_ScriptInstance.expired())
+			{
+				Ref<ScriptInstance> instance = m_ScriptInstance.lock();
+				instance->SetFieldValueInternal(ClassField, &value);
+			}
+			else
+				memcpy(m_Buffer, &value, sizeof(T));
+		}
+
+		UUID GetValueObject();
+		void SetValueEntity(UUID uuid);
+		void SetValueAsset(AssetHandle handle);
+	private:
+		uint8_t m_Buffer[16];
+		std::weak_ptr<ScriptInstance> m_ScriptInstance;
+
+		friend class ScriptEngine;
 	};
 
+	class ScriptFieldMap : public std::map<std::string, ScriptField>
+	{
+	public:
+		// Get or Create script field using default values
+		ScriptField& GetScriptField(const std::string& name, Entity entity);
+	};
+	
 	class ScriptClass {
 	public:
 		ScriptClass() = default;
@@ -47,7 +104,7 @@ namespace Nebula {
 		MonoMethod* GetMethod(const std::string& name, int parameterCount);
 		MonoObject* InvokeMethod(MonoObject* instance, MonoMethod* method, void** parameters = nullptr);
 
-		const std::map<std::string, ScriptField> GetFields() const { return m_Fields; }
+		std::map<std::string, ScriptField>& GetFields() { return m_Fields; }
 	private:
 		std::string m_ClassNamespace;
 		std::string m_ClassName;
@@ -74,29 +131,9 @@ namespace Nebula {
 
 		Ref<ScriptClass> GetScriptClass() { return m_ScriptClass; }
 		MonoObject* GetManagedObject() { return m_Instance; }
-	
-		template<typename T>
-		T GetFieldValue(const std::string& name)
-		{
-			static_assert(sizeof(T) <= 16, "Type too large");
-			
-			bool success = GetFieldValueInternal(name, s_FieldValueBuffer);
-			if (!success)
-				return T();
-
-			return *(T*)s_FieldValueBuffer;
-		}
-	
-		template<typename T>
-		void SetFieldValue(const std::string& name, const T& value)
-		{
-			static_assert(sizeof(T) <= 16, "Type too large");
-			SetFieldValueInternal(name, &value);
-		}
-
-		bool SetFieldValueInternal(const std::string& name, const void* value);
 	private:
-		bool GetFieldValueInternal(const std::string& name, void* buffer);
+		bool SetFieldValueInternal(MonoClassField* field, const void* value);
+		bool GetFieldValueInternal(MonoClassField* field, void* buffer);
 	private:
 		Ref<ScriptClass> m_ScriptClass;
 
@@ -110,9 +147,8 @@ namespace Nebula {
 		MonoMethod* m_OnCollisionEnterMethod = nullptr;
 		MonoMethod* m_OnCollisionExitMethod = nullptr;
 
-		inline static char s_FieldValueBuffer[16];
-
 		friend class ScriptEngine;
+		friend class ScriptField;
 	};
 
 	class ScriptEngine {
@@ -132,9 +168,11 @@ namespace Nebula {
 		static void OnUpdateEntity(Entity entity, float ts);
 		static void OnCollisionEnter(Entity entity, Entity other);
 		static void OnCollisionExit(Entity entity, Entity other);
+		
 		static void DeleteScriptInstance(UUID entityID);
+		static void DeleteScriptFields(UUID entityID);
 
-		static void CopyScriptFields(Entity from, Entity to);
+		static void CopyScriptFields(UUID from, UUID to);
 
 		static Scene* GetSceneContext();
 		static const std::unordered_map<std::string, Ref<ScriptClass>> GetEntityClasses();
@@ -144,6 +182,8 @@ namespace Nebula {
 		static void ClearScriptInstances();
 		static Ref<ScriptInstance> CreateScriptInstance(Entity entity);
 		static Ref<ScriptInstance> GetScriptInstance(Entity entity);
+
+		static ScriptFieldMap& GetScriptFieldMap(UUID entityID);
 
 		static MonoObject* CreateAssetClass(AssetHandle handle);
 		static MonoObject* CreateEntityClass(UUID entityID);
@@ -159,7 +199,6 @@ namespace Nebula {
 		static void LoadAssemblyClasses();
 		
 		static MonoObject* InstanciateClass(MonoClass* monoClass);
-		static bool CreateRuntimeScript(Entity entity);
 
 		friend class ScriptClass;
 		friend class ScriptGlue;
@@ -168,10 +207,8 @@ namespace Nebula {
 		using fieldMap = std::unordered_map<UUID, std::unordered_map<std::string, char*>>;
 		using signatureMap = std::unordered_map<UUID, std::string>;
 
-		static void GetScriptData(std::unordered_map<UUID, Ref<ScriptInstance>>& instances,
-			fieldMap& field_values, signatureMap& classSig);
-		static void ReloadScripts(std::unordered_map<UUID, Ref<ScriptInstance>>& instances,
-			fieldMap& field_values, signatureMap& classSig);
+		static void GetScriptData(fieldMap& field_values, signatureMap& class_signatures);
+		static void ReloadScripts(fieldMap& field_values);
 	};
 
 	namespace Utils {

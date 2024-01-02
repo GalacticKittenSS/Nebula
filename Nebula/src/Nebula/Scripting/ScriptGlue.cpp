@@ -431,7 +431,7 @@ namespace Nebula {
 		auto& component = entity.AddOrReplaceComponent<ScriptComponent>();
 		component.ClassName = fmt::format("{}.{}", nameSpace, name);
 
-		Ref<ScriptInstance> instance = ScriptEngine::CreateScriptInstance(entity);
+		Ref<ScriptInstance> instance = ScriptEngine::GetScriptInstance(entity);
 		ScriptEngine::OnCreateEntity(entity);
 
 		return instance->GetManagedObject();

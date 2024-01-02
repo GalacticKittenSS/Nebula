@@ -157,7 +157,7 @@ namespace Nebula {
 		if (entity.HasComponent<ScriptComponent>())
 		{
 			ScriptEngine::CreateScriptInstance(duplicated);
-			ScriptEngine::CopyScriptFields(entity, duplicated);
+			ScriptEngine::CopyScriptFields(entity.GetUUID(), duplicatedID);
 
 			if (m_IsRunning)
 				ScriptEngine::OnCreateEntity(duplicated);
@@ -493,6 +493,7 @@ namespace Nebula {
 
 		auto view = m_Registry.view<ScriptComponent>();
 		
+		// TODO: Remove (CreateScriptInstance should be called automatically)
 		// Make sure all entities have a script instance before calling OnCreate
 		// Not doing so may cause a crash when call Entity.As in C#
 		for (auto e : view)

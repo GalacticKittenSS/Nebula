@@ -87,7 +87,7 @@ namespace Nebula
 
                 return new Material(handle, ID);
             }
-            set => InternalCalls.Entity_SetMaterial(ID, value.AssetHandle);
+            set => InternalCalls.Entity_SetMaterial(ID, value.ID);
         }
 
         public uint ChildCount

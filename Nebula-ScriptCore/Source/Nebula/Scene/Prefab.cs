@@ -19,7 +19,7 @@
         
         public Entity Create()
         {
-            ulong entityID = InternalCalls.Prefab_Create(AssetHandle);
+            ulong entityID = InternalCalls.Prefab_Create(ID);
             if (entityID == 0)
                 return null;
 

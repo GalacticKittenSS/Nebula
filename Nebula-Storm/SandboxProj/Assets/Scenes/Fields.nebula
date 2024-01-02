@@ -1,0 +1,42 @@
+Scene: Untitled
+Order:
+  Size: 1
+  Data: [3624483591457949354]
+Entities:
+  - Entity: 3624483591457949354
+    TagComponent:
+      Tag: Fields
+    PropertiesComponent:
+      IsEnabled: true
+      Layer: 1
+    ParentChildComponent:
+      PrimaryParent: 0
+      Children: ~
+      ChildCount: 0
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    ScriptComponent:
+      Class: Sandbox.Fields
+      ScriptFields:
+        - Name: asset
+          Type: Asset
+          Data: 199469299191224083
+        - Name: b
+          Type: bool
+          Data: false
+        - Name: entity
+          Type: Entity
+          Data: 3624483591457949354
+        - Name: i
+          Type: int
+          Data: 10
+        - Name: prefab
+          Type: Prefab
+          Data: 16617440293131663672
+        - Name: x
+          Type: float
+          Data: 100.5
+    MaterialComponent:
+      Material: 0

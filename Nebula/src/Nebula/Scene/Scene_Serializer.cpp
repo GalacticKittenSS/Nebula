@@ -13,13 +13,13 @@
 namespace Nebula {
 #define WRITE_SCRIPT_FIELD(FieldType, Type)			\
 	case ScriptFieldType::FieldType: \
-		out << scriptInstance->GetFieldValue<Type>(name); \
+		out << field.GetValue<Type>(); \
 		break
 
 #define READ_SCRIPT_FIELD(FieldType, Type)			\
 	case ScriptFieldType::FieldType: {				\
 		Type data = scriptField["Data"].as<Type>(); \
-		scriptInstance->SetFieldValue(name, data); \
+		instance.SetValue(data); \
 		break; \
 	}
 
@@ -113,57 +113,52 @@ namespace Nebula {
 			out << YAML::Key << "Class" << YAML::Value << component.ClassName;
 
 			// Fields
-			if (Ref<ScriptClass> entityClass = ScriptEngine::GetEntityClass(component.ClassName))
+			auto& fields = ScriptEngine::GetScriptFieldMap(uuid);
+			if (fields.size() > 0)
 			{
-				const auto& fields = entityClass->GetFields();
-				if (fields.size() > 0)
+				out << YAML::Key << "ScriptFields" << YAML::Value;
+				out << YAML::BeginSeq;
+
+				for (auto& [name, field] : fields)
 				{
-					out << YAML::Key << "ScriptFields" << YAML::Value;
-					out << YAML::BeginSeq;
+					if (field.Type == ScriptFieldType::None)
+						continue;
 
-					Ref<ScriptInstance> scriptInstance = ScriptEngine::GetScriptInstance(entity);
-					for (const auto& [name, field] : fields)
+					out << YAML::BeginMap;
+					out << YAML::Key << "Name" << YAML::Value << name;
+					out << YAML::Key << "Type" << YAML::Value << Utils::ScriptFieldTypeToString(field.Type);
+					out << YAML::Key << "Data" << YAML::Value;
+
+					switch (field.Type)
 					{
-						if (field.Type == ScriptFieldType::None)
-							continue;
-
-						out << YAML::BeginMap;
-						out << YAML::Key << "Name" << YAML::Value << name;
-						out << YAML::Key << "Type" << YAML::Value << Utils::ScriptFieldTypeToString(field.Type);
-						out << YAML::Key << "Data" << YAML::Value;
-
-						switch (field.Type)
-						{
-							WRITE_SCRIPT_FIELD(Float,	float);
-							WRITE_SCRIPT_FIELD(Double,	double);
-							WRITE_SCRIPT_FIELD(Bool,	bool);
-							WRITE_SCRIPT_FIELD(Char,	char);
-							WRITE_SCRIPT_FIELD(Byte,	int8_t);
-							WRITE_SCRIPT_FIELD(Short,	int16_t);
-							WRITE_SCRIPT_FIELD(Int,		int32_t);
-							WRITE_SCRIPT_FIELD(Long,	int64_t);
-							WRITE_SCRIPT_FIELD(SByte,	uint8_t);
-							WRITE_SCRIPT_FIELD(UShort,	uint16_t);
-							WRITE_SCRIPT_FIELD(UInt,	uint32_t);
-							WRITE_SCRIPT_FIELD(ULong,	uint64_t);
-							WRITE_SCRIPT_FIELD(Vector2, glm::vec2);
-							WRITE_SCRIPT_FIELD(Vector3, glm::vec3);
-							WRITE_SCRIPT_FIELD(Vector4, glm::vec4); 
-						case ScriptFieldType::Entity:
-						case ScriptFieldType::Prefab:
-						case ScriptFieldType::Font:
-						case ScriptFieldType::Texture:
-						case ScriptFieldType::Asset:
-							auto data = scriptInstance->GetFieldValue<MonoObject*>(name);
-							out << ScriptEngine::GetIDFromObject(data);
-							break;
-						}
-
-						out << YAML::EndMap;
+						WRITE_SCRIPT_FIELD(Float,	float);
+						WRITE_SCRIPT_FIELD(Double,	double);
+						WRITE_SCRIPT_FIELD(Bool,	bool);
+						WRITE_SCRIPT_FIELD(Char,	char);
+						WRITE_SCRIPT_FIELD(Byte,	int8_t);
+						WRITE_SCRIPT_FIELD(Short,	int16_t);
+						WRITE_SCRIPT_FIELD(Int,		int32_t);
+						WRITE_SCRIPT_FIELD(Long,	int64_t);
+						WRITE_SCRIPT_FIELD(SByte,	uint8_t);
+						WRITE_SCRIPT_FIELD(UShort,	uint16_t);
+						WRITE_SCRIPT_FIELD(UInt,	uint32_t);
+						WRITE_SCRIPT_FIELD(ULong,	uint64_t);
+						WRITE_SCRIPT_FIELD(Vector2, glm::vec2);
+						WRITE_SCRIPT_FIELD(Vector3, glm::vec3);
+						WRITE_SCRIPT_FIELD(Vector4, glm::vec4); 
+					case ScriptFieldType::Entity:
+					case ScriptFieldType::Prefab:
+					case ScriptFieldType::Font:
+					case ScriptFieldType::Texture:
+					case ScriptFieldType::Asset:
+						out << field.GetValueObject();
+						break;
 					}
 
-					out << YAML::EndSeq;
+					out << YAML::EndMap;
 				}
+
+				out << YAML::EndSeq;
 			}
 			
 			out << YAML::EndMap; // ScriptComponent
@@ -395,58 +390,53 @@ namespace Nebula {
 			{
 				auto& sc = deserializedEntity.AddComponent<ScriptComponent>();
 				DeserializeValue(sc.ClassName, scriptComponent["Class"]);
-
-				Ref<ScriptInstance> scriptInstance = ScriptEngine::CreateScriptInstance(deserializedEntity);
 				if (auto scriptFields = scriptComponent["ScriptFields"])
 				{
-					if (Ref<ScriptClass> entityClass = ScriptEngine::GetEntityClass(sc.ClassName))
-					{
-						const auto& fields = entityClass->GetFields();
-						for (auto scriptField : scriptFields)
-						{
-							std::string name = scriptField["Name"].as<std::string>();
-							std::string typeString = scriptField["Type"].as<std::string>();
-							ScriptFieldType type = Utils::ScriptFieldTypeFromString(typeString);
+					ScriptFieldMap& fields = ScriptEngine::GetScriptFieldMap(uuid);
 
-							auto it = fields.find(name);
-							if (it == fields.end())
-								continue; 
-						
-							switch (type)
-							{
-								READ_SCRIPT_FIELD(Float,	float);
-								READ_SCRIPT_FIELD(Double,	double);
-								READ_SCRIPT_FIELD(Bool,		bool);
-								READ_SCRIPT_FIELD(Char,		char);
-								READ_SCRIPT_FIELD(Byte,		int8_t);
-								READ_SCRIPT_FIELD(Short,	int16_t);
-								READ_SCRIPT_FIELD(Int,		int32_t);
-								READ_SCRIPT_FIELD(Long,		int64_t);
-								READ_SCRIPT_FIELD(SByte,	uint8_t);
-								READ_SCRIPT_FIELD(UShort,	uint16_t);
-								READ_SCRIPT_FIELD(UInt,		uint32_t);
-								READ_SCRIPT_FIELD(ULong,	uint64_t);
-								READ_SCRIPT_FIELD(Vector2,	glm::vec2);
-								READ_SCRIPT_FIELD(Vector3,	glm::vec3);
-								READ_SCRIPT_FIELD(Vector4,	glm::vec4);
-							case ScriptFieldType::Entity:
-							{
-								AssetHandle data = scriptField["Data"].as<uint64_t>();
-								MonoObject* object = ScriptEngine::CreateEntityClass(data);
-								scriptInstance->SetFieldValueInternal(name, object);
-								break;
-							}
-							case ScriptFieldType::Prefab:
-							case ScriptFieldType::Font:
-							case ScriptFieldType::Texture:
-							case ScriptFieldType::Asset: 
-							{
-								AssetHandle data = scriptField["Data"].as<uint64_t>();
-								MonoObject* object = ScriptEngine::CreateAssetClass(data);
-								scriptInstance->SetFieldValueInternal(name, object);
-								break;
-							}
-							}
+					for (auto scriptField : scriptFields)
+					{
+						std::string name = scriptField["Name"].as<std::string>();
+						std::string typeString = scriptField["Type"].as<std::string>();
+						ScriptFieldType type = Utils::ScriptFieldTypeFromString(typeString);
+
+						ScriptField& instance = fields.GetScriptField(name, deserializedEntity);
+						instance.Type = type;
+						instance.Name = name;
+
+						switch (type)
+						{
+							READ_SCRIPT_FIELD(Float, float);
+							READ_SCRIPT_FIELD(Double, double);
+							READ_SCRIPT_FIELD(Bool, bool);
+							READ_SCRIPT_FIELD(Char, char);
+							READ_SCRIPT_FIELD(Byte, int8_t);
+							READ_SCRIPT_FIELD(Short, int16_t);
+							READ_SCRIPT_FIELD(Int, int32_t);
+							READ_SCRIPT_FIELD(Long, int64_t);
+							READ_SCRIPT_FIELD(SByte, uint8_t);
+							READ_SCRIPT_FIELD(UShort, uint16_t);
+							READ_SCRIPT_FIELD(UInt, uint32_t);
+							READ_SCRIPT_FIELD(ULong, uint64_t);
+							READ_SCRIPT_FIELD(Vector2, glm::vec2);
+							READ_SCRIPT_FIELD(Vector3, glm::vec3);
+							READ_SCRIPT_FIELD(Vector4, glm::vec4);
+
+						case ScriptFieldType::Entity:
+						{
+							AssetHandle data = scriptField["Data"].as<uint64_t>();
+							instance.SetValueEntity(data);
+							break;
+						}
+						case ScriptFieldType::Prefab:
+						case ScriptFieldType::Font:
+						case ScriptFieldType::Texture:
+						case ScriptFieldType::Asset:
+						{
+							AssetHandle data = scriptField["Data"].as<uint64_t>();
+							instance.SetValueAsset(data);
+							break;
+						}
 						}
 					}
 				}

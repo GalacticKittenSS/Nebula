@@ -878,84 +878,81 @@ namespace Nebula {
 			bool classExists = ScriptEngine::EntityClassExists(component.ClassName);
 			UI::ScopedStyleColor colour(ImGuiCol_Text, ImVec4(0.9f, 0.2f, 0.3f, 1.0f), !classExists);
 			
-			if (DrawTextBox("Class", component.ClassName))
+			if (DrawTextBox("Class", component.ClassName) && scene->IsRunning())
 				ScriptEngine::CreateScriptInstance(entity);
 			
 			// FIELDS
-			if (Ref<ScriptInstance> scriptInstance = ScriptEngine::GetScriptInstance(entity))
+			if (Ref<ScriptClass> scriptClass = ScriptEngine::GetEntityClass(component.ClassName))
 			{
 				ImGui::Separator();
 				ImGui::Spacing();
 
-				const auto& fields = scriptInstance->GetScriptClass()->GetFields();
-				for (const auto& [name, field] : fields)
+				auto& fields = scriptClass->GetFields();
+				ScriptFieldMap& map = ScriptEngine::GetScriptFieldMap(entity.GetUUID());
+
+				for (auto& [name, class_field] : fields)
 				{
+					ScriptField& field = map.GetScriptField(name, entity);
+					
 					switch (field.Type)
 					{
-					case Nebula::ScriptFieldType::Float:
+					case ScriptFieldType::Float:
 					{
-						auto data = scriptInstance->GetFieldValue<float>(name);
+						auto data = field.GetValue<float>();
 						if (DrawVec1Control(name.c_str(), data))
-						{
-							scriptInstance->SetFieldValue(name, data);
-						}
+							field.SetValue(data);
+						
 						break;
 					}
-					case Nebula::ScriptFieldType::Bool:
+					case ScriptFieldType::Bool:
 					{
-						auto data = scriptInstance->GetFieldValue<bool>(name);
+						auto data = field.GetValue<bool>();
 						if (DrawBool(name.c_str(), data))
-						{
-							scriptInstance->SetFieldValue(name, data);
-						}
+							field.SetValue(data);
+						
 						break;
 					}
-					case Nebula::ScriptFieldType::Int:
+					case ScriptFieldType::Int:
 					{
-						auto data = scriptInstance->GetFieldValue<int>(name);
+						auto data = field.GetValue<int>();
 						
 						ImGui::PushID(name.c_str());
 						float size = DrawLabel(name);
 						ImGui::SetNextItemWidth(size);
 
 						if (ImGui::DragInt("##V", &data))
-						{
-							scriptInstance->SetFieldValue(name, data);
-						}
+							field.SetValue(data);
+						
 						ImGui::PopID();
 						break;
 					}
-					case Nebula::ScriptFieldType::Vector2:
+					case ScriptFieldType::Vector2:
 					{
-						auto data = scriptInstance->GetFieldValue<glm::vec2>(name);
+						auto data = field.GetValue<glm::vec2>();
 						if (DrawVec2Control(name.c_str(), data))
-						{
-							scriptInstance->SetFieldValue(name, data);
-						}
+							field.SetValue(data);
+						
 						break;
 					}
-					case Nebula::ScriptFieldType::Vector3:
+					case ScriptFieldType::Vector3:
 					{
-						auto data = scriptInstance->GetFieldValue<glm::vec3>(name);
+						auto data = field.GetValue<glm::vec3>();
 						if (DrawVec3Control(name.c_str(), data))
-						{
-							scriptInstance->SetFieldValue(name, data);
-						}
+							field.SetValue(data);
+						
 						break;
 					}
-					case Nebula::ScriptFieldType::Vector4:
+					case ScriptFieldType::Vector4:
 					{
-						auto data = scriptInstance->GetFieldValue<glm::vec4>(name);
+						auto data = field.GetValue<glm::vec4>();
 						if (ImGui::DragFloat4(name.c_str(), value_ptr(data)))
-						{
-							scriptInstance->SetFieldValue(name, data);
-						}
+							field.SetValue(data);
+						
 						break;
 					}
-					case Nebula::ScriptFieldType::Entity:
+					case ScriptFieldType::Entity:
 					{
-						auto data = scriptInstance->GetFieldValue<MonoObject*>(name);
-						UUID id = ScriptEngine::GetIDFromObject(data);
+						UUID id = field.GetValueObject();
 						std::string text = "None";
 						
 						if (id)
@@ -967,15 +964,14 @@ namespace Nebula {
 						
 						DrawLabel(name);
 						if (ImGui::Button(text.c_str(), ImVec2{ ImGui::GetContentRegionAvail().x, 0 }))
-							scriptInstance->SetFieldValueInternal(name, nullptr);
+							field.SetValue(nullptr);
 
 						if (ImGui::BeginDragDropTarget())
 						{
 							if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENTITY"))
 							{
 								const UUID payloadID = *(const UUID*)payload->Data;
-								MonoObject* object = ScriptEngine::CreateEntityClass(payloadID);
-								scriptInstance->SetFieldValueInternal(name, object);
+								field.SetValueEntity(payloadID);
 							}
 						}
 
@@ -987,8 +983,7 @@ namespace Nebula {
 					case ScriptFieldType::Material:
 					case ScriptFieldType::Asset:
 					{
-						auto data = scriptInstance->GetFieldValue<MonoObject*>(name);
-						AssetHandle handle = ScriptEngine::GetIDFromObject(data);
+						AssetHandle handle = field.GetValueObject();
 						const AssetMetadata& metadata = AssetManager::GetAssetMetadata(handle);
 						
 						std::string text = "None";
@@ -997,7 +992,7 @@ namespace Nebula {
 						
 						DrawLabel(name);
 						if (ImGui::Button(text.c_str(), ImVec2{ ImGui::GetContentRegionAvail().x, 0 }))
-							scriptInstance->SetFieldValueInternal(name, nullptr);
+							field.SetValue(nullptr);
 
 						if (ImGui::BeginDragDropTarget()) 
 						{
@@ -1007,8 +1002,7 @@ namespace Nebula {
 								std::filesystem::path path = payloadPath;
 
 								AssetHandle handle = AssetManager::CreateAsset(path);
-								MonoObject* object = ScriptEngine::CreateAssetClass(handle);
-								scriptInstance->SetFieldValueInternal(name, object);
+								field.SetValueAsset(handle);
 							}
 						}
 						
@@ -1097,10 +1091,13 @@ namespace Nebula {
 
 			if (AssetHandle mat = entity.GetComponent<MaterialComponent>().Material)
 			{
-				if (Ref<Texture2D> texture = AssetManager::GetAsset<Material>(mat)->Texture)
+				if (Ref<Material> material = AssetManager::GetAsset<Material>(mat))
 				{
-					maxCellSize = glm::vec2(texture->GetWidth(), texture->GetHeight());
-					component.SubTextureCellSize = glm::min(component.SubTextureCellSize, maxCellSize);
+					if (Ref<Texture2D> texture = material->Texture)
+					{
+						maxCellSize = glm::vec2(texture->GetWidth(), texture->GetHeight());
+						component.SubTextureCellSize = glm::min(component.SubTextureCellSize, maxCellSize);
+					}
 				}
 			}
 			

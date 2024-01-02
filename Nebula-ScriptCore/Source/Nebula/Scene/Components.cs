@@ -200,7 +200,7 @@
                 return new Font(handle);
             }
 
-            set => InternalCalls.StringRendererComponent_SetFontHandle(Entity.ID, value.AssetHandle);
+            set => InternalCalls.StringRendererComponent_SetFontHandle(Entity.ID, value.ID);
         }
 
         public bool Bold

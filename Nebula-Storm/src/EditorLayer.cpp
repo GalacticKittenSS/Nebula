@@ -589,6 +589,7 @@ namespace Nebula
 
 		if (Project::Load(path))
 		{
+			ScriptEngine::ClearScriptInstances();
 			ScriptEngine::ReloadAssembly();
 			
 			std::filesystem::path startScenePath = Project::GetAssetPath(Project::GetActive()->GetConfig().StartScene);

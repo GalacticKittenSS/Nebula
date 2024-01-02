@@ -6,4 +6,6 @@ Project:
   ScriptModulePath: Binaries/Sandbox.dll
 Scene:
   Gravity: [0, -9.81000042]
+  ClearColour: [0.100000001, 0.100000001, 0.100000001, 1]
+  ShowSky: true
   Layers: [Layer 0, Layer 1, Layer 2, Layer 3, Layer 4, Layer 5, Layer 6, Layer 7, Layer 8, Layer 9, Layer 10, Layer 11, Layer 12, Layer 13, Layer 14, Layer 15]

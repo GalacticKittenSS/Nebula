@@ -176,7 +176,7 @@ namespace Sandbox
 
         private void Move(Vector2 speed)
         {
-            Transform.Translation += new Vector3(speed * Nebula.Time.DeltaTime(), 0.0f);
+            Transform.Translation += new Vector3(speed * Nebula.Time.DeltaTime, 0.0f);
 
             if (speed.x < 0.0f)
                 ForceMult.x = -1.0f;
@@ -200,7 +200,7 @@ namespace Sandbox
                 Force *= 0.95f;
 
             Move(Force * ForceMult);
-            Force -= Force * Nebula.Time.DeltaTime();
+            Force -= Force * Nebula.Time.DeltaTime;
 
             if (Force.x <= 0.2f && Force.y <= 0.2f)
                 Force = new Vector2(0.0f, 0.0f);

@@ -19,12 +19,12 @@
 
         public bool Bold
         {
-            get => InternalCalls.Font_GetBold(AssetHandle);
+            get => InternalCalls.Font_GetBold(ID);
         }
 
         public bool Italic
         {
-            get => InternalCalls.Font_GetItalic(AssetHandle);
+            get => InternalCalls.Font_GetItalic(ID);
         }
         
         public static implicit operator string(Font font) => font.FilePath;

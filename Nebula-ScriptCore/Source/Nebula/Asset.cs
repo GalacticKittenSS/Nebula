@@ -2,23 +2,23 @@
 {
     public class Asset
     {
-        protected Asset() { AssetHandle = 0; }
+        protected Asset() { ID = 0; }
 
         internal Asset(ulong handle)
         {
-            AssetHandle = handle;
+            ID = handle;
         }
 
         public Asset(string path)
         {
-            AssetHandle = InternalCalls.Asset_GetOrCreateHandle(path);
+            ID = InternalCalls.Asset_GetOrCreateHandle(path);
         }
 
-        public readonly ulong AssetHandle;
+        public readonly ulong ID;
 
         public string FilePath
         {
-            get => InternalCalls.Asset_GetPathFromHandle(AssetHandle);
+            get => InternalCalls.Asset_GetPathFromHandle(ID);
         }
     }
 }
