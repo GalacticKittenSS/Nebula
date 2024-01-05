@@ -83,7 +83,7 @@ namespace Nebula {
 			m_Scene->DestroyEntity(entity);
 		}
 
-		m_DeletingEntities = true;
+		m_DeletingEntities = false;
 		m_EntitiesToDelete.clear();
 	}
 

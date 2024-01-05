@@ -305,7 +305,7 @@ namespace Nebula
 
 		auto it = idMap.find(id);
 		if (it == idMap.end())
-			return id;
+			return NULL;
 
 		return it->second;
 	}

@@ -115,9 +115,10 @@ namespace Nebula {
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
 			{
 				std::filesystem::path filepath = (const wchar_t*)payload->Data;
+				std::filesystem::path assetPath = Project::GetAssetPath(filepath);
 
 				PrefabSerializer serializer(m_Context.get());
-				serializer.Deserialize(filepath.string());
+				serializer.Deserialize(assetPath.string());
 			}
 
 			ImGui::EndDragDropTarget();

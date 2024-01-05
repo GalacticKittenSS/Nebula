@@ -272,6 +272,7 @@ namespace Nebula {
 
 				if (ImGui::BeginDragDropSource())
 				{
+					m_DragDrop = true;
 					std::filesystem::path relativePath(path);
 					const wchar_t* itemPath = relativePath.c_str();
 					ImGui::SetDragDropPayload("CONTENT_BROWSER_ITEM", itemPath, (wcslen(itemPath) + 1) * sizeof(wchar_t), ImGuiCond_Once);

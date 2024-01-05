@@ -13,6 +13,10 @@ namespace Nebula
 	Ref<Texture2D> ThumbnailCache::GetorCreateThumbnail(const std::filesystem::path& assetPath)
 	{
 		auto absoulutePath = m_Project->GetAssetPath(assetPath);
+
+		if (!std::filesystem::exists(absoulutePath))
+			return nullptr;
+
 		std::filesystem::file_time_type lastWriteTime = std::filesystem::last_write_time(absoulutePath);
 		uint64_t seconds = std::chrono::duration_cast<std::chrono::seconds>(lastWriteTime.time_since_epoch()).count();
 
