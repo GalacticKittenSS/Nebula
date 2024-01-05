@@ -572,7 +572,7 @@ namespace Nebula
 	{
 		if (Ref<Project> active = Project::GetActive())
 		{
-			if (active->GetProjectFilePath().empty())
+			if (!active->GetProjectFilePath().empty())
 				Project::SaveActive(active->GetProjectFilePath());
 		}
 	}
@@ -592,9 +592,10 @@ namespace Nebula
 			ScriptEngine::ClearScriptInstances();
 			ScriptEngine::ReloadAssembly();
 			
+			m_ContentBrowser = CreateRef<ContentBrowserPanel>(Project::GetActive());
+			
 			std::filesystem::path startScenePath = Project::GetAssetPath(Project::GetActive()->GetConfig().StartScene);
 			LoadScene(startScenePath);
-			m_ContentBrowser = CreateRef<ContentBrowserPanel>(Project::GetActive());
 		}
 	}
 
