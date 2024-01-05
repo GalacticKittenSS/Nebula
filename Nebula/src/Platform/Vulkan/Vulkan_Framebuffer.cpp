@@ -241,7 +241,7 @@ namespace Nebula {
 		Ref<Vulkan_Image> image = m_ColourAttachments[attachmentIndex][context->GetImageIndex()];
 		
 		VkCommandBuffer commandBuffer = VulkanAPI::BeginSingleUseCommand();
-		VulkanAPI::TransitionImageLayout(image->GetVulkanImage(), VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, commandBuffer);
+		VulkanAPI::TransitionImageLayout(image->GetVulkanImage(), VK_IMAGE_ASPECT_COLOR_BIT, image->ImageLayout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, commandBuffer);
 		Utils::CopyImageToBuffer(commandBuffer, m_StagingBuffer->GetBuffer(), image->GetVulkanImage(), m_Specifications.Width, m_Specifications.Height);
 		VulkanAPI::TransitionImageLayout(image->GetVulkanImage(), VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, commandBuffer);
 		VulkanAPI::EndSingleUseCommand(commandBuffer);
