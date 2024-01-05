@@ -329,6 +329,9 @@ namespace Nebula {
 		auto& fields = s_Data->EntityScriptFields[entityID];
 		for (auto& [name, field] : fields)
 		{
+			if (!field.ClassField)
+				continue;
+
 			switch (field.Type)
 			{
 			case ScriptFieldType::Prefab:
@@ -737,7 +740,14 @@ namespace Nebula {
 			Ref<ScriptClass> scriptClass = s_Data->EntityClasses[sc.ClassName];
 			auto& fields = scriptClass->GetFields();
 
-			(*this)[name] = fields[name];
+			auto it2 = fields.find(name);
+			if (it2 == fields.end())
+			{
+				static ScriptField defaultField;
+				return defaultField;
+			}
+
+			(*this)[name] = it2->second;
 			return at(name);
 		}
 
@@ -875,12 +885,18 @@ namespace Nebula {
 
 	bool ScriptInstance::GetFieldValueInternal(MonoClassField* field, void* buffer)
 	{
+		if (!field)
+			return false;
+
 		mono_field_get_value(m_Instance, field, buffer);
 		return true;
 	}
 	 
 	bool ScriptInstance::SetFieldValueInternal(MonoClassField* field, const void* value)
 	{
+		if (!field)
+			return false;
+
 		mono_field_set_value(m_Instance, field, (void*)value);
 		return true;
 	}
