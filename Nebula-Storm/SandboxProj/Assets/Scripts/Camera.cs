@@ -10,7 +10,7 @@ namespace Sandbox
 
         void OnCreate()
         {
-            Player = Scene.FindEntityByName("Player");
+            Player = Nebula.Scene.FindEntityByName("Player");
         }
 
         void OnUpdate(float ts)

@@ -1,0 +1,85 @@
+Scene: Untitled
+Order:
+  Size: 3
+  Data: [13171219840290569115, 778301158900037706, 3254825908576337129]
+Entities:
+  - Entity: 3254825908576337129
+    TagComponent:
+      Tag: Camera
+    PropertiesComponent:
+      IsEnabled: true
+      Layer: 1
+    ParentChildComponent:
+      PrimaryParent: 0
+      Children: ~
+      ChildCount: 0
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    CameraComponent:
+      Camera:
+        ProjectionType: 1
+        PerspectiveFOV: 0.785398185
+        PerspectiveNear: 0.00999999978
+        PerspectiveFar: 1000
+        OrthographicSize: 55
+        OrthographicNear: -1
+        OrthographicFar: 1
+      Primary: true
+      FixedAspectRatio: false
+    MaterialComponent:
+      Material: 0
+  - Entity: 778301158900037706
+    TagComponent:
+      Tag: Sprite
+    PropertiesComponent:
+      IsEnabled: true
+      Layer: 1
+    ParentChildComponent:
+      PrimaryParent: 0
+      Children: ~
+      ChildCount: 0
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    MaterialComponent:
+      Material: 15428977048998146413
+    SpriteRendererComponent:
+      Offset: [0, 0]
+      CellSize: [128, 128]
+      CellNum: [1, 1]
+    BoxCollider2DComponent:
+      Offset: [0, 0]
+      Size: [0.5, 0.5]
+      Density: 1
+      Friction: 0.5
+      Restitution: 0
+      RestitutionThreshold: 0.5
+      Mask: 65535
+  - Entity: 13171219840290569115
+    TagComponent:
+      Tag: Scene
+    PropertiesComponent:
+      IsEnabled: true
+      Layer: 1
+    ParentChildComponent:
+      PrimaryParent: 0
+      Children: ~
+      ChildCount: 0
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    ScriptComponent:
+      Class: Sandbox.Scene
+      ScriptFields:
+        - Name: Duplicate
+          Type: Entity
+          Data: 778301158900037706
+        - Name: EntityCount
+          Type: int
+          Data: 415
+    MaterialComponent:
+      Material: 0
