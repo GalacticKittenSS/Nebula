@@ -2,6 +2,9 @@
 #include "ImGui_Layer.h"
 
 #include "Nebula/Core/Application.h"
+#include "Nebula/Project/Project.h"
+
+#include <stb_image_write.h>
 
 #include <imgui.h>
 #include <imgui_internal.h>
@@ -183,26 +186,34 @@ namespace Nebula {
 		ImGui::Render();
 		ImDrawData* drawData = ImGui::GetDrawData();
 
-		if (RendererAPI::GetAPI() == RendererAPI::API::OpenGL)
+		if (drawData->CmdListsCount)
 		{
-			ImGui_ImplOpenGL3_RenderDrawData(drawData);
-		}
-		else if (RendererAPI::GetAPI() == RendererAPI::API::Vulkan && drawData->CmdListsCount)
-		{
-			FrameBufferSpecification spec = m_Framebuffer->GetFrameBufferSpecifications();
-			if (spec.Width != window.GetWidth() || spec.Height != window.GetHeight())
-				m_Framebuffer->Resize(window.GetWidth(), window.GetHeight());
-			
-			m_Framebuffer->Bind();
-			RenderCommand::BeginRecording();
-			m_RenderPass->Bind();
+			switch (RendererAPI::GetAPI())
+			{
+			case RendererAPI::API::OpenGL:
+				ImGui_ImplOpenGL3_RenderDrawData(drawData);
+				break;
+			case RendererAPI::API::Vulkan:
+			{
+				FrameBufferSpecification spec = m_Framebuffer->GetFrameBufferSpecifications();
+				if (window.GetWidth() > 0.0f && window.GetHeight() > 0.0f
+					&& (spec.Width != window.GetWidth() || spec.Height != window.GetHeight()))
+					m_Framebuffer->Resize(window.GetWidth(), window.GetHeight());
 
-			ImGui_ImplVulkan_RenderDrawData(drawData, VulkanAPI::GetCommandBuffer());
+				m_Framebuffer->Bind();
+				RenderCommand::BeginRecording();
+				m_RenderPass->Bind();
 
-			// Submit command buffer
-			m_RenderPass->Unbind();
-			RenderCommand::EndRecording();
-			m_Framebuffer->Unbind();
+				ImGui_ImplVulkan_RenderDrawData(drawData, VulkanAPI::GetCommandBuffer());
+
+				// Submit command buffer
+				m_RenderPass->Unbind();
+				RenderCommand::EndRecording();
+				m_Framebuffer->Unbind();
+
+				break;
+			}
+			}
 		}
 
 		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
