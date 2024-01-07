@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Nebula/Core/Buffer.h"
+
 namespace Nebula
 {
 	enum class ImageFormat
@@ -60,7 +62,7 @@ namespace Nebula
 		bool ShaderUsage = true;
 		bool ImGuiUsage = true;
 
-		int Samples = 1;
+		uint32_t Samples = 1;
 		uint32_t Width;
 		uint32_t Height;
 
@@ -77,9 +79,12 @@ namespace Nebula
 		virtual uint64_t GetImageView() const = 0;
 		virtual uint64_t GetDescriptorSet() const = 0;
 
-		virtual void TransitionImageLayout(ImageLayout oldLayout, ImageLayout newlayout) = 0;
+		virtual Buffer ReadToBuffer() = 0;
 
+		virtual void TransitionImageLayout(ImageLayout oldLayout, ImageLayout newlayout) = 0;
+		
 		virtual bool operator==(const Image2D& other) const = 0;
+		virtual const ImageSpecification& GetSpecification() const = 0;
 
 		static Ref<Image2D> Create(const ImageSpecification& specifications);
 	};

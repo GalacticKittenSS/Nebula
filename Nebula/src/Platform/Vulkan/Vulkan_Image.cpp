@@ -113,6 +113,8 @@ namespace Nebula
 
 			return aspectFlags;
 		}
+
+		void CopyImageToBuffer(VkCommandBuffer commandBuffer, VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 	}
 
 	Vulkan_Image::Vulkan_Image()
@@ -127,7 +129,7 @@ namespace Nebula
 
 		m_ImageFormat = Utils::NebulaToVKImageFormat(m_Specification.Format);
 		m_AspectFlags = isDepthFormat ? Utils::GetDepthAspectFlags(m_ImageFormat) : VK_IMAGE_ASPECT_COLOR_BIT;
-		CreateTextureImage(specification.Samples, m_ImageFormat, m_Specification.Usage, m_AspectFlags, m_Specification.Width, m_Specification.Height);
+		CreateTextureImage(specification.Samples, m_ImageFormat, m_Specification.Usage, m_AspectFlags);
 
 		if (isDepthFormat || !m_Specification.ShaderUsage)
 			return;
@@ -164,15 +166,15 @@ namespace Nebula
 		m_ImGuiDescriptor = nullptr;
 	}
 
-	void Vulkan_Image::CreateTextureImage(int samples, VkFormat format, VkImageUsageFlags usage, VkImageAspectFlags aspect, uint32_t width, uint32_t height)
+	void Vulkan_Image::CreateTextureImage(int samples, VkFormat format, VkImageUsageFlags usage, VkImageAspectFlags aspect)
 	{
 		// Image
 		{
 			VkImageCreateInfo imageInfo{};
 			imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 			imageInfo.imageType = VK_IMAGE_TYPE_2D;
-			imageInfo.extent.width = width;
-			imageInfo.extent.height = height;
+			imageInfo.extent.width = m_Specification.Width;
+			imageInfo.extent.height = m_Specification.Height;
 			imageInfo.extent.depth = 1;
 			imageInfo.mipLevels = 1;
 			imageInfo.arrayLayers = 1;
@@ -192,24 +194,25 @@ namespace Nebula
 			VulkanAPI::AttachDebugNameToObject(VK_OBJECT_TYPE_IMAGE, (uint64_t)m_Image, m_Specification.DebugName);
 		}
 		
-		// Image View
-		{
-			VkImageViewCreateInfo createInfo{};
-			createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-			createInfo.image = m_Image;
-			createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-			createInfo.format = format;
-			createInfo.subresourceRange.aspectMask = aspect;
-			createInfo.subresourceRange.baseMipLevel = 0;
-			createInfo.subresourceRange.levelCount = 1;
-			createInfo.subresourceRange.baseArrayLayer = 0;
-			createInfo.subresourceRange.layerCount = 1;
+		CreateImageView(m_ImageView, format, aspect);
+		VulkanAPI::AttachDebugNameToObject(VK_OBJECT_TYPE_IMAGE_VIEW, (uint64_t)m_ImageView, m_Specification.DebugName);
+	}
 
-			VkResult result = vkCreateImageView(VulkanAPI::GetDevice(), &createInfo, nullptr, &m_ImageView);
-			NB_ASSERT(result == VK_SUCCESS, "Failed to create image view!");
-			
-			VulkanAPI::AttachDebugNameToObject(VK_OBJECT_TYPE_IMAGE_VIEW, (uint64_t)m_ImageView, m_Specification.DebugName);
-		}
+	void Vulkan_Image::CreateImageView(VkImageView& imageView, VkFormat format, VkImageAspectFlags aspect)
+	{
+		VkImageViewCreateInfo createInfo{};
+		createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		createInfo.image = m_Image;
+		createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		createInfo.format = format;
+		createInfo.subresourceRange.aspectMask = aspect;
+		createInfo.subresourceRange.baseMipLevel = 0;
+		createInfo.subresourceRange.levelCount = 1;
+		createInfo.subresourceRange.baseArrayLayer = 0;
+		createInfo.subresourceRange.layerCount = 1;
+
+		VkResult result = vkCreateImageView(VulkanAPI::GetDevice(), &createInfo, nullptr, &imageView);
+		NB_ASSERT(result == VK_SUCCESS, "Failed to create image view!");
 	}
 
 	void Vulkan_Image::CreateSampler()
@@ -245,7 +248,8 @@ namespace Nebula
 		return imageArray;
 	}
 
-	Vulkan_Image::VulkanImageArray Vulkan_Image::CreateImageArray(const std::vector<VkImage>& images, const std::vector<VkImageView>& imageViews)
+	Vulkan_Image::VulkanImageArray Vulkan_Image::CreateImageArray(const std::vector<VkImage>& images, const std::vector<VkImageView>& imageViews,
+		uint32_t width, uint32_t height, VkFormat format)
 	{
 		size_t arraySize = glm::max(images.size(), imageViews.size());
 		VulkanImageArray imageArray(arraySize);
@@ -255,10 +259,30 @@ namespace Nebula
 			imageArray[i] = CreateRef<Vulkan_Image>();
 			imageArray[i]->m_Image = images[i];
 			imageArray[i]->m_ImageView = imageViews[i];
+			imageArray[i]->m_ImageFormat = format;
+			imageArray[i]->m_Specification.Width = width;
+			imageArray[i]->m_Specification.Height = height;
 			imageArray[i]->m_AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT; // Assume these images are coming from swapchain
 		}
 
 		return imageArray;
+	}
+
+	Buffer Vulkan_Image::ReadToBuffer()
+	{
+		ImageLayout = ImageLayout != VK_IMAGE_LAYOUT_UNDEFINED ? ImageLayout : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		VulkanBuffer stagingBuffer = VulkanBuffer(m_Specification.Width * m_Specification.Height * 4, VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+
+		VkCommandBuffer commandBuffer = VulkanAPI::BeginSingleUseCommand();
+		VulkanAPI::TransitionImageLayout(m_Image, VK_IMAGE_ASPECT_COLOR_BIT, ImageLayout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, commandBuffer);
+		Utils::CopyImageToBuffer(commandBuffer, stagingBuffer.GetBuffer(), m_Image, m_Specification.Width, m_Specification.Height);
+		VulkanAPI::TransitionImageLayout(m_Image, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, ImageLayout, commandBuffer);
+		VulkanAPI::EndSingleUseCommand(commandBuffer);
+
+		Buffer buffer;
+		buffer.Size = m_Specification.Width * m_Specification.Height * (m_Specification.Format == ImageFormat::R8 ? 1 : 4);
+		buffer.Data = (uint8_t*)stagingBuffer.GetMemory();
+		return buffer;
 	}
 	
 	typedef ImageLayout ImageLayout_t;

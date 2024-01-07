@@ -26,7 +26,7 @@ namespace Nebula {
 
 		VkFormat NebulaToVKImageFormat(ImageFormat format);
 
-		static void CopyImageToBuffer(VkCommandBuffer commandBuffer, VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
+		void CopyImageToBuffer(VkCommandBuffer commandBuffer, VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
 		{
 			VkBufferImageCopy region{};
 			region.bufferOffset = 0;

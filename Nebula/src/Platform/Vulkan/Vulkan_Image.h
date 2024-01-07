@@ -15,14 +15,18 @@ namespace Nebula
 
 		using VulkanImageArray = std::vector<Ref<Vulkan_Image>>;
 		static VulkanImageArray CreateImageArray(const ImageSpecification& specification, uint32_t size);
-		static VulkanImageArray CreateImageArray(const std::vector<VkImage>& images, const std::vector<VkImageView>& imageViews);
+		static VulkanImageArray CreateImageArray(const std::vector<VkImage>& images, const std::vector<VkImageView>& imageViews,
+			uint32_t width, uint32_t height, VkFormat format);
 
 		uint64_t GetImage() const override { return (uint64_t)m_Image; }
 		uint64_t GetImageView() const override { return (uint64_t)m_ImageView; }
 		uint64_t GetDescriptorSet() const override { return (uint64_t)m_ImGuiDescriptor; }
 
+		Buffer ReadToBuffer() override;
 		void TransitionImageLayout(ImageLayout oldLayout, ImageLayout newlayout) override;
 		
+		const ImageSpecification& GetSpecification() const override { return m_Specification; }
+
 		inline const VkImage& GetVulkanImage() const { return m_Image; }
 		inline const VkImageView& GetVulkanImageView() const { return m_ImageView; }
 		
@@ -36,8 +40,9 @@ namespace Nebula
 		
 		VkImageLayout ImageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 	private:
-		void CreateTextureImage(int samples, VkFormat format, VkImageUsageFlags usage, VkImageAspectFlags aspect, uint32_t width, uint32_t height);
+		void CreateTextureImage(int samples, VkFormat format, VkImageUsageFlags usage, VkImageAspectFlags aspect);
 		void CreateSampler();
+		void CreateImageView(VkImageView& imageView, VkFormat format, VkImageAspectFlags aspect);
 	private:
 		ImageSpecification m_Specification;
 		

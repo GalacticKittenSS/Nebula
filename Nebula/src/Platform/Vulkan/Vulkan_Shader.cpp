@@ -257,6 +257,7 @@ namespace Nebula
 				NB_ASSERT(result == VK_SUCCESS, "Failed to create descriptor set layout!");
 
 				VulkanAPI::AllocateDescriptorSet(m_DescriptorSets[setIndex], m_DescriptorSetLayouts[setIndex]);
+				VulkanAPI::AttachDebugNameToObject(VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)m_DescriptorSets[setIndex], m_Name + "-DescriptorSet_" + std::to_string(setIndex));
 			}
 		}
 	}
