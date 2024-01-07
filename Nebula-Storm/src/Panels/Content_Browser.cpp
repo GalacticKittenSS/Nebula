@@ -593,9 +593,12 @@ namespace Nebula {
 			if (ImGui::InputText("##Name", buffer, sizeof(buffer)))
 				m_CreateFileName = std::string(buffer);
 
+			bool focused = ImGui::IsItemFocused();
+
 			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 
-			if (ImGui::Button("Create File"))
+			if (ImGui::Button("Create File")
+				|| (focused && ImGui::IsKeyDown(ImGuiKey_Enter)))
 			{
 				if (m_CreateDirectory)
 				{
