@@ -889,6 +889,7 @@ namespace Nebula
 		m_Data.Framebuffer->Bind();
 		RenderCommand::BeginRecording();
 		m_Data.Framebuffer->ClearDepthAttachment(0);
+		m_Data.Framebuffer->ClearAttachment(1, -1.0f);
 
 		if (m_Settings.ShowSky)
 			SkyPrePass(camera.GetPosition());
