@@ -25,24 +25,6 @@ namespace Nebula {
 		}
 
 		VkFormat NebulaToVKImageFormat(ImageFormat format);
-
-		void CopyImageToBuffer(VkCommandBuffer commandBuffer, VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
-		{
-			VkBufferImageCopy region{};
-			region.bufferOffset = 0;
-			region.bufferRowLength = 0;
-			region.bufferImageHeight = 0;
-
-			region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			region.imageSubresource.mipLevel = 0;
-			region.imageSubresource.baseArrayLayer = 0;
-			region.imageSubresource.layerCount = 1;
-
-			region.imageOffset = { 0, 0, 0 };
-			region.imageExtent = { width, height, 1 };
-
-			vkCmdCopyImageToBuffer(commandBuffer, image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, buffer, 1, &region);
-		}
 	}
 
 	Vulkan_FrameBuffer::Vulkan_FrameBuffer(const FrameBufferSpecification& specifications) 
@@ -167,8 +149,6 @@ namespace Nebula {
 
 			VulkanAPI::AttachDebugNameToObject(VK_OBJECT_TYPE_FRAMEBUFFER, (uint64_t)m_Framebuffer[imageIndex], m_Specifications.DebugName);
 		}
-
-		m_StagingBuffer = CreateScope<VulkanBuffer>(m_Specifications.Width * m_Specifications.Height, VK_BUFFER_USAGE_TRANSFER_DST_BIT);
 	}
 
 	void Vulkan_FrameBuffer::Bind() 
@@ -208,8 +188,7 @@ namespace Nebula {
 			Ref<Vulkan_Image>& image = attachment[context->GetImageIndex()];
 
 			if (m_Specifications.SwapChainTarget && image->GetFormat() == VK_FORMAT_UNDEFINED) // Assume it's from swapchain
-				VulkanAPI::TransitionImageLayout(image->GetVulkanImage(), VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VulkanAPI::GetCommandBuffer());
-				//image->ImageLayout = image->ImageLayout != VK_IMAGE_LAYOUT_UNDEFINED ? VK_IMAGE_LAYOUT_PRESENT_SRC_KHR : image->ImageLayout;
+				image->TransitionImageLayout(ImageLayout::Undefined, ImageLayout::ColourAttachment);
 		}
 	}
 
@@ -240,16 +219,10 @@ namespace Nebula {
 		Vulkan_Context* context = (Vulkan_Context*)Application::Get().GetWindow().GetContext();
 		Ref<Vulkan_Image> image = m_ColourAttachments[attachmentIndex][context->GetImageIndex()];
 		
-		VkCommandBuffer commandBuffer = VulkanAPI::BeginSingleUseCommand();
-		VulkanAPI::TransitionImageLayout(image->GetVulkanImage(), VK_IMAGE_ASPECT_COLOR_BIT, image->ImageLayout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, commandBuffer);
-		Utils::CopyImageToBuffer(commandBuffer, m_StagingBuffer->GetBuffer(), image->GetVulkanImage(), m_Specifications.Width, m_Specifications.Height);
-		VulkanAPI::TransitionImageLayout(image->GetVulkanImage(), VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, commandBuffer);
-		VulkanAPI::EndSingleUseCommand(commandBuffer);
-
 		unsigned int index = x + y * m_Specifications.Width;
-		int8_t* data = (int8_t*)m_StagingBuffer->GetMemory();
-		int8_t pixel = data[index];
-		return pixel;
+		Buffer buffer = image->ReadToBuffer();
+
+		return buffer.Data[index];
 	}
 
 	void Vulkan_FrameBuffer::ClearAttachment(uint32_t attachmentIndex, VkClearColorValue clearValue)

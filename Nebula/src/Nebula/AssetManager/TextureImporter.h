@@ -8,6 +8,6 @@ namespace Nebula
 	{
 	public:
 		static Ref<Texture2D> ImportTexture2D(AssetHandle handle, const AssetMetadata& metadata);
-		static Ref<Texture2D> CreateTexture2D(std::string_view path, bool imgui_usable = true);
+		static Ref<Texture2D> CreateTexture2D(std::string_view path);
 	};
 }

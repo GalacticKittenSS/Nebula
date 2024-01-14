@@ -316,7 +316,6 @@ namespace Nebula {
 		
 		//White Texture
 		TextureSpecification textureSpec;
-		textureSpec.ImGuiUsable = false;
 		s_Data.WhiteTexture = Texture2D::Create(textureSpec);
 		s_Data.TextureSlots[0] = s_Data.WhiteTexture;
 

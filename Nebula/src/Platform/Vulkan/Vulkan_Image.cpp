@@ -42,6 +42,20 @@ namespace Nebula
 			return "Unknown";
 		}
 
+		uint32_t VulkantoBPP(VkFormat format) {
+			switch (format)
+			{
+			case VK_FORMAT_R8_SINT: return 1;
+			case VK_FORMAT_R8G8B8_UNORM: return 3;
+			case VK_FORMAT_B8G8R8_UNORM: return 3;
+			case VK_FORMAT_R8G8B8A8_UNORM: return 4;
+			case VK_FORMAT_B8G8R8A8_UNORM: return 4;
+			}
+
+			NB_ASSERT(false, "Unknown Vulkan Format");
+			return 0;
+		}
+
 		static bool FormatSupported(VkFormat format, VkImageTiling tiling, VkFormatFeatureFlags features)
 		{
 			VkFormatProperties props;
@@ -114,7 +128,23 @@ namespace Nebula
 			return aspectFlags;
 		}
 
-		void CopyImageToBuffer(VkCommandBuffer commandBuffer, VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
+		static void CopyImageToBuffer(VkCommandBuffer commandBuffer, VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
+		{
+			VkBufferImageCopy region{};
+			region.bufferOffset = 0;
+			region.bufferRowLength = 0;
+			region.bufferImageHeight = 0;
+
+			region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			region.imageSubresource.mipLevel = 0;
+			region.imageSubresource.baseArrayLayer = 0;
+			region.imageSubresource.layerCount = 1;
+
+			region.imageOffset = { 0, 0, 0 };
+			region.imageExtent = { width, height, 1 };
+
+			vkCmdCopyImageToBuffer(commandBuffer, image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, buffer, 1, &region);
+		}
 	}
 
 	Vulkan_Image::Vulkan_Image()
@@ -136,12 +166,12 @@ namespace Nebula
 
 		CreateSampler();
 
-		if (m_Specification.ImGuiUsage)
-			m_ImGuiDescriptor = ImGui_ImplVulkan_AddTexture(m_Sampler, m_ImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
 		m_ImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		m_ImageInfo.imageView = m_ImageView;
 		m_ImageInfo.sampler = m_Sampler;
+
+		uint32_t size = m_Specification.Width * m_Specification.Height * Utils::VulkantoBPP(m_ImageFormat);
+		m_StagingBuffer = CreateScope<VulkanBuffer>(size, VK_BUFFER_USAGE_TRANSFER_DST_BIT);
 	}
 
 	Vulkan_Image::~Vulkan_Image()
@@ -270,18 +300,17 @@ namespace Nebula
 
 	Buffer Vulkan_Image::ReadToBuffer()
 	{
-		ImageLayout = ImageLayout != VK_IMAGE_LAYOUT_UNDEFINED ? ImageLayout : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		VulkanBuffer stagingBuffer = VulkanBuffer(m_Specification.Width * m_Specification.Height * 4, VK_BUFFER_USAGE_TRANSFER_DST_BIT);
-
 		VkCommandBuffer commandBuffer = VulkanAPI::BeginSingleUseCommand();
 		VulkanAPI::TransitionImageLayout(m_Image, VK_IMAGE_ASPECT_COLOR_BIT, ImageLayout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, commandBuffer);
-		Utils::CopyImageToBuffer(commandBuffer, stagingBuffer.GetBuffer(), m_Image, m_Specification.Width, m_Specification.Height);
+		Utils::CopyImageToBuffer(commandBuffer, m_StagingBuffer->GetBuffer(), m_Image, m_Specification.Width, m_Specification.Height);
+
+		ImageLayout = ImageLayout != VK_IMAGE_LAYOUT_UNDEFINED ? ImageLayout : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		VulkanAPI::TransitionImageLayout(m_Image, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, ImageLayout, commandBuffer);
 		VulkanAPI::EndSingleUseCommand(commandBuffer);
 
 		Buffer buffer;
-		buffer.Size = m_Specification.Width * m_Specification.Height * (m_Specification.Format == ImageFormat::R8 ? 1 : 4);
-		buffer.Data = (uint8_t*)stagingBuffer.GetMemory();
+		buffer.Size = m_Specification.Width * m_Specification.Height * Utils::VulkantoBPP(m_ImageFormat);
+		buffer.Data = (uint8_t*)m_StagingBuffer->GetMemory();
 		return buffer;
 	}
 	
@@ -291,5 +320,13 @@ namespace Nebula
 		VkCommandBuffer commandBuffer = VulkanAPI::IsRecording() ? VulkanAPI::GetCommandBuffer() : nullptr;
 		VulkanAPI::TransitionImageLayout(m_Image, m_AspectFlags, (VkImageLayout)oldLayout, (VkImageLayout)newlayout, commandBuffer);
 		ImageLayout = (VkImageLayout)newlayout;
+	}
+
+	uint64_t Vulkan_Image::GetDescriptorSet()
+	{
+		if (!m_ImGuiDescriptor)
+			m_ImGuiDescriptor = ImGui_ImplVulkan_AddTexture(m_Sampler, m_ImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+		return (uint64_t)m_ImGuiDescriptor;
 	}
 }

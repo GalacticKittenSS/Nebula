@@ -254,14 +254,13 @@ namespace Nebula
 		{
 			TextureSpecification spec;
 			spec.DebugName = "White-Texture";
-			spec.ImGuiUsable = false;
 			s_Defaults.WhiteTexture = Texture2D::Create(spec);
 			
 			int data = 0xFFFFFFFF;
 			s_Defaults.WhiteTexture->SetData({ &data, sizeof(int) });
 		}
 
-		s_Defaults.SkyTexture = TextureImporter::CreateTexture2D("Resources/Textures/bg.png", false);
+		s_Defaults.SkyTexture = TextureImporter::CreateTexture2D("Resources/Textures/bg.png");
 		
 		s_Data.QuadVBBase	= new Vertex[Settings::MaxVertices];
 		s_Data.CircleVBBase = new CircleVertex[Settings::MaxVertices];

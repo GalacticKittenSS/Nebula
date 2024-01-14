@@ -13,7 +13,7 @@ namespace Nebula
 		
 		uint64_t GetImage() const override { return (uint64_t)m_RendererID; }
 		uint64_t GetImageView() const override { return (uint64_t)m_RendererID; }
-		uint64_t GetDescriptorSet() const override { return (uint64_t)m_RendererID; }
+		uint64_t GetDescriptorSet() override { return (uint64_t)m_RendererID; }
 
 		Buffer ReadToBuffer() override { return {}; }
 		void TransitionImageLayout(ImageLayout oldLayout, ImageLayout newlayout) override {};

@@ -13,8 +13,7 @@ namespace Nebula {
 		uint32_t Height = 1;
 		ImageFormat Format = ImageFormat::RGBA8;
 		bool GenerateMips = true;
-		bool ImGuiUsable = true;
-
+		
 		//Debug
 		std::string DebugName;
 	};

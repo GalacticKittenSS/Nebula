@@ -20,7 +20,7 @@ namespace Nebula
 
 		uint64_t GetImage() const override { return (uint64_t)m_Image; }
 		uint64_t GetImageView() const override { return (uint64_t)m_ImageView; }
-		uint64_t GetDescriptorSet() const override { return (uint64_t)m_ImGuiDescriptor; }
+		uint64_t GetDescriptorSet() override;
 
 		Buffer ReadToBuffer() override;
 		void TransitionImageLayout(ImageLayout oldLayout, ImageLayout newlayout) override;
@@ -45,6 +45,7 @@ namespace Nebula
 		void CreateImageView(VkImageView& imageView, VkFormat format, VkImageAspectFlags aspect);
 	private:
 		ImageSpecification m_Specification;
+		Scope<VulkanBuffer> m_StagingBuffer;
 		
 		VkImage m_Image;
 		VkImageView m_ImageView;

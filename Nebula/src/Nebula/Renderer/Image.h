@@ -60,8 +60,7 @@ namespace Nebula
 		uint32_t Usage;
 		
 		bool ShaderUsage = true;
-		bool ImGuiUsage = true;
-
+		
 		uint32_t Samples = 1;
 		uint32_t Width;
 		uint32_t Height;
@@ -77,7 +76,7 @@ namespace Nebula
 
 		virtual uint64_t GetImage() const = 0;
 		virtual uint64_t GetImageView() const = 0;
-		virtual uint64_t GetDescriptorSet() const = 0;
+		virtual uint64_t GetDescriptorSet() = 0;
 
 		virtual Buffer ReadToBuffer() = 0;
 

@@ -48,8 +48,7 @@ namespace Nebula {
 		Ref<Vulkan_Image> m_DepthAttachment;
 
 		VkCommandBuffer m_CommandBuffer = nullptr;
-		Scope<VulkanBuffer> m_StagingBuffer = nullptr;
-
+		
 		static Vulkan_FrameBuffer* s_BindedInstance;
 		friend class Vulkan_RenderPass;
 	};

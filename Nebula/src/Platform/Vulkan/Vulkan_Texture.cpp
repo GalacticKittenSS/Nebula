@@ -10,17 +10,7 @@
 namespace Nebula {
 	namespace Utils 
 	{
-		static uint32_t VulkantoBPP(VkFormat format) {
-			switch (format)
-			{
-			case VK_FORMAT_R8_SINT: return 1;
-			case VK_FORMAT_R8G8B8_UNORM: return 3;
-			case VK_FORMAT_R8G8B8A8_UNORM: return 4;
-			}
-
-			NB_ASSERT(false, "Unknown Vulkan Format");
-			return 0;
-		}
+		uint32_t VulkantoBPP(VkFormat format);
 
 		static void CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
 		{
@@ -56,8 +46,7 @@ namespace Nebula {
 		imageSpec.Samples = 1;
 		imageSpec.Width = m_Specification.Width;
 		imageSpec.Height = m_Specification.Height;
-		imageSpec.ImGuiUsage = m_Specification.ImGuiUsable;
-
+		
 		if (!m_Specification.DebugName.empty())
 			imageSpec.DebugName = m_Specification.DebugName + "-Image";
 
