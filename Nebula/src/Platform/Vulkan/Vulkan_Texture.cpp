@@ -12,10 +12,8 @@ namespace Nebula {
 	{
 		uint32_t VulkantoBPP(VkFormat format);
 
-		static void CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
+		static void CopyBufferToImage(VkCommandBuffer commandBuffer, VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
 		{
-			VkCommandBuffer commandBuffer = VulkanAPI::BeginSingleUseCommand();
-
 			VkBufferImageCopy region{};
 			region.bufferOffset = 0;
 			region.bufferRowLength = 0;
@@ -30,8 +28,6 @@ namespace Nebula {
 			region.imageExtent = { width, height, 1 };
 
 			vkCmdCopyBufferToImage(commandBuffer, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-
-			VulkanAPI::EndSingleUseCommand(commandBuffer);
 		}
 	}
 
@@ -91,9 +87,11 @@ namespace Nebula {
 			m_StagingBuffer->SetData(data.Data, (uint32_t)data.Size);
 		}
 
-		VulkanAPI::TransitionImageLayout(m_Image->GetVulkanImage(), VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-		Utils::CopyBufferToImage(m_StagingBuffer->GetBuffer(), m_Image->GetVulkanImage(), m_Width, m_Height);
-		VulkanAPI::TransitionImageLayout(m_Image->GetVulkanImage(), VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		VkCommandBuffer commandBuffer = VulkanAPI::BeginSingleUseCommand();
+		VulkanAPI::TransitionImageLayout(m_Image->GetVulkanImage(), VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, commandBuffer);
+		Utils::CopyBufferToImage(commandBuffer, m_StagingBuffer->GetBuffer(), m_Image->GetVulkanImage(), m_Width, m_Height);
+		VulkanAPI::TransitionImageLayout(m_Image->GetVulkanImage(), VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, commandBuffer);
+		VulkanAPI::EndSingleUseCommand(commandBuffer);
 	}
 
 	void Vulkan_Texture2D::SetFilterNearest(bool nearest) 
