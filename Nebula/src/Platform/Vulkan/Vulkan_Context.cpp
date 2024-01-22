@@ -35,27 +35,27 @@ namespace Nebula {
 			vkCmdCopyImage(commandBuffer, srcimage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstimage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 			VulkanAPI::EndSingleUseCommand(commandBuffer);
 		}
+
+		static std::string VendorIDToString(uint32_t vendor)
+		{
+			switch (vendor)
+			{
+			case 0x1002: return "AMD";
+			case 0x1010: return "ImgTec";
+			case 0x10DE: return "NVIDIA";
+			case 0x13B5: return "ARM";
+			case 0x5143: return "Qualcomm";
+			case 0x8086: return "INTEL";
+			}
+
+			return "Unknown";
+		}
 	}
 
 	Vulkan_Context::Vulkan_Context(GLFWwindow* windowHandle) 
 		: m_WindowHandle(windowHandle)
 	{
 		NB_ASSERT(windowHandle, "Window Handle is NULL!");
-	}
-
-	static std::string VendorIDToString(uint32_t vendor)
-	{
-		switch (vendor)
-		{
-		case 0x1002: return "AMD";
-		case 0x1010: return "ImgTec";
-		case 0x10DE: return "NVIDIA";
-		case 0x13B5: return "ARM";
-		case 0x5143: return "Qualcomm";
-		case 0x8086: return "INTEL";
-		}
-
-		return "Unknown";
 	}
 
 	void Vulkan_Context::Init() {
@@ -75,7 +75,7 @@ namespace Nebula {
 		uint8_t versionPatch = VK_API_VERSION_PATCH(properties.apiVersion);
 
 		NB_INFO("Vulkan Info:");
-		NB_INFO("  Vendor: {0}", VendorIDToString(properties.vendorID));
+		NB_INFO("  Vendor: {0}", Utils::VendorIDToString(properties.vendorID));
 		NB_INFO("  Renderer: {0}", properties.deviceName);
 		NB_INFO("  Version: {0}.{1}.{2}", versionMajor, versionMinor, versionPatch);
 
