@@ -193,4 +193,13 @@ namespace Nebula
 			vkCmdBindDescriptorSets(VulkanAPI::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_Layout,
 				descriptorSet, 1, &descriptorSets[descriptorSet], 0, nullptr);
 	}
+
+	void Vulkan_Pipeline::BindDescriptorSet(Ref<DescriptorSet> descriptorSet) const
+	{
+		Ref<Vulkan_DescriptorSet> vulkanDescriptors = std::static_pointer_cast<Vulkan_DescriptorSet>(descriptorSet);
+		const auto& descrcriptorSets = vulkanDescriptors->GetDescriptorSets();
+
+		vkCmdBindDescriptorSets(VulkanAPI::GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_Layout,
+			0, (uint32_t)descrcriptorSets.size(), descrcriptorSets.data(), 0, nullptr);
+	}
 }

@@ -39,7 +39,8 @@ namespace Nebula
 		// Bind Descriptor Sets from linked shader, for all use descriptorSet = -1 (default)
 		virtual void BindDescriptorSet(uint32_t descriptorSet = -1) const {};
 		virtual void BindDescriptorSet(uint32_t descriptorSet, Ref<UniformBuffer> uniformBuffer) const {};
-		
+		virtual void BindDescriptorSet(Ref<DescriptorSet> descriptorSets) const {};
+
 		static Ref<Pipeline> Create(const PipelineSpecification& specification);
 	};
 }

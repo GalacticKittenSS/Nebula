@@ -266,7 +266,7 @@ namespace Nebula {
 			s_Data.CircleVBBase = new CircleVertex[s_Data.MaxVertices];
 
 			s_Data.CircleShader = Shader::Create("Resources/shaders/Circle.glsl");
-			s_Data.CircleShader->SetUniformBuffer("u_ViewProjection", s_Data.CameraUniformBuffer);
+			//s_Data.CircleShader->SetUniformBuffer("u_ViewProjection", s_Data.CameraUniformBuffer);
 
 			pipelineSpec.Shader = s_Data.CircleShader;
 			s_Data.CirclePipeline = Pipeline::Create(pipelineSpec);
@@ -287,7 +287,7 @@ namespace Nebula {
 			s_Data.LineVertexPos[1] = { 0.5f, 0.0f, 0.0f, 1.0f };
 			
 			s_Data.LineShader = Shader::Create("Resources/shaders/Line.glsl");
-			s_Data.LineShader->SetUniformBuffer("u_ViewProjection", s_Data.CameraUniformBuffer);
+			//s_Data.LineShader->SetUniformBuffer("u_ViewProjection", s_Data.CameraUniformBuffer);
 
 			pipelineSpec.Shader = s_Data.LineShader;
 			pipelineSpec.Shape = PipelineShape::Lines;
@@ -307,7 +307,7 @@ namespace Nebula {
 			s_Data.TextVBBase = new TextVertex[s_Data.MaxVertices];
 		
 			s_Data.TextShader = Shader::Create("Resources/shaders/Text.glsl");
-			s_Data.TextShader->SetUniformBuffer("u_ViewProjection", s_Data.CameraUniformBuffer);
+			//s_Data.TextShader->SetUniformBuffer("u_ViewProjection", s_Data.CameraUniformBuffer);
 
 			pipelineSpec.Shader = s_Data.TextShader;
 			pipelineSpec.Shape = PipelineShape::Triangles;
@@ -324,7 +324,7 @@ namespace Nebula {
 		
 		// Texture Shader
 		s_Data.TextureShader = Shader::Create("Resources/shaders/Default.glsl");
-		s_Data.TextureShader->SetUniformBuffer("u_ViewProjection", s_Data.CameraUniformBuffer);
+		//s_Data.TextureShader->SetUniformBuffer("u_ViewProjection", s_Data.CameraUniformBuffer);
 		
 		pipelineSpec.Shader = s_Data.TextureShader;
 		s_Data.TexturePipeline = Pipeline::Create(pipelineSpec);
@@ -340,7 +340,7 @@ namespace Nebula {
 		}
 		
 		// Vulkan (Fill Texture Array with Default Texture)
-		s_Data.TextureShader->SetTextureArray("u_Textures", s_Data.WhiteTexture);
+		//s_Data.TextureShader->SetTextureArray("u_Textures", s_Data.WhiteTexture);
 	}
 
 	void Renderer2D::Shutdown() {
@@ -645,12 +645,15 @@ namespace Nebula {
 	void Renderer2D::EndScene() {
 		NB_PROFILE_FUNCTION();
 		
-		RenderCommand::BeginRecording();
+		NB_ERROR("Renderer2D is not working and has been temporarily disabled");
+		return;
+
+		//RenderCommand::BeginRecording();
 		s_Data.RenderPass->Bind();
 
 		if (s_Data.QuadIndexCount || s_Data.TriIndexCount) {
-			s_Data.TextureShader->ResetDescriptorSet(1);
-			s_Data.TextureShader->SetTextureArray("u_Textures", s_Data.WhiteTexture);
+			//s_Data.TextureShader->ResetDescriptorSet(1);
+			//s_Data.TextureShader->SetTextureArray("u_Textures", s_Data.WhiteTexture);
 
 			s_Data.TexturePipeline->Bind();
 			s_Data.TextureShader->Bind();
@@ -708,7 +711,7 @@ namespace Nebula {
 		}
 
 		s_Data.RenderPass->Unbind();
-		RenderCommand::EndRecording();
+		//RenderCommand::EndRecording();
 	}
 
 	void Renderer2D::FlushAndReset() {

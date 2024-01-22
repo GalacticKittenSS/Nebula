@@ -127,21 +127,11 @@ namespace Nebula {
 		m_BackFaceCulling = cull;
 	}
 
-	void Vulkan_RendererAPI::BeginRecording()
-	{
-		VulkanAPI::BeginCommandRecording();
-
-		vkCmdSetLineWidth(VulkanAPI::GetCommandBuffer(), m_LineWidth);
-		vkCmdSetCullMode(VulkanAPI::GetCommandBuffer(), m_BackFaceCulling ? VK_CULL_MODE_BACK_BIT : VK_CULL_MODE_NONE);
-	}
-
-	void Vulkan_RendererAPI::EndRecording()
-	{
-		VulkanAPI::EndCommandRecording();
-	}
-	
 	void Vulkan_RendererAPI::DrawIndexed(const Ref<VertexArray>& vertexArray, uint32_t indexCount) 
 	{
+		vkCmdSetLineWidth(VulkanAPI::GetCommandBuffer(), m_LineWidth);
+		vkCmdSetCullMode(VulkanAPI::GetCommandBuffer(), m_BackFaceCulling ? VK_CULL_MODE_BACK_BIT : VK_CULL_MODE_NONE);
+
 		vertexArray->Bind();
 		uint32_t count = indexCount ? indexCount : vertexArray->GetIndexBuffer()->GetCount();
 		vkCmdDrawIndexed(VulkanAPI::GetCommandBuffer(), count, 1, 0, 0, 0);
@@ -149,6 +139,9 @@ namespace Nebula {
 
 	void Vulkan_RendererAPI::DrawLines(const Ref<VertexArray>& vertexArray, uint32_t vertexCount) 
 	{
+		vkCmdSetLineWidth(VulkanAPI::GetCommandBuffer(), m_LineWidth);
+		vkCmdSetCullMode(VulkanAPI::GetCommandBuffer(), m_BackFaceCulling ? VK_CULL_MODE_BACK_BIT : VK_CULL_MODE_NONE);
+
 		vertexArray->Bind();
 		uint32_t count = vertexCount ? vertexCount : vertexArray->GetIndexBuffer()->GetCount();
 		vkCmdDraw(VulkanAPI::GetCommandBuffer(), count, 1, 0, 0);

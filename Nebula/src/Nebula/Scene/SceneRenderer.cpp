@@ -8,6 +8,9 @@
 #include "Nebula/Renderer/Render_Command.h"
 
 #include "Platform/Vulkan/VulkanAPI.h"
+#include "Platform/Vulkan/Vulkan_UniformBuffer.h"
+
+// Descriptor Set
 
 namespace Nebula
 {
@@ -67,7 +70,7 @@ namespace Nebula
 	struct VertexData
 	{
 		std::array<Ref<Texture2D>, 32> TextureSlots;
-		uint32_t TextureSlotIndex = 1; // 0 = White Texture 
+		uint32_t TextureSlotIndex = 2; // 0 = White Texture, 1 = Background
 
 		//Sky
 		Ref<VertexArray>	   SkyVertexArray;
@@ -267,6 +270,7 @@ namespace Nebula
 		s_Data.LineVBBase	= new LineVertex[Settings::MaxVertices];
 		s_Data.TextVBBase	= new TextVertex[Settings::MaxVertices];
 		s_Data.TextureSlots[0] = s_Defaults.WhiteTexture;
+		s_Data.TextureSlots[1] = s_Defaults.SkyTexture;
 	}
 
 	void SceneRenderer::Shutdown()
@@ -315,16 +319,15 @@ namespace Nebula
 			spec.RenderPass = m_Data.GeometryPass;
 			spec.ClearColour = m_Settings.ClearColour;
 			spec.DepthClearValue = 0.0f;
-			m_Data.Framebuffer = FrameBuffer::Create(spec);
+			
+			for (uint32_t i = 0; i < FramesInFlight; i++)
+				m_Data.Frames[i].Framebuffer = FrameBuffer::Create(spec);
 		}
 		
 		PipelineSpecification pipelineSpec;
 		pipelineSpec.RenderPass = m_Data.GeometryPass;
 		pipelineSpec.Shape = PipelineShape::Triangles;
 		pipelineSpec.LineWidth = m_Settings.LineWidth;
-
-		//Camera Uniform
-		m_Data.CameraUniformBuffer = UniformBuffer::Create(sizeof(RenderData::CameraData), 0);
 
 		// Quad Setup
 		SetupBuffers(s_Data.QuadVertexArray, s_Data.QuadVertexBuffer, 6, 4);
@@ -335,7 +338,6 @@ namespace Nebula
 			SetupBuffers(s_Data.CircleVertexArray, s_Data.CircleVertexBuffer, 6, 4);
 			
 			m_Data.CircleShader = Shader::Create("Resources/shaders/Circle.glsl");
-			m_Data.CircleShader->SetUniformBuffer("u_ViewProjection", m_Data.CameraUniformBuffer);
 
 			pipelineSpec.Shader = m_Data.CircleShader;
 			pipelineSpec.DebugName = "Circle-Pipeline";
@@ -347,7 +349,6 @@ namespace Nebula
 			SetupBuffers(s_Data.LineVertexArray, s_Data.LineVertexBuffer, 2, 2);
 			
 			m_Data.LineShader = Shader::Create("Resources/shaders/Line.glsl");
-			m_Data.LineShader->SetUniformBuffer("u_ViewProjection", m_Data.CameraUniformBuffer);
 
 			pipelineSpec.Shader = m_Data.LineShader;
 			pipelineSpec.Shape = PipelineShape::Lines;
@@ -360,7 +361,6 @@ namespace Nebula
 			SetupBuffers(s_Data.TextVertexArray, s_Data.TextVertexBuffer, 6, 4);
 			
 			m_Data.TextShader = Shader::Create("Resources/shaders/Text.glsl");
-			m_Data.TextShader->SetUniformBuffer("u_ViewProjection", m_Data.CameraUniformBuffer);
 
 			pipelineSpec.Shader = m_Data.TextShader;
 			pipelineSpec.Shape = PipelineShape::Triangles;
@@ -370,39 +370,80 @@ namespace Nebula
 
 		// Texture Shader
 		m_Data.TextureShader = Shader::Create("Resources/shaders/Default.glsl");
-		m_Data.TextureShader->SetUniformBuffer("u_ViewProjection", m_Data.CameraUniformBuffer);
 
 		pipelineSpec.Shader = m_Data.TextureShader;
 		pipelineSpec.DebugName = "Texture-Pipeline";
 		m_Data.TexturePipeline = Pipeline::Create(pipelineSpec);
-		m_Data.TextureShader->SetTextureArray("u_Textures", s_Defaults.WhiteTexture);
+		
+		for (uint32_t i = 0; i < FramesInFlight; i++)
+		{
+			RenderData::FrameData& frame = m_Data.Frames[i];
+
+			// CommandBuffer
+			frame.CommandBuffer = CommandBuffer::Create();
+			
+			//Camera Uniform
+			frame.CameraUniformBuffer = UniformBuffer::Create(sizeof(RenderData::CameraData), 0);
+			
+			// Texture Shader
+			{
+				Ref<DescriptorSet>& descriptorSet = m_Data.TextureShader->AllocateDescriptorSets();
+				descriptorSet->SetResource("u_ViewProjection", frame.CameraUniformBuffer);
+				descriptorSet->SetResource("u_Textures", s_Defaults.WhiteTexture, -1);
+				descriptorSet->SetResource("u_Textures", s_Defaults.SkyTexture, 1);
+				frame.DescriptorSets["Texture"] = descriptorSet;
+			}
+			
+			// Circle Shader
+			{
+				Ref<DescriptorSet>& descriptorSet = m_Data.CircleShader->AllocateDescriptorSets();
+				descriptorSet->SetResource("u_ViewProjection", frame.CameraUniformBuffer);
+				frame.DescriptorSets["Circle"] = descriptorSet;
+			}
+
+			// Line Shader
+			{
+				Ref<DescriptorSet>& descriptorSet = m_Data.LineShader->AllocateDescriptorSets();
+				descriptorSet->SetResource("u_ViewProjection", frame.CameraUniformBuffer);
+				frame.DescriptorSets["Line"] = descriptorSet;
+			}
+
+			// Text Shader
+			{
+				Ref<DescriptorSet>& descriptorSet = m_Data.TextShader->AllocateDescriptorSets();
+				descriptorSet->SetResource("u_ViewProjection", frame.CameraUniformBuffer);
+				frame.DescriptorSets["Text"] = descriptorSet;
+			}
+		}
+
+		m_Data.CurrentFrame = &m_Data.Frames[m_Data.FrameIndex];
 	}
 
 	void SceneRenderer::SetClearColour(const glm::vec4& colour)
 	{
-		FrameBufferSpecification& spec = m_Data.Framebuffer->GetFrameBufferSpecifications();
+		FrameBufferSpecification& spec = m_Data.CurrentFrame->Framebuffer->GetFrameBufferSpecifications();
 		spec.ClearColour = colour;
 	}
 	
 	void SceneRenderer::Resize(uint32_t width, uint32_t height)
 	{
-		m_Data.Framebuffer->Resize(width, height);
+		m_Data.CurrentFrame->Framebuffer->Resize(width, height);
 	}
 
 	glm::vec2 SceneRenderer::GetFramebufferSize()
 	{
-		FrameBufferSpecification& spec = m_Data.Framebuffer->GetFrameBufferSpecifications();
+		FrameBufferSpecification& spec = m_Data.CurrentFrame->Framebuffer->GetFrameBufferSpecifications();
 		return { spec.Width, spec.Height };
 	}
 
 	Ref<Image2D> SceneRenderer::GetFinalImage()
 	{
-		return m_Data.Framebuffer->GetColourAttachmentImage(0); 
+		return m_Data.CurrentFrame->Framebuffer->GetColourAttachmentImage(0);
 	}
 
 	int SceneRenderer::ReadImage(uint32_t x, uint32_t y)
 	{
-		return m_Data.Framebuffer->ReadPixel(1, x, y);
+		return m_Data.CurrentFrame->Framebuffer->ReadPixel(1, x, y);
 	}
 
 	void SceneRenderer::RenderSprite(const glm::mat4& transform, Ref<Material> mat, const SpriteRendererComponent& sprite, int entityID)
@@ -643,7 +684,6 @@ namespace Nebula
 
 	void SceneRenderer::SkyPrePass(glm::vec3 position)
 	{
-		float textureIndex = GetTextureIndex(s_Defaults.SkyTexture);
 		glm::mat4 transform = glm::translate(position) * glm::scale(glm::vec3(1000.0f));
 
 		for (size_t i = 0; i < 24; i++)
@@ -651,7 +691,7 @@ namespace Nebula
 			s_Data.QuadVBPtr->Position = transform * s_Defaults.CubeVertexPos[i];
 			s_Data.QuadVBPtr->Colour = glm::vec4(1.0f);
 			s_Data.QuadVBPtr->TexCoord = s_Defaults.CubeTexCoords[i];
-			s_Data.QuadVBPtr->TexIndex = textureIndex;
+			s_Data.QuadVBPtr->TexIndex = 1.0f;
 			s_Data.QuadVBPtr->TilingFactor = 1.0f;
 			s_Data.QuadVBPtr->EntityID = -1;
 			s_Data.QuadVBPtr++;
@@ -666,17 +706,10 @@ namespace Nebula
 
 		if (s_Data.QuadIndexCount)
 		{
-			m_Data.TextureShader->ResetDescriptorSet(1);
-			m_Data.TextureShader->SetTextureArray("u_Textures", s_Defaults.WhiteTexture);
-
 			m_Data.TextureShader->Bind();
 			m_Data.TexturePipeline->Bind();
-
-			for (uint32_t i = 0; i < s_Data.TextureSlotIndex; i++)
-				s_Data.TextureSlots[i]->Bind(i);
-
-			m_Data.TexturePipeline->BindDescriptorSet();
-
+			m_Data.TexturePipeline->BindDescriptorSet(m_Data.CurrentFrame->DescriptorSets["Texture"]);
+			
 			uint32_t dataSize = (uint32_t)((uint8_t*)s_Data.QuadVBPtr - (uint8_t*)s_Data.QuadVBBase);
 			s_Data.SkyVertexBuffer->SetData(s_Data.QuadVBBase, dataSize);
 			RenderCommand::DrawIndexed(s_Data.SkyVertexArray, s_Data.QuadIndexCount);
@@ -729,16 +762,10 @@ namespace Nebula
 		m_Data.GeometryPass->Bind();
 
 		if (s_Data.QuadIndexCount) {
-			m_Data.TextureShader->ResetDescriptorSet(1);
-			m_Data.TextureShader->SetTextureArray("u_Textures", s_Defaults.WhiteTexture);
-
 			m_Data.TextureShader->Bind();
 			m_Data.TexturePipeline->Bind();
 
-			for (uint32_t i = 0; i < s_Data.TextureSlotIndex; i++)
-				s_Data.TextureSlots[i]->Bind(i);
-
-			m_Data.TexturePipeline->BindDescriptorSet();
+			m_Data.TexturePipeline->BindDescriptorSet(m_Data.CurrentFrame->DescriptorSets["Texture"]);
 
 			uint32_t dataSize = (uint32_t)((uint8_t*)s_Data.QuadVBPtr - (uint8_t*)s_Data.QuadVBBase);
 			s_Data.QuadVertexBuffer->SetData(s_Data.QuadVBBase, dataSize);
@@ -751,7 +778,7 @@ namespace Nebula
 
 			m_Data.CircleShader->Bind();
 			m_Data.CirclePipeline->Bind();
-			m_Data.CirclePipeline->BindDescriptorSet();
+			m_Data.CirclePipeline->BindDescriptorSet(m_Data.CurrentFrame->DescriptorSets["Circle"]);
 
 			RenderCommand::DrawIndexed(s_Data.CircleVertexArray, s_Data.CircleIndexCount);
 		}
@@ -762,7 +789,7 @@ namespace Nebula
 
 			m_Data.LineShader->Bind();
 			m_Data.LinePipeline->Bind();
-			m_Data.LinePipeline->BindDescriptorSet();
+			m_Data.LinePipeline->BindDescriptorSet(m_Data.CurrentFrame->DescriptorSets["Line"]);
 
 			RenderCommand::DrawLines(s_Data.LineVertexArray, s_Data.LineVertexCount);
 		}
@@ -773,8 +800,9 @@ namespace Nebula
 
 			m_Data.TextShader->Bind();
 			m_Data.TextPipeline->Bind();
-			s_Data.FontAtlasTexture->Bind();
-			m_Data.TextPipeline->BindDescriptorSet();
+			
+			m_Data.CurrentFrame->DescriptorSets["Text"]->SetResource("u_FontAtlas", s_Data.FontAtlasTexture);
+			m_Data.TextPipeline->BindDescriptorSet(m_Data.CurrentFrame->DescriptorSets["Text"]);
 
 			RenderCommand::DrawIndexed(s_Data.TextVertexArray, s_Data.TextIndexCount);
 		}
@@ -825,14 +853,14 @@ namespace Nebula
 	void SceneRenderer::ColliderPass()
 	{
 		m_Data.ColliderPass->Bind();
-
+		
 		if (s_Data.CircleIndexCount) {
 			uint32_t dataSize = (uint32_t)((uint8_t*)s_Data.CircleVBPtr - (uint8_t*)s_Data.CircleVBBase);
 			s_Data.CircleVertexBuffer->SetData(s_Data.CircleVBBase, dataSize);
 
 			m_Data.CircleShader->Bind();
 			m_Data.CirclePipeline->Bind();
-			m_Data.CirclePipeline->BindDescriptorSet();
+			m_Data.CirclePipeline->BindDescriptorSet(m_Data.CurrentFrame->DescriptorSets["Circle"]);
 
 			RenderCommand::DrawIndexed(s_Data.CircleVertexArray, s_Data.CircleIndexCount);
 		}
@@ -843,7 +871,7 @@ namespace Nebula
 
 			m_Data.LineShader->Bind();
 			m_Data.LinePipeline->Bind();
-			m_Data.LinePipeline->BindDescriptorSet();
+			m_Data.LinePipeline->BindDescriptorSet(m_Data.CurrentFrame->DescriptorSets["Line"]);
 
 			RenderCommand::DrawLines(s_Data.LineVertexArray, s_Data.LineVertexCount);
 		}
@@ -880,21 +908,23 @@ namespace Nebula
 	{
 		NB_ASSERT(m_Context);
 
+		m_Data.FrameIndex = (m_Data.FrameIndex + 1) % FramesInFlight;
+		m_Data.CurrentFrame = &m_Data.Frames[m_Data.FrameIndex];
+
 		m_Data.CameraBuffer.ViewProjection = camera.GetViewProjection();
-		m_Data.CameraUniformBuffer->SetData(&m_Data.CameraBuffer, sizeof(RenderData::CameraData));
-		
+		m_Data.CurrentFrame->CameraUniformBuffer->SetData(&m_Data.CameraBuffer, sizeof(RenderData::CameraData));
+
 		ResetBatch();
 		
-		m_Data.Framebuffer->Bind();
-		RenderCommand::BeginRecording();
-		m_Data.Framebuffer->ClearDepthAttachment(0);
-		m_Data.Framebuffer->ClearAttachment(1, -1.0f);
+		m_Data.CurrentFrame->Framebuffer->Bind();
+		m_Data.CurrentFrame->CommandBuffer->BeginRecording();
+		m_Data.CurrentFrame->Framebuffer->ClearDepthAttachment(0);
 
 		if (m_Settings.ShowSky)
 			SkyPrePass(camera.GetPosition());
 		
 		SkyPass();
-		s_Data.TextureSlotIndex = 1;
+		s_Data.TextureSlotIndex = 2;
 
 		GeometryPrePass();
 		GeometryPass();
@@ -909,33 +939,37 @@ namespace Nebula
 			ColliderPass();
 		else
 		{
-			Ref<Image2D> image = m_Data.Framebuffer->GetColourAttachmentImage(0);
+			Ref<Image2D> image = m_Data.CurrentFrame->Framebuffer->GetColourAttachmentImage(0);
 			ImageLayout layout = m_Settings.PresentToScreen ? ImageLayout::PresentSrcKHR : ImageLayout::ShaderReadOnly;
 			image->TransitionImageLayout(ImageLayout::ColourAttachment, layout);
 		}
 
-		RenderCommand::EndRecording();
-		m_Data.Framebuffer->Unbind();
+		m_Data.CurrentFrame->CommandBuffer->EndRecording();
+		m_Data.CurrentFrame->Framebuffer->Unbind();
+		m_Data.CurrentFrame->CommandBuffer->Submit();
 	}
 
 	void SceneRenderer::Render(const Camera& camera, const glm::mat4& transform)
 	{
 		NB_ASSERT(m_Context);
 
+		m_Data.FrameIndex = (m_Data.FrameIndex + 1) % FramesInFlight;
+		m_Data.CurrentFrame = &m_Data.Frames[m_Data.FrameIndex];
+
 		m_Data.CameraBuffer.ViewProjection = camera.GetProjection() * glm::inverse(transform);
-		m_Data.CameraUniformBuffer->SetData(&m_Data.CameraBuffer, sizeof(RenderData::CameraData));
+		m_Data.CurrentFrame->CameraUniformBuffer->SetData(&m_Data.CameraBuffer, sizeof(RenderData::CameraData));
 
 		ResetBatch();
 
-		m_Data.Framebuffer->Bind();
-		RenderCommand::BeginRecording();
-		m_Data.Framebuffer->ClearDepthAttachment(0);
+		m_Data.CurrentFrame->Framebuffer->Bind();
+		m_Data.CurrentFrame->CommandBuffer->BeginRecording();
+		m_Data.CurrentFrame->Framebuffer->ClearDepthAttachment(0);
 
 		if (m_Settings.ShowSky)
 			SkyPrePass(transform[3]);
 		
 		SkyPass();
-		s_Data.TextureSlotIndex = 1;
+		s_Data.TextureSlotIndex = 2;
 		
 		GeometryPrePass();
 		GeometryPass();
@@ -947,13 +981,14 @@ namespace Nebula
 		}
 		else
 		{
-			Ref<Image2D> image = m_Data.Framebuffer->GetColourAttachmentImage(0);
+			Ref<Image2D> image = m_Data.CurrentFrame->Framebuffer->GetColourAttachmentImage(0);
 			ImageLayout layout = m_Settings.PresentToScreen ? ImageLayout::PresentSrcKHR : ImageLayout::ShaderReadOnly;
 			image->TransitionImageLayout(ImageLayout::ColourAttachment, layout);
 		}
 
-		RenderCommand::EndRecording();
-		m_Data.Framebuffer->Unbind();
+		m_Data.CurrentFrame->CommandBuffer->EndRecording();
+		m_Data.CurrentFrame->CommandBuffer->Submit();
+		m_Data.CurrentFrame->Framebuffer->Unbind();
 	}
 
 	void SceneRenderer::FlushAndReset() 
@@ -961,14 +996,15 @@ namespace Nebula
 		GeometryPass();
 		ResetBatch();
 
-		RenderCommand::EndRecording();
-		RenderCommand::BeginRecording();
+		m_Data.CurrentFrame->CommandBuffer->EndRecording();
+		m_Data.CurrentFrame->CommandBuffer->Submit();
+		m_Data.CurrentFrame->CommandBuffer->BeginRecording();
 	}
 
 	float SceneRenderer::GetTextureIndex(const Ref<Texture2D>& texture)
 	{
 		float textureIndex = 0.0f;
-		for (uint32_t i = 1; i < s_Data.TextureSlotIndex; i++)
+		for (uint32_t i = 2; i < s_Data.TextureSlotIndex; i++)
 		{
 			if (*s_Data.TextureSlots[i].get() == *texture.get())
 			{
@@ -981,6 +1017,7 @@ namespace Nebula
 
 		textureIndex = (float)s_Data.TextureSlotIndex;
 		s_Data.TextureSlots[s_Data.TextureSlotIndex] = texture;
+		m_Data.CurrentFrame->DescriptorSets["Texture"]->SetResource("u_Textures", s_Data.TextureSlots[textureIndex], textureIndex);
 		s_Data.TextureSlotIndex++;
 		return textureIndex;
 	}

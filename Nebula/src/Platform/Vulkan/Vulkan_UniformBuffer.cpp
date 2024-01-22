@@ -12,12 +12,8 @@ namespace Nebula
 	{
 		NB_PROFILE_FUNCTION();
 
-		m_Buffers.resize(2);
-		for (uint32_t i = 0; i < m_Buffers.size(); i++)
-		{
-			m_Buffers[i] = CreateScope<VulkanBuffer>(size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
-		}
-
+		m_Buffer = CreateScope<VulkanBuffer>(size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+		
 		VkDescriptorSetLayoutBinding layoutBinding{};
 		layoutBinding.binding = binding;
 		layoutBinding.descriptorCount = 1u;
@@ -35,8 +31,8 @@ namespace Nebula
 		VulkanAPI::AllocateDescriptorSet(m_DescriptorSet, m_DescriptorSetLayout);
 
 		VkDescriptorBufferInfo bufferInfo{};
-		bufferInfo.buffer = m_Buffers[0]->GetBuffer();
-		bufferInfo.range = m_Buffers[0]->GetSize();
+		bufferInfo.buffer = m_Buffer->GetBuffer();
+		bufferInfo.range = m_Buffer->GetSize();
 		bufferInfo.offset = 0;
 
 		VkWriteDescriptorSet descriptorWrite{};
@@ -64,6 +60,6 @@ namespace Nebula
 	{
 		NB_PROFILE_FUNCTION();
 
-		m_Buffers[0]->SetData(data, size, offset);
+		m_Buffer->SetData(data, size, offset);
 	}
 }

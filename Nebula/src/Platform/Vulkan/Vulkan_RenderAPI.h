@@ -20,9 +20,6 @@ namespace Nebula {
 
 		void SetBackfaceCulling(bool) override;
 
-		void BeginRecording() override;
-		void EndRecording() override;
-
 		void DrawIndexed(const Ref<VertexArray>& vertexArray, uint32_t indexCount) override;
 		void DrawLines(const Ref<VertexArray>& vertexArray, uint32_t vertexCount) override;
 

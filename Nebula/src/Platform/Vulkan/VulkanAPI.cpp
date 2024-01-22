@@ -140,20 +140,16 @@ namespace Nebula
 	VkQueue VulkanAPI::s_Queue = VK_NULL_HANDLE;
 	
 	VkCommandPool VulkanAPI::s_CommandPool = VK_NULL_HANDLE;
-	std::vector<VkCommandBuffer> VulkanAPI::s_CommandBuffers = {};
-
 	std::vector<VkSemaphore> VulkanAPI::s_ImageSemaphores = {};
 	std::vector<VkSemaphore> VulkanAPI::s_RenderSemaphores = {};
-	std::vector<VkFence> VulkanAPI::s_Fences = {};
-
+	
 	std::vector<std::vector<std::function<void()>>> VulkanAPI::s_FreeResourceFuncs = {};
 
 	VkDescriptorPool VulkanAPI::s_DescriptorPool = VK_NULL_HANDLE;
 
 	uint8_t VulkanAPI::s_FrameIndex = 0;
 	bool VulkanAPI::s_FirstSubmit = true;
-	bool VulkanAPI::s_CommandBufferRecording = false;
-
+	
 	VmaAllocator VulkanAPI::s_Allocator = nullptr;
 
 	void VulkanAPI::Init(PFN_vkDebugUtilsMessengerCallbackEXT debugCallback)
@@ -193,7 +189,7 @@ namespace Nebula
 		NB_ASSERT(result == VK_SUCCESS, "Could Not Initialise Vulkan");
 		
 		CreateLogicalDevice();
-		CreateCommandBuffers();
+		CreateCommandPool();
 		CreateSyncObjects();
 
 		// Descriptor Set Pool
@@ -313,7 +309,7 @@ namespace Nebula
 		vkGetDeviceQueue(s_Device, s_QueueFamily, 0, &s_Queue);
 	}
 	
-	void VulkanAPI::CreateCommandBuffers()
+	void VulkanAPI::CreateCommandPool()
 	{
 		VkCommandPoolCreateInfo poolInfo{};
 		poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -322,38 +318,21 @@ namespace Nebula
 
 		VkResult result = vkCreateCommandPool(s_Device, &poolInfo, nullptr, &s_CommandPool);
 		NB_ASSERT(result == VK_SUCCESS, "Failed to create command pool!");
-
-		s_CommandBuffers.resize(g_MaxFrames);
-
-		VkCommandBufferAllocateInfo allocInfo{};
-		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		allocInfo.commandPool = s_CommandPool;
-		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		allocInfo.commandBufferCount = g_MaxFrames;
-
-		result = vkAllocateCommandBuffers(s_Device, &allocInfo, s_CommandBuffers.data());
-		NB_ASSERT(result == VK_SUCCESS, "Failed to allocate command buffers!");
 	}
 	
 	void VulkanAPI::CreateSyncObjects()
 	{
 		s_ImageSemaphores.resize(g_MaxFrames);
 		s_RenderSemaphores.resize(g_MaxFrames);
-		s_Fences.resize(g_MaxFrames);
-
+		
 		VkSemaphoreCreateInfo semaphoreInfo{};
 		semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 		semaphoreInfo.flags = VK_SEMAPHORE_TYPE_BINARY;
 
-		VkFenceCreateInfo fenceInfo{};
-		fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-		fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-
 		for (size_t i = 0; i < g_MaxFrames; i++)
 		{
 			if (vkCreateSemaphore(s_Device, &semaphoreInfo, nullptr, &s_ImageSemaphores[i]) != VK_SUCCESS ||
-				vkCreateSemaphore(s_Device, &semaphoreInfo, nullptr, &s_RenderSemaphores[i]) != VK_SUCCESS ||
-				vkCreateFence(s_Device, &fenceInfo, nullptr, &s_Fences[i]) != VK_SUCCESS)
+				vkCreateSemaphore(s_Device, &semaphoreInfo, nullptr, &s_RenderSemaphores[i]) != VK_SUCCESS)
 			{
 				NB_ERROR("Failed to create semaphores!");
 				NB_ASSERT(false);
@@ -377,7 +356,6 @@ namespace Nebula
 		{
 			vkDestroySemaphore(s_Device, s_ImageSemaphores[i], nullptr);
 			vkDestroySemaphore(s_Device, s_RenderSemaphores[i], nullptr);
-			vkDestroyFence(s_Device, s_Fences[i], nullptr);
 		}
 
 		vkDestroyCommandPool(s_Device, s_CommandPool, nullptr);
@@ -432,58 +410,14 @@ namespace Nebula
 		vkFreeCommandBuffers(s_Device, s_CommandPool, 1, &commandBuffer);
 	}
 
-	void VulkanAPI::BeginCommandRecording()
-	{
-		vkWaitForFences(s_Device, 1, &GetFence(), VK_TRUE, UINT64_MAX);
-		vkResetFences(s_Device, 1, &GetFence());
-
-		vkResetCommandBuffer(GetCommandBuffer(), 0);
-
-		VkCommandBufferBeginInfo beginInfo{};
-		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-
-		VkResult result = vkBeginCommandBuffer(GetCommandBuffer(), &beginInfo);
-		NB_ASSERT(result == VK_SUCCESS, "Failed to begin recording command buffer!");
-
-		s_CommandBufferRecording = true;
-	}
-
-	void VulkanAPI::EndCommandRecording()
-	{
-		s_CommandBufferRecording = false;
-
-		VkResult result = vkEndCommandBuffer(GetCommandBuffer());
-		NB_ASSERT(result == VK_SUCCESS, "Failed to record command buffer!");
-		
-		VkSubmitInfo submitInfo{};
-		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-
-		VkSemaphore waitSemaphores[] = { s_FirstSubmit ? GetImageSemaphore() : GetRenderSemaphore() };
-		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-		submitInfo.waitSemaphoreCount = 1;
-		submitInfo.pWaitSemaphores = waitSemaphores;
-		submitInfo.pWaitDstStageMask = waitStages;
-		submitInfo.commandBufferCount = 1;
-		submitInfo.pCommandBuffers = &GetCommandBuffer();
-
-		VkSemaphore signalSemaphores[] = { GetRenderSemaphore() };
-		submitInfo.signalSemaphoreCount = 1;
-		submitInfo.pSignalSemaphores = signalSemaphores;
-
-		result = vkQueueSubmit(s_Queue, 1, &submitInfo, GetFence());
-		NB_ASSERT(result == VK_SUCCESS, "Failed to submit draw command buffer!");
-
-		s_FirstSubmit = false;
-	}
-
 	void VulkanAPI::ResetFrame()
 	{
+		s_FirstSubmit = true;
+		s_FrameIndex = (s_FrameIndex + 1) % g_MaxFrames;
+
 		for (auto& func : s_FreeResourceFuncs[s_FrameIndex])
 			func();
 		s_FreeResourceFuncs[s_FrameIndex].clear();
-		
-		s_FirstSubmit = true;
-		s_FrameIndex = (s_FrameIndex + 1) % g_MaxFrames;
 	}
 	
 	uint32_t VulkanAPI::FindMemoryType(uint32_t filter, VkMemoryPropertyFlags properties)
@@ -590,6 +524,17 @@ namespace Nebula
 		}
 
 		s_FreeResourceFuncs[s_FrameIndex].emplace_back(func);
+	}
+
+	const VkSemaphore& VulkanAPI::GetSemaphore()
+	{
+		if (s_FirstSubmit)
+		{
+			s_FirstSubmit = false;
+			return GetImageSemaphore();
+		}
+
+		return GetRenderSemaphore();
 	}
 	
 	VulkanBuffer::VulkanBuffer(uint32_t size, VkBufferUsageFlags usage, bool hostAccess)

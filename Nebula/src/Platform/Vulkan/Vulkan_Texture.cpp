@@ -106,7 +106,7 @@ namespace Nebula {
 		NB_PROFILE_FUNCTION();
 
 		// Update Descriptor Set
-		Vulkan_Shader::SetTexture(slot, m_Image->GetVulkanImageInfo());
+		//Vulkan_Shader::SetTexture(slot, m_Image->GetVulkanImageInfo());
 	}
 
 	void Vulkan_Texture2D::Unbind() const 

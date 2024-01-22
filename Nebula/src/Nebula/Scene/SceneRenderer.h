@@ -4,6 +4,7 @@
 #include "Entity.h"
 
 #include "Nebula/Renderer/Camera.h"
+#include "Nebula/Renderer/CommandBuffer.h"
 #include "Nebula/Renderer/Framebuffer.h"
 #include "Nebula/Renderer/Pipeline.h"
 #include "Nebula/Renderer/UniformBuffer.h"
@@ -75,7 +76,6 @@ namespace Nebula
 	private:
 		struct RenderData
 		{
-			Ref<FrameBuffer> Framebuffer;
 			Ref<RenderPass> SkyPass;
 			Ref<RenderPass> GeometryPass;
 			Ref<RenderPass> ColliderPass;
@@ -95,7 +95,19 @@ namespace Nebula
 				glm::mat4 ViewProjection;
 			};
 			CameraData CameraBuffer;
-			Ref<UniformBuffer> CameraUniformBuffer;
+
+#define FramesInFlight 3
+			uint32_t FrameIndex = 0;
+
+			struct FrameData
+			{
+				Ref<FrameBuffer> Framebuffer;
+				Ref<UniformBuffer> CameraUniformBuffer;
+				Ref<CommandBuffer> CommandBuffer;
+				std::map<std::string, Ref<DescriptorSet>> DescriptorSets;
+			};
+			std::array<FrameData, FramesInFlight> Frames;
+			FrameData* CurrentFrame = nullptr;
 		};
 		RenderData m_Data;
 

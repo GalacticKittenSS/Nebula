@@ -8,6 +8,14 @@
 #include <vulkan/vulkan.h>
 
 namespace Nebula {
+	struct UniformData
+	{
+		uint32_t DescriptorSet = (uint32_t)-1;
+		uint32_t Binding = (uint32_t)-1;
+		uint32_t ArrayCount = 0;
+		VkDescriptorType Type = VK_DESCRIPTOR_TYPE_MAX_ENUM;
+	};
+
 	class Vulkan_Shader : public Shader {
 	public:
 		Vulkan_Shader(const std::string& path);
@@ -19,9 +27,7 @@ namespace Nebula {
 
 		const std::string& GetName() const override { return m_Name; }
 
-		void SetTextureArray(const std::string& name, Ref<Texture> texture) override;
-		void SetUniformBuffer(const std::string& name, Ref<UniformBuffer> uniformBuffer) override;
-		void ResetDescriptorSet(uint32_t set) override;
+		Ref<DescriptorSet> AllocateDescriptorSets() const;
 
 		void SetInt(const std::string& name, int value) override;
 		void SetIntArray(const std::string& name, int* values, uint32_t count) override;
@@ -36,20 +42,9 @@ namespace Nebula {
 		void GetVulkanVertexInputInfo(std::vector<VkVertexInputAttributeDescription>& attributeDescriptions, uint32_t& offset) const;
 		inline const std::array<VkPipelineShaderStageCreateInfo, 2>& GetVulkanShaderStages() const { return m_ShaderStages; }
 		inline const std::vector<VkDescriptorSetLayout>& GetVulkanDescriptorSetLayouts() const { return m_DescriptorSetLayouts; }
-		inline const std::vector<VkDescriptorSet>& GetVulkanDescriptorSets() const { return m_DescriptorSets; }
-		
-		static void SetTexture(uint32_t slot, VkDescriptorImageInfo info);
-	
-		struct UniformData
-		{
-			uint32_t descriptorSet = (uint32_t)-1;
-			uint32_t binding = (uint32_t)-1;
-			uint32_t arrayCount = 0;
-			VkDescriptorType type = VK_DESCRIPTOR_TYPE_MAX_ENUM;
-		};
+		inline const std::vector<VkDescriptorSet>& GetVulkanDescriptorSets() const { return {}; }//m_DescriptorSets;}
 
 		UniformData GetUniformFromName(const std::string& name) const;
-		UniformData GetUniformFromType(VkDescriptorType type) const;
 	private:
 		std::string ReadFile(const std::string& filepath);
 		std::unordered_map<VkShaderStageFlagBits, std::string> PreProcess(const std::string& source);
@@ -70,11 +65,21 @@ namespace Nebula {
 
 		VkPipelineLayout m_PipelineLayout;
 		
-		std::vector<VkDescriptorSet> m_DescriptorSets;
-		std::vector<VkDescriptorSetLayout> m_DescriptorSetLayouts;
-
 		std::map<std::string, UniformData> m_Uniforms;
+		std::vector<VkDescriptorSetLayout> m_DescriptorSetLayouts;
+	};
 
-		static const Vulkan_Shader* s_BindedInstance;
+	class Vulkan_DescriptorSet : public DescriptorSet
+	{
+	public:
+		Vulkan_DescriptorSet(const Vulkan_Shader* shader, std::vector<VkDescriptorSetLayout> layouts);
+
+		void SetResource(const std::string& uniformName, Ref<UniformBuffer> uniformBuffer) override;
+		void SetResource(const std::string& uniformName, Ref<Texture2D> texture, uint32_t slot) override;
+
+		const std::vector<VkDescriptorSet>& GetDescriptorSets() const { return m_DescriptorSets; }
+	private:
+		std::vector<VkDescriptorSet> m_DescriptorSets;
+		const Vulkan_Shader* m_Shader = nullptr;
 	};
 }

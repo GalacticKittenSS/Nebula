@@ -3,6 +3,7 @@
 #include "Nebula/Core/Layer.h"
 #include "Nebula/Renderer/FrameBuffer.h"
 #include "Nebula/Renderer/RenderPass.h"
+#include "Nebula/Renderer/CommandBuffer.h"
 
 struct ImVec4;
 
@@ -33,5 +34,6 @@ namespace Nebula {
 		bool m_BlockEvents;
 		Ref<FrameBuffer> m_Framebuffer;
 		Ref<RenderPass> m_RenderPass;
+		Ref<CommandBuffer> m_CommandBuffer;
 	};
 }

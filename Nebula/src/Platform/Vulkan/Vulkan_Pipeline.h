@@ -15,6 +15,7 @@ namespace Nebula
 		void Bind() const override;
 		void BindDescriptorSet(uint32_t descriptorSet) const override;
 		void BindDescriptorSet(uint32_t descriptorSet, Ref<UniformBuffer> uniformBuffer) const override;
+		void BindDescriptorSet(Ref<DescriptorSet> descriptorSet) const override;
 	private:
 		PipelineSpecification m_Specification;
 		VkPipeline m_Pipeline;

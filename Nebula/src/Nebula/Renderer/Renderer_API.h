@@ -22,9 +22,6 @@ namespace Nebula {
 
 		virtual void SetBackfaceCulling(bool) = 0;
 
-		virtual void BeginRecording() {};
-		virtual void EndRecording() {};
-
 		virtual void DrawIndexed(const Ref<VertexArray>& vertexArray, uint32_t indexCount = 0) = 0;
 		virtual void DrawLines(const Ref<VertexArray>& vertexArray, uint32_t vertexCount) = 0;
 

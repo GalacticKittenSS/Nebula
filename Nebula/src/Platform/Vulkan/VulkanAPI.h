@@ -2,6 +2,8 @@
 
 #include <vulkan/vulkan.h>
 
+#include "Vulkan_CommandBuffer.h"
+
 extern "C"
 {
 	typedef struct VmaAllocator_T* VmaAllocator;
@@ -25,9 +27,7 @@ namespace Nebula
 		static void EndSingleUseCommand(VkCommandBuffer commandBuffer);
 		
 		static void ResetFrame();
-		static void BeginCommandRecording();
-		static void EndCommandRecording();
-
+		
 		static uint32_t FindMemoryType(uint32_t filter, VkMemoryPropertyFlags properties);
 		static void TransitionImageLayout(VkImage image, VkImageAspectFlags imageAspect, VkImageLayout oldLayout, VkImageLayout newLayout, VkCommandBuffer commandBuffer = VK_NULL_HANDLE);
 		static void TransitionImageLayout(Ref<Vulkan_Image> image, VkImageLayout newLayout, VkCommandBuffer commandBuffer = VK_NULL_HANDLE);
@@ -42,17 +42,19 @@ namespace Nebula
 		static inline const VkQueue& GetQueue() { return s_Queue; }
 		static inline uint32_t GetQueueFamily() { return s_QueueFamily; }
 
-		static inline const VkCommandBuffer& GetCommandBuffer() { return s_CommandBuffers[s_FrameIndex]; }
+		static inline const VkCommandPool& GetCommandPool() { return s_CommandPool; }
+		static inline const VkCommandBuffer& GetCommandBuffer() { return Vulkan_CommandBuffer::GetInstance()->GetCommandBuffer(); }
+		static inline bool IsRecording() { return Vulkan_CommandBuffer::GetInstance(); }
+
+		static const VkSemaphore& GetSemaphore();
 		static inline const VkSemaphore& GetRenderSemaphore() { return s_RenderSemaphores[s_FrameIndex]; }
 		static inline const VkSemaphore& GetImageSemaphore() { return s_ImageSemaphores[s_FrameIndex]; }
-		static inline const VkFence& GetFence() { return s_Fences[s_FrameIndex]; }
-
-		static inline bool IsRecording() { return s_CommandBufferRecording; }
+		
 		static VkDescriptorPool s_DescriptorPool;
 		static VmaAllocator s_Allocator;
 	private:
 		static void CreateLogicalDevice();
-		static void CreateCommandBuffers();
+		static void CreateCommandPool();
 		static void CreateSyncObjects();
 
 		static VkPhysicalDevice PickPhysicalDevice();
@@ -65,18 +67,14 @@ namespace Nebula
 		static VkQueue s_Queue;
 
 		static VkCommandPool s_CommandPool;
-		static std::vector<VkCommandBuffer> s_CommandBuffers;
-
 		static std::vector<VkSemaphore> s_ImageSemaphores;
 		static std::vector<VkSemaphore> s_RenderSemaphores;
-		static std::vector<VkFence> s_Fences;
-
+		
 		static std::vector<std::vector<std::function<void()>>> s_FreeResourceFuncs;
 
 		static bool s_FirstSubmit;
 		static uint8_t s_FrameIndex;
-		static bool s_CommandBufferRecording;
-
+		
 		friend class ImGuiLayer;
 	};
 

@@ -97,8 +97,8 @@ namespace Nebula {
 			// Render Pass
 			{
 				RenderPassSpecification spec;
-				spec.Attachments = { { ImageFormat::BGRA8, ImageLayout::Undefined, ImageLayout::PresentSrcKHR } };
-				spec.ClearOnLoad = true;
+				spec.Attachments = { { ImageFormat::BGRA8, ImageLayout::PresentSrcKHR, ImageLayout::PresentSrcKHR } };
+				spec.ClearOnLoad = false;
 				spec.SingleWrite = true;
 				m_RenderPass = RenderPass::Create(spec);
 			}
@@ -113,6 +113,11 @@ namespace Nebula {
 				spec.RenderPass = m_RenderPass;
 
 				m_Framebuffer = FrameBuffer::Create(spec);
+			}
+
+			// Commandbuffer
+			{
+				m_CommandBuffer = CommandBuffer::Create();
 			}
 			
 			ImGui_ImplGlfw_InitForVulkan(window, true);
@@ -201,15 +206,17 @@ namespace Nebula {
 					m_Framebuffer->Resize(window.GetWidth(), window.GetHeight());
 
 				m_Framebuffer->Bind();
-				RenderCommand::BeginRecording();
+				m_CommandBuffer->BeginRecording();
 				m_RenderPass->Bind();
 
 				ImGui_ImplVulkan_RenderDrawData(drawData, VulkanAPI::GetCommandBuffer());
 
 				// Submit command buffer
 				m_RenderPass->Unbind();
-				RenderCommand::EndRecording();
+				m_CommandBuffer->EndRecording();
 				m_Framebuffer->Unbind();
+
+				m_CommandBuffer->Submit();
 
 				break;
 			}

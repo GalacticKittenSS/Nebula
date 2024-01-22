@@ -29,14 +29,6 @@ namespace Nebula {
 			s_RendererAPI->SetBackfaceCulling(cull);
 		}
 
-		inline static void BeginRecording() {
-			s_RendererAPI->BeginRecording();
-		}
-		
-		inline static void EndRecording() {
-			s_RendererAPI->EndRecording();
-		}
-
 		inline static void DrawIndexed(const Ref<VertexArray>& vertexArray, uint32_t indexCount = 0) {
 			s_RendererAPI->DrawIndexed(vertexArray, indexCount);
 		}
