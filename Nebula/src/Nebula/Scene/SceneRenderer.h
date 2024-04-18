@@ -76,6 +76,9 @@ namespace Nebula
 	private:
 		struct RenderData
 		{
+			uint32_t FramebufferImageIndex = 0;
+			std::vector<Ref<FrameBuffer>> Framebuffers;
+
 			Ref<RenderPass> SkyPass;
 			Ref<RenderPass> GeometryPass;
 			Ref<RenderPass> ColliderPass;
@@ -101,7 +104,6 @@ namespace Nebula
 
 			struct FrameData
 			{
-				Ref<FrameBuffer> Framebuffer;
 				Ref<UniformBuffer> CameraUniformBuffer;
 				Ref<CommandBuffer> CommandBuffer;
 				std::map<std::string, Ref<DescriptorSet>> DescriptorSets;

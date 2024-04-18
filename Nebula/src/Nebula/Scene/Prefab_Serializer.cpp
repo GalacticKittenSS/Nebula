@@ -448,6 +448,11 @@ namespace Nebula
 						}
 					}
 				}
+
+				if (m_Scene->m_IsRunning)
+				{
+					ScriptEngine::CreateScriptInstance(deserializedEntity);
+				}
 			}
 
 			auto& mc = deserializedEntity.GetComponent<MaterialComponent>();

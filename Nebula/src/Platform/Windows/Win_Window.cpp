@@ -10,9 +10,6 @@
 
 #include "Nebula/Renderer/Renderer.h"
 
-#include "Platform/OpenGl/OpenGL_Context.h"
-#include "Platform/Vulkan/Vulkan_Context.h"
-
 #define VK_USE_PLATFORM_WIN32_KHR
 #include <vulkan/vulkan.h>
 #include <stb_image.h>

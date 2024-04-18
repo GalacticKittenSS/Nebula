@@ -46,10 +46,9 @@ namespace Nebula {
 
 	Vulkan_FrameBuffer::~Vulkan_FrameBuffer() 
 	{
-		VulkanAPI::SubmitResource([framebuffers = m_Framebuffer]()
+		VulkanAPI::SubmitResource([framebuffer = m_Framebuffer]()
 		{
-			for (auto& framebuffer : framebuffers)
-				vkDestroyFramebuffer(VulkanAPI::GetDevice(), framebuffer, nullptr);
+			vkDestroyFramebuffer(VulkanAPI::GetDevice(), framebuffer, nullptr);
 		});
 	}
 
@@ -70,28 +69,26 @@ namespace Nebula {
 
 	void Vulkan_FrameBuffer::Invalidate() 
 	{
-		if (!m_Framebuffer.empty()) 
+		if (!m_Framebuffer) 
 		{
-			VulkanAPI::SubmitResource([framebuffers = m_Framebuffer]()
+			VulkanAPI::SubmitResource([framebuffer = m_Framebuffer]()
 			{
-				for (auto& framebuffer : framebuffers)
-					vkDestroyFramebuffer(VulkanAPI::GetDevice(), framebuffer, nullptr);
+				vkDestroyFramebuffer(VulkanAPI::GetDevice(), framebuffer, nullptr);
 			});
 			
 			m_ColourAttachments.clear();
 			m_DepthAttachment = nullptr;
 		}
 
-		Vulkan_Context* context = (Vulkan_Context*)Application::Get().GetWindow().GetContext();
 		m_ColourAttachments.resize(m_ColourAttachmentSpecs.size());
 
 		for (uint32_t i = 0; i < m_ColourAttachments.size(); i++)
 		{
 			VkFormat format = Utils::NebulaToVKImageFormat(m_ColourAttachmentSpecs[i].TextureFormat);
 
-			if (m_Specifications.SwapChainTarget && format == context->GetImageFormat())
+			if (Ref<Image2D> image = m_ColourAttachmentSpecs[i].ExistingImage)
 			{
-				m_ColourAttachments[i] = context->m_ImageArray;
+				m_ColourAttachments[i] = std::static_pointer_cast<Vulkan_Image>(image);
 				continue;
 			}
 			
@@ -106,7 +103,7 @@ namespace Nebula {
 			if (!m_Specifications.DebugName.empty())
 				imageSpec.DebugName = m_Specifications.DebugName + "-Colour_Attachment_" + std::to_string(i);
 
-			m_ColourAttachments[i] = Vulkan_Image::CreateImageArray(imageSpec, context->GetImageCount());
+			m_ColourAttachments[i] = CreateRef<Vulkan_Image>(imageSpec);
 		}
 
 		if (m_DepthAttachmentSpec.TextureFormat != ImageFormat::None)
@@ -125,30 +122,26 @@ namespace Nebula {
 			m_DepthAttachment = CreateRef<Vulkan_Image>(imageSpec);
 		}
 
-		m_Framebuffer.resize(context->GetImageCount());
-		for (uint32_t imageIndex = 0; imageIndex < m_Framebuffer.size(); imageIndex++)
-		{
-			std::vector<VkImageView> attachments(m_ColourAttachments.size());
-			for (uint32_t i = 0; i < attachments.size(); i++)
-				attachments[i] = m_ColourAttachments[i][imageIndex]->GetVulkanImageView();
+		std::vector<VkImageView> attachments(m_ColourAttachments.size());
+		for (uint32_t i = 0; i < attachments.size(); i++)
+			attachments[i] = m_ColourAttachments[i]->GetVulkanImageView();
 
-			if (m_DepthAttachmentSpec.TextureFormat != ImageFormat::None)
-				attachments.push_back(m_DepthAttachment->GetVulkanImageView());
+		if (m_DepthAttachmentSpec.TextureFormat != ImageFormat::None)
+			attachments.push_back(m_DepthAttachment->GetVulkanImageView());
 
-			VkFramebufferCreateInfo framebufferInfo{};
-			framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-			framebufferInfo.renderPass = (VkRenderPass)m_Specifications.RenderPass->GetRenderPass();
-			framebufferInfo.attachmentCount = (uint32_t)attachments.size();
-			framebufferInfo.pAttachments = attachments.data();
-			framebufferInfo.width = m_Specifications.Width;
-			framebufferInfo.height = m_Specifications.Height;
-			framebufferInfo.layers = 1;
+		VkFramebufferCreateInfo framebufferInfo{};
+		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		framebufferInfo.renderPass = (VkRenderPass)m_Specifications.RenderPass->GetRenderPass();
+		framebufferInfo.attachmentCount = (uint32_t)attachments.size();
+		framebufferInfo.pAttachments = attachments.data();
+		framebufferInfo.width = m_Specifications.Width;
+		framebufferInfo.height = m_Specifications.Height;
+		framebufferInfo.layers = 1;
 
-			VkResult result = vkCreateFramebuffer(VulkanAPI::GetDevice(), &framebufferInfo, nullptr, &m_Framebuffer[imageIndex]);
-			NB_ASSERT(result == VK_SUCCESS, "Failed to create framebuffer");
+		VkResult result = vkCreateFramebuffer(VulkanAPI::GetDevice(), &framebufferInfo, nullptr, &m_Framebuffer);
+		NB_ASSERT(result == VK_SUCCESS, "Failed to create framebuffer");
 
-			VulkanAPI::AttachDebugNameToObject(VK_OBJECT_TYPE_FRAMEBUFFER, (uint64_t)m_Framebuffer[imageIndex], m_Specifications.DebugName);
-		}
+		VulkanAPI::AttachDebugNameToObject(VK_OBJECT_TYPE_FRAMEBUFFER, (uint64_t)m_Framebuffer, m_Specifications.DebugName);
 	}
 
 	void Vulkan_FrameBuffer::Bind() 
@@ -182,11 +175,9 @@ namespace Nebula {
 		if (spec.ClearOnLoad && spec.SingleWrite)
 			return; // Image Layout is not important
 		
-		Vulkan_Context* context = (Vulkan_Context*)Application::Get().GetWindow().GetContext();
 		for (auto& attachment : m_ColourAttachments)
 		{
-			Ref<Vulkan_Image>& image = attachment[context->GetImageIndex()];
-
+			Ref<Vulkan_Image>& image = attachment;
 			if (m_Specifications.SwapChainTarget && image->GetFormat() == VK_FORMAT_UNDEFINED) // Assume it's from swapchain
 				image->TransitionImageLayout(ImageLayout::Undefined, ImageLayout::ColourAttachment);
 		}
@@ -209,6 +200,16 @@ namespace Nebula {
 		m_Specifications.Width = width;
 		m_Specifications.Height = height;
 
+		// Reload attachments (existing image property may change)
+		m_ColourAttachmentSpecs.clear();
+		for (const auto& spec : m_Specifications.Attachments)
+		{
+			if (!Utils::IsDepthFormat(spec.TextureFormat))
+				m_ColourAttachmentSpecs.push_back(spec);
+			else
+				m_DepthAttachmentSpec = spec;
+		}
+
 		Invalidate();
 	}
 
@@ -216,8 +217,7 @@ namespace Nebula {
 	{
 		NB_ASSERT(attachmentIndex < m_ColourAttachments.size(), "Index is greater than Attachment Size");
 
-		Vulkan_Context* context = (Vulkan_Context*)Application::Get().GetWindow().GetContext();
-		Ref<Vulkan_Image> image = m_ColourAttachments[attachmentIndex][context->GetImageIndex()];
+		Ref<Vulkan_Image> image = m_ColourAttachments[attachmentIndex];
 		
 		unsigned int index = x + y * m_Specifications.Width;
 		Buffer buffer = image->ReadToBuffer();
@@ -229,8 +229,7 @@ namespace Nebula {
 	{
 		NB_ASSERT(attachmentIndex < m_ColourAttachments.size());
 		
-		Vulkan_Context* context = (Vulkan_Context*)Application::Get().GetWindow().GetContext();
-		auto& image = m_ColourAttachments[attachmentIndex][context->GetImageIndex()];// ->GetVulkanImage();
+		auto& image = m_ColourAttachments[attachmentIndex];
 
 		VkImageSubresourceRange subResourceRange = {};
 		subResourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -269,7 +268,6 @@ namespace Nebula {
 		if (!m_DepthAttachment)
 			return;
 
-		Vulkan_Context* context = (Vulkan_Context*)Application::Get().GetWindow().GetContext();
 		auto& image = m_DepthAttachment->GetVulkanImage();
 		VkImageAspectFlags aspectFlags = m_DepthAttachment->GetAspectFlags();
 
@@ -294,17 +292,5 @@ namespace Nebula {
 		
 		if (!m_CommandBuffer && !VulkanAPI::IsRecording())
 			VulkanAPI::EndSingleUseCommand(commandBuffer);
-	}
-
-	Ref<Image2D> Vulkan_FrameBuffer::GetColourAttachmentImage(uint32_t index) const
-	{
-		Vulkan_Context* context = (Vulkan_Context*)Application::Get().GetWindow().GetContext();
-		return m_ColourAttachments[index][context->GetImageIndex()];
-	}
-
-	VkFramebuffer Vulkan_FrameBuffer::GetFrameBuffer()
-	{
-		Vulkan_Context* context = (Vulkan_Context*)Application::Get().GetWindow().GetContext();
-		return m_Framebuffer[context->GetImageIndex()];
 	}
 }

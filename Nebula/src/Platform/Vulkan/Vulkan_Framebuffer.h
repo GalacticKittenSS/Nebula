@@ -26,14 +26,14 @@ namespace Nebula {
 		void Bind() override;
 		void Unbind() override;
 
-		Ref<Image2D> GetColourAttachmentImage(uint32_t index = 0) const override;
+		Ref<Image2D> GetColourAttachmentImage(uint32_t index = 0) const override { return m_ColourAttachments[index]; }
 		uint64_t GetColourAttachmentRendererID(uint32_t index = 0) const override { return GetColourAttachmentImage()->GetDescriptorSet(); }
 
 		FrameBufferSpecification& GetFrameBufferSpecifications() override { return m_Specifications; }
 		const FrameBufferSpecification& GetFrameBufferSpecifications() const override { return m_Specifications; }
 
 		void PrepareImages();
-		VkFramebuffer GetFrameBuffer();
+		VkFramebuffer GetFrameBuffer() { return m_Framebuffer; }
 		static Vulkan_FrameBuffer* GetActiveInstance() { return s_BindedInstance; }
 	private:
 		void CreateRenderPass();
@@ -43,8 +43,8 @@ namespace Nebula {
 		Array<AttachmentTextureSpecification> m_ColourAttachmentSpecs;
 		AttachmentTextureSpecification m_DepthAttachmentSpec = ImageFormat::None;
 
-		std::vector<VkFramebuffer> m_Framebuffer;
-		std::vector<Vulkan_Image::VulkanImageArray> m_ColourAttachments;
+		VkFramebuffer m_Framebuffer;
+		Vulkan_Image::VulkanImageArray m_ColourAttachments;
 		Ref<Vulkan_Image> m_DepthAttachment;
 
 		VkCommandBuffer m_CommandBuffer = nullptr;

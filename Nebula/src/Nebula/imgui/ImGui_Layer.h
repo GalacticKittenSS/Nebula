@@ -32,7 +32,7 @@ namespace Nebula {
 		void SetColours(ImVec4 primary, ImVec4 text, ImVec4 regular, ImVec4 hovered, ImVec4 active);
 	private:
 		bool m_BlockEvents;
-		Ref<FrameBuffer> m_Framebuffer;
+		std::vector<Ref<FrameBuffer>> m_Framebuffers;
 		Ref<RenderPass> m_RenderPass;
 		Ref<CommandBuffer> m_CommandBuffer;
 	};

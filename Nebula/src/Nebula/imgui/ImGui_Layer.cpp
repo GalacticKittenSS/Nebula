@@ -18,7 +18,6 @@
 
 #include "Nebula/Renderer/Render_Command.h"
 #include "Platform/Vulkan/VulkanAPI.h"
-#include "Platform/Vulkan/Vulkan_Context.h"
 
 void ImGui_ImplVulkanH_CreateWindowCommandBuffers(VkPhysicalDevice physical_device, VkDevice device, ImGui_ImplVulkanH_Window* wd, uint32_t queue_family, const VkAllocationCallbacks* allocator);
 
@@ -75,7 +74,7 @@ namespace Nebula {
 			init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 			init_info.ImageCount = 3;
 
-			Vulkan_Context* context = (Vulkan_Context*)win.GetContext();
+			const GraphicsContext* context = win.GetContext();
 			ImGui_ImplVulkanH_Window* wd = &vulkan_window;
 			wd->Surface = (VkSurfaceKHR)context->GetSurface();
 
@@ -112,7 +111,16 @@ namespace Nebula {
 				spec.SwapChainTarget = true;
 				spec.RenderPass = m_RenderPass;
 
-				m_Framebuffer = FrameBuffer::Create(spec);
+				const GraphicsContext* context = Application::Get().GetWindow().GetContext();
+				for (uint32_t i = 0; i < context->GetImageCount(); i++)
+				{
+					Ref<Image2D> image = context->GetImage(i);
+					spec.Attachments[0].ExistingImage = image;
+					m_Framebuffers.push_back(FrameBuffer::Create(spec));
+
+					// Prevent invalid image layout validation error 
+					image->TransitionImageLayout(ImageLayout::Undefined, ImageLayout::PresentSrcKHR);
+				}
 			}
 
 			// Commandbuffer
@@ -200,12 +208,21 @@ namespace Nebula {
 				break;
 			case RendererAPI::API::Vulkan:
 			{
-				FrameBufferSpecification spec = m_Framebuffer->GetFrameBufferSpecifications();
-				if (window.GetWidth() > 0.0f && window.GetHeight() > 0.0f
-					&& (spec.Width != window.GetWidth() || spec.Height != window.GetHeight()))
-					m_Framebuffer->Resize(window.GetWidth(), window.GetHeight());
+				const GraphicsContext* context = window.GetContext();
+				uint32_t imageIndex = context->GetImageIndex();
+				Ref<Image2D> image = context->GetImage(imageIndex);
+				
+				FrameBufferSpecification& spec = m_Framebuffers[imageIndex]->GetFrameBufferSpecifications();
+				if (image != spec.Attachments[0].ExistingImage)
+				{
+					spec.Attachments[0].ExistingImage = image;
+					m_Framebuffers[imageIndex]->Resize(window.GetWidth(), window.GetHeight());
 
-				m_Framebuffer->Bind();
+					// Prevent invalid image layout validation error 
+					image->TransitionImageLayout(ImageLayout::Undefined, ImageLayout::PresentSrcKHR);
+				}
+
+				m_Framebuffers[imageIndex]->Bind();
 				m_CommandBuffer->BeginRecording();
 				m_RenderPass->Bind();
 
@@ -214,7 +231,7 @@ namespace Nebula {
 				// Submit command buffer
 				m_RenderPass->Unbind();
 				m_CommandBuffer->EndRecording();
-				m_Framebuffer->Unbind();
+				m_Framebuffers[imageIndex]->Unbind();
 
 				m_CommandBuffer->Submit();
 
@@ -230,6 +247,28 @@ namespace Nebula {
 			ImGui::RenderPlatformWindowsDefault();
 			glfwMakeContextCurrent(backup_current_context);
 		}
+
+		/*
+		if (Input::IsKeyPressed(KeyCode::F2))
+		{
+			Ref<Image2D> image = m_Framebuffers[imageIndex]->GetColourAttachmentImage(0);
+			Buffer buffer = image->ReadToBuffer();
+			
+			Buffer newBuffer = Buffer(buffer.Size);
+			for (int i = 0; i < buffer.Size; i += 4)
+			{
+				newBuffer.Data[i + 0] = buffer.Data[i + 2];
+				newBuffer.Data[i + 1] = buffer.Data[i + 1];
+				newBuffer.Data[i + 2] = buffer.Data[i + 0];
+				newBuffer.Data[i + 3] = buffer.Data[i + 3];
+			}
+
+			stbi_write_png((Project::GetActiveProjectDirectory() / "Screenshots.png").string().c_str(),
+				image->GetSpecification().Width, image->GetSpecification().Height, 4, newBuffer.Data, 0);
+
+			newBuffer.Release();
+		}
+		*/
 	}
 
 	void ImGuiLayer::SetColours(ImVec4 primary, ImVec4 text, ImVec4 regular, ImVec4 hovered, ImVec4 active) {

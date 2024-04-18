@@ -5,8 +5,6 @@
 #include <vulkan/vulkan.h>
 #include <optional>
 
-#include "Vulkan_Context.h"
-
 namespace Nebula {
 	class Vulkan_RendererAPI : public RendererAPI {
 	public:

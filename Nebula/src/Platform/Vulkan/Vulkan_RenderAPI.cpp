@@ -91,6 +91,7 @@ namespace Nebula {
 			return;
 		}
 
+		/*
 		Vulkan_Context* context = (Vulkan_Context*)Application::Get().GetWindow().GetContext();
 		auto& image = context->GetImage();
 		
@@ -110,6 +111,7 @@ namespace Nebula {
 		VulkanAPI::TransitionImageLayout(image, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, commandBuffer);
 		
 		VulkanAPI::EndSingleUseCommand(commandBuffer);
+		*/
 	}
 
 	void Vulkan_RendererAPI::SetClearColour(float r, float g, float b, float a) 

@@ -15,6 +15,7 @@ namespace Nebula
 		ImageFormat TextureFormat = ImageFormat::None;
 		ImageLayout OriginalLayout = ImageLayout::Undefined;
 		ImageLayout FinalLayout = ImageLayout::Undefined;
+		Ref<Image2D> ExistingImage = nullptr;
 	};
 
 	struct RenderPassSpecification

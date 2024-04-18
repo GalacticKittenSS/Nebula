@@ -6,11 +6,10 @@
 
 #include "Nebula/Renderer/MSDFData.h"
 #include "Nebula/Renderer/Render_Command.h"
+#include "Nebula/Renderer/Graphics_Context.h"
 
 #include "Platform/Vulkan/VulkanAPI.h"
 #include "Platform/Vulkan/Vulkan_UniformBuffer.h"
-
-// Descriptor Set
 
 namespace Nebula
 {
@@ -320,8 +319,14 @@ namespace Nebula
 			spec.ClearColour = m_Settings.ClearColour;
 			spec.DepthClearValue = 0.0f;
 			
-			for (uint32_t i = 0; i < FramesInFlight; i++)
-				m_Data.Frames[i].Framebuffer = FrameBuffer::Create(spec);
+			const GraphicsContext* context = Application::Get().GetWindow().GetContext();
+			for (uint32_t i = 0; i < context->GetImageCount(); i++)
+			{
+				if (m_Settings.PresentToScreen)
+					spec.Attachments[0].ExistingImage = context->GetImage(i);
+				
+				m_Data.Framebuffers.push_back(FrameBuffer::Create(spec));
+			}
 		}
 		
 		PipelineSpecification pipelineSpec;
@@ -421,29 +426,44 @@ namespace Nebula
 
 	void SceneRenderer::SetClearColour(const glm::vec4& colour)
 	{
-		FrameBufferSpecification& spec = m_Data.CurrentFrame->Framebuffer->GetFrameBufferSpecifications();
-		spec.ClearColour = colour;
+		for (auto& framebuffer : m_Data.Framebuffers)
+		{
+			FrameBufferSpecification& spec = framebuffer->GetFrameBufferSpecifications();
+			spec.ClearColour = colour;
+		}
 	}
 	
 	void SceneRenderer::Resize(uint32_t width, uint32_t height)
 	{
-		m_Data.CurrentFrame->Framebuffer->Resize(width, height);
+		const GraphicsContext* context = Application::Get().GetWindow().GetContext();
+		for (uint32_t i = 0; i < context->GetImageCount(); i++)
+		{
+			Ref<FrameBuffer> framebuffer = m_Data.Framebuffers[i];
+			
+			if (m_Settings.PresentToScreen)
+			{
+				FrameBufferSpecification& spec = framebuffer->GetFrameBufferSpecifications();
+				spec.Attachments[0].ExistingImage = context->GetImage(i);
+			}
+
+			framebuffer->Resize(width, height);
+		}
 	}
 
 	glm::vec2 SceneRenderer::GetFramebufferSize()
 	{
-		FrameBufferSpecification& spec = m_Data.CurrentFrame->Framebuffer->GetFrameBufferSpecifications();
+		FrameBufferSpecification& spec = m_Data.Framebuffers[m_Data.FramebufferImageIndex]->GetFrameBufferSpecifications();
 		return { spec.Width, spec.Height };
 	}
 
 	Ref<Image2D> SceneRenderer::GetFinalImage()
 	{
-		return m_Data.CurrentFrame->Framebuffer->GetColourAttachmentImage(0);
+		return m_Data.Framebuffers[m_Data.FramebufferImageIndex]->GetColourAttachmentImage(0);
 	}
 
 	int SceneRenderer::ReadImage(uint32_t x, uint32_t y)
 	{
-		return m_Data.CurrentFrame->Framebuffer->ReadPixel(1, x, y);
+		return m_Data.Framebuffers[m_Data.FramebufferImageIndex]->ReadPixel(1, x, y);
 	}
 
 	void SceneRenderer::RenderSprite(const glm::mat4& transform, Ref<Material> mat, const SpriteRendererComponent& sprite, int entityID)
@@ -916,9 +936,12 @@ namespace Nebula
 
 		ResetBatch();
 		
-		m_Data.CurrentFrame->Framebuffer->Bind();
+		const GraphicsContext* context = Application::Get().GetWindow().GetContext();
+		m_Data.FramebufferImageIndex = context->GetImageIndex();
+
+		m_Data.Framebuffers[m_Data.FramebufferImageIndex]->Bind();
 		m_Data.CurrentFrame->CommandBuffer->BeginRecording();
-		m_Data.CurrentFrame->Framebuffer->ClearDepthAttachment(0);
+		m_Data.Framebuffers[m_Data.FramebufferImageIndex]->ClearDepthAttachment(0);
 
 		if (m_Settings.ShowSky)
 			SkyPrePass(camera.GetPosition());
@@ -939,13 +962,13 @@ namespace Nebula
 			ColliderPass();
 		else
 		{
-			Ref<Image2D> image = m_Data.CurrentFrame->Framebuffer->GetColourAttachmentImage(0);
+			Ref<Image2D> image = m_Data.Framebuffers[m_Data.FramebufferImageIndex]->GetColourAttachmentImage(0);
 			ImageLayout layout = m_Settings.PresentToScreen ? ImageLayout::PresentSrcKHR : ImageLayout::ShaderReadOnly;
 			image->TransitionImageLayout(ImageLayout::ColourAttachment, layout);
 		}
 
 		m_Data.CurrentFrame->CommandBuffer->EndRecording();
-		m_Data.CurrentFrame->Framebuffer->Unbind();
+		m_Data.Framebuffers[m_Data.FramebufferImageIndex]->Unbind();
 		m_Data.CurrentFrame->CommandBuffer->Submit();
 	}
 
@@ -960,10 +983,13 @@ namespace Nebula
 		m_Data.CurrentFrame->CameraUniformBuffer->SetData(&m_Data.CameraBuffer, sizeof(RenderData::CameraData));
 
 		ResetBatch();
+		
+		const GraphicsContext* context = Application::Get().GetWindow().GetContext();
+		m_Data.FramebufferImageIndex = context->GetImageIndex();
 
-		m_Data.CurrentFrame->Framebuffer->Bind();
+		m_Data.Framebuffers[m_Data.FramebufferImageIndex]->Bind();
 		m_Data.CurrentFrame->CommandBuffer->BeginRecording();
-		m_Data.CurrentFrame->Framebuffer->ClearDepthAttachment(0);
+		m_Data.Framebuffers[m_Data.FramebufferImageIndex]->ClearDepthAttachment(0);
 
 		if (m_Settings.ShowSky)
 			SkyPrePass(transform[3]);
@@ -981,14 +1007,14 @@ namespace Nebula
 		}
 		else
 		{
-			Ref<Image2D> image = m_Data.CurrentFrame->Framebuffer->GetColourAttachmentImage(0);
+			Ref<Image2D> image = m_Data.Framebuffers[m_Data.FramebufferImageIndex]->GetColourAttachmentImage(0);
 			ImageLayout layout = m_Settings.PresentToScreen ? ImageLayout::PresentSrcKHR : ImageLayout::ShaderReadOnly;
 			image->TransitionImageLayout(ImageLayout::ColourAttachment, layout);
 		}
 
 		m_Data.CurrentFrame->CommandBuffer->EndRecording();
 		m_Data.CurrentFrame->CommandBuffer->Submit();
-		m_Data.CurrentFrame->Framebuffer->Unbind();
+		m_Data.Framebuffers[m_Data.FramebufferImageIndex]->Unbind();
 	}
 
 	void SceneRenderer::FlushAndReset() 
