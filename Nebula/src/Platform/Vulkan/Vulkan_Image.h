@@ -9,15 +9,12 @@ namespace Nebula
 	class Vulkan_Image : public Image2D
 	{
 	public:
-		Vulkan_Image();
 		Vulkan_Image(const ImageSpecification& specification);
 		~Vulkan_Image();
 
-		using VulkanImageArray = std::vector<Ref<Vulkan_Image>>;
-		static VulkanImageArray CreateImageArray(const ImageSpecification& specification, uint32_t size);
-		static VulkanImageArray CreateImageArray(const std::vector<VkImage>& images, const std::vector<VkImageView>& imageViews,
-			uint32_t width, uint32_t height, VkFormat format);
-
+		// Assume image is from SwapChain
+		Vulkan_Image(const VkImage& image, uint32_t width, uint32_t height, VkFormat format);
+		
 		uint64_t GetImage() const override { return (uint64_t)m_Image; }
 		uint64_t GetImageView() const override { return (uint64_t)m_ImageView; }
 		uint64_t GetDescriptorSet() override;
@@ -40,9 +37,9 @@ namespace Nebula
 		
 		VkImageLayout ImageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 	private:
-		void CreateTextureImage(int samples, VkFormat format, VkImageUsageFlags usage, VkImageAspectFlags aspect);
+		void CreateTextureImage(int samples, VkImageUsageFlags usage);
 		void CreateSampler();
-		void CreateImageView(VkImageView& imageView, VkFormat format, VkImageAspectFlags aspect);
+		void CreateImageView();
 	private:
 		ImageSpecification m_Specification;
 		Scope<VulkanBuffer> m_StagingBuffer;

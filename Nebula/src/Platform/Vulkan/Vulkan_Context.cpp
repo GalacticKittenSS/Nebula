@@ -82,7 +82,6 @@ namespace Nebula {
 		NB_ASSERT(versionMajor == 1 && versionMinor >= 2, "Nebula Requires Vulkan version 1.2 and Up!");
 
 		CreateSwapChain();
-		CreateImageViews();
 		AcquireNextImage();
 	}
 
@@ -90,11 +89,8 @@ namespace Nebula {
 	{
 		NB_PROFILE_FUNCTION();
 
-		VulkanAPI::SubmitResource([imageViews = m_ImageViews, swapchain = m_SwapChain, surface = m_Surface]()
+		VulkanAPI::SubmitResource([swapchain = m_SwapChain, surface = m_Surface]()
 		{
-			for (auto imageView : imageViews)
-				vkDestroyImageView(VulkanAPI::GetDevice(), imageView, nullptr);
-
 			vkDestroySwapchainKHR(VulkanAPI::GetDevice(), swapchain, nullptr);
 			vkDestroySurfaceKHR(VulkanAPI::GetInstance(), surface, nullptr);
 		});
@@ -141,19 +137,22 @@ namespace Nebula {
 
 		PresentCurrentImage();
 
-		VulkanAPI::ResetFrame();
+		VulkanAPI::PrepareFrame();
 		AcquireNextImage();
 
 		if (m_RecreateSwapChain)
 		{
 			RecreateSwapChain();
 			AcquireNextImage();
-			VulkanAPI::TransitionImageLayout(m_Images[m_ImageIndex], VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+			VulkanAPI::TransitionImageLayout(m_Images[m_ImageIndex]->GetVulkanImage(), VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 		}
 	}
 
 	void Vulkan_Context::SetVsync(bool vsync)
 	{
+		// TODO: Add ContextSpecification
+		NB_WARN("Context::SetVsync is depreciated, please use ContextSpecification->VsyncEnabled");
+
 		m_PresentMode = vsync ? VK_PRESENT_MODE_MAILBOX_KHR : VK_PRESENT_MODE_IMMEDIATE_KHR;
 		RecreateSwapChain();
 		AcquireNextImage();
@@ -262,60 +261,33 @@ namespace Nebula {
 		NB_ASSERT(result == VK_SUCCESS, "Failed to create swap chain!");
 		
 		vkGetSwapchainImagesKHR(device, m_SwapChain, &m_SwapChainImageCount, nullptr);
-		m_Images.resize(m_SwapChainImageCount);
-		vkGetSwapchainImagesKHR(device, m_SwapChain, &m_SwapChainImageCount, m_Images.data());
+		std::vector<VkImage> images(m_SwapChainImageCount);
+		vkGetSwapchainImagesKHR(device, m_SwapChain, &m_SwapChainImageCount, images.data());
 
 		m_ImageFormat = surfaceFormat.format;
 		m_Extent = extent;
-	}
 
-	void Vulkan_Context::CreateImageViews()
-	{
-		m_ImageViews.resize(m_SwapChainImageCount);
-
-		for (size_t i = 0; i < m_SwapChainImageCount; i++)
-		{
-			VkImageViewCreateInfo createInfo{};
-			createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-			createInfo.image = m_Images[i];
-			createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-			createInfo.format = m_ImageFormat;
-			createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-			createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-			createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-			createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-			createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			createInfo.subresourceRange.baseMipLevel = 0;
-			createInfo.subresourceRange.levelCount = 1;
-			createInfo.subresourceRange.baseArrayLayer = 0;
-			createInfo.subresourceRange.layerCount = 1;
-
-			VkResult result = vkCreateImageView(VulkanAPI::GetDevice(), &createInfo, nullptr, &m_ImageViews[i]);
-			NB_ASSERT(result == VK_SUCCESS, "Failed to create image views!");
-		}
+		size_t arraySize = images.size();
+		m_Images.resize(m_SwapChainImageCount);
+		for (uint32_t i = 0; i < arraySize; i++)
+			m_Images[i] = CreateRef<Vulkan_Image>(images[i], m_Extent.width, m_Extent.height, m_ImageFormat);
 	}
 
 	void Vulkan_Context::RecreateSwapChain() 
 	{
 		vkDeviceWaitIdle(VulkanAPI::GetDevice());
 		CleanUpSwapChain();
-
 		CreateSwapChain();
-		CreateImageViews();
-
-		m_ImageArray = Vulkan_Image::CreateImageArray(m_Images, m_ImageViews, m_Extent.width, m_Extent.height, m_ImageFormat);
 	}
 
 	void Vulkan_Context::CleanUpSwapChain()
 	{
-		VulkanAPI::SubmitResource([imageViews = m_ImageViews, swapchain = m_SwapChain]()
+		VulkanAPI::SubmitResource([swapchain = m_SwapChain]()
 		{
 			vkDeviceWaitIdle(VulkanAPI::GetDevice());
-
-			for (auto imageView : imageViews)
-				vkDestroyImageView(VulkanAPI::GetDevice(), imageView, nullptr);
-			
 			vkDestroySwapchainKHR(VulkanAPI::GetDevice(), swapchain, nullptr);
 		});	
+
+		m_Images.clear();
 	}
 }

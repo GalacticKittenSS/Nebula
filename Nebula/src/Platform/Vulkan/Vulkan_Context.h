@@ -19,11 +19,9 @@ namespace Nebula {
 
 		uint32_t GetImageIndex() const override { return m_ImageIndex; }
 		uint32_t GetImageCount() const override { return m_SwapChainImageCount; }
-		const Ref<Image2D> GetImage(uint32_t index = 0) const override { return m_ImageArray[index]; }
+		const Ref<Image2D> GetImage(uint32_t index = 0) const override { return m_Images[index]; }
 		const void* GetSurface() const override { return m_Surface; }
 
-		const VkFormat& GetImageFormat() const { return m_ImageFormat; }
-		const VkImage& GetImage() const { return m_Images[m_ImageIndex]; }
 		bool m_RecreateSwapChain = false;
 	private:
 		struct SwapChainSupportDetails {
@@ -49,14 +47,11 @@ namespace Nebula {
 		VkSurfaceKHR m_Surface;
 		VkSwapchainKHR m_SwapChain = nullptr;
 		
-		std::vector<VkImage> m_Images;
-		std::vector<VkImageView> m_ImageViews;
+		std::vector<Ref<Vulkan_Image>> m_Images;
 		
 		VkFormat m_ImageFormat;
 		VkExtent2D m_Extent;
 		VkPresentModeKHR m_PresentMode = VK_PRESENT_MODE_MAILBOX_KHR;
-
-		Vulkan_Image::VulkanImageArray m_ImageArray;
 
 		uint32_t m_ImageIndex = 0;
 		uint32_t m_SwapChainImageCount;

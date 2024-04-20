@@ -147,9 +147,16 @@ namespace Nebula
 		}
 	}
 
-	Vulkan_Image::Vulkan_Image()
-		: m_ImageFormat(VK_FORMAT_UNDEFINED), m_AspectFlags(VK_IMAGE_ASPECT_NONE), m_Allocation(nullptr)
+	Vulkan_Image::Vulkan_Image(const VkImage& image, uint32_t width, uint32_t height,  VkFormat format)
+		: m_Image(image), m_ImageFormat(format), m_AspectFlags(VK_IMAGE_ASPECT_COLOR_BIT), m_Allocation(nullptr)
 	{
+		m_Specification.Width = width;
+		m_Specification.Height = height;
+
+		uint32_t size = width * height * Utils::VulkantoBPP(format);
+		m_StagingBuffer = CreateScope<VulkanBuffer>(size, VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+
+		CreateImageView();
 	}
 
 	Vulkan_Image::Vulkan_Image(const ImageSpecification& specification)
@@ -159,16 +166,19 @@ namespace Nebula
 
 		m_ImageFormat = Utils::NebulaToVKImageFormat(m_Specification.Format);
 		m_AspectFlags = isDepthFormat ? Utils::GetDepthAspectFlags(m_ImageFormat) : VK_IMAGE_ASPECT_COLOR_BIT;
-		CreateTextureImage(specification.Samples, m_ImageFormat, m_Specification.Usage, m_AspectFlags);
+		CreateTextureImage(specification.Samples, m_Specification.Usage);
 
-		if (isDepthFormat || !m_Specification.ShaderUsage)
+		if (isDepthFormat)
 			return;
 
-		CreateSampler();
+		if (m_Specification.ShaderUsage)
+		{
+			CreateSampler();
 
-		m_ImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		m_ImageInfo.imageView = m_ImageView;
-		m_ImageInfo.sampler = m_Sampler;
+			m_ImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			m_ImageInfo.imageView = m_ImageView;
+			m_ImageInfo.sampler = m_Sampler;
+		}
 
 		uint32_t size = m_Specification.Width * m_Specification.Height * Utils::VulkantoBPP(m_ImageFormat);
 		m_StagingBuffer = CreateScope<VulkanBuffer>(size, VK_BUFFER_USAGE_TRANSFER_DST_BIT);
@@ -176,12 +186,11 @@ namespace Nebula
 
 	Vulkan_Image::~Vulkan_Image()
 	{
-		if (!m_Allocation)
-			return;
-
 		VulkanAPI::SubmitResource([memory = m_Allocation, image = m_Image, view = m_ImageView, sampler = m_Sampler, descriptor = m_ImGuiDescriptor]()
 		{
-			vmaDestroyImage(VulkanAPI::s_Allocator, image, memory);
+			if (memory)
+				vmaDestroyImage(VulkanAPI::s_Allocator, image, memory);
+			
 			vkDestroyImageView(VulkanAPI::GetDevice(), view, nullptr);
 			vkDestroySampler(VulkanAPI::GetDevice(), sampler, nullptr);
 			
@@ -196,7 +205,7 @@ namespace Nebula
 		m_ImGuiDescriptor = nullptr;
 	}
 
-	void Vulkan_Image::CreateTextureImage(int samples, VkFormat format, VkImageUsageFlags usage, VkImageAspectFlags aspect)
+	void Vulkan_Image::CreateTextureImage(int samples, VkImageUsageFlags usage)
 	{
 		// Image
 		{
@@ -208,7 +217,7 @@ namespace Nebula
 			imageInfo.extent.depth = 1;
 			imageInfo.mipLevels = 1;
 			imageInfo.arrayLayers = 1;
-			imageInfo.format = format;
+			imageInfo.format = m_ImageFormat;
 			imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
 			imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 			imageInfo.usage = usage;
@@ -224,25 +233,26 @@ namespace Nebula
 			VulkanAPI::AttachDebugNameToObject(VK_OBJECT_TYPE_IMAGE, (uint64_t)m_Image, m_Specification.DebugName);
 		}
 		
-		CreateImageView(m_ImageView, format, aspect);
-		VulkanAPI::AttachDebugNameToObject(VK_OBJECT_TYPE_IMAGE_VIEW, (uint64_t)m_ImageView, m_Specification.DebugName);
+		CreateImageView();
 	}
 
-	void Vulkan_Image::CreateImageView(VkImageView& imageView, VkFormat format, VkImageAspectFlags aspect)
+	void Vulkan_Image::CreateImageView()
 	{
 		VkImageViewCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		createInfo.image = m_Image;
 		createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		createInfo.format = format;
-		createInfo.subresourceRange.aspectMask = aspect;
+		createInfo.format = m_ImageFormat;
+		createInfo.subresourceRange.aspectMask = m_AspectFlags;
 		createInfo.subresourceRange.baseMipLevel = 0;
 		createInfo.subresourceRange.levelCount = 1;
 		createInfo.subresourceRange.baseArrayLayer = 0;
 		createInfo.subresourceRange.layerCount = 1;
 
-		VkResult result = vkCreateImageView(VulkanAPI::GetDevice(), &createInfo, nullptr, &imageView);
+		VkResult result = vkCreateImageView(VulkanAPI::GetDevice(), &createInfo, nullptr, &m_ImageView);
 		NB_ASSERT(result == VK_SUCCESS, "Failed to create image view!");
+		
+		VulkanAPI::AttachDebugNameToObject(VK_OBJECT_TYPE_IMAGE_VIEW, (uint64_t)m_ImageView, m_Specification.DebugName);
 	}
 
 	void Vulkan_Image::CreateSampler()
@@ -267,35 +277,6 @@ namespace Nebula
 
 		VkResult result = vkCreateSampler(VulkanAPI::GetDevice(), &samplerInfo, nullptr, &m_Sampler);
 		NB_ASSERT(result == VK_SUCCESS, "Failed to create texture sampler!");
-	}
-
-	Vulkan_Image::VulkanImageArray Vulkan_Image::CreateImageArray(const ImageSpecification& specification, uint32_t size)
-	{
-		VulkanImageArray imageArray(size);
-		for (uint32_t i = 0; i < size; i++)
-			imageArray[i] = CreateRef<Vulkan_Image>(specification);
-
-		return imageArray;
-	}
-
-	Vulkan_Image::VulkanImageArray Vulkan_Image::CreateImageArray(const std::vector<VkImage>& images, const std::vector<VkImageView>& imageViews,
-		uint32_t width, uint32_t height, VkFormat format)
-	{
-		size_t arraySize = glm::max(images.size(), imageViews.size());
-		VulkanImageArray imageArray(arraySize);
-
-		for (uint32_t i = 0; i < arraySize; i++)
-		{
-			imageArray[i] = CreateRef<Vulkan_Image>();
-			imageArray[i]->m_Image = images[i];
-			imageArray[i]->m_ImageView = imageViews[i];
-			imageArray[i]->m_ImageFormat = format;
-			imageArray[i]->m_Specification.Width = width;
-			imageArray[i]->m_Specification.Height = height;
-			imageArray[i]->m_AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT; // Assume these images are coming from swapchain
-		}
-
-		return imageArray;
 	}
 
 	Buffer Vulkan_Image::ReadToBuffer()

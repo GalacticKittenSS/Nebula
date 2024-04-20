@@ -44,7 +44,7 @@ namespace Nebula {
 		AttachmentTextureSpecification m_DepthAttachmentSpec = ImageFormat::None;
 
 		VkFramebuffer m_Framebuffer;
-		Vulkan_Image::VulkanImageArray m_ColourAttachments;
+		std::vector<Ref<Vulkan_Image>> m_ColourAttachments;
 		Ref<Vulkan_Image> m_DepthAttachment;
 
 		VkCommandBuffer m_CommandBuffer = nullptr;
