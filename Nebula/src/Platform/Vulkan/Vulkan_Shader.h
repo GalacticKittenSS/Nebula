@@ -73,6 +73,7 @@ namespace Nebula {
 	{
 	public:
 		Vulkan_DescriptorSet(const Vulkan_Shader* shader, std::vector<VkDescriptorSetLayout> layouts);
+		~Vulkan_DescriptorSet();
 
 		void SetResource(const std::string& uniformName, Ref<UniformBuffer> uniformBuffer) override;
 		void SetResource(const std::string& uniformName, Ref<Texture2D> texture, uint32_t slot) override;

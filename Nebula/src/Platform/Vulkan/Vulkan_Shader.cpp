@@ -512,6 +512,13 @@ namespace Nebula
 		}
 	}
 
+	Vulkan_DescriptorSet::~Vulkan_DescriptorSet()
+	{
+		VulkanAPI::SubmitResource([descriptorSets = m_DescriptorSets] () {
+			vkFreeDescriptorSets(VulkanAPI::GetDevice(), VulkanAPI::GetDescriptorPool(), descriptorSets.size(), descriptorSets.data());
+		});
+	}
+	
 	void Vulkan_DescriptorSet::SetResource(const std::string& uniformName, Ref<UniformBuffer> uniformBuffer)
 	{
 		NB_ASSERT(m_Shader);
