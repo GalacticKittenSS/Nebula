@@ -26,7 +26,8 @@ namespace Nebula
 		static VkCommandBuffer BeginSingleUseCommand();
 		static void EndSingleUseCommand(VkCommandBuffer commandBuffer);
 		
-		static void ResetFrame();
+		// Move to next frame and delete old resources
+		static void PrepareFrame();
 		
 		static uint32_t FindMemoryType(uint32_t filter, VkMemoryPropertyFlags properties);
 		static void TransitionImageLayout(VkImage image, VkImageAspectFlags imageAspect, VkImageLayout oldLayout, VkImageLayout newLayout, VkCommandBuffer commandBuffer = VK_NULL_HANDLE);

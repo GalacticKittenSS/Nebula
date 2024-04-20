@@ -410,7 +410,7 @@ namespace Nebula
 		vkFreeCommandBuffers(s_Device, s_CommandPool, 1, &commandBuffer);
 	}
 
-	void VulkanAPI::ResetFrame()
+	void VulkanAPI::PrepareFrame()
 	{
 		s_FirstSubmit = true;
 		s_FrameIndex = (s_FrameIndex + 1) % g_MaxFrames;
