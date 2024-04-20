@@ -52,7 +52,7 @@ namespace Nebula
 		NB_PROFILE_FUNCTION();
 
 		VulkanAPI::SubmitResource([descriptorSet = m_DescriptorSet]() {
-			vkFreeDescriptorSets(VulkanAPI::GetDevice(), VulkanAPI::s_DescriptorPool, 1, &descriptorSet);
+			vkFreeDescriptorSets(VulkanAPI::GetDevice(), VulkanAPI::GetDescriptorPool(), 1, &descriptorSet);
 		});
 	}
 

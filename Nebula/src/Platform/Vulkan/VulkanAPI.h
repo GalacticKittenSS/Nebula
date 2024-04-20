@@ -43,16 +43,16 @@ namespace Nebula
 		static inline const VkQueue& GetQueue() { return s_Queue; }
 		static inline uint32_t GetQueueFamily() { return s_QueueFamily; }
 
-		static inline const VkCommandPool& GetCommandPool() { return s_CommandPool; }
 		static inline const VkCommandBuffer& GetCommandBuffer() { return (VkCommandBuffer)Vulkan_CommandBuffer::GetInstance()->GetCommandBuffer(); }
 		static inline bool IsRecording() { return Vulkan_CommandBuffer::GetInstance(); }
 
 		static const VkSemaphore& GetSemaphore();
 		static inline const VkSemaphore& GetRenderSemaphore() { return s_RenderSemaphores[s_FrameIndex]; }
 		static inline const VkSemaphore& GetImageSemaphore() { return s_ImageSemaphores[s_FrameIndex]; }
-		
-		static VkDescriptorPool s_DescriptorPool;
-		static VmaAllocator s_Allocator;
+
+		static inline const VmaAllocator& GetMemAllocator() { return s_Allocator; }
+		static inline const VkCommandPool& GetCommandPool() { return s_CommandPool; }
+		static inline const VkDescriptorPool& GetDescriptorPool() { return s_DescriptorPool; }
 	private:
 		static void CreateLogicalDevice();
 		static void CreateCommandPool();
@@ -68,8 +68,12 @@ namespace Nebula
 		static VkQueue s_Queue;
 
 		static VkCommandPool s_CommandPool;
+		static VkDescriptorPool s_DescriptorPool;
+
 		static std::vector<VkSemaphore> s_ImageSemaphores;
 		static std::vector<VkSemaphore> s_RenderSemaphores;
+
+		static VmaAllocator s_Allocator;
 		
 		static std::vector<std::vector<std::function<void()>>> s_FreeResourceFuncs;
 

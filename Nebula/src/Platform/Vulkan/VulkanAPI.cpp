@@ -549,10 +549,10 @@ namespace Nebula
 		allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
 		allocInfo.flags = hostAccess ? VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT : NULL;
 
-		VkResult result = vmaCreateBuffer(VulkanAPI::s_Allocator, &bufferInfo, &allocInfo, &m_Buffer, &m_Allocation, nullptr);
+		VkResult result = vmaCreateBuffer(VulkanAPI::GetMemAllocator(), &bufferInfo, &allocInfo, &m_Buffer, &m_Allocation, nullptr);
 		NB_ASSERT(result == VK_SUCCESS, "Failed to create vertex buffer!");
 
-		vmaMapMemory(VulkanAPI::s_Allocator, m_Allocation, &m_MappedMemory);
+		vmaMapMemory(VulkanAPI::GetMemAllocator(), m_Allocation, &m_MappedMemory);
 		m_AlignedSize = m_Allocation->GetSize();
 	}
 
@@ -560,8 +560,8 @@ namespace Nebula
 	{
 		VulkanAPI::SubmitResource([buffer = m_Buffer, memory = m_Allocation]()
 		{
-			vmaUnmapMemory(VulkanAPI::s_Allocator, memory);
-			vmaDestroyBuffer(VulkanAPI::s_Allocator, buffer, memory);
+			vmaUnmapMemory(VulkanAPI::GetMemAllocator(), memory);
+			vmaDestroyBuffer(VulkanAPI::GetMemAllocator(), buffer, memory);
 		});
 
 		m_Buffer = nullptr;

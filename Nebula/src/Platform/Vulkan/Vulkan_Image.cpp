@@ -189,13 +189,13 @@ namespace Nebula
 		VulkanAPI::SubmitResource([memory = m_Allocation, image = m_Image, view = m_ImageView, sampler = m_Sampler, descriptor = m_ImGuiDescriptor]()
 		{
 			if (memory)
-				vmaDestroyImage(VulkanAPI::s_Allocator, image, memory);
+				vmaDestroyImage(VulkanAPI::GetMemAllocator(), image, memory);
 			
 			vkDestroyImageView(VulkanAPI::GetDevice(), view, nullptr);
 			vkDestroySampler(VulkanAPI::GetDevice(), sampler, nullptr);
 			
 			if (descriptor)
-				vkFreeDescriptorSets(VulkanAPI::GetDevice(), VulkanAPI::s_DescriptorPool, 1, &descriptor);
+				vkFreeDescriptorSets(VulkanAPI::GetDevice(), VulkanAPI::GetDescriptorPool(), 1, &descriptor);
 		});
 
 		m_Allocation = nullptr;
@@ -227,7 +227,7 @@ namespace Nebula
 			VmaAllocationCreateInfo allocInfo{};
 			allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
-			VkResult result = vmaCreateImage(VulkanAPI::s_Allocator, &imageInfo, &allocInfo, &m_Image, &m_Allocation, nullptr);
+			VkResult result = vmaCreateImage(VulkanAPI::GetMemAllocator(), &imageInfo, &allocInfo, &m_Image, &m_Allocation, nullptr);
 			NB_ASSERT(result == VK_SUCCESS, "Failed to create image!");
 
 			VulkanAPI::AttachDebugNameToObject(VK_OBJECT_TYPE_IMAGE, (uint64_t)m_Image, m_Specification.DebugName);
