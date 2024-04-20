@@ -969,7 +969,6 @@ namespace Nebula
 
 		m_Data.CurrentFrame->CommandBuffer->EndRecording();
 		m_Data.Framebuffers[m_Data.FramebufferImageIndex]->Unbind();
-		m_Data.CurrentFrame->CommandBuffer->Submit();
 	}
 
 	void SceneRenderer::Render(const Camera& camera, const glm::mat4& transform)
@@ -1013,7 +1012,6 @@ namespace Nebula
 		}
 
 		m_Data.CurrentFrame->CommandBuffer->EndRecording();
-		m_Data.CurrentFrame->CommandBuffer->Submit();
 		m_Data.Framebuffers[m_Data.FramebufferImageIndex]->Unbind();
 	}
 
@@ -1023,7 +1021,6 @@ namespace Nebula
 		ResetBatch();
 
 		m_Data.CurrentFrame->CommandBuffer->EndRecording();
-		m_Data.CurrentFrame->CommandBuffer->Submit();
 		m_Data.CurrentFrame->CommandBuffer->BeginRecording();
 	}
 

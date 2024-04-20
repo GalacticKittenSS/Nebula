@@ -226,14 +226,12 @@ namespace Nebula {
 				m_CommandBuffer->BeginRecording();
 				m_RenderPass->Bind();
 
-				ImGui_ImplVulkan_RenderDrawData(drawData, VulkanAPI::GetCommandBuffer());
+				ImGui_ImplVulkan_RenderDrawData(drawData, (VkCommandBuffer)m_CommandBuffer->GetCommandBuffer());
 
 				// Submit command buffer
 				m_RenderPass->Unbind();
 				m_CommandBuffer->EndRecording();
 				m_Framebuffers[imageIndex]->Unbind();
-
-				m_CommandBuffer->Submit();
 
 				break;
 			}

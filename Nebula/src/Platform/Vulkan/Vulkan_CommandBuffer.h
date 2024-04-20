@@ -14,12 +14,13 @@ namespace Nebula
 
 		void BeginRecording() override;
 		void EndRecording() override;
-		void Submit() override;
 
 		bool IsRecording() override { return m_Recording; }
+		uint64_t GetCommandBuffer() const override { return (uint64_t)m_CommandBuffer; }
 
-		const VkCommandBuffer& GetCommandBuffer() const { return m_CommandBuffer; }
 		static const Vulkan_CommandBuffer* GetInstance() { return s_Instance; }
+	private:
+		void Submit();
 	private:
 		VkCommandBuffer m_CommandBuffer;
 		VkFence m_Fence;

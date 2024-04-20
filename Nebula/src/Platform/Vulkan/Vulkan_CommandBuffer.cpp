@@ -28,7 +28,8 @@ namespace Nebula
 
 	Vulkan_CommandBuffer::~Vulkan_CommandBuffer()
 	{
-		VulkanAPI::SubmitResource([fence = m_Fence] {
+		VulkanAPI::SubmitResource([commandBuffer = m_CommandBuffer, fence = m_Fence] {
+			vkFreeCommandBuffers(VulkanAPI::GetDevice(), VulkanAPI::GetCommandPool(), 1, &commandBuffer);
 			vkDestroyFence(VulkanAPI::GetDevice(), fence, nullptr);
 		});
 	}
@@ -57,6 +58,8 @@ namespace Nebula
 
 		VkResult result = vkEndCommandBuffer(m_CommandBuffer);
 		NB_ASSERT(result == VK_SUCCESS, "Failed to record command buffer!");
+
+		Submit();
 	}
 	
 	void Vulkan_CommandBuffer::Submit()
