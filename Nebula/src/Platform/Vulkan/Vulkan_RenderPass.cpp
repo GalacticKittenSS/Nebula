@@ -15,8 +15,6 @@ namespace Nebula
 		VkFormat FindDepthFormat();
 	}
 
-	const Vulkan_RenderPass* Vulkan_RenderPass::s_ActiveInstance = nullptr;
-	
 	Vulkan_RenderPass::Vulkan_RenderPass(const RenderPassSpecification& specification)
 		: m_Specification(specification)
 	{
@@ -139,7 +137,6 @@ namespace Nebula
 
 	void Vulkan_RenderPass::Bind()
 	{
-		s_ActiveInstance = this;
 		Vulkan_FrameBuffer* framebuffer = Vulkan_FrameBuffer::GetActiveInstance();
 
 		if (!VulkanAPI::IsRecording() || !framebuffer)
@@ -198,8 +195,6 @@ namespace Nebula
 
 	void Vulkan_RenderPass::Unbind()
 	{
-		s_ActiveInstance = nullptr;
-
 		if (VulkanAPI::IsRecording())
 			vkCmdEndRenderPass(VulkanAPI::GetCommandBuffer());
 	}
