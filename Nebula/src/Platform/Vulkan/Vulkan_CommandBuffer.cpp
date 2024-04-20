@@ -5,7 +5,7 @@
 
 namespace Nebula
 {
-	Vulkan_CommandBuffer* Vulkan_CommandBuffer::s_Instance = nullptr;
+	VkCommandBuffer* Vulkan_CommandBuffer::s_Instance = nullptr;
 
 	Vulkan_CommandBuffer::Vulkan_CommandBuffer()
 	{
@@ -48,7 +48,7 @@ namespace Nebula
 		NB_ASSERT(result == VK_SUCCESS, "Failed to begin recording command buffer!");
 
 		m_Recording = true;
-		s_Instance = this;
+		s_Instance = &m_CommandBuffer;
 	}
 		
 	void Vulkan_CommandBuffer::EndRecording()

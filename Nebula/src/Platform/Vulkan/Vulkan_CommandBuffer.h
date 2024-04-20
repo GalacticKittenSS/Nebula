@@ -18,7 +18,8 @@ namespace Nebula
 		bool IsRecording() override { return m_Recording; }
 		uint64_t GetCommandBuffer() const override { return (uint64_t)m_CommandBuffer; }
 
-		static const Vulkan_CommandBuffer* GetInstance() { return s_Instance; }
+		static bool IsBound() { return s_Instance; }
+		static const VkCommandBuffer& GetVulkanBuffer() { return *s_Instance; }
 	private:
 		void Submit();
 	private:
@@ -27,6 +28,6 @@ namespace Nebula
 
 		bool m_Recording = false;
 
-		static Vulkan_CommandBuffer* s_Instance;
+		static VkCommandBuffer* s_Instance;
 	};
 }

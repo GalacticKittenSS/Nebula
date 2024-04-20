@@ -43,8 +43,8 @@ namespace Nebula
 		static inline const VkQueue& GetQueue() { return s_Queue; }
 		static inline uint32_t GetQueueFamily() { return s_QueueFamily; }
 
-		static inline const VkCommandBuffer& GetCommandBuffer() { return (VkCommandBuffer)Vulkan_CommandBuffer::GetInstance()->GetCommandBuffer(); }
-		static inline bool IsRecording() { return Vulkan_CommandBuffer::GetInstance(); }
+		static inline const VkCommandBuffer& GetCommandBuffer() { return Vulkan_CommandBuffer::GetVulkanBuffer(); }
+		static inline bool IsRecording() { return Vulkan_CommandBuffer::IsBound(); }
 
 		static const VkSemaphore& GetSemaphore();
 		static inline const VkSemaphore& GetRenderSemaphore() { return s_RenderSemaphores[s_FrameIndex]; }
