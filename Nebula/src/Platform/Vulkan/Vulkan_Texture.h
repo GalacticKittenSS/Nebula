@@ -30,7 +30,7 @@ namespace Nebula {
 			return m_Image == other.GetImage();
 		}
 
-		VkDescriptorImageInfo GetVulkanImageInfo() { return m_Image->GetVulkanImageInfo(); }
+		const VkDescriptorImageInfo& GetVulkanImageInfo() const { return m_Image->GetVulkanImageInfo(); }
 	private:
 		TextureSpecification m_Specification;
 
