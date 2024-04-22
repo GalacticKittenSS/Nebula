@@ -159,6 +159,7 @@ namespace Nebula
 		s_Data.TextVBPtr = s_Data.TextVBBase;
 
 		s_Data.TextureSlotIndex = 1;
+		s_Data.FontAtlasTexture = nullptr;
 	}
 	
 	void SceneRenderer::Setup()
@@ -520,11 +521,11 @@ namespace Nebula
 
 	void SceneRenderer::RenderString(const glm::mat4& transform, Ref<Font> font, const StringRendererComponent& string, int entityID)
 	{
-		if (s_Data.FontAtlasTexture != font->GetAtlasTexture())
-		{
+		if (s_Data.FontAtlasTexture &&
+			s_Data.FontAtlasTexture != font->GetAtlasTexture())
 			FlushAndReset();
-			s_Data.FontAtlasTexture = font->GetAtlasTexture();
-		}
+		
+		s_Data.FontAtlasTexture = font->GetAtlasTexture();
 
 		if (s_Data.TextIndexCount >= m_Settings.MaxIndices)
 			FlushAndReset();
@@ -946,10 +947,10 @@ namespace Nebula
 		if (m_Settings.ShowSky)
 			SkyPrePass(camera.GetPosition());
 		
-		SkyPass();
 		s_Data.TextureSlotIndex = 2;
-
 		GeometryPrePass();
+		
+		SkyPass();
 		GeometryPass();
 		
 		if (m_SelectedEntity)
@@ -993,10 +994,10 @@ namespace Nebula
 		if (m_Settings.ShowSky)
 			SkyPrePass(transform[3]);
 		
-		SkyPass();
 		s_Data.TextureSlotIndex = 2;
-		
 		GeometryPrePass();
+		
+		SkyPass();
 		GeometryPass();
 
 		if (m_Settings.ShowColliders)
