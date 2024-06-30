@@ -222,7 +222,8 @@ namespace Nebula {
 		unsigned int index = x + y * m_Specifications.Width;
 		Buffer buffer = image->ReadToBuffer();
 
-		return buffer.Data[index];
+		uint32_t* data = (uint32_t*)buffer.Data;
+		return data[index];
 	}
 
 	void Vulkan_FrameBuffer::ClearAttachment(uint32_t attachmentIndex, VkClearColorValue clearValue)

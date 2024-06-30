@@ -46,6 +46,7 @@ namespace Nebula
 			switch (format)
 			{
 			case VK_FORMAT_R8_SINT: return 1;
+			case VK_FORMAT_R32_SINT: return 4;
 			case VK_FORMAT_R8G8B8_UNORM: return 3;
 			case VK_FORMAT_B8G8R8_UNORM: return 3;
 			case VK_FORMAT_R8G8B8A8_UNORM: return 4;
@@ -103,6 +104,7 @@ namespace Nebula
 			switch (format)
 			{
 			case ImageFormat::R8:				RETURN_FORMAT_SUPPORTED(VK_FORMAT_R8_SINT);
+			case ImageFormat::R32:				RETURN_FORMAT_SUPPORTED(VK_FORMAT_R32_SINT);
 			case ImageFormat::RGB8:				RETURN_FORMAT_SUPPORTED(VK_FORMAT_R8G8B8_UNORM);
 			case ImageFormat::RGBA8:			RETURN_FORMAT_SUPPORTED(VK_FORMAT_R8G8B8A8_UNORM);
 			case ImageFormat::BGR8:				RETURN_FORMAT_SUPPORTED(VK_FORMAT_B8G8R8_UNORM);

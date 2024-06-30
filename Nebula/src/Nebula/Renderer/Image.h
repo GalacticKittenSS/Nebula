@@ -8,6 +8,7 @@ namespace Nebula
 	{
 		None = 0,
 		R8,
+		R32,
 		RGB8,
 		RGBA8,
 		RGBA32F,
@@ -19,7 +20,7 @@ namespace Nebula
 
 		//Defaults
 		Depth = DEPTH24STENCIL8,
-		RED_INT = R8
+		RED_INT = R32
 	};
 
 	enum ImageUsage
