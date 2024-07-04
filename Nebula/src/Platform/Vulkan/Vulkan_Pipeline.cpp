@@ -31,6 +31,15 @@ namespace Nebula
 			NB_ASSERT(false, "Unknown Shape Given");
 			return VK_POLYGON_MODE_FILL;
 		}
+
+		VkFormat NebulaToVKImageFormat(ImageFormat format);
+
+		static bool ImageFormatSupportsBlending(ImageFormat format)
+		{
+			VkFormatProperties properties;
+			vkGetPhysicalDeviceFormatProperties(VulkanAPI::GetPhysicalDevice(), NebulaToVKImageFormat(format), &properties);
+			return properties.linearTilingFeatures & VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BLEND_BIT;
+		}
 	}
 
 	Vulkan_Pipeline::Vulkan_Pipeline(const PipelineSpecification& specification)
@@ -97,10 +106,25 @@ namespace Nebula
 		size_t outputCount = m_Specification.Shader->GetFragmentOutputCount();
 		std::vector<VkPipelineColorBlendAttachmentState> colorBlendAttachments(outputCount);
 
+		std::vector<AttachmentTextureSpecification> attachments = m_Specification.RenderPass->GetRenderPassSpecifications().Attachments;
+
 		for (uint32_t i = 0; i < outputCount; i++)
 		{
 			colorBlendAttachments[i].colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-			colorBlendAttachments[i].blendEnable = VK_FALSE;
+
+			if (!Utils::ImageFormatSupportsBlending(attachments[i].TextureFormat))
+			{
+				colorBlendAttachments[i].blendEnable = VK_FALSE;
+				continue;
+			}
+			
+			colorBlendAttachments[i].blendEnable = VK_TRUE;
+			colorBlendAttachments[i].srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+			colorBlendAttachments[i].dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+			colorBlendAttachments[i].colorBlendOp = VK_BLEND_OP_ADD;
+			colorBlendAttachments[i].srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+			colorBlendAttachments[i].dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+			colorBlendAttachments[i].alphaBlendOp = VK_BLEND_OP_ADD;
 		}
 
 		VkPipelineColorBlendStateCreateInfo colorBlending{};
