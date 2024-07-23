@@ -65,7 +65,7 @@ namespace Nebula
 		void RenderSelectionUI(Entity selectedEntity, glm::vec3 cameraForward);
 
 		void SkyPrePass(glm::vec3 position);
-		void GeometryPrePass();
+		void GeometryPrePass(glm::vec3 cameraPos);
 		void ColliderPrePass(glm::vec3 forward);
 		
 		void SkyPass();

@@ -814,8 +814,55 @@ namespace Nebula
 		m_Data.SkyPass->Unbind();
 	}
 
-	void SceneRenderer::GeometryPrePass()
+	template <typename component_t>
+	struct RenderComponent
 	{
+		glm::mat4* Transform = nullptr;
+		Ref<Material> Material;
+		component_t* Component = nullptr;
+		int EntityID = -1;
+
+		RenderComponent() = default;
+	};
+
+	// The Quicksort function Implement
+	void Sort(Array<std::pair<float, RenderComponent<SpriteRendererComponent>>>& arr, int low, int high)
+	{
+		if (low >= high)
+			return;
+
+		float pivot = arr[high].first;
+
+		//Index of smaller element and Indicate
+		//the right position of pivot found so far
+		int i = (low - 1);
+
+		for (int j = low; j <= high - 1; j++)
+		{
+			if (arr[j].first > pivot)
+			{
+				//Increment index of smaller element
+				i++;
+				arr.swap(i, j);
+			}
+		}
+
+		arr.swap(i + 1, high);
+
+		// index of pivot after partition
+		int splitIndex = i + 1;
+
+		//smaller element than pivot goes left and
+		Sort(arr, low, splitIndex - 1);
+		
+		//higher element goes right
+		Sort(arr, splitIndex + 1, high);
+	}
+
+	void SceneRenderer::GeometryPrePass(glm::vec3 cameraPos)
+	{
+		Array<std::pair<float, RenderComponent<SpriteRendererComponent>>> SpriteGroup;
+
 		auto spriteGroup = m_Context->m_Registry.group<WorldTransformComponent, MaterialComponent, PropertiesComponent>(entt::get<SpriteRendererComponent>);
 		for (auto id : spriteGroup)
 		{
@@ -824,10 +871,27 @@ namespace Nebula
 			if (prop.Enabled)
 			{
 				Ref<Material> mat = AssetManager::GetAsset<Material>(material.Material);
-				RenderSprite(transform.Transform, mat, sprite, (int)id);
+				
+				float distance = cameraPos.z - transform.Transform[3].z;
+				
+				RenderComponent<SpriteRendererComponent> group;
+				group.Transform = &transform.Transform;
+				group.Material = mat;
+				group.Component = &sprite;
+				group.EntityID = (int)id;
+				
+				size_t current_index = SpriteGroup.size();
+				SpriteGroup.push_back({ distance, group });
+
+				//RenderSprite(transform.Transform, mat, sprite, (int)id);
 			}
 		}
 
+		Sort(SpriteGroup, 0, SpriteGroup.size() - 1);
+
+		for (const auto& [distance, group] : SpriteGroup)
+			RenderSprite(*group.Transform, group.Material, *group.Component, group.EntityID);
+		
 		auto circleGroup = m_Context->m_Registry.view<WorldTransformComponent, MaterialComponent, PropertiesComponent, CircleRendererComponent>();
 		for (auto id : circleGroup)
 		{
@@ -1051,7 +1115,7 @@ namespace Nebula
 		SkyPass();
 
 		s_Data.TextureSlotIndex = 2;
-		GeometryPrePass();
+		GeometryPrePass(camera.GetPosition());
 		GeometryPass();
 		
 		if (m_SelectedEntity)
@@ -1185,7 +1249,7 @@ namespace Nebula
 		SkyPass();
 		
 		s_Data.TextureSlotIndex = 2;
-		GeometryPrePass();
+		GeometryPrePass(transform[3]);
 		GeometryPass();
 
 		if (m_Settings.ShowColliders)
