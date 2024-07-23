@@ -1008,6 +1008,48 @@ namespace Nebula {
 	}
 #pragma endregion
 
+#pragma region GridRendererComponent
+	static void GridRendererComponent_SetRows(UUID entityID, uint32_t rows)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+		Entity entity = { entityID, scene };
+		NB_ASSERT(entity);
+
+		entity.GetComponent<GridRendererComponent>().Rows = rows;
+	}
+
+	static uint32_t GridRendererComponent_GetRows(UUID entityID)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+		Entity entity = { entityID, scene };
+		NB_ASSERT(entity);
+
+		return entity.GetComponent<GridRendererComponent>().Rows;
+	}
+
+	static void GridRendererComponent_SetColumns(UUID entityID, uint32_t columns)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+		Entity entity = { entityID, scene };
+		NB_ASSERT(entity);
+
+		entity.GetComponent<GridRendererComponent>().Columns = columns;
+	}
+
+	static uint32_t GridRendererComponent_GetColumns(UUID entityID)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+		Entity entity = { entityID, scene };
+		NB_ASSERT(entity);
+
+		return entity.GetComponent<GridRendererComponent>().Columns;
+	}
+#pragma endregion
+
 #pragma region Rigidbody2DComponent
 	static int Rigidbody2DComponent_GetBodyType(UUID entityID) {
 		Scene* scene = ScriptEngine::GetSceneContext();
@@ -1536,6 +1578,11 @@ namespace Nebula {
 		NB_ADD_INTERNAL_CALL(StringRendererComponent_SetText);
 		NB_ADD_INTERNAL_CALL(StringRendererComponent_SetKerning);
 		NB_ADD_INTERNAL_CALL(StringRendererComponent_SetLineSpacing);
+
+		NB_ADD_INTERNAL_CALL(GridRendererComponent_GetRows);
+		NB_ADD_INTERNAL_CALL(GridRendererComponent_GetColumns);
+		NB_ADD_INTERNAL_CALL(GridRendererComponent_SetRows);
+		NB_ADD_INTERNAL_CALL(GridRendererComponent_SetColumns);
 		
 		NB_ADD_INTERNAL_CALL(Rigidbody2DComponent_GetBodyType);
 		NB_ADD_INTERNAL_CALL(Rigidbody2DComponent_GetFixedRotation);

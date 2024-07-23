@@ -686,6 +686,45 @@ namespace Nebula
 		}
 	}
 
+	void DrawLine(const glm::vec3& p0, const glm::vec3& p1, const glm::vec4& colour, int entityID)
+	{
+		s_Data.LineVBPtr->Position = p0;
+		s_Data.LineVBPtr->Colour = colour;
+		s_Data.LineVBPtr->EntityID = entityID;
+		s_Data.LineVBPtr++;
+
+		s_Data.LineVBPtr->Position = p1;
+		s_Data.LineVBPtr->Colour = colour;
+		s_Data.LineVBPtr->EntityID = entityID;
+		s_Data.LineVBPtr++;
+
+		s_Data.LineVertexCount += 2;
+	}
+
+	void SceneRenderer::RenderGrid(const glm::mat4& transform, Ref<Material> mat, const GridRendererComponent& grid, int entityID)
+	{
+		if (s_Data.QuadIndexCount >= m_Settings.MaxIndices)
+			FlushAndReset();
+
+		Material material = Material::Get(mat);
+
+		for (size_t i = 0; i < grid.Rows + 1; i++)
+		{
+			float y = (i / (float)grid.Rows) - 0.5f;
+			glm::vec3 p0 = transform * glm::vec4(-0.5f, y, 0.0f, 1.0f);
+			glm::vec3 p1 = transform * glm::vec4( 0.5f, y, 0.0f, 1.0f);
+			DrawLine(p0, p1, material.Colour, entityID);
+		}
+
+		for (size_t i = 0; i < grid.Columns + 1; i++)
+		{
+			float x = (i / (float)grid.Columns) - 0.5f;
+			glm::vec3 p0 = transform * glm::vec4(x, -0.5f, 0.0f, 1.0f);
+			glm::vec3 p1 = transform * glm::vec4(x,	 0.5f, 0.0f, 1.0f);
+			DrawLine(p0, p1, material.Colour, entityID);
+		}
+	}
+
 	void SceneRenderer::RenderCircleCollider(glm::mat4& transform, const CircleColliderComponent& circleCollider, const glm::vec3& projectionCollider, int entityID)
 	{
 		glm::vec3 wTranslation, wRotation, wScale;
@@ -710,21 +749,6 @@ namespace Nebula
 		}
 
 		s_Data.CircleIndexCount += 6;
-	}
-
-	void DrawLine(const glm::vec3& p0, const glm::vec3& p1, const glm::vec4& colour, int entityID)
-	{
-		s_Data.LineVBPtr->Position = p0;
-		s_Data.LineVBPtr->Colour = colour;
-		s_Data.LineVBPtr->EntityID = entityID;
-		s_Data.LineVBPtr++;
-
-		s_Data.LineVBPtr->Position = p1;
-		s_Data.LineVBPtr->Colour = colour;
-		s_Data.LineVBPtr->EntityID = entityID;
-		s_Data.LineVBPtr++;
-
-		s_Data.LineVertexCount += 2;
 	}
 
 	void SceneRenderer::RenderRect(const glm::mat4& transform, const glm::vec4& colour, int id)
@@ -827,6 +851,19 @@ namespace Nebula
 				RenderString(transform.Transform, font, string, (int)id);
 			}
 		}
+
+		auto gridGroup = m_Context->m_Registry.view<WorldTransformComponent, MaterialComponent, PropertiesComponent, GridRendererComponent>();
+		for (auto id : gridGroup)
+		{
+			auto [transform, material, prop, grid] = gridGroup.get<WorldTransformComponent, MaterialComponent, PropertiesComponent, GridRendererComponent>(id);
+
+			if (prop.Enabled)
+			{
+				Ref<Material> mat = AssetManager::GetAsset<Material>(material.Material);
+				RenderGrid(transform.Transform, mat, grid, (int)id);
+			}
+		}
+
 	}
 
 	void SceneRenderer::GeometryPass()
@@ -1071,6 +1108,34 @@ namespace Nebula
 
 			if (prop.Enabled)
 				Renderer2D::Draw(string, transform.Transform, (int)id);
+		}
+
+		auto gridGroup = m_Context->m_Registry.view<WorldTransformComponent, MaterialComponent, PropertiesComponent, GridRendererComponent>();
+		for (auto id : gridGroup)
+		{
+			auto [transform, material, prop, grid] = gridGroup.get<WorldTransformComponent, MaterialComponent, PropertiesComponent, GridRendererComponent>(id);
+
+			if (prop.Enabled)
+			{
+				Ref<Material> mat = AssetManager::GetAsset<Material>(material.Material);
+				Material material = Material::Get(mat);
+
+				for (size_t i = 0; i < grid.Rows + 1; i++)
+				{
+					float y = (i / (float)grid.Rows) - 0.5f;
+					glm::vec3 p0 = transform.Transform * glm::vec4(-0.5f, y, 0.0f, 1.0f);
+					glm::vec3 p1 = transform.Transform * glm::vec4(0.5f, y, 0.0f, 1.0f);
+					Renderer2D::DrawLine(p0, p1, material.Colour, (int)id);
+				}
+
+				for (size_t i = 0; i < grid.Columns + 1; i++)
+				{
+					float x = (i / (float)grid.Columns) - 0.5f;
+					glm::vec3 p0 = transform.Transform * glm::vec4(x, -0.5f, 0.0f, 1.0f);
+					glm::vec3 p1 = transform.Transform * glm::vec4(x, 0.5f, 0.0f, 1.0f);
+					Renderer2D::DrawLine(p0, p1, material.Colour, (int)id);
+				}
+			}
 		}
 
 		Renderer2D::EndScene();

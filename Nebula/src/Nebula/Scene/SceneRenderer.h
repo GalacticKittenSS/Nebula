@@ -56,6 +56,7 @@ namespace Nebula
 		void RenderSprite(const glm::mat4& transform, Ref<Material> mat, const SpriteRendererComponent& sprite, int entityID);
 		void RenderCircle(const glm::mat4& transform, Ref<Material> mat, const CircleRendererComponent& circle, int entityID);
 		void RenderString(const glm::mat4& transform, Ref<Font> font, const StringRendererComponent& string, int entityID);
+		void RenderGrid(const glm::mat4& transform, Ref<Material> mat, const GridRendererComponent& grid, int entityID);
 
 		void RenderRect(const glm::mat4& transform, const glm::vec4& colour, int id);
 		void RenderCircleCollider(glm::mat4& transform, const CircleColliderComponent& circleCollider, const glm::vec3& projectionCollider, int entityID);

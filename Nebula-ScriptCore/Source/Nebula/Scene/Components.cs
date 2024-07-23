@@ -228,6 +228,21 @@
         }
     }
 
+    public class GridRendererComponent : Component
+    {
+        public int Rows
+        {
+            get => InternalCalls.GridRendererComponent_GetRows(Entity.ID);
+            set => InternalCalls.GridRendererComponent_SetRows(Entity.ID, value);
+        }
+
+        public int Columns
+        {
+            get => InternalCalls.GridRendererComponent_GetColumns(Entity.ID);
+            set => InternalCalls.GridRendererComponent_SetColumns(Entity.ID, value);
+        }
+    }
+
     public class Rigidbody2DComponent : Component
     {
         public enum BodyType { Static = 0, Dynamic, Kinematic };

@@ -165,6 +165,12 @@ namespace Nebula {
 		}
 	};
 
+	struct GridRendererComponent
+	{
+		uint32_t Rows = 1;
+		uint32_t Columns = 1;
+	};
+
 	//Physics
 	struct Rigidbody2DComponent {
 		enum class BodyType { Static = 0, Dynamic, Kinematic };
@@ -233,7 +239,7 @@ namespace Nebula {
 	using AllComponents = ComponentGroup <
 		PropertiesComponent, TransformComponent, WorldTransformComponent,
 		CameraComponent, ScriptComponent, NativeScriptComponent,
-		MaterialComponent, SpriteRendererComponent, CircleRendererComponent, StringRendererComponent,
+		MaterialComponent, SpriteRendererComponent, CircleRendererComponent, StringRendererComponent, GridRendererComponent,
 		Rigidbody2DComponent, BoxCollider2DComponent, CircleColliderComponent
 	>;
 }

@@ -290,6 +290,19 @@ namespace Nebula
         internal extern static void StringRendererComponent_SetLineSpacing(ulong entityID, float lineSpacing);
         #endregion
 
+        #region GridRendererComponent
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void GridRendererComponent_SetRows(ulong entityID, int rows);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static int GridRendererComponent_GetRows(ulong entityID);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void GridRendererComponent_SetColumns(ulong entityID, int columns);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static int GridRendererComponent_GetColumns(ulong entityID);
+        #endregion
         #region Rigidbody2DComponent
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static int Rigidbody2DComponent_GetBodyType(ulong entityID);

@@ -219,6 +219,17 @@ namespace Nebula
 			out << YAML::EndMap; // StringRendererComponent
 		}
 
+		if (entity.HasComponent<GridRendererComponent>()) {
+			out << YAML::Key << "GridRendererComponent";
+			out << YAML::BeginMap; // GridRendererComponent
+
+			auto& component = entity.GetComponent<GridRendererComponent>();
+			out << YAML::Key << "Columns" << YAML::Value << component.Columns;
+			out << YAML::Key << "Rows" << YAML::Value << component.Rows;
+
+			out << YAML::EndMap; // GridRendererComponent
+		}
+
 		if (entity.HasComponent<Rigidbody2DComponent>()) {
 			out << YAML::Key << "Rigidbody2DComponent";
 			out << YAML::BeginMap; // Rigidbody2DComponent
@@ -507,6 +518,13 @@ namespace Nebula
 				DeserializeValue(src.Kerning, stringRendererComponent["Kerning"]);
 				DeserializeValue(src.LineSpacing, stringRendererComponent["LineSpacing"]);
 				src.FontHandle = DeserializeValue<uint64_t>(stringRendererComponent["Font"]);
+			}
+
+			if (auto gridRendererComponent = entity["GridRendererComponent"])
+			{
+				auto& grc = deserializedEntity.AddComponent<GridRendererComponent>();
+				DeserializeValue(grc.Columns, gridRendererComponent["Columns"]);
+				DeserializeValue(grc.Rows, gridRendererComponent["Rows"]);
 			}
 
 			if (auto rigidbody2DComponent = entity["Rigidbody2DComponent"])

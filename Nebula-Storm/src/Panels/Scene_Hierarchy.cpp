@@ -798,6 +798,7 @@ namespace Nebula {
 			DisplayAddComponentEntry<SpriteRendererComponent>("Sprite Renderer");
 			DisplayAddComponentEntry<CircleRendererComponent>("Circle Renderer");
 			DisplayAddComponentEntry<StringRendererComponent>("String Renderer");
+			DisplayAddComponentEntry<GridRendererComponent>("Grid Renderer");
 			
 			DisplayAddComponentEntry<Rigidbody2DComponent>("Rigidbody 2D");
 			DisplayAddComponentEntry<BoxCollider2DComponent>("Box Collider 2D");
@@ -1165,6 +1166,22 @@ namespace Nebula {
 			DrawVec1Control("Line Spacing", component.LineSpacing);
 
 			DrawColourEdit("Colour", component.Colour);
+		}, true);
+
+		DrawComponent<GridRendererComponent>("Grid Renderer", entity, [](auto& component) {
+			// Rows
+			ImGui::PushID("Rows");
+			float size = DrawLabel("Rows");
+			ImGui::SetNextItemWidth(size);
+			ImGui::DragInt("##V", (int*)&component.Rows);
+			ImGui::PopID();
+			
+			// Columns
+			ImGui::PushID("Columns");
+			size = DrawLabel("Columns");
+			ImGui::SetNextItemWidth(size);
+			ImGui::DragInt("##V", (int*)&component.Columns);
+			ImGui::PopID();
 		}, true);
 
 		DrawComponent<Rigidbody2DComponent>("Rigidbody 2D", entity, [scene = m_Context](auto& component) {
