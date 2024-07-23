@@ -8,6 +8,7 @@
 #include "UniformBuffer.h"
 #include "RenderPass.h"
 #include "Pipeline.h"
+#include "CommandBuffer.h"
 
 #include "Nebula/AssetManager/AssetManager.h"
 #include "Nebula/Scene/Components.h"
@@ -20,8 +21,8 @@ namespace Nebula {
 		glm::vec3 Position;
 		glm::vec4 Colour;
 		glm::vec2 TexCoord;
-		float TexIndex;
 		float TilingFactor;
+		float TexIndex;
 
 		//Editor Only
 		int EntityID;
@@ -65,8 +66,11 @@ namespace Nebula {
 		static const uint32_t MaxVertices  = MaxSprites * 4;
 		static const uint32_t MaxIndices   = MaxSprites * 6;
 		
-		Ref<RenderPass>    RenderPass;
-		Ref<Texture2D>	 WhiteTexture;
+		// Vulkan Only
+		Ref<RenderPass>		  RenderPass;
+		Ref<CommandBuffer> CommandBuffer;
+		Ref<Texture2D>		WhiteTexture;
+		std::map<std::string, Ref<DescriptorSet>> DescriptorSets;
 		
 		Ref<Shader>		TextureShader;
 		Ref<Shader>		 CircleShader;
@@ -197,6 +201,8 @@ namespace Nebula {
 	void Renderer2D::Init() {
 		NB_PROFILE_FUNCTION();
 
+		s_Data.CommandBuffer = CommandBuffer::Create();
+
 		//Render Pass
 		{
 			RenderPassSpecification spec;
@@ -266,8 +272,11 @@ namespace Nebula {
 			s_Data.CircleVBBase = new CircleVertex[s_Data.MaxVertices];
 
 			s_Data.CircleShader = Shader::Create("Resources/shaders/Circle.glsl");
-			//s_Data.CircleShader->SetUniformBuffer("u_ViewProjection", s_Data.CameraUniformBuffer);
 
+			Ref<DescriptorSet>& descriptorSet = s_Data.CircleShader->AllocateDescriptorSets();
+			descriptorSet->SetResource("u_ViewProjection", s_Data.CameraUniformBuffer);
+			s_Data.DescriptorSets["Circle"] = descriptorSet;
+			
 			pipelineSpec.Shader = s_Data.CircleShader;
 			s_Data.CirclePipeline = Pipeline::Create(pipelineSpec);
 		}
@@ -287,8 +296,11 @@ namespace Nebula {
 			s_Data.LineVertexPos[1] = { 0.5f, 0.0f, 0.0f, 1.0f };
 			
 			s_Data.LineShader = Shader::Create("Resources/shaders/Line.glsl");
-			//s_Data.LineShader->SetUniformBuffer("u_ViewProjection", s_Data.CameraUniformBuffer);
 
+			Ref<DescriptorSet>& descriptorSet = s_Data.LineShader->AllocateDescriptorSets();
+			descriptorSet->SetResource("u_ViewProjection", s_Data.CameraUniformBuffer);
+			s_Data.DescriptorSets["Line"] = descriptorSet;
+			
 			pipelineSpec.Shader = s_Data.LineShader;
 			pipelineSpec.Shape = PipelineShape::Lines;
 			s_Data.LinePipeline = Pipeline::Create(pipelineSpec);
@@ -307,7 +319,10 @@ namespace Nebula {
 			s_Data.TextVBBase = new TextVertex[s_Data.MaxVertices];
 		
 			s_Data.TextShader = Shader::Create("Resources/shaders/Text.glsl");
-			//s_Data.TextShader->SetUniformBuffer("u_ViewProjection", s_Data.CameraUniformBuffer);
+
+			Ref<DescriptorSet>& descriptorSet = s_Data.TextShader->AllocateDescriptorSets();
+			descriptorSet->SetResource("u_ViewProjection", s_Data.CameraUniformBuffer);
+			s_Data.DescriptorSets["Text"] = descriptorSet;
 
 			pipelineSpec.Shader = s_Data.TextShader;
 			pipelineSpec.Shape = PipelineShape::Triangles;
@@ -323,9 +338,10 @@ namespace Nebula {
 		s_Data.WhiteTexture->SetData(Buffer(&whiteTextureData, sizeof(uint32_t)));
 		
 		// Texture Shader
-		s_Data.TextureShader = Shader::Create("Resources/shaders/Default.glsl");
-		//s_Data.TextureShader->SetUniformBuffer("u_ViewProjection", s_Data.CameraUniformBuffer);
-		
+		std::string path = RendererAPI::GetAPI() == RendererAPI::API::OpenGL ?
+			"Resources/shaders/Default_OpenGL.glsl" : "Resources/shaders/Default.glsl";
+		s_Data.TextureShader = Shader::Create(path);
+
 		pipelineSpec.Shader = s_Data.TextureShader;
 		s_Data.TexturePipeline = Pipeline::Create(pipelineSpec);
 
@@ -339,8 +355,13 @@ namespace Nebula {
 			s_Data.TextureShader->SetIntArray("u_Textures", samplers, s_Data.MaxTextureSlots);
 		}
 		
-		// Vulkan (Fill Texture Array with Default Texture)
-		//s_Data.TextureShader->SetTextureArray("u_Textures", s_Data.WhiteTexture);
+		// Vulkan
+		{
+			Ref<DescriptorSet>& descriptorSet = s_Data.TextureShader->AllocateDescriptorSets();
+			descriptorSet->SetResource("u_ViewProjection", s_Data.CameraUniformBuffer);
+			descriptorSet->SetResource("u_Textures", s_Data.WhiteTexture, -1);
+			s_Data.DescriptorSets["Texture"] = descriptorSet;
+		}
 	}
 
 	void Renderer2D::Shutdown() {
@@ -638,6 +659,7 @@ namespace Nebula {
 
 		textureIndex = (float)s_Data.TextureSlotIndex;
 		s_Data.TextureSlots[s_Data.TextureSlotIndex] = texture;
+		s_Data.DescriptorSets["Texture"]->SetResource("u_Textures", s_Data.TextureSlots[textureIndex], textureIndex);
 		s_Data.TextureSlotIndex++;
 		return textureIndex;
 	}
@@ -645,23 +667,17 @@ namespace Nebula {
 	void Renderer2D::EndScene() {
 		NB_PROFILE_FUNCTION();
 		
-		NB_ERROR("Renderer2D is not working and has been temporarily disabled");
-		return;
-
-		//RenderCommand::BeginRecording();
+		s_Data.CommandBuffer->BeginRecording();
 		s_Data.RenderPass->Bind();
 
 		if (s_Data.QuadIndexCount || s_Data.TriIndexCount) {
-			//s_Data.TextureShader->ResetDescriptorSet(1);
-			//s_Data.TextureShader->SetTextureArray("u_Textures", s_Data.WhiteTexture);
-
-			s_Data.TexturePipeline->Bind();
 			s_Data.TextureShader->Bind();
+			s_Data.TexturePipeline->Bind();
 		
 			for (uint32_t i = 0; i < s_Data.TextureSlotIndex; i++)
 				s_Data.TextureSlots[i]->Bind(i);
 
-			s_Data.TexturePipeline->BindDescriptorSet();
+			s_Data.TexturePipeline->BindDescriptorSet(s_Data.DescriptorSets["Texture"]);
 		}
 
 		if (s_Data.TriIndexCount) {
@@ -682,7 +698,7 @@ namespace Nebula {
 			
 			s_Data.CircleShader->Bind();
 			s_Data.CirclePipeline->Bind();
-			s_Data.CirclePipeline->BindDescriptorSet();
+			s_Data.CirclePipeline->BindDescriptorSet(s_Data.DescriptorSets["Circle"]);
 			
 			RenderCommand::DrawIndexed(s_Data.CircleVertexArray, s_Data.CircleIndexCount);
 		}
@@ -693,7 +709,7 @@ namespace Nebula {
 
 			s_Data.LineShader->Bind();
 			s_Data.LinePipeline->Bind();
-			s_Data.LinePipeline->BindDescriptorSet();
+			s_Data.LinePipeline->BindDescriptorSet(s_Data.DescriptorSets["Line"]);
 
 			RenderCommand::DrawLines(s_Data.LineVertexArray, s_Data.LineVertexCount);
 		}
@@ -704,14 +720,16 @@ namespace Nebula {
 
 			s_Data.TextShader->Bind();
 			s_Data.TextPipeline->Bind();
+
 			s_Data.FontAtlasTexture->Bind();
-			s_Data.TextPipeline->BindDescriptorSet();
+			s_Data.DescriptorSets["Text"]->SetResource("u_FontAtlas", s_Data.FontAtlasTexture);
+			s_Data.TextPipeline->BindDescriptorSet(s_Data.DescriptorSets["Text"]);
 
 			RenderCommand::DrawIndexed(s_Data.TextVertexArray, s_Data.TextIndexCount);
 		}
 
 		s_Data.RenderPass->Unbind();
-		//RenderCommand::EndRecording();
+		s_Data.CommandBuffer->EndRecording();
 	}
 
 	void Renderer2D::FlushAndReset() {

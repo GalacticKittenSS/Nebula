@@ -22,7 +22,7 @@ namespace Nebula
 			bool ShowSky = true;
 
 			// Changing these values after setup will make no difference
-			bool PresentToScreen = false; // Note: This is not fully supported with vulkan
+			bool PresentToScreen = false;
 			uint32_t InitialWidth = 1600, InitialHeight = 900;
 			float LineWidth = 1.0f;
 			glm::vec4 ClearColour = { 0.1f, 0.1f, 0.1f, 1.0f };

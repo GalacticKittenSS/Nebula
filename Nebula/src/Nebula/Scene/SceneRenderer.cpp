@@ -7,6 +7,7 @@
 #include "Nebula/Renderer/MSDFData.h"
 #include "Nebula/Renderer/Render_Command.h"
 #include "Nebula/Renderer/Graphics_Context.h"
+#include "Nebula/Renderer/Renderer2D.h"
 
 namespace Nebula
 {
@@ -971,7 +972,7 @@ namespace Nebula
 			RenderRect(transform, { 1.0f, 0.5f, 0.0f, 1.0f }, (int)selectedEntity);
 		}
 
-		Scene::SceneNode node = m_Context->GetEntityNode(selectedEntity.GetUUID());
+		Scene::SceneNode& node = m_Context->GetEntityNode(selectedEntity.GetUUID());
 		for (auto& id : node.Children)
 		{
 			Entity child = { id, selectedEntity };
@@ -996,6 +997,7 @@ namespace Nebula
 
 		if (!m_Settings.PresentToScreen || !s_UsingOpengl)
 			m_Data.Framebuffers[m_Data.FramebufferImageIndex]->Bind();
+#if 0
 		m_Data.CurrentFrame->CommandBuffer->BeginRecording();
 		m_Data.Framebuffers[m_Data.FramebufferImageIndex]->ClearDepthAttachment(0);
 
@@ -1031,6 +1033,55 @@ namespace Nebula
 		}
 
 		m_Data.CurrentFrame->CommandBuffer->EndRecording();
+#else
+		RenderCommand::SetClearColour(m_Settings.ClearColour);
+		RenderCommand::Clear();
+		m_Data.Framebuffers[m_Data.FramebufferImageIndex]->ClearAttachment(1, -1);
+
+		Renderer2D::BeginScene(camera);
+
+		auto spriteGroup = m_Context->m_Registry.group<WorldTransformComponent, MaterialComponent, PropertiesComponent>(entt::get<SpriteRendererComponent>);
+		for (auto id : spriteGroup)
+		{
+			auto [transform, material, prop, sprite] = spriteGroup.get<WorldTransformComponent, MaterialComponent, PropertiesComponent, SpriteRendererComponent>(id);
+
+			if (prop.Enabled)
+			{
+				Ref<Material> mat = AssetManager::GetAsset<Material>(material.Material);
+				Renderer2D::Draw(sprite, transform.Transform, Material::Get(mat), (int)id);
+			}
+		}
+
+		auto circleGroup = m_Context->m_Registry.view<WorldTransformComponent, MaterialComponent, PropertiesComponent, CircleRendererComponent>();
+		for (auto id : circleGroup)
+		{
+			auto [transform, material, prop, circle] = circleGroup.get<WorldTransformComponent, MaterialComponent, PropertiesComponent, CircleRendererComponent>(id);
+
+			if (prop.Enabled)
+			{
+				Ref<Material> mat = AssetManager::GetAsset<Material>(material.Material);
+				Renderer2D::Draw(circle, transform.Transform, Material::Get(mat), (int)id);
+			}
+		}
+
+		auto stringGroup = m_Context->m_Registry.view<WorldTransformComponent, PropertiesComponent, StringRendererComponent>();
+		for (auto id : stringGroup)
+		{
+			auto [transform, prop, string] = stringGroup.get<WorldTransformComponent, PropertiesComponent, StringRendererComponent>(id);
+
+			if (prop.Enabled)
+				Renderer2D::Draw(string, transform.Transform, (int)id);
+		}
+
+		Renderer2D::EndScene();
+
+		if (!s_UsingOpengl)
+		{
+			Ref<Image2D> image = m_Data.Framebuffers[m_Data.FramebufferImageIndex]->GetColourAttachmentImage(0);
+			ImageLayout layout = m_Settings.PresentToScreen ? ImageLayout::PresentSrcKHR : ImageLayout::ShaderReadOnly;
+			image->TransitionImageLayout(ImageLayout::ColourAttachment, layout);
+		}
+#endif
 		if (!m_Settings.PresentToScreen || !s_UsingOpengl)
 			m_Data.Framebuffers[m_Data.FramebufferImageIndex]->Unbind();
 	}
