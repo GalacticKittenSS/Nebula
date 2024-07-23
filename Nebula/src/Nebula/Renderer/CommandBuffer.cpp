@@ -11,6 +11,7 @@ namespace Nebula
 		switch (RendererAPI::GetAPI())
 		{
 		case RendererAPI::API::Vulkan: return CreateRef<Vulkan_CommandBuffer>();
+		case RendererAPI::API::OpenGL: return CreateRef<CommandBuffer>();
 		}
 
 		return nullptr;

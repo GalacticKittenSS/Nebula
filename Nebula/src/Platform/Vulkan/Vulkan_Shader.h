@@ -78,6 +78,17 @@ namespace Nebula {
 		void SetResource(const std::string& uniformName, Ref<UniformBuffer> uniformBuffer) override;
 		void SetResource(const std::string& uniformName, Ref<Texture2D> texture, uint32_t slot) override;
 
+		void UploadUniformInt(const std::string& name, const int value) override {};
+		void UploadUniformIntArray(const std::string& name, int* values, uint32_t count) override {};
+
+		void UploadUniformMat3(const std::string& name, const glm::mat3& matrix) override {};
+		void UploadUniformMat4(const std::string& name, const glm::mat4& matrix) override {};
+
+		void UploadUniformFloat(const std::string& name, const float values) override {};
+		void UploadUniformFloat2(const std::string& name, const glm::vec2& values) override {};
+		void UploadUniformFloat3(const std::string& name, const glm::vec3& values) override {};
+		void UploadUniformFloat4(const std::string& name, const glm::vec4& values) override {};
+
 		const std::vector<VkDescriptorSet>& GetDescriptorSets() const { return m_DescriptorSets; }
 	private:
 		std::vector<VkDescriptorSet> m_DescriptorSets;

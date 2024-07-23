@@ -15,7 +15,7 @@ namespace Nebula
 		void BeginRecording() override;
 		void EndRecording() override;
 
-		bool IsRecording() override { return m_Recording; }
+		bool IsRecording() const override { return m_Recording; }
 		uint64_t GetCommandBuffer() const override { return (uint64_t)m_CommandBuffer; }
 
 		static bool IsBound() { return s_Instance; }

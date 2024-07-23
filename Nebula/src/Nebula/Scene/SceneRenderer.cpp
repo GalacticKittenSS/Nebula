@@ -8,9 +8,6 @@
 #include "Nebula/Renderer/Render_Command.h"
 #include "Nebula/Renderer/Graphics_Context.h"
 
-#include "Platform/Vulkan/VulkanAPI.h"
-#include "Platform/Vulkan/Vulkan_UniformBuffer.h"
-
 namespace Nebula
 {
 	struct Defaults
@@ -25,6 +22,7 @@ namespace Nebula
 		Ref<Texture2D> SkyTexture;
 	};
 	static Defaults s_Defaults;
+	static bool s_UsingOpengl = RendererAPI::GetAPI() == RendererAPI::API::OpenGL;
 
 	struct Vertex
 	{
@@ -114,10 +112,11 @@ namespace Nebula
 	};
 	static VertexData s_Data;
 
-	static void SetupBuffers(Ref<VertexArray>& vertexArray, Ref<VertexBuffer>& vertexBuffer, uint32_t indicesPerShape, uint32_t verticesPerShape)
+	static void SetupBuffers(Ref<VertexArray>& vertexArray, Ref<VertexBuffer>& vertexBuffer, uint32_t indicesPerShape, uint32_t verticesPerShape, BufferLayout layout)
 	{
 		vertexArray = VertexArray::Create();
 		vertexBuffer = VertexBuffer::Create(SceneRenderer::Settings::MaxVertices * sizeof(Vertex));
+		vertexBuffer->SetLayout(layout);
 		vertexArray->AddVertexBuffer(vertexBuffer);
 
 		uint32_t maxIndices = SceneRenderer::Settings::MaxSprites * indicesPerShape;
@@ -294,7 +293,7 @@ namespace Nebula
 			spec.DebugName = "Sky-RenderPass";
 			spec.ClearOnLoad = true;
 			spec.SingleWrite = true;
-			spec.Attachments = { ImageFormat::BGRA8, ImageFormat::RED_INT, ImageFormat::DEPTH24STENCIL8 };
+			spec.Attachments = { ImageFormat::RGBA8, ImageFormat::RED_INT, ImageFormat::DEPTH24STENCIL8 };
 			m_Data.SkyPass = RenderPass::Create(spec);
 		
 			spec.DebugName = "Geometry-RenderPass";
@@ -312,7 +311,7 @@ namespace Nebula
 		{
 			FrameBufferSpecification spec;
 			spec.DebugName = "SceneRenderer-Framebuffer";
-			spec.Attachments = { ImageFormat::BGRA8, ImageFormat::RED_INT, ImageFormat::DEPTH24STENCIL8 };
+			spec.Attachments = { ImageFormat::RGBA8, ImageFormat::RED_INT, ImageFormat::DEPTH24STENCIL8 };
 			spec.Width = m_Settings.InitialWidth;
 			spec.Height = m_Settings.InitialHeight;
 			spec.SwapChainTarget = m_Settings.PresentToScreen;
@@ -336,12 +335,30 @@ namespace Nebula
 		pipelineSpec.LineWidth = m_Settings.LineWidth;
 
 		// Quad Setup
-		SetupBuffers(s_Data.QuadVertexArray, s_Data.QuadVertexBuffer, 6, 4);
-		SetupBuffers(s_Data.SkyVertexArray, s_Data.SkyVertexBuffer, 6, 4);
+		BufferLayout layout = {
+			{ ShaderDataType::Float3, "position" },
+			{ ShaderDataType::Float4, "colour" },
+			{ ShaderDataType::Float2, "texCoord" },
+			{ ShaderDataType::Float, "texIndex" },
+			{ ShaderDataType::Float, "tilingFactor" },
+			{ ShaderDataType::Int, "entityID" }
+		};
+
+		SetupBuffers(s_Data.QuadVertexArray, s_Data.QuadVertexBuffer, 6, 4, layout);
+		SetupBuffers(s_Data.SkyVertexArray, s_Data.SkyVertexBuffer, 6, 4, layout);
 		
 		// Circle Setup
 		{
-			SetupBuffers(s_Data.CircleVertexArray, s_Data.CircleVertexBuffer, 6, 4);
+			BufferLayout CircleLayout = {
+				{ ShaderDataType::Float3, "position" },
+				{ ShaderDataType::Float3, "localPosition" },
+				{ ShaderDataType::Float4, "colour" },
+				{ ShaderDataType::Float, "thickness" },
+				{ ShaderDataType::Float, "fade" },
+				{ ShaderDataType::Int, "entityID" }
+			};
+
+			SetupBuffers(s_Data.CircleVertexArray, s_Data.CircleVertexBuffer, 6, 4, CircleLayout);
 			
 			m_Data.CircleShader = Shader::Create("Resources/shaders/Circle.glsl");
 
@@ -352,7 +369,13 @@ namespace Nebula
 
 		// Line Setup
 		{
-			SetupBuffers(s_Data.LineVertexArray, s_Data.LineVertexBuffer, 2, 2);
+			BufferLayout LineLayout = {
+				{ ShaderDataType::Float3, "position" },
+				{ ShaderDataType::Float4, "colour" },
+				{ ShaderDataType::Int, "entityID" }
+			};
+
+			SetupBuffers(s_Data.LineVertexArray, s_Data.LineVertexBuffer, 2, 2, LineLayout);
 			
 			m_Data.LineShader = Shader::Create("Resources/shaders/Line.glsl");
 
@@ -364,7 +387,14 @@ namespace Nebula
 
 		// Text Setup
 		{
-			SetupBuffers(s_Data.TextVertexArray, s_Data.TextVertexBuffer, 6, 4);
+			BufferLayout TextLayout = {
+				{ ShaderDataType::Float3, "position" },
+				{ ShaderDataType::Float4, "colour" },
+				{ ShaderDataType::Float2, "texCoord" },
+				{ ShaderDataType::Int, "entityID" }
+			};
+
+			SetupBuffers(s_Data.TextVertexArray, s_Data.TextVertexBuffer, 6, 4, TextLayout);
 			
 			m_Data.TextShader = Shader::Create("Resources/shaders/Text.glsl");
 
@@ -375,7 +405,19 @@ namespace Nebula
 		}
 
 		// Texture Shader
-		m_Data.TextureShader = Shader::Create("Resources/shaders/Default.glsl");
+		std::string path = s_UsingOpengl ? "Resources/shaders/Default_OpenGl.glsl" :
+			"Resources/shaders/Default.glsl";
+		m_Data.TextureShader = Shader::Create(path);
+
+		// OPENGL
+		{
+			int32_t samplers[32];
+			for (uint32_t i = 0; i < 32; i++)
+				samplers[i] = i;
+
+			m_Data.TextureShader->Bind();
+			m_Data.TextureShader->SetIntArray("u_Textures", samplers, 32);
+		}
 
 		pipelineSpec.Shader = m_Data.TextureShader;
 		pipelineSpec.DebugName = "Texture-Pipeline";
@@ -432,6 +474,8 @@ namespace Nebula
 			FrameBufferSpecification& spec = framebuffer->GetFrameBufferSpecifications();
 			spec.ClearColour = colour;
 		}
+
+		m_Settings.ClearColour = colour;
 	}
 	
 	void SceneRenderer::Resize(uint32_t width, uint32_t height)
@@ -464,7 +508,11 @@ namespace Nebula
 
 	int SceneRenderer::ReadImage(uint32_t x, uint32_t y)
 	{
-		return m_Data.Framebuffers[m_Data.FramebufferImageIndex]->ReadPixel(1, x, y);
+		m_Data.Framebuffers[m_Data.FramebufferImageIndex]->Bind();
+		int pixel = m_Data.Framebuffers[m_Data.FramebufferImageIndex]->ReadPixel(1, x, y);
+		m_Data.Framebuffers[m_Data.FramebufferImageIndex]->Unbind();
+
+		return pixel;
 	}
 
 	void SceneRenderer::RenderSprite(const glm::mat4& transform, Ref<Material> mat, const SpriteRendererComponent& sprite, int entityID)
@@ -521,8 +569,8 @@ namespace Nebula
 
 	void SceneRenderer::RenderString(const glm::mat4& transform, Ref<Font> font, const StringRendererComponent& string, int entityID)
 	{
-		if (s_Data.FontAtlasTexture &&
-			s_Data.FontAtlasTexture != font->GetAtlasTexture())
+		if ((!s_Data.FontAtlasTexture && s_UsingOpengl)
+			|| s_Data.FontAtlasTexture != font->GetAtlasTexture())
 			FlushAndReset();
 		
 		s_Data.FontAtlasTexture = font->GetAtlasTexture();
@@ -731,6 +779,8 @@ namespace Nebula
 			m_Data.TexturePipeline->Bind();
 			m_Data.TexturePipeline->BindDescriptorSet(m_Data.CurrentFrame->DescriptorSets["Texture"]);
 			
+			s_Defaults.SkyTexture->Bind(1);
+			
 			uint32_t dataSize = (uint32_t)((uint8_t*)s_Data.QuadVBPtr - (uint8_t*)s_Data.QuadVBBase);
 			s_Data.SkyVertexBuffer->SetData(s_Data.QuadVBBase, dataSize);
 			RenderCommand::DrawIndexed(s_Data.SkyVertexArray, s_Data.QuadIndexCount);
@@ -786,6 +836,9 @@ namespace Nebula
 			m_Data.TextureShader->Bind();
 			m_Data.TexturePipeline->Bind();
 
+			for (uint32_t i = 0; i < s_Data.TextureSlotIndex; i++)
+				s_Data.TextureSlots[i]->Bind(i);
+
 			m_Data.TexturePipeline->BindDescriptorSet(m_Data.CurrentFrame->DescriptorSets["Texture"]);
 
 			uint32_t dataSize = (uint32_t)((uint8_t*)s_Data.QuadVBPtr - (uint8_t*)s_Data.QuadVBBase);
@@ -821,7 +874,8 @@ namespace Nebula
 
 			m_Data.TextShader->Bind();
 			m_Data.TextPipeline->Bind();
-			
+
+			s_Data.FontAtlasTexture->Bind();
 			m_Data.CurrentFrame->DescriptorSets["Text"]->SetResource("u_FontAtlas", s_Data.FontAtlasTexture);
 			m_Data.TextPipeline->BindDescriptorSet(m_Data.CurrentFrame->DescriptorSets["Text"]);
 
@@ -940,17 +994,25 @@ namespace Nebula
 		const GraphicsContext* context = Application::Get().GetWindow().GetContext();
 		m_Data.FramebufferImageIndex = context->GetImageIndex();
 
-		m_Data.Framebuffers[m_Data.FramebufferImageIndex]->Bind();
+		if (!m_Settings.PresentToScreen || !s_UsingOpengl)
+			m_Data.Framebuffers[m_Data.FramebufferImageIndex]->Bind();
 		m_Data.CurrentFrame->CommandBuffer->BeginRecording();
 		m_Data.Framebuffers[m_Data.FramebufferImageIndex]->ClearDepthAttachment(0);
 
+		if (s_UsingOpengl)
+		{
+			RenderCommand::SetClearColour(m_Settings.ClearColour);
+			RenderCommand::Clear();
+			m_Data.Framebuffers[m_Data.FramebufferImageIndex]->ClearAttachment(1, -1);
+		}
+
 		if (m_Settings.ShowSky)
 			SkyPrePass(camera.GetPosition());
-		
+
+		SkyPass();
+
 		s_Data.TextureSlotIndex = 2;
 		GeometryPrePass();
-		
-		SkyPass();
 		GeometryPass();
 		
 		if (m_SelectedEntity)
@@ -969,7 +1031,8 @@ namespace Nebula
 		}
 
 		m_Data.CurrentFrame->CommandBuffer->EndRecording();
-		m_Data.Framebuffers[m_Data.FramebufferImageIndex]->Unbind();
+		if (!m_Settings.PresentToScreen || !s_UsingOpengl)
+			m_Data.Framebuffers[m_Data.FramebufferImageIndex]->Unbind();
 	}
 
 	void SceneRenderer::Render(const Camera& camera, const glm::mat4& transform)
@@ -987,17 +1050,26 @@ namespace Nebula
 		const GraphicsContext* context = Application::Get().GetWindow().GetContext();
 		m_Data.FramebufferImageIndex = context->GetImageIndex();
 
-		m_Data.Framebuffers[m_Data.FramebufferImageIndex]->Bind();
+		if (!m_Settings.PresentToScreen || !s_UsingOpengl)
+			m_Data.Framebuffers[m_Data.FramebufferImageIndex]->Bind();
+		
 		m_Data.CurrentFrame->CommandBuffer->BeginRecording();
 		m_Data.Framebuffers[m_Data.FramebufferImageIndex]->ClearDepthAttachment(0);
+
+		if (s_UsingOpengl)
+		{
+			RenderCommand::SetClearColour(m_Settings.ClearColour);
+			RenderCommand::Clear();
+			m_Data.Framebuffers[m_Data.FramebufferImageIndex]->ClearAttachment(1, -1);
+		}
 
 		if (m_Settings.ShowSky)
 			SkyPrePass(transform[3]);
 		
+		SkyPass();
+		
 		s_Data.TextureSlotIndex = 2;
 		GeometryPrePass();
-		
-		SkyPass();
 		GeometryPass();
 
 		if (m_Settings.ShowColliders)
@@ -1013,7 +1085,9 @@ namespace Nebula
 		}
 
 		m_Data.CurrentFrame->CommandBuffer->EndRecording();
-		m_Data.Framebuffers[m_Data.FramebufferImageIndex]->Unbind();
+		
+		if (!m_Settings.PresentToScreen || !s_UsingOpengl)
+			m_Data.Framebuffers[m_Data.FramebufferImageIndex]->Unbind();
 	}
 
 	void SceneRenderer::FlushAndReset() 

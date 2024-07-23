@@ -81,13 +81,6 @@ namespace Nebula {
 			NB_ASSERT(false, "");
 			return "";
 		}
-
-		static const bool IsAmdGpu()
-		{
-			const char* vendor = (char*)glGetString(GL_VENDOR);
-			return strstr(vendor, "ATI") != nullptr;
-		}
-
 	}
 
 	OpenGL_Shader::OpenGL_Shader(const std::string& filepath)
@@ -103,13 +96,8 @@ namespace Nebula {
 		{
 			Timer timer;
 			CompileOrGetVulkanBinaries(shaderSources);
-			if (Utils::IsAmdGpu()) {
-				CreateProgramForAmd();
-			}
-			else {
-				CompileOrGetOpenGLBinaries();
-				CreateProgram();
-			}
+			CompileOrGetOpenGLBinaries();
+			CreateProgram();
 			NB_WARN("Shader creation took {0} ms", timer.Elapsed() * 1000);
 		}
 
@@ -119,6 +107,8 @@ namespace Nebula {
 		auto lastDot = filepath.rfind('.');
 		auto count = lastDot == std::string::npos ? filepath.size() - lastSlash : lastDot - lastSlash;
 		m_Name = filepath.substr(lastSlash, count);
+
+		m_DescriptorSet = CreateRef<OpenGL_DescriptorSet>(m_RendererID);
 	}
 
 	OpenGL_Shader::OpenGL_Shader(const std::string& name, const std::string& vertexSrc, const std::string& fragmentSrc)
@@ -131,13 +121,10 @@ namespace Nebula {
 		sources[GL_FRAGMENT_SHADER] = fragmentSrc;
 
 		CompileOrGetVulkanBinaries(sources);
-		if (Utils::IsAmdGpu()) {
-			CreateProgramForAmd();
-		}
-		else {
-			CompileOrGetOpenGLBinaries();
-			CreateProgram();
-		}
+		CompileOrGetOpenGLBinaries();
+		CreateProgram();
+
+		m_DescriptorSet = CreateRef<OpenGL_DescriptorSet>(m_RendererID);
 	}
 
 	OpenGL_Shader::~OpenGL_Shader()
@@ -380,106 +367,6 @@ namespace Nebula {
 		return true;
 	}
 
-	void OpenGL_Shader::CreateProgramForAmd()
-	{
-		GLuint program = glCreateProgram();
-
-		std::filesystem::path cacheDirectory = Utils::GetCacheDirectory();
-		std::filesystem::path shaderFilePath = m_FilePath;
-		std::filesystem::path cachedPath = cacheDirectory / (shaderFilePath.filename().string() + ".cached_opengl.pgr");
-		std::ifstream in(cachedPath, std::ios::ate | std::ios::binary);
-
-		if (in.is_open())
-		{
-			auto size = in.tellg();
-			in.seekg(0);
-
-			auto& data = std::vector<char>(size);
-			uint32_t format = 0;
-			in.read((char*)&format, sizeof(uint32_t));
-			in.read((char*)data.data(), size);
-			glProgramBinary(program, format, data.data(), (GLsizei)data.size());
-
-			bool linked = VerifyProgramLink(program);
-
-			if (!linked)
-				return;
-		}
-		else
-		{
-			std::array<uint32_t, 2> glShadersIDs;
-			CompileOpenGLBinariesForAmd(program, glShadersIDs);
-			glLinkProgram(program);
-
-			bool linked = VerifyProgramLink(program);
-
-			if (linked)
-			{
-				// Save program data
-				GLint formats = 0;
-				glGetIntegerv(GL_NUM_PROGRAM_BINARY_FORMATS, &formats);
-				NB_ASSERT(formats > 0, "Driver does not support binary format");
-				Utils::CreateCacheDirectoryIfNeeded();
-				GLint length = 0;
-				glGetProgramiv(program, GL_PROGRAM_BINARY_LENGTH, &length);
-				auto shaderData = std::vector<char>(length);
-				uint32_t format = 0;
-				glGetProgramBinary(program, length, nullptr, &format, shaderData.data());
-				std::ofstream out(cachedPath, std::ios::out | std::ios::binary);
-				if (out.is_open())
-				{
-					out.write((char*)&format, sizeof(uint32_t));
-					out.write(shaderData.data(), shaderData.size());
-					out.flush();
-					out.close();
-				}
-			}
-
-			for (auto& id : glShadersIDs)
-				glDetachShader(program, id);
-		}
-
-		m_RendererID = program;
-	}
-
-	void OpenGL_Shader::CompileOpenGLBinariesForAmd(GLenum& program, std::array<uint32_t, 2>& glShadersIDs)
-	{
-		int glShaderIDIndex = 0;
-		for (auto&& [stage, spirv] : m_VulkanSPIRV)
-		{
-			spirv_cross::CompilerGLSL glslCompiler(spirv);
-			auto& source = glslCompiler.compile();
-
-			uint32_t shader;
-
-			shader = glCreateShader(stage);
-
-			const GLchar* sourceCStr = source.c_str();
-			glShaderSource(shader, 1, &sourceCStr, 0);
-
-			glCompileShader(shader);
-
-			int isCompiled = 0;
-			glGetShaderiv(shader, GL_COMPILE_STATUS, &isCompiled);
-			if (isCompiled == GL_FALSE)
-			{
-				int maxLength = 0;
-				glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &maxLength);
-
-				std::vector<char> infoLog(maxLength);
-				glGetShaderInfoLog(shader, maxLength, &maxLength, &infoLog[0]);
-
-				glDeleteShader(shader);
-
-				NB_ERROR("{0}", infoLog.data());
-				NB_ASSERT(false, "[OpenGL] Shader compilation failure!");
-				return;
-			}
-			glAttachShader(program, shader);
-			glShadersIDs[glShaderIDIndex++] = shader;
-		}
-	}
-
 	void OpenGL_Shader::Reflect(GLenum stage, const std::vector<uint32_t>& shaderData)
 	{
 		spirv_cross::Compiler compiler(shaderData);
@@ -522,94 +409,99 @@ namespace Nebula {
 	{
 		NB_PROFILE_FUNCTION();
 
-		UploadUniformInt(name, value);
+		m_DescriptorSet->UploadUniformInt(name, value);
 	}
 
 	void OpenGL_Shader::SetIntArray(const std::string& name, int* values, uint32_t count)
 	{
-		UploadUniformIntArray(name, values, count);
+		m_DescriptorSet->UploadUniformIntArray(name, values, count);
 	}
 
 	void OpenGL_Shader::SetFloat(const std::string& name, float value)
 	{
 		NB_PROFILE_FUNCTION();
 
-		UploadUniformFloat(name, value);
+		m_DescriptorSet->UploadUniformFloat(name, value);
 	}
 
 	void OpenGL_Shader::SetFloat2(const std::string& name, const glm::vec2& value)
 	{
 		NB_PROFILE_FUNCTION();
 
-		UploadUniformFloat2(name, value);
+		m_DescriptorSet->UploadUniformFloat2(name, value);
 	}
 
 	void OpenGL_Shader::SetFloat3(const std::string& name, const glm::vec3& value)
 	{
 		NB_PROFILE_FUNCTION();
 
-		UploadUniformFloat3(name, value);
+		m_DescriptorSet->UploadUniformFloat3(name, value);
 	}
 
 	void OpenGL_Shader::SetFloat4(const std::string& name, const glm::vec4& value)
 	{
 		NB_PROFILE_FUNCTION();
 
-		UploadUniformFloat4(name, value);
+		m_DescriptorSet->UploadUniformFloat4(name, value);
 	}
 
 	void OpenGL_Shader::SetMat4(const std::string& name, const glm::mat4& value)
 	{
 		NB_PROFILE_FUNCTION();
 
-		UploadUniformMat4(name, value);
+		m_DescriptorSet->UploadUniformMat4(name, value);
 	}
 
-	void OpenGL_Shader::UploadUniformInt(const std::string& name, int value)
+	OpenGL_DescriptorSet::OpenGL_DescriptorSet(uint32_t shaderID)
+		: m_ShaderID(shaderID)
 	{
-		GLint location = glGetUniformLocation(m_RendererID, name.c_str());
+	}
+	
+	void OpenGL_DescriptorSet::UploadUniformInt(const std::string& name, int value)
+	{
+		GLint location = glGetUniformLocation(m_ShaderID, name.c_str());
 		glUniform1i(location, value);
 	}
 
-	void OpenGL_Shader::UploadUniformIntArray(const std::string& name, int* values, uint32_t count)
+	void OpenGL_DescriptorSet::UploadUniformIntArray(const std::string& name, int* values, uint32_t count)
 	{
-		GLint location = glGetUniformLocation(m_RendererID, name.c_str());
+		GLint location = glGetUniformLocation(m_ShaderID, name.c_str());
 		glUniform1iv(location, count, values);
 	}
 
-	void OpenGL_Shader::UploadUniformFloat(const std::string& name, float value)
+	void OpenGL_DescriptorSet::UploadUniformFloat(const std::string& name, float value)
 	{
-		GLint location = glGetUniformLocation(m_RendererID, name.c_str());
+		GLint location = glGetUniformLocation(m_ShaderID, name.c_str());
 		glUniform1f(location, value);
 	}
 
-	void OpenGL_Shader::UploadUniformFloat2(const std::string& name, const glm::vec2& value)
+	void OpenGL_DescriptorSet::UploadUniformFloat2(const std::string& name, const glm::vec2& value)
 	{
-		GLint location = glGetUniformLocation(m_RendererID, name.c_str());
+		GLint location = glGetUniformLocation(m_ShaderID, name.c_str());
 		glUniform2f(location, value.x, value.y);
 	}
 
-	void OpenGL_Shader::UploadUniformFloat3(const std::string& name, const glm::vec3& value)
+	void OpenGL_DescriptorSet::UploadUniformFloat3(const std::string& name, const glm::vec3& value)
 	{
-		GLint location = glGetUniformLocation(m_RendererID, name.c_str());
+		GLint location = glGetUniformLocation(m_ShaderID, name.c_str());
 		glUniform3f(location, value.x, value.y, value.z);
 	}
 
-	void OpenGL_Shader::UploadUniformFloat4(const std::string& name, const glm::vec4& value)
+	void OpenGL_DescriptorSet::UploadUniformFloat4(const std::string& name, const glm::vec4& value)
 	{
-		GLint location = glGetUniformLocation(m_RendererID, name.c_str());
+		GLint location = glGetUniformLocation(m_ShaderID, name.c_str());
 		glUniform4f(location, value.x, value.y, value.z, value.w);
 	}
 
-	void OpenGL_Shader::UploadUniformMat3(const std::string& name, const glm::mat3& matrix)
+	void OpenGL_DescriptorSet::UploadUniformMat3(const std::string& name, const glm::mat3& matrix)
 	{
-		GLint location = glGetUniformLocation(m_RendererID, name.c_str());
+		GLint location = glGetUniformLocation(m_ShaderID, name.c_str());
 		glUniformMatrix3fv(location, 1, GL_FALSE, glm::value_ptr(matrix));
 	}
 
-	void OpenGL_Shader::UploadUniformMat4(const std::string& name, const glm::mat4& matrix)
+	void OpenGL_DescriptorSet::UploadUniformMat4(const std::string& name, const glm::mat4& matrix)
 	{
-		GLint location = glGetUniformLocation(m_RendererID, name.c_str());
+		GLint location = glGetUniformLocation(m_ShaderID, name.c_str());
 		glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(matrix));
 	}
 

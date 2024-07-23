@@ -15,8 +15,8 @@ namespace Nebula {
 		void SwapBuffers() override;
 		void SetVsync(bool vsync) override;
 
-		uint32_t GetImageIndex() const override { return -1; };
-		uint32_t GetImageCount() const override { return -1; };
+		uint32_t GetImageIndex() const override { return 0; };
+		uint32_t GetImageCount() const override { return 1; };
 		const Ref<Image2D> GetImage(uint32_t index = 0) const override { return nullptr; }
 		
 		const void* GetSurface() const override { return nullptr; }

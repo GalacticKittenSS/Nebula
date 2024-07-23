@@ -10,10 +10,10 @@ namespace Nebula
 	public:
 		virtual ~CommandBuffer() = default;
 
-		virtual void BeginRecording() = 0;
-		virtual void EndRecording() = 0;
-		virtual bool IsRecording() = 0;
-		virtual uint64_t GetCommandBuffer() const = 0;
+		virtual void BeginRecording() {};
+		virtual void EndRecording() {};
+		virtual bool IsRecording() const { return false; };
+		virtual uint64_t GetCommandBuffer() const { return -1; };
 
 		static Ref<CommandBuffer> Create();
 	};
