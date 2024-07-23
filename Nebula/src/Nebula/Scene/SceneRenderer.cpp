@@ -764,7 +764,7 @@ namespace Nebula
 		DrawLine(p3, p0, colour, id);
 	}
 
-	void SceneRenderer::RenderBoxCollider(glm::mat4& transform, const BoxCollider2DComponent& boxCollider, float zIndex, int entityID)
+	void SceneRenderer::RenderBoxCollider(glm::mat4& transform, const glm::vec4& colour, const BoxCollider2DComponent& boxCollider, float zIndex, int entityID)
 	{
 		glm::vec3 wTranslation, wRotation, wScale;
 		Maths::DecomposeTransform(transform, wTranslation, wRotation, wScale);
@@ -773,7 +773,7 @@ namespace Nebula
 		glm::mat4 new_transform = glm::translate(wTranslation) * glm::toMat4(glm::quat(wRotation)) *
 			glm::translate(glm::vec3(boxCollider.Offset, zIndex)) * glm::scale(scale);
 
-		RenderRect(new_transform, { 0.0f, 1.0f, 0.0f, 1.0f }, entityID);
+		RenderRect(new_transform, colour, entityID);
 	}
 
 	void SceneRenderer::SkyPrePass(glm::vec3 position)
@@ -1016,14 +1016,16 @@ namespace Nebula
 		for (auto id : boxGroup)
 		{
 			auto [wtc, bc2d] = boxGroup.get<WorldTransformComponent, BoxCollider2DComponent>(id);
+			
+			glm::vec4 colour = { 0.0f, 1.0f, 0.0f, 1.0f };
 
 			if (m_SelectedEntity)
 			{
 				if (hasRelationShip(m_Context, Entity{ id, m_Context.get() }.GetUUID(), m_SelectedEntity.GetUUID()))
-					continue;
+					colour = { 1.0f, 0.5f, 0.0f, 1.0f };
 			}
 
-			RenderBoxCollider(wtc.Transform, bc2d, zIndex, (int)id);
+			RenderBoxCollider(wtc.Transform, colour, bc2d, zIndex, (int)id);
 		}
 	}
 
@@ -1062,7 +1064,9 @@ namespace Nebula
 			return;
 
 		if (selectedEntity.HasComponent<SpriteRendererComponent>()
-			|| selectedEntity.HasComponent<CircleRendererComponent>())
+			|| selectedEntity.HasComponent<CircleRendererComponent>() 
+			// Outline already rendered in ColliderPass
+			&& !(selectedEntity.HasComponent<BoxCollider2DComponent>() || selectedEntity.HasComponent<CircleColliderComponent>()))
 		{
 			const WorldTransformComponent& wtc = selectedEntity.GetComponent<WorldTransformComponent>();
 

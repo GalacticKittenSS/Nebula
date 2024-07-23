@@ -60,7 +60,7 @@ namespace Nebula
 
 		void RenderRect(const glm::mat4& transform, const glm::vec4& colour, int id);
 		void RenderCircleCollider(glm::mat4& transform, const CircleColliderComponent& circleCollider, const glm::vec3& projectionCollider, int entityID);
-		void RenderBoxCollider(glm::mat4& transform, const BoxCollider2DComponent& boxCollider, float zIndex, int entityID);
+		void RenderBoxCollider(glm::mat4& transform, const glm::vec4& colour, const BoxCollider2DComponent& boxCollider, float zIndex, int entityID);
 
 		void RenderSelectionUI(Entity selectedEntity, glm::vec3 cameraForward);
 
