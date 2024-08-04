@@ -11,6 +11,11 @@
             return new Entity(entityID);
         }
 
+        public static bool EntityExists(string name)
+        {
+            return InternalCalls.Scene_EntityNameExists(name);
+        }
+
         public static Entity CreateNewEntity(string name)
         {
             ulong entityID = InternalCalls.Scene_CreateNewEntity(name);

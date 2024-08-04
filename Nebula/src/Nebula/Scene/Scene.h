@@ -55,6 +55,7 @@ namespace Nebula {
 
 		Entity GetPrimaryCamera();
 		Entity GetEntityWithTag(std::string_view tag);
+		bool EntityWithTagExists(std::string_view tag);
 		Entity GetEntityWithUUID(UUID id);
 
 		template <typename... Components>

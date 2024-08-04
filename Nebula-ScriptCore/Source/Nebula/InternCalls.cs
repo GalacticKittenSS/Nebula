@@ -70,6 +70,9 @@ namespace Nebula
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static string Asset_GetPathFromHandle(ulong handle);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static bool Asset_IsValid(ulong handle);
         #endregion
 
         #region Font
@@ -108,6 +111,9 @@ namespace Nebula
         internal extern static ulong Scene_FindEntityByName(string name);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static bool Scene_EntityNameExists(string name);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static ulong Scene_CreateNewEntity(string name);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
@@ -144,6 +150,9 @@ namespace Nebula
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void Entity_SetLayer(ulong entityID, short layer);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static bool Entity_IsValid(ulong entityID);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static ulong Entity_GetMaterial(ulong entityID);

@@ -250,6 +250,21 @@ namespace Nebula {
 		return {};
 	}
 
+	bool Scene::EntityWithTagExists(std::string_view tag) {
+		NB_PROFILE_FUNCTION();
+
+		auto view = m_Registry.view<TagComponent>();
+
+		for (auto& entity : view) {
+			const TagComponent& tc = view.get<TagComponent>(entity);
+
+			if (tc.Tag == tag)
+				return true;
+		}
+
+		return false;
+	}
+
 	Entity Scene::GetEntityWithUUID(UUID id) {
 		auto it = m_EntityMap.find(id);
 		NB_ASSERT(it != m_EntityMap.end(), "Could Not Find Entity UUID");

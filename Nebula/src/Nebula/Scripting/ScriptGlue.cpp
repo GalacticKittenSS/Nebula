@@ -172,6 +172,11 @@ namespace Nebula {
 		std::string path = metadata.RelativePath.string();
 		return ScriptEngine::CreateMonoString(path.c_str());
 	}
+
+	static bool Asset_IsValid(AssetHandle handle)
+	{
+		return AssetManager::IsHandleValid(handle);
+	}
 #pragma endregion
 
 #pragma region Font
@@ -322,6 +327,18 @@ namespace Nebula {
 			return 0;
 
 		return entity.GetUUID();
+	}
+
+	static bool Scene_EntityNameExists(MonoString* name)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+
+		char* cName = mono_string_to_utf8(name);
+		bool exists = scene->EntityWithTagExists(cName);
+		mono_free(cName);
+
+		return exists;
 	}
 
 	static uint64_t Scene_CreateNewEntity(MonoString* name)
@@ -483,6 +500,15 @@ namespace Nebula {
 
 		auto& comp = entity.GetComponent<PropertiesComponent>();
 		comp.Layer->Identity = layer;
+
+	static bool Entity_IsValid(UUID entityID)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+
+		Entity entity = { entityID, scene };
+		return entity.IsValid();
+	}
 	}
 
 	static void Entity_SetMaterial(UUID entityID, UUID handle)
@@ -1495,6 +1521,7 @@ namespace Nebula {
 		NB_ADD_INTERNAL_CALL(Asset_GetHandleFromPath);
 		NB_ADD_INTERNAL_CALL(Asset_GetPathFromHandle);
 		NB_ADD_INTERNAL_CALL(Asset_GetOrCreateHandle);
+		NB_ADD_INTERNAL_CALL(Asset_IsValid);
 
 		NB_ADD_INTERNAL_CALL(Font_GetBold);
 		NB_ADD_INTERNAL_CALL(Font_GetItalic);
@@ -1508,6 +1535,7 @@ namespace Nebula {
 		NB_ADD_INTERNAL_CALL(Material_SetTiling);
 
 		NB_ADD_INTERNAL_CALL(Scene_FindEntityByName);
+		NB_ADD_INTERNAL_CALL(Scene_EntityNameExists);
 		NB_ADD_INTERNAL_CALL(Scene_CreateNewEntity);
 		NB_ADD_INTERNAL_CALL(Scene_DuplicateEntity);
 		NB_ADD_INTERNAL_CALL(Scene_DestroyEntity);
@@ -1523,6 +1551,7 @@ namespace Nebula {
 		NB_ADD_INTERNAL_CALL(Entity_GetName);
 		NB_ADD_INTERNAL_CALL(Entity_GetScriptInstance);
 		NB_ADD_INTERNAL_CALL(Entity_GetLayer);
+		NB_ADD_INTERNAL_CALL(Entity_IsValid);
 		NB_ADD_INTERNAL_CALL(Entity_GetMaterial);
 
 		NB_ADD_INTERNAL_CALL(Entity_SetName);

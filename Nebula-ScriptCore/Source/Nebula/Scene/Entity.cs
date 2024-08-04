@@ -149,5 +149,21 @@ namespace Nebula
 
             return new Entity(id);
         }
+
+        public bool IsValid()
+        {
+            if (ID == 0)
+                return false;
+
+            return InternalCalls.Entity_IsValid(ID);
+        }
+
+        public static implicit operator bool(Entity entity)
+        {
+            if (entity == null)
+                return false;
+
+            return entity.IsValid();
+        }
     }
 }
