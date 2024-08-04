@@ -16,6 +16,7 @@
 #include <mono/metadata/reflection.h>
 
 #include <box2d/b2_body.h>
+#include <box2d/b2_fixture.h>
 
 namespace Nebula {
 	UUID ScriptFunctionData::HoveredEntity = NULL;
@@ -1180,8 +1181,8 @@ namespace Nebula {
 		auto& component = entity.GetComponent<Rigidbody2DComponent>();
 		component.Type = (Rigidbody2DComponent::BodyType)type;
 
-		b2Body* body = (b2Body*)component.RuntimeBody;
-		body->SetType(Utils::Rigibody2DToBox2D(component.Type));
+		if (b2Body* body = (b2Body*)component.RuntimeBody)
+			body->SetType(Utils::Rigibody2DToBox2D(component.Type));
 	}
 
 	static bool Rigidbody2DComponent_GetFixedRotation(UUID entityID)
@@ -1204,6 +1205,72 @@ namespace Nebula {
 
 		auto& component = entity.GetComponent<Rigidbody2DComponent>();
 		component.FixedRotation = fixedRotation;
+	
+		if (b2Body* body = (b2Body*)component.RuntimeBody)
+			body->SetFixedRotation(fixedRotation);
+	}
+
+	static bool Rigidbody2DComponent_GetTrigger(UUID entityID)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+		Entity entity = { entityID, scene };
+		NB_ASSERT(entity);
+
+		auto& component = entity.GetComponent<Rigidbody2DComponent>();
+		return component.Trigger;
+	}
+
+	static void Rigidbody2DComponent_SetTrigger(UUID entityID, bool isTrigger)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+		Entity entity = { entityID, scene };
+		NB_ASSERT(entity);
+
+		auto& component = entity.GetComponent<Rigidbody2DComponent>();
+		component.Trigger = isTrigger;
+		
+		if (entity.HasComponent<BoxCollider2DComponent>())
+		{
+			auto& bc2d = entity.GetComponent<BoxCollider2DComponent>();
+
+			if (b2Fixture* fixture = (b2Fixture*)bc2d.RuntimeFixture)
+				fixture->SetSensor(isTrigger);
+		}
+		
+		if (entity.HasComponent<CircleColliderComponent>())
+		{
+			auto& cc = entity.GetComponent<CircleColliderComponent>();
+
+			if (b2Fixture* fixture = (b2Fixture*)cc.RuntimeFixture)
+				fixture->SetSensor(isTrigger);
+		}
+	}
+	
+	static float Rigidbody2DComponent_GetGravityScale(UUID entityID)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+		Entity entity = { entityID, scene };
+		NB_ASSERT(entity);
+
+		auto& component = entity.GetComponent<Rigidbody2DComponent>();
+		return component.GravityScale;
+	}
+
+	static void Rigidbody2DComponent_SetGravityScale(UUID entityID, float gravityScale)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+		Entity entity = { entityID, scene };
+		NB_ASSERT(entity);
+
+		auto& component = entity.GetComponent<Rigidbody2DComponent>();
+		component.GravityScale = gravityScale;
+
+		if (b2Body* body = (b2Body*)component.RuntimeBody)
+			body->SetGravityScale(gravityScale);
 	}
 
 	static void Rigidbody2DComponent_ApplyLinearImpulse(UUID entityID, glm::vec2* impulse, glm::vec2* point)
@@ -1329,6 +1396,9 @@ namespace Nebula {
 
 		auto& component = entity.GetComponent<BoxCollider2DComponent>();
 		component.Density = density;
+
+		if (b2Fixture* fixture = (b2Fixture*)component.RuntimeFixture)
+			fixture->SetDensity(density);
 	}
 
 	static float BoxCollider2DComponent_GetFriction(UUID entityID)
@@ -1351,6 +1421,9 @@ namespace Nebula {
 
 		auto& component = entity.GetComponent<BoxCollider2DComponent>();
 		component.Friction = friction;
+
+		if (b2Fixture* fixture = (b2Fixture*)component.RuntimeFixture)
+			fixture->SetFriction(friction);
 	}
 
 	static float BoxCollider2DComponent_GetRestitution(UUID entityID)
@@ -1373,6 +1446,9 @@ namespace Nebula {
 
 		auto& component = entity.GetComponent<BoxCollider2DComponent>();
 		component.Restitution = restitution;
+
+		if (b2Fixture* fixture = (b2Fixture*)component.RuntimeFixture)
+			fixture->SetRestitution(restitution);
 	}
 
 	static float BoxCollider2DComponent_GetThreshold(UUID entityID)
@@ -1395,6 +1471,9 @@ namespace Nebula {
 
 		auto& component = entity.GetComponent<BoxCollider2DComponent>();
 		component.RestitutionThreshold = threshold;
+
+		if (b2Fixture* fixture = (b2Fixture*)component.RuntimeFixture)
+			fixture->SetRestitutionThreshold(threshold);
 	}
 	
 	static uint16_t BoxCollider2DComponent_GetMask(UUID entityID)
@@ -1703,8 +1782,13 @@ namespace Nebula {
 		
 		NB_ADD_INTERNAL_CALL(Rigidbody2DComponent_GetBodyType);
 		NB_ADD_INTERNAL_CALL(Rigidbody2DComponent_GetFixedRotation);
+		NB_ADD_INTERNAL_CALL(Rigidbody2DComponent_GetTrigger);
+		NB_ADD_INTERNAL_CALL(Rigidbody2DComponent_GetGravityScale);
+
 		NB_ADD_INTERNAL_CALL(Rigidbody2DComponent_SetBodyType);
 		NB_ADD_INTERNAL_CALL(Rigidbody2DComponent_SetFixedRotation);
+		NB_ADD_INTERNAL_CALL(Rigidbody2DComponent_SetTrigger);
+		NB_ADD_INTERNAL_CALL(Rigidbody2DComponent_SetGravityScale);
 
 		NB_ADD_INTERNAL_CALL(Rigidbody2DComponent_ApplyForce);
 		NB_ADD_INTERNAL_CALL(Rigidbody2DComponent_ApplyForceToCenter);

@@ -341,6 +341,18 @@ namespace Nebula
         internal extern static void Rigidbody2DComponent_SetFixedRotation(ulong entityID, bool fixedRotation);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static bool Rigidbody2DComponent_GetTrigger(ulong entityID);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void Rigidbody2DComponent_SetTrigger(ulong entityID, bool trigger);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static int Rigidbody2DComponent_GetGravityScale(ulong entityID);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void Rigidbody2DComponent_SetGravityScale(ulong entityID, float gravityScale);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void Rigidbody2DComponent_ApplyLinearImpulse(ulong entityID, ref Vector2 impulse, ref Vector2 point);
         
         [MethodImplAttribute(MethodImplOptions.InternalCall)]

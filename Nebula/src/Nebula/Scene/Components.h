@@ -177,6 +177,7 @@ namespace Nebula {
 		BodyType Type = BodyType::Dynamic;
 		bool FixedRotation = false;
 		bool Trigger = false;
+		float GravityScale = 1.0f;
 
 		void* RuntimeBody = nullptr;
 

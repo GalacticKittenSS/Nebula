@@ -294,6 +294,7 @@ namespace Nebula {
 		bodyDef.position.Set(translation.x, translation.y);
 		bodyDef.angle = rotation.z;
 		bodyDef.fixedRotation = rb2d.FixedRotation;
+		bodyDef.gravityScale = rb2d.GravityScale;
 
 		b2BodyUserData data;
 		data.pointer = reinterpret_cast<uintptr_t>(new UUID(entity.GetUUID()));
@@ -364,6 +365,7 @@ namespace Nebula {
 		body->SetType(Utils::Rigibody2DToBox2D(rb2d.Type));
 		body->SetTransform({ translation.x, translation.y }, rotation.z);
 		body->SetFixedRotation(rb2d.FixedRotation);
+		body->SetGravityScale(rb2d.GravityScale);
 
 		if (entity.HasComponent<BoxCollider2DComponent>()) {
 			auto& bc2d = entity.GetComponent<BoxCollider2DComponent>();

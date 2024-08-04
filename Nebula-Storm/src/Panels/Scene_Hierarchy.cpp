@@ -1194,6 +1194,7 @@ namespace Nebula {
 
 			DrawBool("Fixed Rotation", component.FixedRotation);
 			DrawBool("Is Trigger", component.Trigger);
+			DrawVec1Control("Gravity Scale", component.GravityScale);
 		}, true);
 
 		DrawComponent<BoxCollider2DComponent>("Box Collider 2D", entity, [](auto& component) {

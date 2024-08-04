@@ -265,6 +265,18 @@
             set => InternalCalls.Rigidbody2DComponent_SetFixedRotation(Entity.ID, value);
         }
 
+        public bool IsTrigger
+        {
+            get => InternalCalls.Rigidbody2DComponent_GetTrigger(Entity.ID); 
+            set => InternalCalls.Rigidbody2DComponent_SetTrigger(Entity.ID, value);
+        }
+
+        public float GravityScale
+        {
+            get => InternalCalls.Rigidbody2DComponent_GetGravityScale(Entity.ID); 
+            set => InternalCalls.Rigidbody2DComponent_SetGravityScale(Entity.ID, value);
+        }
+
         public Vector2 LinearVelocity
         {
             get
