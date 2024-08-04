@@ -152,6 +152,12 @@ namespace Nebula
         internal extern static void Entity_SetLayer(ulong entityID, short layer);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static bool Entity_IsEnabled(ulong entityID);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void Entity_SetEnabled(ulong entityID, bool enabled);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static bool Entity_IsValid(ulong entityID);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
@@ -165,6 +171,15 @@ namespace Nebula
         
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static uint Entity_GetChildCount(ulong entityID);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void Entity_AddChild(ulong entityID, ulong childID);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static ulong Entity_GetParent(ulong entityID);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void Entity_SetParent(ulong entityID, ulong parentID);
         #endregion
 
         #region Prefab

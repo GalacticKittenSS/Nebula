@@ -480,7 +480,7 @@ namespace Nebula {
 		return childID;
 	}
 
-	static uint16_t Entity_GetLayer(uint64_t entityID)
+	static uint16_t Entity_GetLayer(UUID entityID)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
@@ -491,7 +491,7 @@ namespace Nebula {
 		return comp.Layer->Identity;
 	}
 
-	static void Entity_SetLayer(uint64_t entityID, uint16_t layer)
+	static void Entity_SetLayer(UUID entityID, uint16_t layer)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
 		NB_ASSERT(scene);
@@ -499,7 +499,23 @@ namespace Nebula {
 		NB_ASSERT(entity);
 
 		auto& comp = entity.GetComponent<PropertiesComponent>();
-		comp.Layer->Identity = layer;
+
+		auto& config = Project::GetActive()->GetConfig();
+		
+		if (config.Layers.find(layer) != config.Layers.end())
+			comp.Layer = config.Layers.at(layer);
+	}
+
+	static bool Entity_IsEnabled(UUID entityID)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+		Entity entity = { entityID, scene };
+		NB_ASSERT(entity);
+
+		auto& comp = entity.GetComponent<PropertiesComponent>();
+		return comp.Enabled;
+	}
 
 	static bool Entity_IsValid(UUID entityID)
 	{
@@ -509,6 +525,34 @@ namespace Nebula {
 		Entity entity = { entityID, scene };
 		return entity.IsValid();
 	}
+
+	static void UpdateChildProperties(Scene* scene, Entity entity, bool enabled)
+	{
+		auto& prop = entity.GetComponent<PropertiesComponent>();
+		prop.Enabled = enabled;
+
+		if (entity.HasComponent<Rigidbody2DComponent>())
+		{
+			if (b2Body* body = (b2Body*)entity.GetComponent<Rigidbody2DComponent>().RuntimeBody)
+				body->SetEnabled(enabled);
+		}
+
+		auto& pcc = scene->GetEntityNode(entity.GetUUID());
+		for (UUID id : pcc.Children)
+		{
+			Entity child = { id, entity };
+			UpdateChildProperties(scene, child, enabled);
+		}
+	}
+
+	static void Entity_SetEnabled(UUID entityID, bool enabled)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+		Entity entity = { entityID, scene };
+		NB_ASSERT(entity);
+
+		UpdateChildProperties(scene, entity, enabled);
 	}
 
 	static void Entity_SetMaterial(UUID entityID, UUID handle)
@@ -552,6 +596,45 @@ namespace Nebula {
 		
 		auto& comp = scene->GetEntityNode(entityID);
 		return (uint32_t)comp.Children.size();
+	}
+
+	static void Entity_AddChild(UUID entityID, UUID childID)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+		
+		auto& entityNode = scene->GetEntityNode(entityID);
+		auto& childNode = scene->GetEntityNode(childID);
+
+		// Child is already a child of entity
+		if (childNode.Parent == entityID)
+			return;
+
+		// Remove child from existing parent
+		if (childNode.Parent)
+			scene->GetEntityNode(childNode.Parent).Children.remove(entityID);
+
+		else
+			scene->m_SceneOrder.remove(childID);
+
+		// Update child and entity nodes
+		childNode.Parent = entityID;
+		entityNode.Children.push_back(childID);
+	}
+
+	static uint64_t Entity_GetParent(UUID entityID)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		NB_ASSERT(scene);
+
+		auto& node = scene->GetEntityNode(entityID);
+		return node.Parent;
+	}
+
+	static void Entity_SetParent(UUID entityID, UUID parentID)
+	{
+		// Add entityID as child to parentID
+		Entity_AddChild(parentID, entityID);
 	}
 #pragma endregion
 
@@ -1547,17 +1630,22 @@ namespace Nebula {
 		NB_ADD_INTERNAL_CALL(Entity_FindChildByName);
 		NB_ADD_INTERNAL_CALL(Entity_GetChild);
 		NB_ADD_INTERNAL_CALL(Entity_GetChildCount);
+		NB_ADD_INTERNAL_CALL(Entity_AddChild);
 
 		NB_ADD_INTERNAL_CALL(Entity_GetName);
 		NB_ADD_INTERNAL_CALL(Entity_GetScriptInstance);
 		NB_ADD_INTERNAL_CALL(Entity_GetLayer);
+		NB_ADD_INTERNAL_CALL(Entity_IsEnabled);
 		NB_ADD_INTERNAL_CALL(Entity_IsValid);
 		NB_ADD_INTERNAL_CALL(Entity_GetMaterial);
+		NB_ADD_INTERNAL_CALL(Entity_GetParent);
 
 		NB_ADD_INTERNAL_CALL(Entity_SetName);
 		NB_ADD_INTERNAL_CALL(Entity_SetScriptInstance);
 		NB_ADD_INTERNAL_CALL(Entity_SetLayer);
+		NB_ADD_INTERNAL_CALL(Entity_SetEnabled);
 		NB_ADD_INTERNAL_CALL(Entity_SetMaterial);
+		NB_ADD_INTERNAL_CALL(Entity_SetParent);
 
 		NB_ADD_INTERNAL_CALL(TransformComponent_GetTranslation);
 		NB_ADD_INTERNAL_CALL(TransformComponent_GetRotation);

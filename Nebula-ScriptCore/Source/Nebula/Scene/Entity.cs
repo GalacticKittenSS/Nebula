@@ -77,6 +77,18 @@ namespace Nebula
             }
         }
 
+        public bool Enabled
+        {
+            get
+            {
+                return InternalCalls.Entity_IsEnabled(ID);
+            }
+            set
+            {
+                InternalCalls.Entity_SetEnabled(ID, value);
+            }
+        }
+
         public Material Material
         {
             get
@@ -93,6 +105,19 @@ namespace Nebula
         public uint ChildCount
         {
             get => InternalCalls.Entity_GetChildCount(ID);
+        }
+
+        public Entity Parent
+        {
+            get
+            {
+                ulong id = InternalCalls.Entity_GetParent(ID);
+                if (id == 0)
+                    return null;
+
+                return new Entity(id);
+            }
+            set => InternalCalls.Entity_SetParent(ID, value.ID);
         }
 
         public bool HasComponent<T>() where T : Component, new()
@@ -148,6 +173,14 @@ namespace Nebula
                 return null;
 
             return new Entity(id);
+        }
+
+        public void AddChild(Entity child)
+        {
+            if (!child)
+                return;
+
+            InternalCalls.Entity_AddChild(ID, child.ID);
         }
 
         public bool IsValid()
