@@ -389,7 +389,7 @@ namespace Nebula {
 		s_Data->EntityInstances[entity.GetUUID()]->InvokeOnUpdate(ts);
 	}
 	
-	void ScriptEngine::OnCollisionEnter(Entity entity, Entity other)
+	void ScriptEngine::OnCollisionEnter(Entity entity, Entity other, const std::array<glm::vec2, 2>& contactPoints)
 	{
 		if (!s_Data->SceneContext)
 			return;
@@ -403,7 +403,10 @@ namespace Nebula {
 				return;
 		}
 		
-		s_Data->EntityInstances[entity.GetUUID()]->InvokeOnCollisionEnter(other);
+		ScriptContactInfo contactInfo;
+		contactInfo.Other = CreateEntityClass(other.GetUUID());
+		contactInfo.ContactPoint = contactPoints;
+		s_Data->EntityInstances[entity.GetUUID()]->InvokeOnCollisionEnter(contactInfo);
 	}
 	
 	void ScriptEngine::OnCollisionExit(Entity entity, Entity other)
@@ -865,11 +868,11 @@ namespace Nebula {
 		}
 	}
 	
-	void ScriptInstance::InvokeOnCollisionEnter(Entity other)
+	void ScriptInstance::InvokeOnCollisionEnter(ScriptContactInfo& contactInfo)
 	{
 		if (m_OnCollisionEnterMethod)
 		{
-			void* param = ScriptEngine::CreateEntityClass(other.GetUUID());
+			void* param = &contactInfo;
 			m_ScriptClass->InvokeMethod(m_Instance, m_OnCollisionEnterMethod, &param);
 		}
 	}

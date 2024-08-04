@@ -15,6 +15,7 @@ namespace Nebula
 			bool IsTypeEnter;
 			UUID EntityA;
 			UUID EntityB;
+			std::array<glm::vec2, 2> ContactPoints;
 		};
 
 		ContactListener(Scene* scene); 
@@ -26,7 +27,7 @@ namespace Nebula
 		
 		inline bool IsFlushing() const { return m_FlushingContacts; }
 	private:
-		void CallEntityEnter(UUID entity, UUID other);
+		void CallEntityEnter(UUID entity, UUID other, const std::array<glm::vec2, 2>& contactPoints);
 		void CallEntityExit(UUID entity, UUID other);
 
 		Scene* m_Scene;

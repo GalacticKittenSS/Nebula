@@ -116,6 +116,12 @@ namespace Nebula {
 		friend class ScriptEngine;
 	};
 
+	struct ScriptContactInfo
+	{
+		MonoObject* Other;
+		std::array<glm::vec2, 2> ContactPoint;
+	};
+
 	class ScriptInstance
 	{
 	public:
@@ -126,7 +132,7 @@ namespace Nebula {
 
 		void InvokeOnCreate();
 		void InvokeOnUpdate(float ts);
-		void InvokeOnCollisionEnter(Entity other);
+		void InvokeOnCollisionEnter(ScriptContactInfo& contactInfo);
 		void InvokeOnCollisionExit(Entity other);
 
 		Ref<ScriptClass> GetScriptClass() { return m_ScriptClass; }
@@ -166,7 +172,7 @@ namespace Nebula {
 
 		static bool OnCreateEntity(Entity entity);
 		static void OnUpdateEntity(Entity entity, float ts);
-		static void OnCollisionEnter(Entity entity, Entity other);
+		static void OnCollisionEnter(Entity entity, Entity other, const std::array<glm::vec2, 2>& contactPoints);
 		static void OnCollisionExit(Entity entity, Entity other);
 		
 		static void DeleteScriptInstance(UUID entityID);

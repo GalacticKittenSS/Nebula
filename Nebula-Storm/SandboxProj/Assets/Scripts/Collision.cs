@@ -7,9 +7,9 @@ namespace Sandbox
 		public int CollisionCount = 0;
 		public bool Handled = true;
 		
-		void OnCollisionEnter(Entity other)
+		void OnCollisionEnter(ContactInfo contactInfo)
 		{
-			if (other.Name == "Player")
+			if (contactInfo.OtherEntity.Name == "Player")
 				return;
 			
 			CollisionCount++;
