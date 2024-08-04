@@ -242,6 +242,7 @@ namespace Nebula {
 			case Nebula::ScriptFieldType::Prefab:	return "Prefab";
 			case Nebula::ScriptFieldType::Font:		return "Font";
 			case Nebula::ScriptFieldType::Texture:	return "Texture";
+			case Nebula::ScriptFieldType::Material:	return "Material";
 			case Nebula::ScriptFieldType::Asset:	return "Asset";
 			}
 
@@ -271,6 +272,7 @@ namespace Nebula {
 			if (fieldType == "Prefab")	return ScriptFieldType::Prefab;
 			if (fieldType == "Font")	return ScriptFieldType::Font;
 			if (fieldType == "Texture")	return ScriptFieldType::Texture;
+			if (fieldType == "Material")return ScriptFieldType::Material;
 			if (fieldType == "Asset")	return ScriptFieldType::Asset;
 
 			NB_ASSERT(false);

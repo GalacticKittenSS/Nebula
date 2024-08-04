@@ -149,6 +149,7 @@ namespace Nebula
 					case ScriptFieldType::Prefab:
 					case ScriptFieldType::Font:
 					case ScriptFieldType::Texture:
+					case ScriptFieldType::Material:
 					case ScriptFieldType::Asset:
 						out << field.GetValueObject();
 						break;
@@ -165,24 +166,31 @@ namespace Nebula
 		
 		auto& materialComponent = entity.GetComponent<MaterialComponent>();
 		const AssetMetadata& materialMetadata = AssetManager::GetAssetMetadata(materialComponent.Material);
-		if (materialMetadata.Type != AssetType::MemoryAsset) {
-			out << YAML::Key << "MaterialComponent";
-			out << YAML::BeginMap; // MaterialComponent
 
+		out << YAML::Key << "MaterialComponent";
+		out << YAML::BeginMap; // MaterialComponent
+
+		if (materialMetadata.Type != AssetType::MemoryAsset)
+		{
+			// Output Asset Handle
 			out << YAML::Key << "Material" << YAML::Value << materialComponent.Material;
-			out << YAML::EndMap; // MaterialComponent
 		}
+		else
+		{
+			// Output Material Properties
+			Ref<Material> material = AssetManager::GetAsset<Material>(materialComponent.Material);
+			out << YAML::Key << "Colour" << YAML::Value << material->Colour;
+			out << YAML::Key << "Tiling" << YAML::Value << material->Tiling;
+
+			if (material->Texture)
+				out << YAML::Key << "Texture" << YAML::Value << material->Texture->Handle;
+		}
+
+		out << YAML::EndMap; // MaterialComponent
 
 		if (entity.HasComponent<SpriteRendererComponent>()) {
 			out << YAML::Key << "SpriteRendererComponent";
 			out << YAML::BeginMap; // SpriteRendererComponent
-
-			if (materialMetadata.Type == AssetType::MemoryAsset)
-			{
-				Ref<Material> material = AssetManager::GetAsset<Material>(materialComponent.Material);
-				out << YAML::Key << "Colour" << YAML::Value << material->Colour;
-				out << YAML::Key << "Tiling" << YAML::Value << material->Tiling;
-			}
 
 			auto& component = entity.GetComponent<SpriteRendererComponent>();
 			out << YAML::Key << "Offset" << YAML::Value << component.SubTextureOffset;
@@ -450,6 +458,7 @@ namespace Nebula
 						case ScriptFieldType::Prefab:
 						case ScriptFieldType::Font:
 						case ScriptFieldType::Texture:
+						case ScriptFieldType::Material:
 						case ScriptFieldType::Asset:
 						{
 							AssetHandle data = scriptField["Data"].as<uint64_t>();
@@ -470,12 +479,25 @@ namespace Nebula
 			if (auto materialComponent = entity["MaterialComponent"])
 			{
 				DeserializeValue(mc.Material, materialComponent["Material"]);
+
+				if (!mc.Material)
+				{
+					Ref<Material> material = CreateRef<Material>();
+					DeserializeValue(material->Colour, materialComponent["Colour"]);
+					DeserializeValue(material->Tiling, materialComponent["Tiling"]);
+
+					AssetHandle handle = DeserializeValue<UUID>(materialComponent["Texture"]);
+					material->Texture = AssetManager::GetAsset<Texture2D>(handle);
+
+					mc.Material = AssetManager::CreateMemoryAsset(material);
+				}
 			}
 
 			if (auto spriteRendererComponent = entity["SpriteRendererComponent"])
 			{
 				auto& src = deserializedEntity.AddComponent<SpriteRendererComponent>();
 
+				// Backwards Compatability (Material Properties stored under SpriteRendererComponent)
 				if (!mc.Material)
 				{
 					Ref<Material> material = CreateRef<Material>();
@@ -497,6 +519,7 @@ namespace Nebula
 			{
 				auto& crc = deserializedEntity.AddComponent<CircleRendererComponent>();
 
+				// Backwards Compatability (Material Properties stored under CircleRendererComponent)
 				if (!mc.Material)
 				{
 					Ref<Material> material = CreateRef<Material>();
