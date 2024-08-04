@@ -245,7 +245,7 @@ namespace Nebula {
 
 	}
 
-	static UUID Material_GetTexture(UUID handle)
+	static uint64_t Material_GetTexture(UUID handle)
 	{
 		if (!handle)
 			return NULL;
