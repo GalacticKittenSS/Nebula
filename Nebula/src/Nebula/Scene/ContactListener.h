@@ -23,8 +23,7 @@ namespace Nebula
 		void EndContact(b2Contact* contact) override;
 
 		void Flush();
-		void DeleteEntity(UUID entity);
-
+		
 		inline bool IsFlushing() const { return m_FlushingContacts; }
 	private:
 		void CallEntityEnter(UUID entity, UUID other);

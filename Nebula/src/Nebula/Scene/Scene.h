@@ -89,8 +89,10 @@ namespace Nebula {
 		entt::registry m_Registry;
 		std::unordered_map<UUID, entt::entity> m_EntityMap;
 		std::unordered_map<UUID, SceneNode> m_Nodes;
+		std::vector<UUID> m_EntitiesToDestroy;
 
 		bool m_IsRunning = false, m_IsPaused = false;
+		bool m_FrameRunning = false;
 		int m_StepFrames = 0;
 
 		uint32_t m_ViewportWidth = 0, m_ViewportHeight = 0;

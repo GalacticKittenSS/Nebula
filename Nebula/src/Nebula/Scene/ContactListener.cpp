@@ -74,25 +74,6 @@ namespace Nebula {
 
 		m_FlushingContacts = false;
 		m_Contacts.clear();
-		
-		m_DeletingEntities = true;
-
-		for (const UUID& uuid : m_EntitiesToDelete)
-		{
-			Entity entity = { uuid, m_Scene };
-			m_Scene->DestroyEntity(entity);
-		}
-
-		m_DeletingEntities = false;
-		m_EntitiesToDelete.clear();
-	}
-
-	void ContactListener::DeleteEntity(UUID entity)
-	{
-		if (m_EntitiesToDelete.find(entity) != m_EntitiesToDelete.size())
-			return;
-
-		m_EntitiesToDelete.push_back(entity);
 	}
 
 	void ContactListener::CallEntityEnter(UUID a, UUID b)

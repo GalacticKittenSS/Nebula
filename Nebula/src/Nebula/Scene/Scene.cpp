@@ -174,9 +174,9 @@ namespace Nebula {
 		
 		UUID entityID = entity.GetUUID();
 
-		if (m_ContactListener && m_ContactListener->IsFlushing())
+		if (m_FrameRunning)
 		{
-			m_ContactListener->DeleteEntity(entityID);
+			m_EntitiesToDestroy.push_back(entityID);
 			return;
 		}
 
@@ -575,6 +575,8 @@ namespace Nebula {
 		if (m_IsPaused && m_StepFrames-- <= 0)
 			return;
 
+		m_FrameRunning = true;
+
 		auto camView = m_Registry.view<TransformComponent, CameraComponent>();
 		for (auto entity : camView) {
 			auto [transform, camera] = camView.get<TransformComponent, CameraComponent>(entity);
@@ -588,6 +590,17 @@ namespace Nebula {
 
 		UpdateScripts();
 		UpdatePhysics();
+
+		m_FrameRunning = false;
+
+		// Always delete entities last
+		for (UUID entityID : m_EntitiesToDestroy)
+		{
+			Entity entity = GetEntityWithUUID(entityID);
+			DestroyEntity(entity);
+		}
+
+		m_EntitiesToDestroy.clear();
 	}
 
 	void Scene::OnSimulationStart() {
