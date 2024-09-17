@@ -495,8 +495,12 @@ namespace Nebula {
 		case AssetType::Texture:
 		{
 			Ref<Texture2D> texture = AssetManager::GetAsset<Texture2D>(m_AssetPreview);
-			float buttonSize = ImGui::GetContentRegionAvail().x;
-			ImGui::Image((ImTextureID)texture->GetRendererID(), ImVec2{ buttonSize, buttonSize }, { 0, 1 }, { 1, 0 });
+			if (texture)
+			{
+				float buttonSize = ImGui::GetContentRegionAvail().x;
+				ImGui::Image((ImTextureID)texture->GetRendererID(), ImVec2{ buttonSize, buttonSize }, { 0, 1 }, { 1, 0 });
+			}
+
 			break;
 		}
 		case AssetType::Font:
