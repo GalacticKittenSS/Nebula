@@ -1020,7 +1020,7 @@ namespace Nebula {
 
 		DrawComponent<MaterialComponent>("Material", entity, [](auto& component) {
 			const AssetMetadata& metadata = AssetManager::GetAssetMetadata(component.Material);
-			std::string text = metadata.RelativePath.empty() ? "Default" : metadata.RelativePath.string();
+			std::string text = metadata.RelativePath.empty() ? "Custom" : metadata.RelativePath.string();
 
 			DrawLabel("Material");
 			if (ImGui::Button(text.c_str(), ImVec2{ ImGui::GetContentRegionAvail().x, 0 }))
@@ -1202,7 +1202,7 @@ namespace Nebula {
 
 		DrawComponent<BoxCollider2DComponent>("Box Collider 2D", entity, [](auto& component) {
 			DrawVec2Control("Offset", component.Offset);
-			DrawVec2Control("Size",   component.Size);
+			DrawVec2Control("Size", component.Size, glm::vec2(0.0f), glm::vec2(0.0f), glm::vec2(0.5f));
 			DrawVec1Control("Density", component.Density, 0.01f, 0.0f, 1.0f);
 			DrawVec1Control("Friction", component.Friction, 0.01f, 0.0f, 1.0f);
 			DrawVec1Control("Restitution", component.Restitution, 0.01f, 0.0f, 1.0f);
