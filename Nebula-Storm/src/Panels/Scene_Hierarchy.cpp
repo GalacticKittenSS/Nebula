@@ -93,6 +93,9 @@ namespace Nebula {
 	void SceneHierarchyPanel::SetContext(const Ref<Scene>& context) {
 		if (m_SelectionContext)
 			m_SelectionContext = { m_SelectionContext.GetUUID(), context.get() };
+		else
+			// Selection Context could be invalid but still point to an entity
+			m_SelectionContext = {};
 		
 		m_Context = context;
 	}
