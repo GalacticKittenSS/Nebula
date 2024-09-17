@@ -1,3 +1,5 @@
+@echo off
+
 cd ..
 setx NEBULA "%cd%"
 cd scripts
