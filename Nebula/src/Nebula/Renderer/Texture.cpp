@@ -23,7 +23,10 @@ namespace Nebula {
 	/////////////////////////////////////////////////////////
 	//-----------------------------------------------------//
 
-	Ref<SubTexture2D> SubTexture2D::CreateFromCoords(const Ref<Texture2D>& texture, const glm::vec2& coords, const glm::vec2& cellSize, const glm::vec2& spriteSize) {
+	Ref<SubTexture2D> SubTexture2D::CreateFromCoords(const Ref<Texture2D>& texture, const glm::vec2& coords, const glm::vec2& origCellSize, const glm::vec2& spriteSize) {
+		glm::vec2 maxCellSize = glm::vec2(texture->GetWidth(), texture->GetHeight());
+		glm::vec2 cellSize = glm::min(origCellSize, maxCellSize); 
+		
 		glm::vec2 min = {
 			((coords.x + 0) * cellSize.x) / texture->GetWidth(),
 			((coords.y + 0) * cellSize.y) / texture->GetHeight()
