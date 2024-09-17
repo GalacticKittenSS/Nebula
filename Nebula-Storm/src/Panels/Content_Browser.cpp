@@ -603,13 +603,16 @@ namespace Nebula {
 				if (m_CreateDirectory)
 				{
 					std::filesystem::path directory = m_CurrentDirectory / std::filesystem::path(m_CreateFileName).replace_extension();
-					std::filesystem::create_directory(directory);
+					std::filesystem::create_directories(directory);
 				}
 				else
 				{
 					std::string extension = m_CreateFileName.substr(m_CreateFileName.find("."));
 					std::filesystem::path templateFile = "Resources/Templates/" + extension;
 					std::filesystem::path newFile = m_CurrentDirectory / m_CreateFileName;
+
+					if (!std::filesystem::exists(newFile.parent_path()))
+						std::filesystem::create_directories(newFile.parent_path());
 
 					if (std::filesystem::exists(templateFile))
 						std::filesystem::copy(templateFile, newFile);

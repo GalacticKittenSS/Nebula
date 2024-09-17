@@ -39,7 +39,7 @@ namespace Nebula
 		msdfgen::BitmapConstRef<T, N> bitmap = (msdfgen::BitmapConstRef<T, N>)generator.atlasStorage();
 
 		if (!std::filesystem::exists(cachePath.parent_path()))
-			std::filesystem::create_directory(cachePath.parent_path());
+			std::filesystem::create_directories(cachePath.parent_path());
 
 		stbi_flip_vertically_on_write(1);
 		stbi_write_png(cachePath.string().c_str(), bitmap.width, bitmap.height, N, (void*)bitmap.pixels, 0);
