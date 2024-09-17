@@ -39,10 +39,10 @@ namespace Nebula {
 		}
 
 		if (updatePhysics)
-			UpdatePhysicsBody();
+			UpdatePhysicsBodyTransform();
 	}
 
-	void Entity::UpdatePhysicsBody()
+	void Entity::UpdatePhysicsBodyTransform()
 	{
 		NB_PROFILE_FUNCTION();
 

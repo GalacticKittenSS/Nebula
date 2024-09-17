@@ -67,7 +67,7 @@ namespace Nebula {
 		
 		void CalculateTransform(bool calcParent = false);
 		void UpdateTransform(bool updatePhysics = true);
-		void UpdatePhysicsBody();
+		void UpdatePhysicsBodyTransform();
 
 		bool IsValid() const { return m_Scene->m_Registry.valid(m_EntityHandle); }
 
